@@ -26,6 +26,7 @@ $script:HistorialSesion = [System.Collections.Generic.List[string]]::new()
 $script:ArchivoEstado   = "$env:TEMP\AtlasRed_UltimoEscaneo.txt"
 $script:MostrarInfo     = $true        # El user puede deshabilitarlo con X en la info card
 $script:ModoAuto        = $Auto.IsPresent
+$atlasToolkitReady      = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
 
 # ================================================================
 #  TABLA OUI - Prefijos MAC (3 octetos) -> Fabricante
@@ -683,7 +684,12 @@ function Mostrar-InfoModulo {
 function Esperar-Enter {
     param([switch]$Silencioso)
     if (-not $Silencioso -and -not $script:ModoAuto) {
-        Read-Host "`n  Press ENTER to go back to menu..."
+        $msg = "`n  Press ENTER to go back to menu..."
+        if ($atlasToolkitReady -and (Get-Command Wait-AtlasExit -ErrorAction SilentlyContinue)) {
+            Wait-AtlasExit -Message $msg
+            return
+        }
+        Read-Host $msg
     }
 }
 
@@ -1909,13 +1915,19 @@ if ($script:ModoAuto) {
 while ($true) {
     Clear-Host
     Write-Host "`n"
-    Escribir-Centrado "  +--------------------------------------------------------------+  " "DarkGray"
-    Escribir-Centrado "  |                                                              |  " "Yellow"
-    Escribir-Centrado "  |            ROUTER SECURITY AUDIT  v3.0                      |  " "Yellow"
-    Escribir-Centrado "  |         Scan · Firmware · Devices · Report                  |  " "DarkGray"
-    Escribir-Centrado "  |                                                              |  " "Yellow"
-    Escribir-Centrado "  +--------------------------------------------------------------+  " "DarkGray"
-    Write-Host ""
+    if ($atlasToolkitReady) {
+        Write-AtlasHeader -Title 'ROUTER SECURITY AUDIT v3.0' -Color Yellow
+        Write-AtlasStep 'Scan · Firmware · Devices · Report'
+        Write-Host ""
+    } else {
+        Escribir-Centrado "  +--------------------------------------------------------------+  " "DarkGray"
+        Escribir-Centrado "  |                                                              |  " "Yellow"
+        Escribir-Centrado "  |            ROUTER SECURITY AUDIT  v3.0                      |  " "Yellow"
+        Escribir-Centrado "  |         Scan · Firmware · Devices · Report                  |  " "DarkGray"
+        Escribir-Centrado "  |                                                              |  " "Yellow"
+        Escribir-Centrado "  +--------------------------------------------------------------+  " "DarkGray"
+        Write-Host ""
+    }
     Escribir-Centrado "  +--- DIAGNOSTICO BASICO ------+---- HERRAMIENTAS AVANZADAS --+  " "DarkGray"
     Escribir-Centrado "  |                             |                              |  " "DarkGray"
     Escribir-Centrado "  |  [A]  LAN Ports Audit       |  [L]  Router Firmware       |  " "White"
