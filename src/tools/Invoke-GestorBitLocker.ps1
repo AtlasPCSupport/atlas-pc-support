@@ -25,6 +25,7 @@ function Invoke-GestorBitLocker {
 [console]::ForegroundColor = "Gray"
 $Host.UI.RawUI.WindowTitle = "ATLAS PC SUPPORT - BitLocker Manager v3"
 try { $Host.UI.RawUI.WindowSize = New-Object System.Management.Automation.Host.Size(105, 48) } catch {}
+$atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
 
 # Log file
 $logFile = Join-Path $PSScriptRoot "ATLAS_bitlocker.log"
@@ -49,6 +50,31 @@ function Escribir-Centrado {
     } else {
         Write-Host $Texto -ForegroundColor $Color
     }
+}
+
+function Write-AtlasHeaderCompat {
+    param([string]$Title, [string]$Subtitle = "")
+    if ($atlasToolkitReady) {
+        Write-Host ''
+        Write-AtlasHeader -Title $Title -Color Yellow
+        if ($Subtitle) { Write-AtlasStep $Subtitle }
+        Write-Host ''
+        return
+    }
+    Write-Host "`n"
+    Escribir-Centrado "===================================================" "DarkGray"
+    Escribir-Centrado "         BITLOCKER MANAGER v3" "Yellow"
+    Escribir-Centrado "  Encrypt · Backup Keys · Health Check · AD Sync" "DarkGray"
+    Escribir-Centrado "===================================================" "DarkGray"
+}
+
+function Wait-AtlasReturnCompat {
+    param([string]$Message = "    ENTER to go back...")
+    if ($atlasToolkitReady -and (Get-Command Wait-AtlasExit -ErrorAction SilentlyContinue)) {
+        Wait-AtlasExit -Message ($Message.Trim())
+        return
+    }
+    $null = Read-Host $Message
 }
 
 function Show-DiskTable {
@@ -522,11 +548,7 @@ Clear-Host
 
 while ($true) {
     Clear-Host
-    Write-Host "`n"
-    Escribir-Centrado "===================================================" "DarkGray"
-    Escribir-Centrado "         BITLOCKER MANAGER v3" "Yellow"
-    Escribir-Centrado "  Encrypt · Backup Keys · Health Check · AD Sync" "DarkGray"
-    Escribir-Centrado "===================================================" "DarkGray"
+    Write-AtlasHeaderCompat -Title "BITLOCKER MANAGER v3" -Subtitle "Encrypt · Backup Keys · Health Check · AD Sync"
     
     # TPM status
     Write-Host ""
@@ -699,7 +721,7 @@ while ($true) {
                     foreach ($ruta in $rutasGuardadas) { Write-Host "    -> ${ruta}" -ForegroundColor Gray }
                 }
             }
-            Write-Host "`n"; Read-Host "    ENTER to go back..."
+            Write-Host "`n"; Wait-AtlasReturnCompat -Message "    ENTER to go back..."
         }
 
         # =============================================
@@ -728,25 +750,25 @@ while ($true) {
             
             Write-Host ""
             $allVolumes = Show-DiskTable
-            if (-not $allVolumes) { Read-Host "    ENTER to go back..."; continue }
+            if (-not $allVolumes) { Wait-AtlasReturnCompat -Message "    ENTER to go back..."; continue }
             
             Write-Host "    Disk to encrypt (or [B] to go back):" -ForegroundColor White
             $input = Read-Host "    >"
             if ($input -eq "B" -or $input -eq "b") { continue }
             
             $validated = Validate-DriveLetter -Input $input -ValidVolumes $allVolumes
-            if (-not $validated) { Read-Host "    ENTER to go back..."; continue }
+            if (-not $validated) { Wait-AtlasReturnCompat -Message "    ENTER to go back..."; continue }
             
             $disk = $validated.Letter; $vol = $validated.Volume
             
             if ($vol.VolumeStatus -eq 'FullyEncrypted') {
                 Write-Host "    ${disk} YA esta encriptado." -ForegroundColor Yellow
-                Read-Host "    ENTER to go back..."; continue
+                Wait-AtlasReturnCompat -Message "    ENTER to go back..."; continue
             }
             if ($vol.VolumeStatus -eq 'EncryptionInProgress') {
                 Write-Host "    ${disk} ya se esta encriptando." -ForegroundColor Yellow
                 Show-EncryptionProgress -MountPoint $disk -Mode "Encrypting"
-                Read-Host "    ENTER to go back..."; continue
+                Wait-AtlasReturnCompat -Message "    ENTER to go back..."; continue
             }
             
             # HEALTH CHECK
@@ -813,7 +835,7 @@ while ($true) {
                     Write-Host "    SUGERENCIA: gpedit.msc > Computer Config > Admin Templates > BitLocker" -ForegroundColor Yellow
                 }
             }
-            Write-Host ""; Read-Host "    ENTER to go back..."
+            Write-Host ""; Wait-AtlasReturnCompat -Message "    ENTER to go back..."
         }
 
         # =============================================
@@ -826,21 +848,21 @@ while ($true) {
             Write-Host ""
             
             $encVolumes = Show-DiskTable -OnlyEncrypted
-            if (-not $encVolumes) { Read-Host "    ENTER to go back..."; continue }
+            if (-not $encVolumes) { Wait-AtlasReturnCompat -Message "    ENTER to go back..."; continue }
             
             Write-Host "    Disk a desencriptar (o [B]):" -ForegroundColor White
             $input = Read-Host "    >"
             if ($input -eq "B" -or $input -eq "b") { continue }
             
             $validated = Validate-DriveLetter -Input $input -ValidVolumes $encVolumes
-            if (-not $validated) { Read-Host "    ENTER to go back..."; continue }
+            if (-not $validated) { Wait-AtlasReturnCompat -Message "    ENTER to go back..."; continue }
             
             $disk = $validated.Letter; $vol = $validated.Volume
             
             if ($vol.VolumeStatus -eq 'DecryptionInProgress') {
                 Write-Host "    Already being decrypted." -ForegroundColor Yellow
                 Show-EncryptionProgress -MountPoint $disk -Mode "Decrypting"
-                Read-Host "    ENTER to go back..."; continue
+                Wait-AtlasReturnCompat -Message "    ENTER to go back..."; continue
             }
             
             $capGB = if ($vol.CapacityGB) { "{0:N1}" -f $vol.CapacityGB } else { "?" }
@@ -865,7 +887,7 @@ while ($true) {
                 Write-Host "    [ERROR] $($_.Exception.Message)" -ForegroundColor Red
                 Write-Log "ERROR desactivando ${disk}: $($_.Exception.Message)" "ERROR"
             }
-            Write-Host ""; Read-Host "    ENTER to go back..."
+            Write-Host ""; Wait-AtlasReturnCompat -Message "    ENTER to go back..."
         }
 
         # =============================================
@@ -912,7 +934,7 @@ while ($true) {
             }
             if (-not $hasProtectors) { Write-Host "    (none)" -ForegroundColor DarkGray }
             
-            Write-Host "`n"; Read-Host "    ENTER to go back..."
+            Write-Host "`n"; Wait-AtlasReturnCompat -Message "    ENTER to go back..."
         }
 
         # =============================================

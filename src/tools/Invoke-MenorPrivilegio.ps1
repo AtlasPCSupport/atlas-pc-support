@@ -278,6 +278,7 @@ function Invoke-MenorPrivilegio {
     $lang = _Atlas-DetectLang
     if (-not $T.ContainsKey($lang)) { $lang = 'en' }
     $L = $T[$lang]
+    $atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
 
 $ErrorActionPreference = "Stop"
 
@@ -310,6 +311,15 @@ function Escribir-Centrado {
     } catch { Write-Host $Texto -ForegroundColor $Color }
 }
 
+function Wait-AtlasContinue {
+    param([string]$Message = $L.EnterContinue)
+    if ($atlasToolkitReady -and (Get-Command Wait-AtlasExit -ErrorAction SilentlyContinue)) {
+        Wait-AtlasExit -Message ($Message -replace "^[`r`n\s]+", '')
+        return
+    }
+    $null = Read-Host $Message
+}
+
 function Obtener-EstadoUAC {
     try {
         $regPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
@@ -337,6 +347,17 @@ function Dibujar-Header {
     $uac = Obtener-EstadoUAC
     $rol = Obtener-RolUsuario $env:USERNAME
     $rolColor = if ($rol -eq $L.RoleAdmin) { "Cyan" } else { "Green" }
+
+    if ($atlasToolkitReady) {
+        Write-AtlasHeader -Title $L.HeaderApp -Color Yellow
+        Write-AtlasStep $L.HeaderSub
+        Write-AtlasStep (($L.UserRoleLine -f $env:USERNAME, $rol))
+        if ($uac.Color -eq 'Green') { Write-AtlasSuccess $uac.Texto }
+        elseif ($uac.Color -eq 'Red') { Write-AtlasWarn $uac.Texto }
+        else { Write-AtlasStep $uac.Texto }
+        Write-Host ""
+        return
+    }
 
     Escribir-Centrado $L.Bar "DarkGray"
     Escribir-Centrado $L.HeaderApp "Cyan"
@@ -453,7 +474,7 @@ do {
             $existe = Get-LocalUser -Name $newAdminUser -ErrorAction SilentlyContinue
             if ($existe) {
                 Escribir-Centrado $L.T1Exists "Red"
-                Read-Host $L.EnterContinue
+                Wait-AtlasContinue -Message $L.EnterContinue
                 break
             }
 
@@ -463,14 +484,14 @@ do {
 
             if ($passSecure.Length -eq 0) {
                 Escribir-Centrado $L.T1EmptyPwd "Red"
-                Read-Host $L.EnterContinue
+                Wait-AtlasContinue -Message $L.EnterContinue
                 break
             }
 
             $errPass = Validar-Contrasena $passSecure
             if ($errPass) {
                 Escribir-Centrado ("ERROR: " + $errPass) "Red"
-                Read-Host $L.EnterContinue
+                Wait-AtlasContinue -Message $L.EnterContinue
                 break
             }
 
@@ -484,7 +505,7 @@ do {
             } catch {
                 Escribir-Centrado ($L.ErrGeneric -f $_.Exception.Message) "Red"
             }
-            Read-Host $L.EnterContinue
+            Wait-AtlasContinue -Message $L.EnterContinue
         }
 
         "2" {
@@ -499,12 +520,12 @@ do {
                 if ($otrosAdmins.Count -eq 0) {
                     Escribir-Centrado $L.T2BlockedNoAdmin "Red"
                     Escribir-Centrado $L.T2CreateFirst "Yellow"
-                    Read-Host $L.EnterContinue
+                    Wait-AtlasContinue -Message $L.EnterContinue
                     break
                 }
             } catch {
                 Escribir-Centrado ($L.T2VerifyErr -f $_.Exception.Message) "Red"
-                Read-Host $L.EnterContinue
+                Wait-AtlasContinue -Message $L.EnterContinue
                 break
             }
 
@@ -525,7 +546,7 @@ do {
                 Escribir-Centrado $L.T2Done "Green"
             } catch {
                 Escribir-Centrado ($L.ErrGeneric -f $_.Exception.Message) "Red"
-                Read-Host $L.EnterContinue
+                Wait-AtlasContinue -Message $L.EnterContinue
                 break
             }
 
@@ -571,7 +592,7 @@ do {
             } catch {
                 Escribir-Centrado ($L.ErrGeneric -f $_.Exception.Message) "Red"
             }
-            Read-Host $L.EnterContinue
+            Wait-AtlasContinue -Message $L.EnterContinue
         }
 
         "4" {
@@ -608,7 +629,7 @@ do {
             } catch {
                 Escribir-Centrado ($L.ErrGeneric -f $_.Exception.Message) "Red"
             }
-            Read-Host $L.EnterContinue
+            Wait-AtlasContinue -Message $L.EnterContinue
         }
 
         "5" {
@@ -621,7 +642,7 @@ do {
                 $usuarios = Get-LocalUser -ErrorAction Stop | Where-Object { $_.Name -ne $env:USERNAME }
                 if ($usuarios.Count -eq 0) {
                     Escribir-Centrado $L.T5NoOthers "Yellow"
-                    Read-Host $L.EnterContinue
+                    Wait-AtlasContinue -Message $L.EnterContinue
                     break
                 }
 
@@ -645,7 +666,7 @@ do {
                 $num = 0
                 if (![int]::TryParse($numStr, [ref]$num) -or $num -lt 1 -or $num -gt $usuarios.Count) {
                     Escribir-Centrado $L.T5BadNumber "Red"
-                    Read-Host $L.EnterContinue
+                    Wait-AtlasContinue -Message $L.EnterContinue
                     break
                 }
 
@@ -660,7 +681,7 @@ do {
             } catch {
                 Escribir-Centrado ($L.ErrGeneric -f $_.Exception.Message) "Red"
             }
-            Read-Host $L.EnterContinue
+            Wait-AtlasContinue -Message $L.EnterContinue
         }
 
         "6" {
@@ -704,7 +725,7 @@ do {
             } catch {
                 Escribir-Centrado ($L.ErrGeneric -f $_.Exception.Message) "Red"
             }
-            Read-Host $L.EnterContinue
+            Wait-AtlasContinue -Message $L.EnterContinue
         }
 
         "7" {
@@ -755,7 +776,7 @@ do {
             } catch {
                 Escribir-Centrado ($L.ErrGeneric -f $_.Exception.Message) "Red"
             }
-            Read-Host $L.EnterContinue
+            Wait-AtlasContinue -Message $L.EnterContinue
         }
 
         "8" { return }
@@ -763,3 +784,4 @@ do {
 
 } while ($true)
 }
+

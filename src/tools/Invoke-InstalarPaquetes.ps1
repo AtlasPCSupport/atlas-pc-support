@@ -197,6 +197,7 @@ function Invoke-InstalarPaquetes {
     $lang = _Atlas-DetectLang
     if (-not $T.ContainsKey($lang)) { $lang = 'en' }
     $L = $T[$lang]
+    $atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
 
     # --- Config ---
     $PROFILE_DIR = Join-Path $env:LOCALAPPDATA 'AtlasPC\winget-profiles'
@@ -297,8 +298,24 @@ function Invoke-InstalarPaquetes {
         Write-Host ((' ' * $pad) + $Text) -ForegroundColor $Color
     }
 
+    function Wait-AtlasContinue {
+        param([string]$Message)
+        if ($atlasToolkitReady -and (Get-Command Wait-AtlasExit -ErrorAction SilentlyContinue)) {
+            Wait-AtlasExit -Message $Message
+            return
+        }
+        $null = Read-Host $Message
+    }
+
     function Write-Header {
         Clear-Host
+        if ($atlasToolkitReady) {
+            Write-Host ''
+            Write-AtlasHeader -Title 'BULK APP INSTALLER' -Color Yellow
+            Write-AtlasStep 'Catalog · Profiles · Search · Install via winget'
+            Write-Host ''
+            return
+        }
         Write-Host ''
         Write-Centered-Pkg '============================================================' 'DarkGray'
         Write-Centered-Pkg '        BULK APP INSTALLER' 'Yellow'
@@ -934,14 +951,14 @@ function Invoke-InstalarPaquetes {
                 Write-Host ('  ' + $L.WingetHintWin10) -ForegroundColor DarkGray
                 Write-Host ('  ' + $L.WingetHintWin11) -ForegroundColor DarkGray
                 Write-Host ''
-                Read-Host $L.EnterToExit
+                Wait-AtlasContinue -Message $L.EnterToExit
                 return
             }
         } else {
             Write-Host ('  ' + $L.WingetHintWin10) -ForegroundColor DarkGray
             Write-Host ('  ' + $L.WingetHintWin11) -ForegroundColor DarkGray
             Write-Host ''
-            Read-Host $L.EnterToExit
+            Wait-AtlasContinue -Message $L.EnterToExit
             return
         }
     }
@@ -990,12 +1007,12 @@ function Invoke-InstalarPaquetes {
                 } else {
                     Write-Host ('  ' + $L.NothingPicked) -ForegroundColor Yellow
                 }
-                Read-Host $L.EnterToContinue
+                Wait-AtlasContinue -Message $L.EnterToContinue
             }
             '^2$' {
                 $loaded = Load-Profile
                 if ($loaded.Count -gt 0) { $currentSelection = $loaded }
-                Read-Host $L.EnterToContinue
+                Wait-AtlasContinue -Message $L.EnterToContinue
             }
             '^3$' {
                 Write-Header
@@ -1008,15 +1025,15 @@ function Invoke-InstalarPaquetes {
                     }
                 }
                 Write-Host ''
-                Read-Host $L.EnterToContinue
+                Wait-AtlasContinue -Message $L.EnterToContinue
             }
             '^4$' {
                 Save-Profile -Packages $currentSelection
-                Read-Host $L.EnterToContinue
+                Wait-AtlasContinue -Message $L.EnterToContinue
             }
             '^5$' {
                 Install-Packages -Packages $currentSelection
-                Read-Host $L.EnterToContinue
+                Wait-AtlasContinue -Message $L.EnterToContinue
             }
             '^6$' {
                 $picked = Search-Winget
@@ -1026,7 +1043,7 @@ function Invoke-InstalarPaquetes {
                     foreach ($s in $picked)          { $seen[$s.Id] = $s }
                     $currentSelection = @($seen.Values)
                 }
-                Read-Host $L.EnterToContinue
+                Wait-AtlasContinue -Message $L.EnterToContinue
             }
             '^[Qq]$' { return }
             default {
