@@ -91,6 +91,16 @@ function Invoke-InstalarMicrosoftStore {
     $lang = _Atlas-DetectLang
     if (-not $T.ContainsKey($lang)) { $lang = 'en' }
     $L = $T[$lang]
+    $atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
+
+    function Wait-StoreCompat {
+        param([string]$Message)
+        if ($atlasToolkitReady -and (Get-Command Wait-AtlasExit -ErrorAction SilentlyContinue)) {
+            Wait-AtlasExit -Message $Message
+            return
+        }
+        Read-Host $Message | Out-Null
+    }
 
     # --- Console setup ---
     try { $Host.UI.RawUI.WindowTitle = $L.Title } catch {}
@@ -103,7 +113,7 @@ function Invoke-InstalarMicrosoftStore {
         [Security.Principal.WindowsBuiltInRole]::Administrator)
     if (-not $isAdmin) {
         Write-Host $L.NeedAdmin -ForegroundColor Red
-        Read-Host $L.EnterExit
+        Wait-StoreCompat -Message $L.EnterExit
         return
     }
 
@@ -116,11 +126,17 @@ function Invoke-InstalarMicrosoftStore {
 
     # --- Header ---
     Write-Host ''
-    Write-Host $L.Separator -ForegroundColor DarkGray
-    Write-Host "   $($L.Title)" -ForegroundColor Yellow
-    Write-Host "   $caption (Build $build)" -ForegroundColor Gray
-    Write-Host $L.Separator -ForegroundColor DarkGray
-    Write-Host ''
+    if ($atlasToolkitReady) {
+        Write-AtlasHeader -Title $L.Title -Color Yellow
+        Write-AtlasStep ("{0} (Build {1})" -f $caption, $build)
+        Write-Host ''
+    } else {
+        Write-Host $L.Separator -ForegroundColor DarkGray
+        Write-Host "   $($L.Title)" -ForegroundColor Yellow
+        Write-Host "   $caption (Build $build)" -ForegroundColor Gray
+        Write-Host $L.Separator -ForegroundColor DarkGray
+        Write-Host ''
+    }
 
     # --- Step 1: Detect ---
     Write-Host $L.CheckingStore -ForegroundColor Cyan
@@ -128,7 +144,7 @@ function Invoke-InstalarMicrosoftStore {
     if ($storeApp) {
         Write-Host ($L.AlreadyInstalled -f $storeApp.Version) -ForegroundColor Green
         Write-Host ''
-        Read-Host $L.EnterExit
+        Wait-StoreCompat -Message $L.EnterExit
         return
     }
     Write-Host $L.NotFound -ForegroundColor Yellow
@@ -178,7 +194,7 @@ function Invoke-InstalarMicrosoftStore {
     }
 
     if ($installedViaWsreset) {
-        Read-Host $L.EnterExit
+        Wait-StoreCompat -Message $L.EnterExit
         return
     }
 
@@ -192,7 +208,7 @@ function Invoke-InstalarMicrosoftStore {
         Write-Host $L.ManualStep2 -ForegroundColor Gray
         Write-Host $L.ManualStep3 -ForegroundColor Gray
         Write-Host ''
-        Read-Host $L.EnterExit
+        Wait-StoreCompat -Message $L.EnterExit
         return
     }
 
@@ -229,5 +245,5 @@ function Invoke-InstalarMicrosoftStore {
     }
 
     Write-Host ''
-    Read-Host $L.EnterExit
+    Wait-StoreCompat -Message $L.EnterExit
 }
