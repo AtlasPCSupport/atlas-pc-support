@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-02T22:37:34.7901516-05:00",
+  "generatedAt": "2026-07-02T22:56:35.1540230-05:00",
   "algorithm": "SHA256",
   "files": {
     "Invoke-ActualizarPowerShell.ps1": "bebc42e1da74f2a425c3823397827eaf132b790e8e75c124725a6ca7f48353cc",
@@ -9,7 +9,7 @@
     "Invoke-DiagnosticoEventos.ps1": "f98c1de1539ad7968a9a9330f952b964cd54d2e67af155cb14a6f7095c691331",
     "Invoke-DiagnosticoMaster.ps1": "7aa9c0b717f24002af30cbc93b9c22f6d978e02508f813f4f42d4c63688f31ae",
     "Invoke-EntregaPC.ps1": "93ae68c47b4f4b3955cdbeacb6290e12f1bd3278b481fd26a9a6b5658a3db164",
-    "Invoke-ExtraerLicencias.ps1": "56775007685dbcfd87fb5c10a2318a8534cbc5c764c83228bcd1f0d264ca4ce7",
+    "Invoke-ExtraerLicencias.ps1": "66c84efb00c58399ffba64883c2838a9b9fd7ed511c6df79938ac62b4c443d17",
     "Invoke-Fase0.ps1": "87f903655a9873823f44091b8adf696242556e2332a26183bea67618d07cf41a",
     "Invoke-FastCopy.ps1": "deb4615764cb1068f41f50add5dee3fd69610e210d093a681eae7677b8015554",
     "Invoke-GestorBitLocker.ps1": "00ea4e8b691077e80679e1c7b7f878d2b60e8e9d84ead4f0419bf9e9042f0d10",
@@ -19,13 +19,13 @@
     "Invoke-InstalarPaquetes.ps1": "5a86ad81d6f6a2a1676b94f3a9d5a5b3058f22476bb303914946c89f847a92cd",
     "Invoke-InstalarRuntimes.ps1": "60502070af04e5ac8fe97743f201773b755197efcdeeb6c312b04cc8698b0826",
     "Invoke-KeyboardDoctor.ps1": "645f606446394dd5f1b192a612ade7bb16bb8f0c8fb37dc40344115c156e6756",
-    "Invoke-MantenimientoPRO.ps1": "981f64c24dccf8ff1d4c7a38cc43b9e5a230e0ad3d637a0eeee766e31b8ab124",
+    "Invoke-MantenimientoPRO.ps1": "a0dd44dd82c48b5926973c6391b65c4c94a811f80b870cbbf00d7728027e94cf",
     "Invoke-MenorPrivilegio.ps1": "a2a5ff7fdc7cfc5fd0ae9ec65fc8ee565ded2e802fa804719e4fa60d632dcc4f",
     "Invoke-PartsUpgrade.ps1": "073d114013810af0223092d3192406880b735e5199a70a1d48101abb60ccab97",
     "Invoke-Personalizacion.ps1": "0212b1ac489832ac2d87242849dbd7be5e2a96ef80604f272a2f586d05cde5e3",
     "Invoke-PrepararUSB.ps1": "38581d2c9951661f343a95a6d5588950a6298aaefc69c9133fe0ab58392d3cbf",
     "Invoke-PrinterDoctor.ps1": "d1d6c5f4ae88467a072cfb021c69315cbe4a771fb538baf8974d17fddaf20dad",
-    "Invoke-Robocopy.ps1": "6ba87e7315c789357d90b821b866a057125153149fa221d081bc38d56fe7ec92",
+    "Invoke-Robocopy.ps1": "29f5abf91d82946d6fd7ffd7786de8165ad3e481e7075e7654fd4071328f0a7a",
     "Invoke-SelectorDNS.ps1": "0f5461f61d45c1fe0316a731a047bed8c93986d69a1c5607b72724b0d2804651",
     "Invoke-StopServices.ps1": "62089b6915ed4a9f51ffbfd353521ff07fca6294e9081b0c71bcd329381cc11b"
   }

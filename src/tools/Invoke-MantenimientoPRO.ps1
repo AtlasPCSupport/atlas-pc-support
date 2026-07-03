@@ -13,6 +13,7 @@ $Host.UI.RawUI.WindowTitle = "ATLAS PC SUPPORT | Maintenance Suite v8.3"
 $Host.UI.RawUI.BackgroundColor = "Black"
 $Host.UI.RawUI.ForegroundColor = "White"
 Clear-Host
+$atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
 
 function Write-Centered-PRO {
     param([string]$Text, [string]$Color = 'White')
@@ -20,11 +21,45 @@ function Write-Centered-PRO {
     $pad = [Math]::Max(0, [Math]::Floor(($w - $Text.Length) / 2))
     Write-Host ((' ' * $pad) + $Text) -ForegroundColor $Color
 }
+
+function _Write-AtlasHeaderCompat {
+    param([string]$Title, [ConsoleColor]$Color = 'Yellow')
+    if ($atlasToolkitReady) {
+        Write-AtlasHeader -Title $Title -Color $Color
+        return
+    }
+    Write-Centered-PRO $Title $Color
+}
+
+function _Write-AtlasStepCompat {
+    param([string]$Message, [ConsoleColor]$Color = 'Gray')
+    if ($atlasToolkitReady) {
+        Write-AtlasStep $Message
+        return
+    }
+    Write-Host ("  {0}" -f $Message) -ForegroundColor $Color
+}
+
+function _Wait-AtlasExitCompat {
+    param([string]$Message)
+    if ($atlasToolkitReady -and (Get-Command Wait-AtlasExit -ErrorAction SilentlyContinue)) {
+        Wait-AtlasExit -Message $Message
+        return
+    }
+    Write-Host ("`n  {0}" -f $Message) -ForegroundColor Yellow
+    $null = Read-Host
+}
+
 Write-Host "`n"
-Write-Centered-PRO "============================================================" 'DarkGray'
-Write-Centered-PRO "        DEEP CLEAN & REPAIR  v8.3" 'Yellow'
-Write-Centered-PRO "  Defender · Cleanup · DISM/SFC · Repair · Report" 'DarkGray'
-Write-Centered-PRO "============================================================" 'DarkGray'
+if ($atlasToolkitReady) {
+    _Write-AtlasHeaderCompat -Title "DEEP CLEAN & REPAIR  v8.3" -Color Yellow
+    _Write-AtlasStepCompat -Message "Defender · Cleanup · DISM/SFC · Repair · Report" -Color DarkGray
+} else {
+    Write-Centered-PRO "============================================================" 'DarkGray'
+    Write-Centered-PRO "        DEEP CLEAN & REPAIR  v8.3" 'Yellow'
+    Write-Centered-PRO "  Defender · Cleanup · DISM/SFC · Repair · Report" 'DarkGray'
+    Write-Centered-PRO "============================================================" 'DarkGray'
+}
 Write-Host "`n"
 Write-Host "  Client name (Enter to use hostname): " -NoNewline -ForegroundColor Cyan
 $inputName = Read-Host
@@ -125,6 +160,13 @@ function Get-Recommendations {
 # --- 6. FUNCIONES DE DISEÑO ---
 function Show-Header {
     Clear-Host
+    if ($atlasToolkitReady) {
+        Write-Host ''
+        _Write-AtlasHeaderCompat -Title "ATLAS PC SUPPORT" -Color Yellow
+        _Write-AtlasStepCompat -Message ("Cliente: {0}" -f $script:ClientName) -Color Cyan
+        Write-Host ''
+        return
+    }
     $w = $Host.UI.RawUI.WindowSize.Width; if ($w -le 0) { $w = 80 }
     $t = "ATLAS PC SUPPORT"
     $p = [math]::Max(0, [int](($w - $t.Length) / 2))
@@ -435,7 +477,7 @@ function Run-Task-Safe {
         if (-not $AutoMode) { Write-Host "`n  [!] Error: $_" -ForegroundColor Red }
         Write-Log "[$Title] EXCEPCION: $_" "ERROR"
     }
-    if (-not $AutoMode) { Write-Host "`n  Press Enter to go back..."; Read-Host }
+    if (-not $AutoMode) { _Wait-AtlasExitCompat -Message "Press Enter to go back..." }
     return $Success
 }
 
@@ -953,8 +995,7 @@ function Run-AutoMode {
     
     Generar-Report -IncluirLog $true
     
-    Write-Host "`n  Press Enter to exit..." -ForegroundColor Yellow
-    Read-Host
+    _Wait-AtlasExitCompat -Message "Press Enter to exit..."
     Exit
 }
 
