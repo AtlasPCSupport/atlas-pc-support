@@ -98,12 +98,37 @@ function Invoke-GPUCheck {
     $lang = Get-UiLang
     if (-not $T.ContainsKey($lang)) { $lang = 'en' }
     $L = $T[$lang]
+    $atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
 
     function Write-Centered {
         param([string]$Text, [string]$Color = 'White')
         $w = try { $Host.UI.RawUI.WindowSize.Width } catch { 100 }
         $pad = [Math]::Max(0, [Math]::Floor(($w - $Text.Length) / 2))
         Write-Host ((' ' * $pad) + $Text) -ForegroundColor $Color
+    }
+
+    function Write-GPUHeader {
+        Clear-Host
+        if ($atlasToolkitReady) {
+            Write-Host ''
+            Write-AtlasHeader -Title ("ATLAS PC SUPPORT - " + $L.Header) -Color Yellow
+            Write-Host ''
+            return
+        }
+        Write-Host ''
+        Write-Centered '============================================================' 'Cyan'
+        Write-Centered ("ATLAS PC SUPPORT - " + $L.Header) 'Yellow'
+        Write-Centered '============================================================' 'Cyan'
+        Write-Host ''
+    }
+
+    function Wait-GPUContinue {
+        param([string]$Message = $L.PressEnter)
+        if ($atlasToolkitReady -and (Get-Command Wait-AtlasExit -ErrorAction SilentlyContinue)) {
+            Wait-AtlasExit -Message $Message
+            return
+        }
+        Read-Host $Message | Out-Null
     }
 
     function Ensure-Dir {
@@ -404,12 +429,7 @@ table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6p
 
     $Host.UI.RawUI.WindowTitle = $L.Title
     try { $Host.UI.RawUI.WindowSize = New-Object System.Management.Automation.Host.Size(100, 36) } catch {}
-    Clear-Host
-    Write-Host ''
-    Write-Centered '============================================================' 'Cyan'
-    Write-Centered ("ATLAS PC SUPPORT - " + $L.Header) 'Yellow'
-    Write-Centered '============================================================' 'Cyan'
-    Write-Host ''
+    Write-GPUHeader
     Write-Centered $L.MenuQuick 'White'
     Write-Centered $L.MenuFull 'White'
     Write-Centered $L.MenuCustom 'White'
@@ -434,7 +454,7 @@ table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6p
         '0' { return }
         default {
             Write-Host $L.InvalidOption -ForegroundColor Red
-            Read-Host $L.PressEnter | Out-Null
+            Wait-GPUContinue -Message $L.PressEnter
             return
         }
     }
@@ -457,12 +477,12 @@ table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6p
 
     if (-not $deps.GPUZ) {
         Write-Host ("[GPU Check] " + $L.NeedGPUZ) -ForegroundColor Red
-        Read-Host $L.PressEnter | Out-Null
+        Wait-GPUContinue -Message $L.PressEnter
         return
     }
     if ((-not $skipStress) -and (-not $deps.FurMark)) {
         Write-Host ("[GPU Check] " + $L.NeedFurMark) -ForegroundColor Red
-        Read-Host $L.PressEnter | Out-Null
+        Wait-GPUContinue -Message $L.PressEnter
         return
     }
     if ($skipStress) { Write-Host ("[GPU Check] " + $L.StressOff) -ForegroundColor Yellow }
@@ -644,5 +664,5 @@ table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6p
     Write-Host ("[GPU Check] {0}: {1}" -f $L.JsonPath, $jsonOut) -ForegroundColor Gray
     Write-Host ("[GPU Check] {0}: {1}" -f $L.HtmlPath, $htmlOut) -ForegroundColor Gray
     Write-Host ''
-    Read-Host $L.PressEnter | Out-Null
+    Wait-GPUContinue -Message $L.PressEnter
 }

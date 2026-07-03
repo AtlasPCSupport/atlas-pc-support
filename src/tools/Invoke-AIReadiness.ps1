@@ -176,9 +176,18 @@ function Invoke-AIReadiness {
     $lang = _Atlas-DetectLang
     $L = if ($T.ContainsKey($lang)) { $T[$lang] } else { $T['en'] }
     $esc = [char]0x1B
+    $atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
 
     function Write-AIRHeader {
         Clear-Host
+        if ($atlasToolkitReady) {
+            Write-Host ''
+            Write-AtlasHeader -Title $L.Title -Color Yellow
+            Write-AtlasStep $L.Subtitle
+            Write-Host ("  " + ('=' * 72)) -ForegroundColor DarkGray
+            Write-Host ''
+            return
+        }
         Write-Host ''
         Write-Host "  $esc[38;5;208m$($L.Title)$esc[0m"
         Write-Host "  $esc[90m$($L.Subtitle)$esc[0m"
@@ -192,6 +201,10 @@ function Invoke-AIReadiness {
     }
 
     function Pause-AIR {
+        if ($atlasToolkitReady -and (Get-Command Wait-AtlasExit -ErrorAction SilentlyContinue)) {
+            Wait-AtlasExit -Message $L.PressKey
+            return
+        }
         Write-Host ''
         Write-Host "  $($L.PressKey)"
         try {
