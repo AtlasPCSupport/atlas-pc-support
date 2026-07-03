@@ -205,6 +205,28 @@ function Invoke-InstalarPaquetes {
         New-Item -ItemType Directory -Path $PROFILE_DIR -Force | Out-Null
     }
 
+    # Known package-id migrations (mostly msstore) to keep old profiles working.
+    $ID_MIGRATIONS = @{
+        '9NFHQRDFLG40' = '9WZDNCRFJ3B4'  # JW Library
+    }
+
+    function Resolve-PackageId {
+        param([hashtable]$Pkg)
+        if (-not $Pkg -or -not $Pkg.Id) { return $Pkg }
+
+        $oldId = [string]$Pkg.Id
+        if (-not $ID_MIGRATIONS.ContainsKey($oldId)) { return $Pkg }
+
+        $newId = [string]$ID_MIGRATIONS[$oldId]
+        if (-not $newId -or $newId -eq $oldId) { return $Pkg }
+
+        $resolved = @{}
+        foreach ($k in $Pkg.Keys) { $resolved[$k] = $Pkg[$k] }
+        $resolved.Id = $newId
+        if (-not $resolved.Source) { $resolved.Source = 'msstore' }
+        return $resolved
+    }
+
     # --- Catalog ---
     # Keys are localized category labels; entries can be:
     #   winget package : @{ Id; Name; [NoteKey]; [Source='winget'|'msstore'] }
@@ -243,7 +265,7 @@ function Invoke-InstalarPaquetes {
             @{ Id='OpenWhisperSystems.Signal';           Name='Signal' },
             @{ Id='Telegram.TelegramDesktop';            Name='Telegram Desktop' },
             @{ Id='9NKSQGP7F2NH';                        Name='WhatsApp Desktop'; Source='msstore' },
-            @{ Id='9NFHQRDFLG40';                        Name='JW Library'; Source='msstore' }
+            @{ Id='9WZDNCRFJ3B4';                        Name='JW Library'; Source='msstore' }
         )
         ($L.CategoryUtilities) = @(
             @{ Id='7zip.7zip';                           Name='7-Zip' },
@@ -588,7 +610,12 @@ function Invoke-InstalarPaquetes {
             }
 
             try {
-                $r = Invoke-PackageInstall -Pkg $p
+                $pkgToInstall = Resolve-PackageId -Pkg $p
+                if ($pkgToInstall.Id -ne $p.Id) {
+                    Write-Host ('    [i] Package ID updated: {0} -> {1}' -f $p.Id, $pkgToInstall.Id) -ForegroundColor DarkGray
+                }
+
+                $r = Invoke-PackageInstall -Pkg $pkgToInstall
                 switch ($r.Exit) {
                     0 { Write-Host ('  ' + $L.InstalledOK) -ForegroundColor Green; $ok++ }
                     -1978335189 { Write-Host ('  ' + $L.AlreadyInstalled) -ForegroundColor DarkGray; $already++ }
@@ -675,7 +702,7 @@ function Invoke-InstalarPaquetes {
                 if ($_.type)    { $entry.Type    = [string]$_.type }
                 if ($_.handler) { $entry.Handler = [string]$_.handler }
                 if ($_.source)  { $entry.Source  = [string]$_.source }
-                $entry
+                Resolve-PackageId -Pkg $entry
             })
             Write-Host ('  ' + ($L.ProfileLoaded -f $obj.name, $packages.Count)) -ForegroundColor Green
             return $packages
