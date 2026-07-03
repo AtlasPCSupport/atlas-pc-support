@@ -1,7 +1,7 @@
 # ============================================================
 #  Atlas PC Support — launcher.ps1 (compilado)
 #  Versión: 1.0.0
-#  Build:   2026-07-03 08:22:41
+#  Build:   2026-07-03 13:58:45
 #  Repo:    https://github.com/mikepchelper-spec/atlas-pc-support
 #
 #  Uso:
@@ -19,7 +19,7 @@
 # ============================================================
 
 $script:AtlasVersion = '1.0.0'
-$script:AtlasBuildDate = '2026-07-03 08:22:41'
+$script:AtlasBuildDate = '2026-07-03 13:58:45'
 $script:AtlasToolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/src/tools'
 
 $script:AtlasToolsManifest = @'
@@ -321,7 +321,7 @@ $script:AtlasToolsManifest = @'
 
 $script:AtlasToolHashesJson = @'
 {
-  "generatedAt": "2026-07-03T08:22:41.6437865-05:00",
+  "generatedAt": "2026-07-03T13:58:45.3220927-05:00",
   "algorithm": "SHA256",
   "files": {
     "Invoke-ActualizarPowerShell.ps1": "bebc42e1da74f2a425c3823397827eaf132b790e8e75c124725a6ca7f48353cc",
@@ -2741,6 +2741,74 @@ function Get-AtlasToolExpectedHash {
     return $null
 }
 
+function Get-AtlasToolHashesRemoteUrl {
+    [CmdletBinding()]
+    param()
+
+    if (-not $script:AtlasToolsBaseUrl) { return $null }
+    $base = [string]$script:AtlasToolsBaseUrl
+    if ([string]::IsNullOrWhiteSpace($base)) { return $null }
+
+    $normalized = $base.TrimEnd('/')
+    if ($normalized -match '/src/tools$') {
+        return ($normalized -replace '/src/tools$', '/config/tool-hashes.json')
+    }
+    return $null
+}
+
+function Refresh-AtlasToolHashesFromRemote {
+    [CmdletBinding()]
+    param([string]$FileName)
+
+    $hashUrl = Get-AtlasToolHashesRemoteUrl
+    if (-not $hashUrl) { return $false }
+
+    $tmpPath = Join-Path $env:TEMP ("atlas-tool-hashes-" + [guid]::NewGuid().ToString('N') + '.json')
+    try {
+        $ProgressPreference = 'SilentlyContinue'
+        Invoke-WebRequest -Uri ($hashUrl + '?v=' + [guid]::NewGuid().ToString('N').Substring(0,8)) `
+            -OutFile $tmpPath -UseBasicParsing -TimeoutSec 30 -ErrorAction Stop
+
+        $raw = Get-Content -Raw -LiteralPath $tmpPath -Encoding UTF8 -ErrorAction Stop
+        $obj = ConvertFrom-AtlasJson $raw
+        if (-not $obj -or -not $obj.files) {
+            Write-AtlasLog "Refresh hashes: respuesta invalida desde $hashUrl" -Level WARN -Tool 'Runner'
+            return $false
+        }
+
+        $map = @{}
+        if ($obj.files -is [hashtable]) {
+            $map = $obj.files
+        } else {
+            foreach ($p in $obj.files.PSObject.Properties) {
+                $map[$p.Name] = [string]$p.Value
+            }
+        }
+        if ($map.Count -le 0) {
+            Write-AtlasLog "Refresh hashes: mapa vacio desde $hashUrl" -Level WARN -Tool 'Runner'
+            return $false
+        }
+
+        $script:AtlasToolHashes = $map
+        if ($FileName) {
+            $newExpected = Get-AtlasToolExpectedHash -FileName $FileName
+            if ($newExpected) {
+                Write-AtlasLog "Hashes refrescados en caliente para '$FileName'." -Level INFO -Tool 'Runner'
+                return $true
+            }
+            Write-AtlasLog "Hashes refrescados, pero '$FileName' no existe en el manifiesto remoto." -Level WARN -Tool 'Runner'
+            return $false
+        }
+        Write-AtlasLog "Hashes refrescados en caliente ($($map.Count) entries)." -Level INFO -Tool 'Runner'
+        return $true
+    } catch {
+        Write-AtlasLog "No se pudo refrescar tool-hashes remotos: $_" -Level WARN -Tool 'Runner'
+        return $false
+    } finally {
+        Remove-Item -LiteralPath $tmpPath -Force -ErrorAction SilentlyContinue
+    }
+}
+
 function Test-AtlasToolFileIntegrity {
     [CmdletBinding()]
     param(
@@ -2867,6 +2935,7 @@ function Get-AtlasToolScript {
     }
 
     # 2) Cache local
+    $invalidCachePath = $null
     if (Test-Path -LiteralPath $cachePath) {
         if (Test-AtlasToolFileIntegrity -Path $cachePath -FileName $fileName -SourceLabel 'cache') {
             Unblock-AtlasFile -Path $cachePath
@@ -2878,7 +2947,16 @@ function Get-AtlasToolScript {
             $fallbackCachePath = $cachePath
             Write-AtlasLog "Tool cache valida pero expirada ($ageHours h); intentare refrescar." -Level INFO -Tool 'Runner'
         } else {
-            Write-AtlasLog "Cache invalida para '$fileName'; se forzara descarga." -Level WARN -Tool 'Runner'
+            $invalidCachePath = $cachePath
+            Write-AtlasLog "Cache invalida para '$fileName'; se intentara refrescar hashes antes de descartar." -Level WARN -Tool 'Runner'
+            if (Refresh-AtlasToolHashesFromRemote -FileName $fileName) {
+                if (Test-AtlasToolFileIntegrity -Path $cachePath -FileName $fileName -SourceLabel 'cache-refreshed') {
+                    Unblock-AtlasFile -Path $cachePath
+                    Write-AtlasLog "Cache recuperada tras refresh de hashes: $cachePath" -Level INFO -Tool 'Runner'
+                    return $cachePath
+                }
+            }
+            Write-AtlasLog "Cache sigue invalida para '$fileName'; se forzara descarga." -Level WARN -Tool 'Runner'
             Remove-Item -LiteralPath $cachePath -Force -ErrorAction SilentlyContinue
         }
     }
@@ -2918,8 +2996,24 @@ function Get-AtlasToolScript {
             -OutFile $tempDownload -UseBasicParsing -TimeoutSec 60 -ErrorAction Stop
 
         if (-not (Test-AtlasToolFileIntegrity -Path $tempDownload -FileName $fileName -SourceLabel 'download')) {
-            Remove-Item -LiteralPath $tempDownload -Force -ErrorAction SilentlyContinue
-            throw "Descarga rechazada por validacion de integridad."
+            # Si el launcher quedo atrasado respecto a hashes remotos, intentar
+            # refrescar hashes en caliente y volver a validar sin perder disponibilidad.
+            $validatedAfterRefresh = $false
+            if (Refresh-AtlasToolHashesFromRemote -FileName $fileName) {
+                if (Test-AtlasToolFileIntegrity -Path $tempDownload -FileName $fileName -SourceLabel 'download-refreshed') {
+                    $validatedAfterRefresh = $true
+                    Write-AtlasLog "Descarga validada tras refresh de hashes: $fileName" -Level INFO -Tool 'Runner'
+                }
+            }
+
+            if (-not $validatedAfterRefresh) {
+                Remove-Item -LiteralPath $tempDownload -Force -ErrorAction SilentlyContinue
+                if ($invalidCachePath -and (Test-Path -LiteralPath $invalidCachePath)) {
+                    Write-AtlasLog "Usando cache previa como ultimo fallback para '$fileName'." -Level WARN -Tool 'Runner'
+                    return $invalidCachePath
+                }
+                throw "Descarga rechazada por validacion de integridad."
+            }
         }
 
         Move-Item -LiteralPath $tempDownload -Destination $cachePath -Force
@@ -3729,13 +3823,42 @@ function Initialize-AtlasDashboard {
         try {
             if ($script:AtlasDashboardBooted) { return }
             $script:AtlasDashboardBooted = $true
+
+            $static2 = & $staticFn
+            if ($sideOS -and $static2.OSCaption) {
+                $os = if ($static2.OSBuild) { "$($static2.OSCaption) (build $($static2.OSBuild))" } else { $static2.OSCaption }
+                $sideOS.Text = $os
+            }
+            if ($sideCpu -and $static2.CpuName) {
+                $sideCpu.Text = $static2.CpuName
+            }
+            if ($sideRam -and $static2.TotalRamGB -gt 0) {
+                $sideRam.Text = "$($static2.TotalRamGB) GB"
+            }
+
+            $snap2 = & $liveFn
+            if ($sideIp -and $snap2.IpAddress) {
+                $sideIp.Text = $snap2.IpAddress
+            }
+            if ($sideUptime -and $snap2.Uptime -and $static2.LastBoot) {
+                $upFmt = & $strFn 'sidebar.uptimeFmt' `
+                    ([int]$snap2.Uptime.TotalDays) `
+                    ($snap2.Uptime.Hours) `
+                    ($snap2.Uptime.Minutes)
+                $sideUptime.Text = "$($static2.LastBoot.ToString('yyyy-MM-dd HH:mm'))  ($upFmt)"
+            }
+            if ($sideLastSync) {
+                $sideLastSync.Text = (Get-Date).ToString('HH:mm:ss')
+            }
+
             $stopToRun = if ($script:AtlasDashboardStopMonitor -is [scriptblock]) { $script:AtlasDashboardStopMonitor } else { $stopClosed }
             if ($stopToRun -is [scriptblock]) { & $stopToRun }
         } catch {
-            Write-AtlasLog "Dashboard bootstrap failed: $_" -Level WARN -Tool 'UI'
+            try { & $logFn "Dashboard bootstrap failed: $_" -Level WARN -Tool 'UI' } catch { }
         }
     }
-    $Window.Add_ContentRendered($bootstrapAction)
+    $bootstrapClosed = $bootstrapAction.GetNewClosure()
+    $Window.Add_ContentRendered($bootstrapClosed)
 
     # Stop the timer cleanly when the window closes.
     $Window.Add_Closed({
