@@ -1,7 +1,7 @@
 # ============================================================
 #  Atlas PC Support — launcher.ps1 (compilado)
 #  Versión: 1.0.0
-#  Build:   2026-07-03 08:10:05
+#  Build:   2026-07-03 08:14:29
 #  Repo:    https://github.com/mikepchelper-spec/atlas-pc-support
 #
 #  Uso:
@@ -19,7 +19,7 @@
 # ============================================================
 
 $script:AtlasVersion = '1.0.0'
-$script:AtlasBuildDate = '2026-07-03 08:10:05'
+$script:AtlasBuildDate = '2026-07-03 08:14:29'
 $script:AtlasToolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/src/tools'
 
 $script:AtlasToolsManifest = @'
@@ -321,7 +321,7 @@ $script:AtlasToolsManifest = @'
 
 $script:AtlasToolHashesJson = @'
 {
-  "generatedAt": "2026-07-03T08:10:05.7771151-05:00",
+  "generatedAt": "2026-07-03T08:14:29.2920065-05:00",
   "algorithm": "SHA256",
   "files": {
     "Invoke-ActualizarPowerShell.ps1": "bebc42e1da74f2a425c3823397827eaf132b790e8e75c124725a6ca7f48353cc",
@@ -336,10 +336,10 @@ $script:AtlasToolHashesJson = @'
     "Invoke-FastCopy.ps1": "14d7d644f9a267ccf9bff73832148f10c8db4fc918003a2d0a13100a3c033bc1",
     "Invoke-GestorBitLocker.ps1": "fd2c3644ac65faa0c7c39d7253772e413914101a481cefae8000a68c4f89fcc4",
     "Invoke-GPUCheck.ps1": "cfbb0e30d39960335e96e3ee39020da7fa8cc39c9d52cc1287f0ab7fbe5a6b19",
-    "Invoke-HostsManager.ps1": "669737fde3ae354f86d0247c6b511ad14e908a769a4bc2a8496b1b4d6d4c9a8a",
+    "Invoke-HostsManager.ps1": "fe26ffe69919dc72b3cce423df40364e597caf387c72ce5e7d961ba42eba6e35",
     "Invoke-InstalarMicrosoftStore.ps1": "a88f4096d33749637d2257bc7284fea002140d1ebb7833795f4d2803e4dd8fb2",
     "Invoke-InstalarPaquetes.ps1": "f2ea4252fa1913394d9a235817d16e2cd8ce0c0b52a9d68e257c921f6117dadd",
-    "Invoke-InstalarRuntimes.ps1": "60502070af04e5ac8fe97743f201773b755197efcdeeb6c312b04cc8698b0826",
+    "Invoke-InstalarRuntimes.ps1": "1baad75ad5ccd5ce0459f8fb2e00e7ebca3eecbf0b56bb27483e197f5bcd3c29",
     "Invoke-KeyboardDoctor.ps1": "f4e2e484b3b08ccbc3d829b3893df82719943f6dc226f0e26dc72d0203cd5660",
     "Invoke-MantenimientoPRO.ps1": "a0dd44dd82c48b5926973c6391b65c4c94a811f80b870cbbf00d7728027e94cf",
     "Invoke-MenorPrivilegio.ps1": "1f0c63ad3081d0ad8d10fb8fea68ddc7de49918988032d4f2985a66442de0426",
@@ -349,7 +349,7 @@ $script:AtlasToolHashesJson = @'
     "Invoke-PrinterDoctor.ps1": "fe78e343744f8182427a6c157f54e7a24185fe950dba86ca193bd02541a243d2",
     "Invoke-Robocopy.ps1": "29f5abf91d82946d6fd7ffd7786de8165ad3e481e7075e7654fd4071328f0a7a",
     "Invoke-SelectorDNS.ps1": "71ed1eb9a2087f02c7f2810dd25f819a6dcfb8d9a897fbcc9de1a12341bf4e94",
-    "Invoke-StopServices.ps1": "62089b6915ed4a9f51ffbfd353521ff07fca6294e9081b0c71bcd329381cc11b"
+    "Invoke-StopServices.ps1": "04013323966c6326b13567a265001a74731ab3bf28c9264b6c7348a4441d56fe"
   }
 }
 '@

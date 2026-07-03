@@ -78,6 +78,16 @@ function Invoke-InstalarRuntimes {
     $lang = _Atlas-DetectLang
     if (-not $T.ContainsKey($lang)) { $lang = 'en' }
     $L = $T[$lang]
+    $atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
+
+    function Wait-InstalarRuntimesCompat {
+        param([string]$Message)
+        if ($atlasToolkitReady -and (Get-Command Wait-AtlasExit -ErrorAction SilentlyContinue)) {
+            Wait-AtlasExit -Message $Message
+            return
+        }
+        Read-Host $Message | Out-Null
+    }
 
     # --- Console setup ---
     try { $Host.UI.RawUI.WindowTitle = $L.Title } catch {}
@@ -90,7 +100,7 @@ function Invoke-InstalarRuntimes {
         [Security.Principal.WindowsBuiltInRole]::Administrator)
     if (-not $isAdmin) {
         Write-Host $L.NeedAdmin -ForegroundColor Red
-        Read-Host $L.EnterExit
+        Wait-InstalarRuntimesCompat -Message $L.EnterExit
         return
     }
 
@@ -100,7 +110,7 @@ function Invoke-InstalarRuntimes {
         Write-Host $L.WingetNotFound -ForegroundColor Red
         Write-Host $L.ManualSteps -ForegroundColor Yellow
         Write-Host ''
-        Read-Host $L.EnterExit
+        Wait-InstalarRuntimesCompat -Message $L.EnterExit
         return
     }
 
@@ -111,11 +121,17 @@ function Invoke-InstalarRuntimes {
 
     # --- Header ---
     Write-Host ''
-    Write-Host $L.Separator -ForegroundColor DarkGray
-    Write-Host "   $($L.Title)" -ForegroundColor Yellow
-    Write-Host "   $($L.BuildLine -f $caption, $build)" -ForegroundColor Gray
-    Write-Host $L.Separator -ForegroundColor DarkGray
-    Write-Host ''
+    if ($atlasToolkitReady) {
+        Write-AtlasHeader -Title $L.Title -Color Yellow
+        Write-AtlasStep ($L.BuildLine -f $caption, $build)
+        Write-Host ''
+    } else {
+        Write-Host $L.Separator -ForegroundColor DarkGray
+        Write-Host "   $($L.Title)" -ForegroundColor Yellow
+        Write-Host "   $($L.BuildLine -f $caption, $build)" -ForegroundColor Gray
+        Write-Host $L.Separator -ForegroundColor DarkGray
+        Write-Host ''
+    }
 
     # --- Package definitions ---
     # IsDism=$true entries use Enable-WindowsOptionalFeature instead of winget
@@ -226,5 +242,5 @@ function Invoke-InstalarRuntimes {
     Write-Host ($L.SummaryLine -f $cntOk, $cntSkip, $cntFail) -ForegroundColor $summaryColor
     Write-Host $L.Separator -ForegroundColor DarkGray
     Write-Host ''
-    Read-Host $L.EnterExit
+    Wait-InstalarRuntimesCompat -Message $L.EnterExit
 }

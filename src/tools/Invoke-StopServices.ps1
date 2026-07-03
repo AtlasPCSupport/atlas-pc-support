@@ -117,6 +117,7 @@ function Invoke-StopServices {
     $lang = _Atlas-DetectLang
     if (-not $T.ContainsKey($lang)) { $lang = 'en' }
     $L = $T[$lang]
+    $atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
 
     # Per-service descriptions also localized
     $svcLoc = @{
@@ -213,8 +214,22 @@ function Invoke-StopServices {
         @{ Name=$t.Name; Tier=$t.Tier; Desc=$loc.Desc; Note=$loc.Note }
     }
 
+    function Wait-StopServicesCompat {
+        param([string]$Message)
+        if ($atlasToolkitReady -and (Get-Command Wait-AtlasExit -ErrorAction SilentlyContinue)) {
+            Wait-AtlasExit -Message $Message
+            return
+        }
+        Read-Host $Message | Out-Null
+    }
+
     function Show-Header {
         Clear-Host
+        if ($atlasToolkitReady) {
+            Write-AtlasHeader -Title $L.HeaderTitle -Color Yellow
+            Write-Host ''
+            return
+        }
         Write-Host ''
         Write-Host '  =================================================' -ForegroundColor DarkGray
         Write-Host ('   ' + $L.HeaderTitle) -ForegroundColor Yellow
@@ -408,7 +423,7 @@ function Invoke-StopServices {
                     Show-ServicesTable $list
                 }
                 Write-Host ''
-                Read-Host ('  ' + $L.EnterReturn) | Out-Null
+                Wait-StopServicesCompat -Message ('  ' + $L.EnterReturn)
             }
             '^2$' {
                 Show-Header
@@ -417,7 +432,7 @@ function Invoke-StopServices {
                 $list = List-Services -TierFilter 'SAFE' | Where-Object { $_.Status -eq 'Running' }
                 if ($list.Count -eq 0) {
                     Write-Host ('  ' + $L.AlreadyOptim) -ForegroundColor Cyan
-                    Read-Host ('  ' + $L.Enter) | Out-Null
+                    Wait-StopServicesCompat -Message ('  ' + $L.Enter)
                     continue
                 }
                 Show-ServicesTable $list
@@ -427,7 +442,7 @@ function Invoke-StopServices {
                     Apply-Stop -Targets $list | Out-Null
                 }
                 Write-Host ''
-                Read-Host ('  ' + $L.Enter) | Out-Null
+                Wait-StopServicesCompat -Message ('  ' + $L.Enter)
             }
             '^3$' {
                 Show-Header
@@ -437,7 +452,7 @@ function Invoke-StopServices {
                 $list = List-Services | Where-Object { $_.Status -eq 'Running' }
                 if ($list.Count -eq 0) {
                     Write-Host ('  ' + $L.AllStopped) -ForegroundColor Cyan
-                    Read-Host ('  ' + $L.Enter) | Out-Null
+                    Wait-StopServicesCompat -Message ('  ' + $L.Enter)
                     continue
                 }
                 Show-ServicesTable $list
@@ -447,13 +462,13 @@ function Invoke-StopServices {
                     Apply-Stop -Targets $list | Out-Null
                 }
                 Write-Host ''
-                Read-Host ('  ' + $L.Enter) | Out-Null
+                Wait-StopServicesCompat -Message ('  ' + $L.Enter)
             }
             '^4$' {
                 Show-Header
                 Apply-Undo
                 Write-Host ''
-                Read-Host ('  ' + $L.Enter) | Out-Null
+                Wait-StopServicesCompat -Message ('  ' + $L.Enter)
             }
             '^5$' {
                 Show-Header
@@ -465,7 +480,7 @@ function Invoke-StopServices {
                     Write-Host ("        {0}" -f $s.Note) -ForegroundColor Gray
                     Write-Host ''
                 }
-                Read-Host ('  ' + $L.Enter) | Out-Null
+                Wait-StopServicesCompat -Message ('  ' + $L.Enter)
             }
             '^[Qq]$' { return }
             default { Write-Host ('  ' + $L.BadOption) -ForegroundColor Red; Start-Sleep 1 }

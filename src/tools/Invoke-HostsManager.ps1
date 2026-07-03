@@ -165,6 +165,7 @@ function Invoke-HostsManager {
     $lang = _Atlas-DetectLang
     if (-not $T.ContainsKey($lang)) { $lang = 'en' }
     $L = $T[$lang]
+    $atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
 
     $hostsPath = Join-Path $env:SystemRoot 'System32\drivers\etc\hosts'
 
@@ -173,16 +174,33 @@ function Invoke-HostsManager {
     $principal = [Security.Principal.WindowsPrincipal]::new([Security.Principal.WindowsIdentity]::GetCurrent())
     $isAdmin   = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
-    do {
+    function Pause-HostsManager {
+        param([string]$Message)
+        if ($atlasToolkitReady -and (Get-Command Wait-AtlasExit -ErrorAction SilentlyContinue)) {
+            Wait-AtlasExit -Message $Message
+            return
+        }
+        Read-Host $Message | Out-Null
+    }
+
+    function Show-HMHeader {
         Clear-Host
         Write-Host ""
-        Write-Host "  =================================================" -ForegroundColor DarkGray
-        Write-Host ('   ' + $L.Header) -ForegroundColor Yellow
-        Write-Host "  =================================================" -ForegroundColor DarkGray
+        if ($atlasToolkitReady) {
+            Write-AtlasHeader -Title $L.Header -Color Yellow
+        } else {
+            Write-Host "  =================================================" -ForegroundColor DarkGray
+            Write-Host ('   ' + $L.Header) -ForegroundColor Yellow
+            Write-Host "  =================================================" -ForegroundColor DarkGray
+        }
         Write-Host ('  ' + ($L.PathLabel -f $hostsPath)) -ForegroundColor Gray
         $adminText = if ($isAdmin) { $L.AdminYes } else { $L.AdminNo }
         Write-Host ('  ' + ($L.AdminLabel -f $adminText)) -ForegroundColor $(if ($isAdmin) { 'Green' } else { 'Yellow' })
         Write-Host ""
+    }
+
+    do {
+        Show-HMHeader
         Write-Host ('  ' + $L.Options) -ForegroundColor Cyan
         Write-Host ('    ' + $L.Opt1)
         Write-Host ('    ' + $L.Opt2)
@@ -208,7 +226,7 @@ function Invoke-HostsManager {
                     Write-Host ('  ' + $L.NotExist) -ForegroundColor Red
                 }
                 Write-Host ""
-                Read-Host ('  ' + $L.EnterCont) | Out-Null
+                Pause-HostsManager -Message ('  ' + $L.EnterCont)
             }
             '2' {
                 try {
@@ -220,7 +238,7 @@ function Invoke-HostsManager {
                 } catch {
                     Write-Host ('  ' + ($L.ErrPrefix -f $_.Exception.Message)) -ForegroundColor Red
                 }
-                Read-Host ('  ' + $L.EnterCont) | Out-Null
+                Pause-HostsManager -Message ('  ' + $L.EnterCont)
             }
             '3' {
                 $ip   = Read-Host ('  ' + $L.IPLabel)
@@ -236,7 +254,7 @@ function Invoke-HostsManager {
                 } else {
                     Write-Host ('  ' + $L.CancelEmpty) -ForegroundColor Yellow
                 }
-                Read-Host ('  ' + $L.EnterCont) | Out-Null
+                Pause-HostsManager -Message ('  ' + $L.EnterCont)
             }
             '4' {
                 $name = Read-Host ('  ' + $L.DelPrompt)
@@ -252,7 +270,7 @@ function Invoke-HostsManager {
                         Write-Host ('  ' + ($L.ErrAdmin -f $_.Exception.Message)) -ForegroundColor Red
                     }
                 }
-                Read-Host ('  ' + $L.EnterCont) | Out-Null
+                Pause-HostsManager -Message ('  ' + $L.EnterCont)
             }
             '5' {
                 try {
@@ -261,7 +279,7 @@ function Invoke-HostsManager {
                 } catch {
                     Write-Host ('  ' + ($L.ErrPrefix -f $_.Exception.Message)) -ForegroundColor Red
                 }
-                Read-Host ('  ' + $L.EnterCont) | Out-Null
+                Pause-HostsManager -Message ('  ' + $L.EnterCont)
             }
             '6' {
                 $ok = Read-Host ('  ' + $L.ConfirmReset)
@@ -276,7 +294,7 @@ function Invoke-HostsManager {
                         Write-Host ('  ' + ($L.ErrAdmin2 -f $_.Exception.Message)) -ForegroundColor Red
                     }
                 }
-                Read-Host ('  ' + $L.EnterCont) | Out-Null
+                Pause-HostsManager -Message ('  ' + $L.EnterCont)
             }
             '7' {
                 try {
@@ -288,14 +306,14 @@ function Invoke-HostsManager {
                 } catch {
                     Write-Host ('  ' + ($L.ErrPrefix -f $_.Exception.Message)) -ForegroundColor Red
                 }
-                Read-Host ('  ' + $L.EnterCont) | Out-Null
+                Pause-HostsManager -Message ('  ' + $L.EnterCont)
             }
             '8' {
                 $src = Read-Host ('  ' + $L.ImportPrompt)
                 $src = $src.Trim('"').Trim("'")
                 if (-not (Test-Path $src)) {
                     Write-Host ('  ' + $L.FileNotFound) -ForegroundColor Red
-                    Read-Host ('  ' + $L.EnterCont) | Out-Null
+                    Pause-HostsManager -Message ('  ' + $L.EnterCont)
                     continue
                 }
                 $ok = Read-Host ('  ' + $L.ConfirmImport)
@@ -310,7 +328,7 @@ function Invoke-HostsManager {
                         Write-Host ('  ' + ($L.ErrAdmin2 -f $_.Exception.Message)) -ForegroundColor Red
                     }
                 }
-                Read-Host ('  ' + $L.EnterCont) | Out-Null
+                Pause-HostsManager -Message ('  ' + $L.EnterCont)
             }
             '9' {
                 Write-Host ""
@@ -330,7 +348,7 @@ function Invoke-HostsManager {
                     default { $null }
                 }
                 if (-not $url) {
-                    Read-Host ('  ' + $L.SBCancelled) | Out-Null
+                    Pause-HostsManager -Message ('  ' + $L.SBCancelled)
                     continue
                 }
                 Write-Host ""
@@ -339,7 +357,7 @@ function Invoke-HostsManager {
                 Write-Host ('  ' + $L.SBNote3) -ForegroundColor Yellow
                 Write-Host ""
                 $ok = Read-Host ('  ' + $L.SBContinue)
-                if ($ok -notmatch '^[sSyY]$') { Read-Host ('  ' + $L.SBCancelled) | Out-Null; continue }
+                if ($ok -notmatch '^[sSyY]$') { Pause-HostsManager -Message ('  ' + $L.SBCancelled); continue }
                 try {
                     $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
                     $before = Join-Path (Split-Path $hostsPath) "hosts.atlas-pre-stevenblack.$stamp"
@@ -369,19 +387,19 @@ function Invoke-HostsManager {
                     Write-Host ('  ' + ($L.ErrPrefix -f $_.Exception.Message)) -ForegroundColor Red
                     Write-Host ('  ' + $L.SBSuggest) -ForegroundColor Yellow
                 }
-                Read-Host ('  ' + $L.EnterCont) | Out-Null
+                Pause-HostsManager -Message ('  ' + $L.EnterCont)
             }
             { $_ -match '^[rR]$' } {
                 $ptrFile = Join-Path $env:LOCALAPPDATA 'AtlasPC\hosts-last-stevenblack-backup.txt'
                 if (-not (Test-Path $ptrFile)) {
                     Write-Host ('  ' + $L.SBNoBackup) -ForegroundColor Yellow
-                    Read-Host ('  ' + $L.EnterCont) | Out-Null
+                    Pause-HostsManager -Message ('  ' + $L.EnterCont)
                     continue
                 }
                 $backupPath = (Get-Content $ptrFile -Raw).Trim()
                 if (-not (Test-Path $backupPath)) {
                     Write-Host ('  ' + ($L.SBBackupGone -f $backupPath)) -ForegroundColor Red
-                    Read-Host ('  ' + $L.EnterCont) | Out-Null
+                    Pause-HostsManager -Message ('  ' + $L.EnterCont)
                     continue
                 }
                 Write-Host ""
@@ -400,7 +418,7 @@ function Invoke-HostsManager {
                         Write-Host ('  ' + ($L.ErrAdmin2 -f $_.Exception.Message)) -ForegroundColor Red
                     }
                 }
-                Read-Host ('  ' + $L.EnterCont) | Out-Null
+                Pause-HostsManager -Message ('  ' + $L.EnterCont)
             }
             { $_ -match '^[qQ]$' } { return }
         }
