@@ -571,10 +571,20 @@ function Invoke-DiagnosticoMaster {
     $lang = _Atlas-DetectLang
     if (-not $T.ContainsKey($lang)) { $lang = 'en' }
     $L = $T[$lang]
+    $atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
 
 $Host.UI.RawUI.ForegroundColor = "Gray"
 try { $Host.UI.RawUI.WindowSize = New-Object System.Management.Automation.Host.Size(100, 55) } catch {}
 try { [Console]::CursorVisible = $true } catch {}
+
+function Wait-DiagnosticoMasterCompat {
+    param([string]$Message)
+    if ($atlasToolkitReady -and (Get-Command Wait-AtlasExit -ErrorAction SilentlyContinue)) {
+        Wait-AtlasExit -Message $Message
+        return
+    }
+    Read-Host $Message | Out-Null
+}
 
 function Escribir-Centrado {
     param([string]$Texto, [ConsoleColor]$Color = "White", [boolean]$NewLine = $true)
@@ -586,6 +596,13 @@ function Escribir-Centrado {
 
 function Dibujar-Header {
     try { Clear-Host } catch {}
+    if ($atlasToolkitReady) {
+        Write-Host "`n"
+        Write-AtlasHeader -Title $L.HdrTitle -Color Yellow
+        Write-AtlasStep $L.HdrSub
+        Write-Host "`n"
+        return
+    }
     Write-Host "`n`n"
     Escribir-Centrado "==========================================================" "DarkGray"
     Escribir-Centrado $L.HdrTitle "DarkYellow"
@@ -1872,7 +1889,7 @@ do {
         else {
             Write-Host ($L.FatalError -f $_.Exception.Message) -ForegroundColor Red
             Write-Host ($L.ErrorLine -f $_.InvocationInfo.ScriptLineNumber) -ForegroundColor DarkGray
-            Read-Host $L.EnterExit; $continuar=$false
+            Wait-DiagnosticoMasterCompat -Message $L.EnterExit; $continuar=$false
         }
     }
 } while ($continuar)

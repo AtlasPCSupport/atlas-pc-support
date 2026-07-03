@@ -1,7 +1,7 @@
 # ============================================================
 #  Atlas PC Support — launcher.ps1 (compilado)
 #  Versión: 1.0.0
-#  Build:   2026-07-03 08:14:29
+#  Build:   2026-07-03 08:18:32
 #  Repo:    https://github.com/mikepchelper-spec/atlas-pc-support
 #
 #  Uso:
@@ -19,7 +19,7 @@
 # ============================================================
 
 $script:AtlasVersion = '1.0.0'
-$script:AtlasBuildDate = '2026-07-03 08:14:29'
+$script:AtlasBuildDate = '2026-07-03 08:18:32'
 $script:AtlasToolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/src/tools'
 
 $script:AtlasToolsManifest = @'
@@ -321,15 +321,15 @@ $script:AtlasToolsManifest = @'
 
 $script:AtlasToolHashesJson = @'
 {
-  "generatedAt": "2026-07-03T08:14:29.2920065-05:00",
+  "generatedAt": "2026-07-03T08:18:32.6403037-05:00",
   "algorithm": "SHA256",
   "files": {
     "Invoke-ActualizarPowerShell.ps1": "bebc42e1da74f2a425c3823397827eaf132b790e8e75c124725a6ca7f48353cc",
     "Invoke-AIReadiness.ps1": "6f734eac4cdc9d3c8da7ba3b84fda9ad31fa596c2af239f8d69dd8ee3bcce280",
     "Invoke-AuditoriaRouter.ps1": "ddc72007cd9ff080aee1b34141f6b7ab9319ae3b9527a923280b2bea6cde4451",
-    "Invoke-Deduplicador.ps1": "8c37f2d12d54ced67cea7b8c36a00bdc7272b2cbdee0bbfcf0346945a36e0afc",
+    "Invoke-Deduplicador.ps1": "ba59fd597a4fb3568b02647538f2d76c5b982613415922974d7f7703e4427075",
     "Invoke-DiagnosticoEventos.ps1": "d8bcd80253e7118747e819618f8814729d615ff2fc359d7740ccad97b9c6cb1b",
-    "Invoke-DiagnosticoMaster.ps1": "7aa9c0b717f24002af30cbc93b9c22f6d978e02508f813f4f42d4c63688f31ae",
+    "Invoke-DiagnosticoMaster.ps1": "55b07593b743e653bbe47f887710edb2392c13e2811bdc755e62855f077c79f5",
     "Invoke-EntregaPC.ps1": "7918bce7c3cbde9498f4c8c9c7229c20e33a6c194d57e98e34f67b9b0d684ab9",
     "Invoke-ExtraerLicencias.ps1": "66c84efb00c58399ffba64883c2838a9b9fd7ed511c6df79938ac62b4c443d17",
     "Invoke-Fase0.ps1": "87f903655a9873823f44091b8adf696242556e2332a26183bea67618d07cf41a",
@@ -337,7 +337,7 @@ $script:AtlasToolHashesJson = @'
     "Invoke-GestorBitLocker.ps1": "fd2c3644ac65faa0c7c39d7253772e413914101a481cefae8000a68c4f89fcc4",
     "Invoke-GPUCheck.ps1": "cfbb0e30d39960335e96e3ee39020da7fa8cc39c9d52cc1287f0ab7fbe5a6b19",
     "Invoke-HostsManager.ps1": "fe26ffe69919dc72b3cce423df40364e597caf387c72ce5e7d961ba42eba6e35",
-    "Invoke-InstalarMicrosoftStore.ps1": "a88f4096d33749637d2257bc7284fea002140d1ebb7833795f4d2803e4dd8fb2",
+    "Invoke-InstalarMicrosoftStore.ps1": "a96e3adf0507b6d0fa9ea4777e0141dda0c29f067e8e1dfcfa487c0b17a8105d",
     "Invoke-InstalarPaquetes.ps1": "f2ea4252fa1913394d9a235817d16e2cd8ce0c0b52a9d68e257c921f6117dadd",
     "Invoke-InstalarRuntimes.ps1": "1baad75ad5ccd5ce0459f8fb2e00e7ebca3eecbf0b56bb27483e197f5bcd3c29",
     "Invoke-KeyboardDoctor.ps1": "f4e2e484b3b08ccbc3d829b3893df82719943f6dc226f0e26dc72d0203cd5660",

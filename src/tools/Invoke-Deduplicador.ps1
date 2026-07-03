@@ -47,15 +47,34 @@ function Invoke-Deduplicador {
         Stopped     = if ($es) { " [OK] Servidor(es) detenido(s) con éxito." } else { " [OK] Server(s) successfully stopped." }
         Next        = if ($es) { " Presiona cualquier tecla para continuar..." } else { " Press any key to continue..." }
     }
-    #endregion
+    $atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
 
-    while ($true) {
+    function Pause-Deduplicador {
+        param([string]$Message)
+        if ($atlasToolkitReady -and (Get-Command Wait-AtlasExit -ErrorAction SilentlyContinue)) {
+            Wait-AtlasExit -Message $Message
+            return
+        }
+        Read-Host $Message | Out-Null
+    }
+
+    function Show-DeduplicadorHeader {
         Clear-Host
         Write-Host ''
+        if ($atlasToolkitReady) {
+            Write-AtlasHeader -Title ("ATLAS PC SUPPORT - " + $T.Title) -Color Yellow
+            Write-Host ''
+            return
+        }
         Write-Host '============================================================' -ForegroundColor Yellow
         Write-Host "         ATLAS PC SUPPORT - $($T.Title)" -ForegroundColor Yellow
         Write-Host '============================================================' -ForegroundColor Yellow
         Write-Host ''
+    }
+    #endregion
+
+    while ($true) {
+        Show-DeduplicadorHeader
         Write-Host $T.Opt1 -ForegroundColor White
         Write-Host $T.Opt2 -ForegroundColor White
         Write-Host ''
@@ -75,7 +94,7 @@ function Invoke-Deduplicador {
                 Write-Host $T.PyErr -ForegroundColor Red
                 Write-Host $T.PyHint -ForegroundColor Yellow
                 Write-Host ''
-                Read-Host $T.Next
+                Pause-Deduplicador -Message $T.Next
                 continue
             }
 
@@ -110,7 +129,7 @@ function Invoke-Deduplicador {
                 if (-not (Test-Path -LiteralPath $scriptPath)) {
                     Write-Host " [ERROR] Archivo no encontrado en la ruta especificada." -ForegroundColor Red
                     Write-Host ''
-                    Read-Host $T.Next
+                    Pause-Deduplicador -Message $T.Next
                     continue
                 }
             }
@@ -156,7 +175,7 @@ function Invoke-Deduplicador {
                         if ($validPaths.Count -eq 0) {
                             Write-Host " [ERROR] Ninguna de las rutas especificadas existe." -ForegroundColor Red
                             Write-Host ''
-                            Read-Host $T.Next
+                            Pause-Deduplicador -Message $T.Next
                             continue
                         }
                         $folderPath = $validPaths -join ';'
@@ -169,7 +188,7 @@ function Invoke-Deduplicador {
                 if (-not (Test-Path -LiteralPath $folderPath)) {
                     Write-Host " [ERROR] La carpeta especificada no existe: $folderPath" -ForegroundColor Red
                     Write-Host ''
-                    Read-Host $T.Next
+                    Pause-Deduplicador -Message $T.Next
                     continue
                 }
                 $folderPath = (Resolve-Path -LiteralPath $folderPath).Path
@@ -237,7 +256,7 @@ function Invoke-Deduplicador {
                 }
             }
             Write-Host ''
-            Read-Host $T.Next
+            Pause-Deduplicador -Message $T.Next
         }
         elseif ($opt -eq '2') {
             Write-Host ''
@@ -245,7 +264,7 @@ function Invoke-Deduplicador {
             taskkill /f /t /fi "windowtitle eq DeduplicadorServer" 2>$null | Out-Null
             Write-Host $T.Stopped -ForegroundColor Green
             Write-Host ''
-            Read-Host $T.Next
+            Pause-Deduplicador -Message $T.Next
         }
     }
 }
