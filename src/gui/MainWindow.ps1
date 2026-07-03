@@ -643,13 +643,42 @@ function Initialize-AtlasDashboard {
         try {
             if ($script:AtlasDashboardBooted) { return }
             $script:AtlasDashboardBooted = $true
+
+            $static2 = & $staticFn
+            if ($sideOS -and $static2.OSCaption) {
+                $os = if ($static2.OSBuild) { "$($static2.OSCaption) (build $($static2.OSBuild))" } else { $static2.OSCaption }
+                $sideOS.Text = $os
+            }
+            if ($sideCpu -and $static2.CpuName) {
+                $sideCpu.Text = $static2.CpuName
+            }
+            if ($sideRam -and $static2.TotalRamGB -gt 0) {
+                $sideRam.Text = "$($static2.TotalRamGB) GB"
+            }
+
+            $snap2 = & $liveFn
+            if ($sideIp -and $snap2.IpAddress) {
+                $sideIp.Text = $snap2.IpAddress
+            }
+            if ($sideUptime -and $snap2.Uptime -and $static2.LastBoot) {
+                $upFmt = & $strFn 'sidebar.uptimeFmt' `
+                    ([int]$snap2.Uptime.TotalDays) `
+                    ($snap2.Uptime.Hours) `
+                    ($snap2.Uptime.Minutes)
+                $sideUptime.Text = "$($static2.LastBoot.ToString('yyyy-MM-dd HH:mm'))  ($upFmt)"
+            }
+            if ($sideLastSync) {
+                $sideLastSync.Text = (Get-Date).ToString('HH:mm:ss')
+            }
+
             $stopToRun = if ($script:AtlasDashboardStopMonitor -is [scriptblock]) { $script:AtlasDashboardStopMonitor } else { $stopClosed }
             if ($stopToRun -is [scriptblock]) { & $stopToRun }
         } catch {
-            Write-AtlasLog "Dashboard bootstrap failed: $_" -Level WARN -Tool 'UI'
+            try { & $logFn "Dashboard bootstrap failed: $_" -Level WARN -Tool 'UI' } catch { }
         }
     }
-    $Window.Add_ContentRendered($bootstrapAction)
+    $bootstrapClosed = $bootstrapAction.GetNewClosure()
+    $Window.Add_ContentRendered($bootstrapClosed)
 
     # Stop the timer cleanly when the window closes.
     $Window.Add_Closed({

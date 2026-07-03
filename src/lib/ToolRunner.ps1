@@ -79,6 +79,74 @@ function Get-AtlasToolExpectedHash {
     return $null
 }
 
+function Get-AtlasToolHashesRemoteUrl {
+    [CmdletBinding()]
+    param()
+
+    if (-not $script:AtlasToolsBaseUrl) { return $null }
+    $base = [string]$script:AtlasToolsBaseUrl
+    if ([string]::IsNullOrWhiteSpace($base)) { return $null }
+
+    $normalized = $base.TrimEnd('/')
+    if ($normalized -match '/src/tools$') {
+        return ($normalized -replace '/src/tools$', '/config/tool-hashes.json')
+    }
+    return $null
+}
+
+function Refresh-AtlasToolHashesFromRemote {
+    [CmdletBinding()]
+    param([string]$FileName)
+
+    $hashUrl = Get-AtlasToolHashesRemoteUrl
+    if (-not $hashUrl) { return $false }
+
+    $tmpPath = Join-Path $env:TEMP ("atlas-tool-hashes-" + [guid]::NewGuid().ToString('N') + '.json')
+    try {
+        $ProgressPreference = 'SilentlyContinue'
+        Invoke-WebRequest -Uri ($hashUrl + '?v=' + [guid]::NewGuid().ToString('N').Substring(0,8)) `
+            -OutFile $tmpPath -UseBasicParsing -TimeoutSec 30 -ErrorAction Stop
+
+        $raw = Get-Content -Raw -LiteralPath $tmpPath -Encoding UTF8 -ErrorAction Stop
+        $obj = ConvertFrom-AtlasJson $raw
+        if (-not $obj -or -not $obj.files) {
+            Write-AtlasLog "Refresh hashes: respuesta invalida desde $hashUrl" -Level WARN -Tool 'Runner'
+            return $false
+        }
+
+        $map = @{}
+        if ($obj.files -is [hashtable]) {
+            $map = $obj.files
+        } else {
+            foreach ($p in $obj.files.PSObject.Properties) {
+                $map[$p.Name] = [string]$p.Value
+            }
+        }
+        if ($map.Count -le 0) {
+            Write-AtlasLog "Refresh hashes: mapa vacio desde $hashUrl" -Level WARN -Tool 'Runner'
+            return $false
+        }
+
+        $script:AtlasToolHashes = $map
+        if ($FileName) {
+            $newExpected = Get-AtlasToolExpectedHash -FileName $FileName
+            if ($newExpected) {
+                Write-AtlasLog "Hashes refrescados en caliente para '$FileName'." -Level INFO -Tool 'Runner'
+                return $true
+            }
+            Write-AtlasLog "Hashes refrescados, pero '$FileName' no existe en el manifiesto remoto." -Level WARN -Tool 'Runner'
+            return $false
+        }
+        Write-AtlasLog "Hashes refrescados en caliente ($($map.Count) entries)." -Level INFO -Tool 'Runner'
+        return $true
+    } catch {
+        Write-AtlasLog "No se pudo refrescar tool-hashes remotos: $_" -Level WARN -Tool 'Runner'
+        return $false
+    } finally {
+        Remove-Item -LiteralPath $tmpPath -Force -ErrorAction SilentlyContinue
+    }
+}
+
 function Test-AtlasToolFileIntegrity {
     [CmdletBinding()]
     param(
@@ -205,6 +273,7 @@ function Get-AtlasToolScript {
     }
 
     # 2) Cache local
+    $invalidCachePath = $null
     if (Test-Path -LiteralPath $cachePath) {
         if (Test-AtlasToolFileIntegrity -Path $cachePath -FileName $fileName -SourceLabel 'cache') {
             Unblock-AtlasFile -Path $cachePath
@@ -216,7 +285,16 @@ function Get-AtlasToolScript {
             $fallbackCachePath = $cachePath
             Write-AtlasLog "Tool cache valida pero expirada ($ageHours h); intentare refrescar." -Level INFO -Tool 'Runner'
         } else {
-            Write-AtlasLog "Cache invalida para '$fileName'; se forzara descarga." -Level WARN -Tool 'Runner'
+            $invalidCachePath = $cachePath
+            Write-AtlasLog "Cache invalida para '$fileName'; se intentara refrescar hashes antes de descartar." -Level WARN -Tool 'Runner'
+            if (Refresh-AtlasToolHashesFromRemote -FileName $fileName) {
+                if (Test-AtlasToolFileIntegrity -Path $cachePath -FileName $fileName -SourceLabel 'cache-refreshed') {
+                    Unblock-AtlasFile -Path $cachePath
+                    Write-AtlasLog "Cache recuperada tras refresh de hashes: $cachePath" -Level INFO -Tool 'Runner'
+                    return $cachePath
+                }
+            }
+            Write-AtlasLog "Cache sigue invalida para '$fileName'; se forzara descarga." -Level WARN -Tool 'Runner'
             Remove-Item -LiteralPath $cachePath -Force -ErrorAction SilentlyContinue
         }
     }
@@ -256,8 +334,24 @@ function Get-AtlasToolScript {
             -OutFile $tempDownload -UseBasicParsing -TimeoutSec 60 -ErrorAction Stop
 
         if (-not (Test-AtlasToolFileIntegrity -Path $tempDownload -FileName $fileName -SourceLabel 'download')) {
-            Remove-Item -LiteralPath $tempDownload -Force -ErrorAction SilentlyContinue
-            throw "Descarga rechazada por validacion de integridad."
+            # Si el launcher quedo atrasado respecto a hashes remotos, intentar
+            # refrescar hashes en caliente y volver a validar sin perder disponibilidad.
+            $validatedAfterRefresh = $false
+            if (Refresh-AtlasToolHashesFromRemote -FileName $fileName) {
+                if (Test-AtlasToolFileIntegrity -Path $tempDownload -FileName $fileName -SourceLabel 'download-refreshed') {
+                    $validatedAfterRefresh = $true
+                    Write-AtlasLog "Descarga validada tras refresh de hashes: $fileName" -Level INFO -Tool 'Runner'
+                }
+            }
+
+            if (-not $validatedAfterRefresh) {
+                Remove-Item -LiteralPath $tempDownload -Force -ErrorAction SilentlyContinue
+                if ($invalidCachePath -and (Test-Path -LiteralPath $invalidCachePath)) {
+                    Write-AtlasLog "Usando cache previa como ultimo fallback para '$fileName'." -Level WARN -Tool 'Runner'
+                    return $invalidCachePath
+                }
+                throw "Descarga rechazada por validacion de integridad."
+            }
         }
 
         Move-Item -LiteralPath $tempDownload -Destination $cachePath -Force
