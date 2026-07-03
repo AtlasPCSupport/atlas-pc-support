@@ -215,6 +215,7 @@ function Invoke-KeyboardDoctor {
     $lang = _Atlas-DetectLang
     if (-not $T.ContainsKey($lang)) { $lang = 'en' }
     $L = $T[$lang]
+    $atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
 
     $script:KeyboardDoctorReport = [ordered]@{
         Generated = Get-Date
@@ -240,6 +241,12 @@ function Invoke-KeyboardDoctor {
 
     function Write-KDHeader {
         Clear-Host
+        if ($atlasToolkitReady) {
+            Write-AtlasHeader -Title $L.Title -Color Yellow
+            Write-AtlasStep $L.Subtitle
+            Write-Host ""
+            return
+        }
         Write-Host "============================================================" -ForegroundColor Cyan
         Write-Host "  $($L.Title)" -ForegroundColor Cyan
         Write-Host "  $($L.Subtitle)" -ForegroundColor DarkGray
@@ -249,6 +256,10 @@ function Invoke-KeyboardDoctor {
 
     function Pause-KeyboardDoctor {
         Write-Host ""
+        if ($atlasToolkitReady -and (Get-Command Wait-AtlasExit -ErrorAction SilentlyContinue)) {
+            Wait-AtlasExit -Message $L.Back
+            return
+        }
         Read-Host $L.Back | Out-Null
     }
 
