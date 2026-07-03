@@ -207,6 +207,7 @@ function Invoke-PrinterDoctor {
     $lang = _Atlas-DetectLang
     if (-not $T.ContainsKey($lang)) { $lang = 'en' }
     $L = $T[$lang]
+    $atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
 
     $script:PrinterDoctorReport = [ordered]@{
         Generated = Get-Date
@@ -231,10 +232,24 @@ function Invoke-PrinterDoctor {
         } catch { return $false }
     }
 
-    function Pause-PrinterDoctor { Write-Host ""; Read-Host $L.Back | Out-Null }
+    function Pause-PrinterDoctor {
+        Write-Host ""
+        if ($atlasToolkitReady -and (Get-Command Wait-AtlasExit -ErrorAction SilentlyContinue)) {
+            Wait-AtlasExit -Message $L.Back
+            return
+        }
+        Read-Host $L.Back | Out-Null
+    }
 
     function Write-PDHeader {
         Clear-Host
+        if ($atlasToolkitReady) {
+            Write-AtlasHeader -Title $L.Title -Color Yellow
+            Write-AtlasStep $L.Subtitle
+            Write-Host "$($L.Computer): $env:COMPUTERNAME | $($L.Admin): $(if (Test-IsAdmin) { $L.Yes } else { $L.No })" -ForegroundColor DarkGray
+            Write-Host ""
+            return
+        }
         Write-Host "============================================================" -ForegroundColor DarkCyan
         Write-Host "  $($L.Title)" -ForegroundColor Cyan
         Write-Host "  $($L.Subtitle)" -ForegroundColor Gray

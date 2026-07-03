@@ -147,6 +147,7 @@ function Invoke-DiagnosticoEventos {
     $lang = _Atlas-DetectLang
     if (-not $T.ContainsKey($lang)) { $lang = 'en' }
     $L = $T[$lang]
+    $atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
 
     # ----- Bilingual EventID knowledge base -----
     # Two parallel hashtables; we pick by language.
@@ -431,15 +432,34 @@ $htmlSections
         return $OutPath
     }
 
-    while ($true) {
+    function Show-DEHeader {
         Clear-Host
         Write-Host ''
+        if ($atlasToolkitReady) {
+            Write-AtlasHeader -Title ($L.HeaderTitle.Trim()) -Color Yellow
+            Write-AtlasStep ("{0}: {1}" -f $L.ComputerLbl, $env:COMPUTERNAME)
+            Write-Host ''
+            return
+        }
         Write-Host $L.HeaderBar -ForegroundColor Cyan
         Write-Host $L.HeaderTitle -ForegroundColor Cyan
         Write-Host $L.HeaderBar -ForegroundColor Cyan
         Write-Host ''
         Write-Host "  $($L.ComputerLbl): $env:COMPUTERNAME"
         Write-Host ''
+    }
+
+    function Pause-DE {
+        param([string]$Message)
+        if ($atlasToolkitReady -and (Get-Command Wait-AtlasExit -ErrorAction SilentlyContinue)) {
+            Wait-AtlasExit -Message $Message
+            return
+        }
+        Read-Host $Message | Out-Null
+    }
+
+    while ($true) {
+        Show-DEHeader
         Write-Host $L.Menu1 -ForegroundColor White
         Write-Host $L.Menu2 -ForegroundColor White
         Write-Host $L.Menu3 -ForegroundColor White
@@ -458,27 +478,27 @@ $htmlSections
                 $a = _Query-Events -LogName 'System'      -Levels @(1,2) -Hours 24 -MaxEvents 200
                 $b = _Query-Events -LogName 'Application' -Levels @(1,2) -Hours 24 -MaxEvents 200
                 _Render-Events @($a + $b) $L.Section1
-                Read-Host $L.EnterBack
+                Pause-DE -Message $L.EnterBack
             }
             '2' {
                 $e = _Query-Events -LogName 'System' -Ids @(41,6008,6006,1074) -Hours 168 -MaxEvents 200
                 _Render-Events $e $L.Section2
-                Read-Host $L.EnterBack
+                Pause-DE -Message $L.EnterBack
             }
             '3' {
                 $e = _Query-Events -LogName 'System' -Ids @(1,17,18,19,46,47,7,51,52,55,153) -Hours 168 -MaxEvents 300
                 _Render-Events $e $L.Section3
-                Read-Host $L.EnterBack
+                Pause-DE -Message $L.EnterBack
             }
             '4' {
                 $e = _Query-Events -LogName 'Application' -Ids @(1000,1001,1026) -Hours 168 -MaxEvents 300
                 _Render-Events $e $L.Section4
-                Read-Host $L.EnterBack
+                Pause-DE -Message $L.EnterBack
             }
             '5' {
                 $e = _Query-Events -LogName 'System' -Ids @(219,7026) -Hours 168 -MaxEvents 200
                 _Render-Events $e $L.Section5
-                Read-Host $L.EnterBack
+                Pause-DE -Message $L.EnterBack
             }
             '6' {
                 try {
@@ -489,7 +509,7 @@ $htmlSections
                     Write-Host ($L.SecDenied -f $_.Exception.Message) -ForegroundColor Red
                     Write-Host $L.SecRetry -ForegroundColor DarkGray
                 }
-                Read-Host $L.EnterBack
+                Pause-DE -Message $L.EnterBack
             }
             '7' {
                 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
@@ -504,7 +524,7 @@ $htmlSections
                 } catch {
                     Write-Host ($L.HtmlError -f $_.Exception.Message) -ForegroundColor Red
                 }
-                Read-Host $L.EnterBack
+                Pause-DE -Message $L.EnterBack
             }
             '8' {
                 Write-Host ''
@@ -512,7 +532,7 @@ $htmlSections
                 $idN = 0
                 if (-not [int]::TryParse($idTxt, [ref]$idN)) {
                     Write-Host $L.BadId -ForegroundColor Red
-                    Read-Host $L.EnterPrompt
+                    Pause-DE -Message $L.EnterPrompt
                     continue
                 }
                 $kb = _Kb-Lookup '*' '*' $idN
@@ -543,7 +563,7 @@ $htmlSections
                         Write-Host ("    - $($_.TimeCreated.ToString('yyyy-MM-dd HH:mm')) [$($_.LogName)] $msg") -ForegroundColor DarkGray
                     }
                 }
-                Read-Host $L.EnterBack
+                Pause-DE -Message $L.EnterBack
             }
             'Q' { return }
             default { }

@@ -297,6 +297,7 @@ function Invoke-PartsUpgrade {
     $lang = _Atlas-DetectLang
     if (-not $T.ContainsKey($lang)) { $lang = 'en' }
     $L = $T[$lang]
+    $atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
 
     $ErrorActionPreference = 'Continue'
     $Host.UI.RawUI.WindowTitle = $L.WinTitle
@@ -312,7 +313,25 @@ function Invoke-PartsUpgrade {
         if (-not $NoNewLine) { $script:ReporteTexto += "`r`n" }
     }
 
+    function Wait-PartsUpgradeCompat {
+        param([string]$Message)
+        if ($atlasToolkitReady -and (Get-Command Wait-AtlasExit -ErrorAction SilentlyContinue)) {
+            Wait-AtlasExit -Message $Message
+            return
+        }
+        Read-Host $Message | Out-Null
+    }
+
     function Section-Header { param([string]$Title)
+        if ($atlasToolkitReady -and $Title -eq $L.HeaderMain) {
+            Clear-Host
+            Write-AtlasHeader -Title $Title -Color Yellow
+            $script:ReporteTexto += "`r`n"
+            $script:ReporteTexto += ('=' * 70) + "`r`n"
+            $script:ReporteTexto += "  $Title`r`n"
+            $script:ReporteTexto += ('=' * 70) + "`r`n"
+            return
+        }
         Log-Out ''
         Log-Out ('=' * 70) 'Cyan'
         Log-Out "  $Title" 'Yellow'
@@ -872,4 +891,6 @@ $gpuRows
         }
         default { Log-Out $L.QuitNoSave 'DarkGray' }
     }
+    $exitMessage = if ($lang -eq 'es') { 'ENTER para salir' } else { 'ENTER to exit' }
+    Wait-PartsUpgradeCompat -Message $exitMessage
 }

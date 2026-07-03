@@ -1,7 +1,7 @@
 # ============================================================
 #  Atlas PC Support — launcher.ps1 (compilado)
 #  Versión: 1.0.0
-#  Build:   2026-07-03 08:02:11
+#  Build:   2026-07-03 08:10:05
 #  Repo:    https://github.com/mikepchelper-spec/atlas-pc-support
 #
 #  Uso:
@@ -19,7 +19,7 @@
 # ============================================================
 
 $script:AtlasVersion = '1.0.0'
-$script:AtlasBuildDate = '2026-07-03 08:02:11'
+$script:AtlasBuildDate = '2026-07-03 08:10:05'
 $script:AtlasToolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/src/tools'
 
 $script:AtlasToolsManifest = @'
@@ -321,14 +321,14 @@ $script:AtlasToolsManifest = @'
 
 $script:AtlasToolHashesJson = @'
 {
-  "generatedAt": "2026-07-03T08:02:11.5038441-05:00",
+  "generatedAt": "2026-07-03T08:10:05.7771151-05:00",
   "algorithm": "SHA256",
   "files": {
     "Invoke-ActualizarPowerShell.ps1": "bebc42e1da74f2a425c3823397827eaf132b790e8e75c124725a6ca7f48353cc",
     "Invoke-AIReadiness.ps1": "6f734eac4cdc9d3c8da7ba3b84fda9ad31fa596c2af239f8d69dd8ee3bcce280",
     "Invoke-AuditoriaRouter.ps1": "ddc72007cd9ff080aee1b34141f6b7ab9319ae3b9527a923280b2bea6cde4451",
     "Invoke-Deduplicador.ps1": "8c37f2d12d54ced67cea7b8c36a00bdc7272b2cbdee0bbfcf0346945a36e0afc",
-    "Invoke-DiagnosticoEventos.ps1": "f98c1de1539ad7968a9a9330f952b964cd54d2e67af155cb14a6f7095c691331",
+    "Invoke-DiagnosticoEventos.ps1": "d8bcd80253e7118747e819618f8814729d615ff2fc359d7740ccad97b9c6cb1b",
     "Invoke-DiagnosticoMaster.ps1": "7aa9c0b717f24002af30cbc93b9c22f6d978e02508f813f4f42d4c63688f31ae",
     "Invoke-EntregaPC.ps1": "7918bce7c3cbde9498f4c8c9c7229c20e33a6c194d57e98e34f67b9b0d684ab9",
     "Invoke-ExtraerLicencias.ps1": "66c84efb00c58399ffba64883c2838a9b9fd7ed511c6df79938ac62b4c443d17",
@@ -343,10 +343,10 @@ $script:AtlasToolHashesJson = @'
     "Invoke-KeyboardDoctor.ps1": "f4e2e484b3b08ccbc3d829b3893df82719943f6dc226f0e26dc72d0203cd5660",
     "Invoke-MantenimientoPRO.ps1": "a0dd44dd82c48b5926973c6391b65c4c94a811f80b870cbbf00d7728027e94cf",
     "Invoke-MenorPrivilegio.ps1": "1f0c63ad3081d0ad8d10fb8fea68ddc7de49918988032d4f2985a66442de0426",
-    "Invoke-PartsUpgrade.ps1": "073d114013810af0223092d3192406880b735e5199a70a1d48101abb60ccab97",
+    "Invoke-PartsUpgrade.ps1": "d8703a7ff9a2c6cc8aa42caedc4457451174b0ae0c6fa70d7b8a76038c03d3be",
     "Invoke-Personalizacion.ps1": "0212b1ac489832ac2d87242849dbd7be5e2a96ef80604f272a2f586d05cde5e3",
     "Invoke-PrepararUSB.ps1": "38581d2c9951661f343a95a6d5588950a6298aaefc69c9133fe0ab58392d3cbf",
-    "Invoke-PrinterDoctor.ps1": "d1d6c5f4ae88467a072cfb021c69315cbe4a771fb538baf8974d17fddaf20dad",
+    "Invoke-PrinterDoctor.ps1": "fe78e343744f8182427a6c157f54e7a24185fe950dba86ca193bd02541a243d2",
     "Invoke-Robocopy.ps1": "29f5abf91d82946d6fd7ffd7786de8165ad3e481e7075e7654fd4071328f0a7a",
     "Invoke-SelectorDNS.ps1": "71ed1eb9a2087f02c7f2810dd25f819a6dcfb8d9a897fbcc9de1a12341bf4e94",
     "Invoke-StopServices.ps1": "62089b6915ed4a9f51ffbfd353521ff07fca6294e9081b0c71bcd329381cc11b"
