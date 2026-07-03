@@ -255,6 +255,7 @@ function Invoke-Robocopy {
     $lang = _Atlas-DetectLang
     if (-not $T.ContainsKey($lang)) { $lang = 'en' }
     $L = $T[$lang]
+    $atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
 
 $Host.UI.RawUI.BackgroundColor = "Black"
 $Host.UI.RawUI.ForegroundColor = "Gray"
@@ -267,6 +268,30 @@ function Write-Centered {
     $W = try { $Host.UI.RawUI.WindowSize.Width } catch { 80 }
     $Pad = [math]::Max(0, [math]::Floor(($W - $Text.Length) / 2))
     Write-Host (" " * $Pad + $Text) -ForegroundColor $Color
+}
+
+function _Write-AtlasHeaderCompat {
+    param([string]$Title)
+    if ($atlasToolkitReady) {
+        Write-Host ''
+        Write-AtlasHeader -Title $Title -Color Yellow
+        Write-Host ''
+        return
+    }
+    Write-Host "`n"
+    Write-Centered $L.HeaderBar "Cyan"
+    Write-Centered $L.HeaderTitle "Yellow"
+    Write-Centered $L.HeaderBar "Cyan"
+    Write-Host ""
+}
+
+function _Write-AtlasStepCompat {
+    param([string]$Message, [ConsoleColor]$FallbackColor = 'White')
+    if ($atlasToolkitReady) {
+        Write-AtlasStep $Message
+        return
+    }
+    Write-Centered $Message $FallbackColor
 }
 
 function Clean-Path {
@@ -384,7 +409,7 @@ function Test-CopyIntegrity {
     param([string]$Origen, [string]$Destino, [int]$SampleSize = 15)
 
     Write-Host ""
-    Write-Centered $L.Verifying "Yellow"
+    _Write-AtlasStepCompat -Message $L.Verifying -FallbackColor Yellow
     Write-Host ""
 
     $srcStats = Get-FolderStats $Origen
@@ -454,7 +479,7 @@ function Start-SmartCopy {
     )
 
     Write-Host ""
-    Write-Centered ($L.CopyingHdr -f $DiskType, $MT, $Mode) "Yellow"
+    _Write-AtlasStepCompat -Message ($L.CopyingHdr -f $DiskType, $MT, $Mode) -FallbackColor Yellow
     Write-Host ""
 
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
@@ -547,11 +572,7 @@ function Start-SmartCopy {
 
 do {
     Clear-Host
-    Write-Host "`n"
-    Write-Centered $L.HeaderBar "Cyan"
-    Write-Centered $L.HeaderTitle "Yellow"
-    Write-Centered $L.HeaderBar "Cyan"
-    Write-Host ""
+    _Write-AtlasHeaderCompat -Title $L.WinTitle
 
     $origen = $null; $isFile = $false; $srcName = ""; $srcStats = $null
 

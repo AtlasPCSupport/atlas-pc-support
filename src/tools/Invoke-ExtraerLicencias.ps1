@@ -26,6 +26,7 @@ $ErrorActionPreference = "Stop"
     Funciones de interfaz de usuario para alineación y formato estandarizado.
 #>
 $Host.UI.RawUI.WindowTitle = "ATLAS PC SUPPORT - Extract Product Keys"
+$atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
 
 function Write-Centered {
     param(
@@ -44,12 +45,29 @@ function Write-Centered {
 
 function Show-Header {
     Clear-Host
+    if ($atlasToolkitReady) {
+        Write-Host ''
+        Write-AtlasHeader -Title "EXTRACT PRODUCT KEYS" -Color Yellow
+        Write-AtlasStep "Windows · Office · BIOS/UEFI"
+        Write-Host ''
+        return
+    }
     Write-Host "`n"
     Write-Centered -Text "========================================" -Color Yellow
     Write-Centered -Text "  EXTRACT PRODUCT KEYS" -Color Yellow
     Write-Centered -Text "  Windows · Office · BIOS/UEFI" -Color DarkGray
     Write-Centered -Text "========================================" -Color Yellow
     Write-Host "`n"
+}
+
+function Wait-AtlasReturn {
+    param([string]$Message = "Press ENTER to return")
+    if ($atlasToolkitReady -and (Get-Command Wait-AtlasExit -ErrorAction SilentlyContinue)) {
+        Wait-AtlasExit -Message $Message
+        return
+    }
+    Write-Centered -Text $Message -Color White
+    $null = Read-Host
 }
 
 <#
@@ -84,8 +102,7 @@ function Get-BiosKey {
     }
     
     Write-Host "`n"
-    Write-Centered -Text "Press ENTER to return to menu..." -Color White
-    $null = Read-Host
+    Wait-AtlasReturn -Message "Press ENTER to return to menu..."
 }
 
 <#
@@ -188,8 +205,7 @@ function Get-CurrentKey {
     }
     
     Write-Host "`n"
-    Write-Centered -Text "Press ENTER to return to menu..." -Color White
-    $null = Read-Host
+    Wait-AtlasReturn -Message "Press ENTER to return to menu..."
 }
 
 <#
@@ -219,8 +235,7 @@ function Invoke-NativeAudit {
     } catch {}
 
     Write-Host "`n"
-    Write-Centered -Text "Press ENTER to return to menu..." -Color White
-    $null = Read-Host
+    Wait-AtlasReturn -Message "Press ENTER to return to menu..."
 }
 
 <#
@@ -437,8 +452,7 @@ function Get-OsInfo {
     }
 
     Write-Host "`n"
-    Write-Centered -Text "Press ENTER to return to main menu..." -Color White
-    $null = Read-Host
+    Wait-AtlasReturn -Message "Press ENTER to return to main menu..."
 }
 
 # ============================================================================
@@ -522,7 +536,7 @@ function Get-OfficeKeys {
     }
 
     Write-Host ""
-    Read-Host " Press ENTER to return"
+    Wait-AtlasReturn -Message "Press ENTER to return"
 }
 
 # ============================================================================
@@ -645,7 +659,7 @@ function Get-InstalledProductKeys {
     }
 
     Write-Host ""
-    Read-Host " Press ENTER to return"
+    Wait-AtlasReturn -Message "Press ENTER to return"
 }
 
 # ============================================================================
@@ -671,7 +685,7 @@ function Get-BrowserPasswords {
     if ($c1 -ne 'AUTHORIZE' -and $c1 -ne 'AUTORIZO') {
         Write-Centered -Text "[X] Cancelled. No passwords were extracted." -Color Red
         Write-Host ""
-        Read-Host " Press ENTER to return"
+        Wait-AtlasReturn -Message "Press ENTER to return"
         return
     }
 
@@ -765,7 +779,7 @@ function Get-BrowserPasswords {
     }
 
     Write-Host ""
-    Read-Host " Press ENTER to return"
+    Wait-AtlasReturn -Message "Press ENTER to return"
 }
 
 # Bucle principal
