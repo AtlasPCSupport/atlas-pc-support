@@ -17,6 +17,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Lint (PSScriptAnalyzer)
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser -ErrorAction Stop
+          # launcher.ps1 es autogenerado: se valida por AST mas abajo, no por linter.
+          $findings = Invoke-ScriptAnalyzer -Path . -Recurse -Settings ./PSScriptAnalyzerSettings.psd1 |
+                        Where-Object { $_.ScriptName -ne 'launcher.ps1' }
+          $errors = @($findings | Where-Object Severity -eq 'Error')
+          $warns  = @($findings | Where-Object Severity -eq 'Warning')
+          foreach ($f in $findings) {
+            $sev = switch ($f.Severity) { 'Error' { 'error' } 'Warning' { 'warning' } default { 'notice' } }
+            Write-Host "::$sev file=$($f.ScriptPath),line=$($f.Line)::[$($f.RuleName)] $($f.Message)"
+          }
+          Write-Host "PSScriptAnalyzer: $($errors.Count) error(s), $($warns.Count) warning(s)."
+          # Por ahora el gate solo BLOQUEA en severidad Error. Las warnings se reducen por fases.
+          if ($errors.Count -gt 0) { exit 1 }
+
+      - name: Assert compiled artifacts are fresh (no stale launcher)
+        shell: pwsh
+        run: |
+          # Corre ANTES del build de abajo, sobre el checkout pristino, para
+          # detectar si alguien edito src/ sin reconstruir launcher.ps1.
+          . ./tests/Assert-LauncherFresh.ps1
+
       - name: Build launcher.ps1
         shell: pwsh
         run: |
@@ -60,9 +84,60 @@ jobs:
         run: |
           . ./tests/Test-ToolSources.ps1
 
+      - name: Unit tests (Pester v5)
+        shell: pwsh
+        run: |
+          Install-Module Pester -Scope CurrentUser -Force -MinimumVersion 5.5.0 -SkipPublisherCheck -ErrorAction Stop
+          Import-Module Pester -MinimumVersion 5.5.0 -Force
+          Invoke-Pester -Path ./tests/Lib.Tests.ps1 -Output Detailed -CI
+
       - name: Upload built launcher
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: launcher
           path: launcher.ps1
+
+  windows-compat:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build launcher with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          .\build.ps1
+
+      - name: Parse scripts with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $targets = @(
+            "$PWD\src\Launcher.ps1"
+            "$PWD\launcher.ps1"
+          ) + (Get-ChildItem "$PWD\src\tools\Invoke-*.ps1" | Select-Object -ExpandProperty FullName)
+          $fail = 0
+          foreach ($path in $targets) {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors.Count -gt 0) {
+              $fail++
+              Write-Host "::error file=$path::Parse errors:"
+              $errors | ForEach-Object {
+                Write-Host ("  line {0}: {1}" -f $_.Extent.StartLineNumber, $_.Message)
+              }
+            }
+          }
+          if ($fail -gt 0) { exit 1 }
+
+      - name: XAML smoke parse (Windows PowerShell 5.1)
+        shell: powershell
+        run: |
+          [xml]$xaml = Get-Content -Raw -LiteralPath "$PWD\src\gui\MainWindow.xaml" -Encoding UTF8
+          if (-not $xaml.DocumentElement) {
+            throw "MainWindow.xaml no tiene documento XML valido."
+          }
+          if ($xaml.DocumentElement.LocalName -ne 'Window') {
+            throw "MainWindow.xaml root esperado: Window. Actual: $($xaml.DocumentElement.LocalName)"
+          }

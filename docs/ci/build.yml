@@ -84,9 +84,60 @@ jobs:
         run: |
           . ./tests/Test-ToolSources.ps1
 
+      - name: Unit tests (Pester v5)
+        shell: pwsh
+        run: |
+          Install-Module Pester -Scope CurrentUser -Force -MinimumVersion 5.5.0 -SkipPublisherCheck -ErrorAction Stop
+          Import-Module Pester -MinimumVersion 5.5.0 -Force
+          Invoke-Pester -Path ./tests/Lib.Tests.ps1 -Output Detailed -CI
+
       - name: Upload built launcher
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: launcher
           path: launcher.ps1
+
+  windows-compat:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build launcher with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          .\build.ps1
+
+      - name: Parse scripts with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $targets = @(
+            "$PWD\src\Launcher.ps1"
+            "$PWD\launcher.ps1"
+          ) + (Get-ChildItem "$PWD\src\tools\Invoke-*.ps1" | Select-Object -ExpandProperty FullName)
+          $fail = 0
+          foreach ($path in $targets) {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors.Count -gt 0) {
+              $fail++
+              Write-Host "::error file=$path::Parse errors:"
+              $errors | ForEach-Object {
+                Write-Host ("  line {0}: {1}" -f $_.Extent.StartLineNumber, $_.Message)
+              }
+            }
+          }
+          if ($fail -gt 0) { exit 1 }
+
+      - name: XAML smoke parse (Windows PowerShell 5.1)
+        shell: powershell
+        run: |
+          [xml]$xaml = Get-Content -Raw -LiteralPath "$PWD\src\gui\MainWindow.xaml" -Encoding UTF8
+          if (-not $xaml.DocumentElement) {
+            throw "MainWindow.xaml no tiene documento XML valido."
+          }
+          if ($xaml.DocumentElement.LocalName -ne 'Window') {
+            throw "MainWindow.xaml root esperado: Window. Actual: $($xaml.DocumentElement.LocalName)"
+          }
