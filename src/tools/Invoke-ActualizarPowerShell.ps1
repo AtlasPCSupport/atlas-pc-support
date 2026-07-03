@@ -120,6 +120,7 @@ function Invoke-ActualizarPowerShell {
     $lang = _Atlas-DetectLang
     if (-not $T.ContainsKey($lang)) { $lang = 'en' }
     $L = $T[$lang]
+    $atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
 
     # ----- Constants (mirrored from src/lib/PS7.ps1, self-contained) -----
     $PS7_VERSION  = '7.5.0'
@@ -127,6 +128,46 @@ function Invoke-ActualizarPowerShell {
     $PS7_MSI_NAME = "PowerShell-$PS7_VERSION-win-x64.msi"
 
     # ----- Inline helpers (no dependency on launcher libs) -----
+    function _Write-AtlasHeader {
+        param([string]$Title, [ConsoleColor]$Color = [ConsoleColor]::Cyan)
+        if ($atlasToolkitReady) {
+            Write-AtlasHeader -Title $Title -Color $Color
+            return
+        }
+        Write-Host ''
+        Write-Host '================================================================' -ForegroundColor $Color
+        Write-Host ('  ' + $Title) -ForegroundColor $Color
+        Write-Host '================================================================' -ForegroundColor $Color
+        Write-Host ''
+    }
+
+    function _Write-AtlasStepCompat {
+        param([string]$Message)
+        if ($atlasToolkitReady) { Write-AtlasStep $Message; return }
+        Write-Host ('  ' + $Message) -ForegroundColor Cyan
+    }
+
+    function _Write-AtlasOkCompat {
+        param([string]$Message)
+        if ($atlasToolkitReady) { Write-AtlasSuccess $Message; return }
+        Write-Host ('  ' + $Message) -ForegroundColor Green
+    }
+
+    function _Write-AtlasWarnCompat {
+        param([string]$Message)
+        if ($atlasToolkitReady) { Write-AtlasWarn $Message; return }
+        Write-Host ('  ' + $Message) -ForegroundColor Yellow
+    }
+
+    function _Write-AtlasErrCompat {
+        param([string]$Message)
+        if ($atlasToolkitReady -and (Get-Command Write-AtlasFailure -ErrorAction SilentlyContinue)) {
+            Write-AtlasFailure $Message
+            return
+        }
+        Write-Host ('  ' + $Message) -ForegroundColor Red
+    }
+
     function _Test-IsAdmin {
         try {
             $id = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -192,7 +233,7 @@ function Invoke-ActualizarPowerShell {
         $msi = $null
         if ($OfflineSource -and (Test-Path -LiteralPath $OfflineSource)) {
             $msi = (Resolve-Path -LiteralPath $OfflineSource).Path
-            Write-Host ('  ' + ($L.UsingLocalMsi -f $msi)) -ForegroundColor Cyan
+            _Write-AtlasStepCompat ($L.UsingLocalMsi -f $msi)
         }
         if (-not $msi) {
             $cacheDir = Join-Path $env:LOCALAPPDATA 'AtlasPC\deps'
@@ -200,7 +241,7 @@ function Invoke-ActualizarPowerShell {
                 New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null
             }
             $msi = Join-Path $cacheDir $MsiName
-            Write-Host ('  ' + ($L.Downloading -f $Version)) -ForegroundColor Cyan
+            _Write-AtlasStepCompat ($L.Downloading -f $Version)
             try {
                 $ProgressPreference = 'SilentlyContinue'
                 Invoke-WebRequest -Uri $Url -OutFile $msi -UseBasicParsing -TimeoutSec 900
@@ -209,7 +250,7 @@ function Invoke-ActualizarPowerShell {
             }
         }
         $msiArgs = @('/i', "`"$msi`"", '/qn', '/norestart', 'ADD_PATH=1', 'ENABLE_PSREMOTING=0', 'REGISTER_MANIFEST=1')
-        Write-Host ('  ' + $L.Installing) -ForegroundColor Cyan
+        _Write-AtlasStepCompat $L.Installing
         $p = Start-Process -FilePath 'msiexec.exe' -ArgumentList $msiArgs -Wait -PassThru
         if ($p.ExitCode -ne 0 -and $p.ExitCode -ne 3010) {
             throw ($L.MsiExitCode -f $p.ExitCode)
@@ -218,17 +259,13 @@ function Invoke-ActualizarPowerShell {
         if (-not $path) {
             throw $L.InstalledButLost
         }
-        Write-Host ('  ' + ($L.InstallOK -f $path)) -ForegroundColor Green
+        _Write-AtlasOkCompat ($L.InstallOK -f $path)
         return $path
     }
 
     # ----- UI -----
     Clear-Host
-    Write-Host ''
-    Write-Host '================================================================' -ForegroundColor Cyan
-    Write-Host ('  ' + $L.Title) -ForegroundColor Cyan
-    Write-Host '================================================================' -ForegroundColor Cyan
-    Write-Host ''
+    _Write-AtlasHeader -Title $L.Title -Color Cyan
 
     $current = "{0}.{1}" -f $PSVersionTable.PSVersion.Major, $PSVersionTable.PSVersion.Minor
     Write-Host ('  ' + ($L.CurrentConsole -f $current)) -ForegroundColor White
@@ -252,17 +289,17 @@ function Invoke-ActualizarPowerShell {
     }
 
     if (-not (_Test-IsAdmin)) {
-        Write-Host ('  ' + $L.NeedAdmin) -ForegroundColor Red
+        _Write-AtlasErrCompat $L.NeedAdmin
         Write-Host ('  ' + $L.NeedAdminHint) -ForegroundColor DarkGray
         return
     }
 
     $offline = _Find-OfflineMsi
     if ($offline) {
-        Write-Host ('  ' + ($L.FoundOfflineMsi -f $offline)) -ForegroundColor Cyan
+        _Write-AtlasStepCompat ($L.FoundOfflineMsi -f $offline)
         Write-Host ('  ' + $L.WillInstallLocal) -ForegroundColor DarkGray
     } else {
-        Write-Host ('  ' + $L.NoOfflineMsi) -ForegroundColor Cyan
+        _Write-AtlasStepCompat $L.NoOfflineMsi
         Write-Host ('  ' + ($L.VersionToInstall -f $PS7_VERSION)) -ForegroundColor DarkGray
     }
 
@@ -270,7 +307,7 @@ function Invoke-ActualizarPowerShell {
     $go = Read-Host ('  ' + $L.ConfirmContinue)
     # Accept Spanish 'n' and English 'n' identically; everything else continues.
     if ($go -match '^[Nn]') {
-        Write-Host ('  ' + $L.Cancelled) -ForegroundColor DarkGray
+        _Write-AtlasWarnCompat $L.Cancelled
         return
     }
 
@@ -288,7 +325,7 @@ function Invoke-ActualizarPowerShell {
         Write-Host ('  ' + $L.CloseAndReopen) -ForegroundColor DarkGray
     } catch {
         Write-Host ''
-        Write-Host ('  ' + ($L.InstallError -f $_.Exception.Message)) -ForegroundColor Red
+        _Write-AtlasErrCompat ($L.InstallError -f $_.Exception.Message)
         Write-Host ''
         Write-Host ('  ' + $L.ManualAlt) -ForegroundColor DarkGray
         Write-Host ('  ' + $L.ManualWinget) -ForegroundColor White

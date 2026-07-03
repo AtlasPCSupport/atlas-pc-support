@@ -120,6 +120,7 @@ $T = @{
 $lang = _Atlas-DetectLang
 if (-not $T.ContainsKey($lang)) { $lang = 'en' }
 $L = $T[$lang]
+$atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
 
 # --- 1. INITIAL CONFIG ---
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -152,6 +153,19 @@ function Write-Centered {
 
 function Show-Header {
     Clear-Host
+    if ($atlasToolkitReady) {
+        Write-Host ''
+        Write-AtlasHeader -Title $L.Brand -Color Yellow
+        Write-AtlasStep $L.Subtitle
+        if ($global:IsLogging) {
+            Write-AtlasWarn $L.LogActive
+        } else {
+            Write-AtlasStep $L.LogInactive
+        }
+        Write-Host ''
+        return
+    }
+
     Write-Host "`n`n`n"
     Write-Centered $L.Brand $AtlasOrange
     Write-Centered $L.Subtitle $AtlasWhite
@@ -163,6 +177,15 @@ function Show-Header {
         Write-Centered $L.LogInactive $AtlasGray
     }
     Write-Host "`n`n"
+}
+
+function Wait-AtlasReturn {
+    if ($atlasToolkitReady -and (Get-Command Wait-AtlasExit -ErrorAction SilentlyContinue)) {
+        Wait-AtlasExit -Message $L.PressKey
+        return
+    }
+    Write-Centered $L.PressKey $AtlasGray
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 }
 
 # --- 4. CUSTOM LOG ENGINE ---
@@ -234,8 +257,7 @@ function Hardening-Apply {
     Write-Host "`n"
     Write-Centered $L.Done $AtlasOrange
     Write-Host "`n"
-    Write-Centered $L.PressKey $AtlasGray
-    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    Wait-AtlasReturn
 }
 
 function Restore-Defaults {
@@ -262,8 +284,7 @@ function Restore-Defaults {
     Write-Host "`n"
     Write-Centered $L.Warn $AtlasWhite
     Write-Host "`n"
-    Write-Centered $L.PressKey $AtlasGray
-    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    Wait-AtlasReturn
 }
 
 function Check-Status {
@@ -285,8 +306,7 @@ function Check-Status {
     Write-Centered $L.SixToFourState $AtlasGray
     Write-Centered $6to4 $AtlasWhite
     Write-Host "`n"
-    Write-Centered $L.PressKey $AtlasGray
-    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    Wait-AtlasReturn
 }
 
 # --- 6. MAIN MENU ---
