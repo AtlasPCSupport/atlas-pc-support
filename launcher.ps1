@@ -1,7 +1,7 @@
 # ============================================================
 #  Atlas PC Support — launcher.ps1 (compilado)
 #  Versión: 1.0.0
-#  Build:   2026-07-03 14:22:01
+#  Build:   2026-07-03 14:36:08
 #  Repo:    https://github.com/mikepchelper-spec/atlas-pc-support
 #
 #  Uso:
@@ -19,7 +19,7 @@
 # ============================================================
 
 $script:AtlasVersion = '1.0.0'
-$script:AtlasBuildDate = '2026-07-03 14:22:01'
+$script:AtlasBuildDate = '2026-07-03 14:36:08'
 $script:AtlasToolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/src/tools'
 
 $script:AtlasToolsManifest = @'
@@ -321,7 +321,7 @@ $script:AtlasToolsManifest = @'
 
 $script:AtlasToolHashesJson = @'
 {
-  "generatedAt": "2026-07-03T14:22:01.8699993-05:00",
+  "generatedAt": "2026-07-03T14:36:08.9867476-05:00",
   "algorithm": "SHA256",
   "files": {
     "Invoke-ActualizarPowerShell.ps1": "bebc42e1da74f2a425c3823397827eaf132b790e8e75c124725a6ca7f48353cc",
@@ -338,7 +338,7 @@ $script:AtlasToolHashesJson = @'
     "Invoke-GPUCheck.ps1": "cfbb0e30d39960335e96e3ee39020da7fa8cc39c9d52cc1287f0ab7fbe5a6b19",
     "Invoke-HostsManager.ps1": "fe26ffe69919dc72b3cce423df40364e597caf387c72ce5e7d961ba42eba6e35",
     "Invoke-InstalarMicrosoftStore.ps1": "a96e3adf0507b6d0fa9ea4777e0141dda0c29f067e8e1dfcfa487c0b17a8105d",
-    "Invoke-InstalarPaquetes.ps1": "f2ea4252fa1913394d9a235817d16e2cd8ce0c0b52a9d68e257c921f6117dadd",
+    "Invoke-InstalarPaquetes.ps1": "f1712328b4800c7e43e7320ecf6ae3273f050e0fc46dc59d096e677a2cc25232",
     "Invoke-InstalarRuntimes.ps1": "1baad75ad5ccd5ce0459f8fb2e00e7ebca3eecbf0b56bb27483e197f5bcd3c29",
     "Invoke-KeyboardDoctor.ps1": "f4e2e484b3b08ccbc3d829b3893df82719943f6dc226f0e26dc72d0203cd5660",
     "Invoke-MantenimientoPRO.ps1": "a0dd44dd82c48b5926973c6391b65c4c94a811f80b870cbbf00d7728027e94cf",
