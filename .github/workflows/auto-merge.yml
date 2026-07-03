@@ -12,23 +12,88 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  issues: write
   checks: read
   statuses: read
 
 jobs:
+  # ----------------------------------------------------------------------------
+  # Guard: en cada evento pull_request recalcula si el PR toca rutas criticas de
+  # seguridad. Si las toca, RETIRA el label 'auto-merge-ok' (bloquea el merge
+  # automatico y exige revision humana). Si no, lo aniade.
+  # El job de auto-merge solo fusiona PRs que tengan ese label.
+  # ----------------------------------------------------------------------------
+  guard:
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.user.login == 'devin-ai-integration[bot]'
+    steps:
+      - name: Evaluate security-critical paths
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const label = 'auto-merge-ok';
+            const prNumber = context.payload.pull_request.number;
+            const { owner, repo } = context.repo;
+
+            // Asegura que el label exista (no falla si ya existe).
+            try {
+              await github.rest.issues.getLabel({ owner, repo, name: label });
+            } catch (e) {
+              await github.rest.issues.createLabel({
+                owner, repo, name: label, color: '0e8a16',
+                description: 'CI: PR sin cambios en rutas criticas; elegible para auto-merge.'
+              }).catch(() => {});
+            }
+
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner, repo, pull_number: prNumber, per_page: 100
+            });
+
+            // Rutas que exigen revision humana (codigo que se ejecuta como admin
+            // via `irm | iex`, compilador, instalador y propios workflows).
+            const sensitive = [
+              /^launcher\.ps1$/,
+              /^launcher\.ps1\.sha256$/,
+              /^get\.ps1$/,
+              /^build\.ps1$/,
+              /^src\/lib\//,
+              /^config\//,
+              /^\.github\/workflows\//,
+              /^onboarding\//,
+            ];
+            const hits = files.map(f => f.filename)
+                              .filter(n => sensitive.some(re => re.test(n)));
+
+            const hasLabel = context.payload.pull_request.labels
+                              .some(l => l.name === label);
+
+            if (hits.length > 0) {
+              core.warning('Rutas criticas modificadas; auto-merge DESHABILITADO. Requiere revision humana:\n  ' + hits.join('\n  '));
+              if (hasLabel) {
+                await github.rest.issues.removeLabel({ owner, repo, issue_number: prNumber, name: label }).catch(() => {});
+              }
+            } else if (!hasLabel) {
+              await github.rest.issues.addLabels({ owner, repo, issue_number: prNumber, labels: [label] });
+              core.info('Sin rutas criticas; label de auto-merge aniadido.');
+            }
+
   automerge:
     runs-on: ubuntu-latest
-    # Sólo PRs abiertos por el bot de Devin. Cualquier otro autor requiere merge manual.
+    # Solo PRs del bot de Devin. Cualquier otro autor requiere merge manual.
     if: |
       (github.event_name != 'pull_request' && github.event_name != 'pull_request_review') ||
       github.event.pull_request.user.login == 'devin-ai-integration[bot]'
     steps:
-      - name: Auto-merge when CI is green
+      - name: Auto-merge when CI is green and PR is non-sensitive
         uses: pascalgn/automerge-action@v0.16.4
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           MERGE_METHOD: squash
-          MERGE_LABELS: ""
+          # Exige el label que el job 'guard' gestiona: si el PR toca rutas
+          # criticas, el label no esta presente y NO se fusiona.
+          MERGE_LABELS: "auto-merge-ok"
           UPDATE_LABELS: ""
           MERGE_FILTER_AUTHOR: "devin-ai-integration[bot]"
           MERGE_DELETE_BRANCH: "true"

@@ -1,0 +1,11 @@
+# Critical supply-chain and execution paths require explicit owner review.
+* @mikepchelper-spec
+
+/get.ps1 @mikepchelper-spec
+/launcher.ps1 @mikepchelper-spec
+/launcher.ps1.sha256 @mikepchelper-spec
+/build.ps1 @mikepchelper-spec
+/config/** @mikepchelper-spec
+/src/lib/** @mikepchelper-spec
+/.github/workflows/** @mikepchelper-spec
+/onboarding/** @mikepchelper-spec
