@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-07-03T08:18:32.6403037-05:00",
+  "generatedAt": "2026-07-03T08:22:41.6437865-05:00",
   "algorithm": "SHA256",
   "files": {
     "Invoke-ActualizarPowerShell.ps1": "bebc42e1da74f2a425c3823397827eaf132b790e8e75c124725a6ca7f48353cc",
     "Invoke-AIReadiness.ps1": "6f734eac4cdc9d3c8da7ba3b84fda9ad31fa596c2af239f8d69dd8ee3bcce280",
-    "Invoke-AuditoriaRouter.ps1": "ddc72007cd9ff080aee1b34141f6b7ab9319ae3b9527a923280b2bea6cde4451",
+    "Invoke-AuditoriaRouter.ps1": "6500c6bfdc3f37e19ba3a66e3c6d348d0c9a50e782859918e10fc2ed344df8f6",
     "Invoke-Deduplicador.ps1": "ba59fd597a4fb3568b02647538f2d76c5b982613415922974d7f7703e4427075",
     "Invoke-DiagnosticoEventos.ps1": "d8bcd80253e7118747e819618f8814729d615ff2fc359d7740ccad97b9c6cb1b",
     "Invoke-DiagnosticoMaster.ps1": "55b07593b743e653bbe47f887710edb2392c13e2811bdc755e62855f077c79f5",
@@ -23,7 +23,7 @@
     "Invoke-MenorPrivilegio.ps1": "1f0c63ad3081d0ad8d10fb8fea68ddc7de49918988032d4f2985a66442de0426",
     "Invoke-PartsUpgrade.ps1": "d8703a7ff9a2c6cc8aa42caedc4457451174b0ae0c6fa70d7b8a76038c03d3be",
     "Invoke-Personalizacion.ps1": "0212b1ac489832ac2d87242849dbd7be5e2a96ef80604f272a2f586d05cde5e3",
-    "Invoke-PrepararUSB.ps1": "38581d2c9951661f343a95a6d5588950a6298aaefc69c9133fe0ab58392d3cbf",
+    "Invoke-PrepararUSB.ps1": "302aac0035f17edaf136378dd2e0e9fb5693d115dbe44a7beced6b62c832ee75",
     "Invoke-PrinterDoctor.ps1": "fe78e343744f8182427a6c157f54e7a24185fe950dba86ca193bd02541a243d2",
     "Invoke-Robocopy.ps1": "29f5abf91d82946d6fd7ffd7786de8165ad3e481e7075e7654fd4071328f0a7a",
     "Invoke-SelectorDNS.ps1": "71ed1eb9a2087f02c7f2810dd25f819a6dcfb8d9a897fbcc9de1a12341bf4e94",

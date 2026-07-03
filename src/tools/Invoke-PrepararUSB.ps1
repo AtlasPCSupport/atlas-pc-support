@@ -225,6 +225,16 @@ function Invoke-PrepararUSB {
     $lang = _Atlas-DetectLang
     if (-not $T.ContainsKey($lang)) { $lang = 'en' }
     $L = $T[$lang]
+    $atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
+
+    function Wait-PrepararUSBCompat {
+        param([string]$Message)
+        if ($atlasToolkitReady -and (Get-Command Wait-AtlasExit -ErrorAction SilentlyContinue)) {
+            Wait-AtlasExit -Message $Message
+            return
+        }
+        Read-Host $Message | Out-Null
+    }
 
     # README content per language (keeps existing UX; one heredoc per lang)
     $READMES = @{
@@ -501,6 +511,12 @@ Generado por Atlas PC Support - Preparar USB Offline
     function Show-Header {
         Clear-Host
         Write-Host ''
+        if ($atlasToolkitReady) {
+            Write-AtlasHeader -Title ($L.HeaderL1.Trim()) -Color Yellow
+            Write-AtlasStep $L.HeaderSub
+            Write-Host ''
+            return
+        }
         Write-Centered '============================================================' 'DarkGray'
         Write-Centered '        BUILD OFFLINE USB' 'Yellow'
         Write-Centered '  Pack the panel + deps onto a USB for offline use' 'DarkGray'
@@ -1484,7 +1500,7 @@ exit 0
     if (-not $ok) {
         Write-Host ''
         Write-Centered $L.DLLnchFatal 'Red'
-        Read-Host $L.EnterExit
+        Wait-PrepararUSBCompat -Message $L.EnterExit
         return
     }
 
