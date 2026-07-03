@@ -254,11 +254,26 @@ function Invoke-EntregaPC {
     $lang = _Atlas-DetectLang
     if (-not $T.ContainsKey($lang)) { $lang = 'en' }
     $L = $T[$lang]
+    $atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
+
+function Wait-AtlasReturn {
+    param([string]$Message = $L.ReturnHint)
+    $cleanMsg = ($Message -replace "^[`r`n\s]+", '').Trim()
+    if ($atlasToolkitReady -and (Get-Command Wait-AtlasExit -ErrorAction SilentlyContinue)) {
+        if ([string]::IsNullOrWhiteSpace($cleanMsg)) { $cleanMsg = 'Press ENTER to continue...' }
+        Wait-AtlasExit -Message $cleanMsg
+        return
+    }
+    if (-not [string]::IsNullOrWhiteSpace($Message)) {
+        Write-Host $Message -ForegroundColor DarkGray
+    }
+    $null = Read-Host
+}
 
 if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     Write-Warning $L.NeedAdmin1
     Write-Warning $L.NeedAdmin2
-    Pause
+    Wait-AtlasReturn -Message $L.ReturnHint
     return
 }
 
@@ -275,6 +290,13 @@ function Escribir-Centrado {
 
 function Mostrar-Encabezado {
     Clear-Host
+    if ($atlasToolkitReady) {
+        Write-Host ''
+        Write-AtlasHeader -Title 'ATLAS PC SUPPORT' -Color Yellow
+        Write-AtlasStep ($L.HeaderSub.Trim())
+        Write-Host ''
+        return
+    }
     Write-Host "`n"
     Escribir-Centrado " █████╗ ████████╗██╗      █████╗ ███████╗" "DarkYellow"
     Escribir-Centrado "██╔══██╗╚══██╔══╝██║     ██╔══██╗██╔════╝" "DarkYellow"
@@ -314,8 +336,7 @@ function Modificar-UsuarioActual {
     } catch {
         Write-Host ("`n" + ($L.ErrFmt -f $_.Exception.Message)) -ForegroundColor Red
     }
-    Write-Host $L.ReturnHint -ForegroundColor DarkGray
-    Read-Host
+    Wait-AtlasReturn -Message $L.ReturnHint
 }
 
 function Crear-NuevoUsuario {
@@ -356,8 +377,7 @@ function Crear-NuevoUsuario {
     } catch {
         Write-Host ("`n" + ($L.ErrFmt -f $_.Exception.Message)) -ForegroundColor Red
     }
-    Write-Host $L.ReturnHint -ForegroundColor DarkGray
-    Read-Host
+    Wait-AtlasReturn -Message $L.ReturnHint
 }
 
 function Renombrar-Equipo {
@@ -370,7 +390,7 @@ function Renombrar-Equipo {
     if ($nuevo -eq "0" -or [string]::IsNullOrWhiteSpace($nuevo)) { return }
     if ($nuevo -notmatch '^[A-Za-z0-9\-]{1,15}$') {
         Write-Host $L.BadName -ForegroundColor Red
-        Read-Host $L.EnterBack
+        Wait-AtlasReturn -Message $L.EnterBack
         return
     }
     try {
@@ -380,7 +400,7 @@ function Renombrar-Equipo {
     } catch {
         Write-Host ("`n" + ($L.ErrFmt -f $_.Exception.Message)) -ForegroundColor Red
     }
-    Read-Host $L.EnterBack
+    Wait-AtlasReturn -Message $L.EnterBack
 }
 
 function _Esc-Html {
@@ -752,7 +772,7 @@ function toggleAll(){
         Write-Host ""
         Write-Host ($L.CouldNotSave -f $_.Exception.Message) -ForegroundColor Red
     }
-    Read-Host $L.EnterBack
+    Wait-AtlasReturn -Message $L.EnterBack
 }
 
 while ($true) {

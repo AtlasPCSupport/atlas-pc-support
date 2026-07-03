@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-02T22:56:35.1540230-05:00",
+  "generatedAt": "2026-07-02T23:14:36.7387802-05:00",
   "algorithm": "SHA256",
   "files": {
     "Invoke-ActualizarPowerShell.ps1": "bebc42e1da74f2a425c3823397827eaf132b790e8e75c124725a6ca7f48353cc",
@@ -8,10 +8,10 @@
     "Invoke-Deduplicador.ps1": "8c37f2d12d54ced67cea7b8c36a00bdc7272b2cbdee0bbfcf0346945a36e0afc",
     "Invoke-DiagnosticoEventos.ps1": "f98c1de1539ad7968a9a9330f952b964cd54d2e67af155cb14a6f7095c691331",
     "Invoke-DiagnosticoMaster.ps1": "7aa9c0b717f24002af30cbc93b9c22f6d978e02508f813f4f42d4c63688f31ae",
-    "Invoke-EntregaPC.ps1": "93ae68c47b4f4b3955cdbeacb6290e12f1bd3278b481fd26a9a6b5658a3db164",
+    "Invoke-EntregaPC.ps1": "7918bce7c3cbde9498f4c8c9c7229c20e33a6c194d57e98e34f67b9b0d684ab9",
     "Invoke-ExtraerLicencias.ps1": "66c84efb00c58399ffba64883c2838a9b9fd7ed511c6df79938ac62b4c443d17",
     "Invoke-Fase0.ps1": "87f903655a9873823f44091b8adf696242556e2332a26183bea67618d07cf41a",
-    "Invoke-FastCopy.ps1": "deb4615764cb1068f41f50add5dee3fd69610e210d093a681eae7677b8015554",
+    "Invoke-FastCopy.ps1": "14d7d644f9a267ccf9bff73832148f10c8db4fc918003a2d0a13100a3c033bc1",
     "Invoke-GestorBitLocker.ps1": "00ea4e8b691077e80679e1c7b7f878d2b60e8e9d84ead4f0419bf9e9042f0d10",
     "Invoke-GPUCheck.ps1": "5e3439b8ba1bd6ec34de358429596f53a986bbfeab797492d8453fad13b4492b",
     "Invoke-HostsManager.ps1": "669737fde3ae354f86d0247c6b511ad14e908a769a4bc2a8496b1b4d6d4c9a8a",
@@ -26,7 +26,7 @@
     "Invoke-PrepararUSB.ps1": "38581d2c9951661f343a95a6d5588950a6298aaefc69c9133fe0ab58392d3cbf",
     "Invoke-PrinterDoctor.ps1": "d1d6c5f4ae88467a072cfb021c69315cbe4a771fb538baf8974d17fddaf20dad",
     "Invoke-Robocopy.ps1": "29f5abf91d82946d6fd7ffd7786de8165ad3e481e7075e7654fd4071328f0a7a",
-    "Invoke-SelectorDNS.ps1": "0f5461f61d45c1fe0316a731a047bed8c93986d69a1c5607b72724b0d2804651",
+    "Invoke-SelectorDNS.ps1": "71ed1eb9a2087f02c7f2810dd25f819a6dcfb8d9a897fbcc9de1a12341bf4e94",
     "Invoke-StopServices.ps1": "62089b6915ed4a9f51ffbfd353521ff07fca6294e9081b0c71bcd329381cc11b"
   }
 }

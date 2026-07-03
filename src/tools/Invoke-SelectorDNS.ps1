@@ -37,6 +37,7 @@ function _Atlas-DetectLang {
 }
 $lang = _Atlas-DetectLang
 $es   = ($lang -eq 'es')
+$atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
 
 $logFile    = Join-Path $env:LOCALAPPDATA 'AtlasPC\logs\dns_log.txt'
 $backupFile = Join-Path $env:LOCALAPPDATA 'AtlasPC\logs\dns_backup.json'
@@ -216,6 +217,10 @@ function Write-Centered {
 }
 
 function Press-AnyKey {
+    if ($atlasToolkitReady -and (Get-Command Wait-AtlasExit -ErrorAction SilentlyContinue)) {
+        Wait-AtlasExit -Message ($txt.Next.Trim())
+        return
+    }
     Write-Host ""
     Write-Host $txt.Next -ForegroundColor DarkGray
     try {
@@ -677,14 +682,21 @@ do {
     $screenW  = $Host.UI.RawUI.WindowSize.Width
     $menuW    = 64
     $lm       = " " * [math]::Max(0, [math]::Floor(($screenW - $menuW) / 2))
-    Write-Host ""
-    Write-Centered "################################################################" "Yellow"
-    Write-Centered "#                                                              #" "Yellow"
-    Write-Centered "#           A T L A S   P C   S U P P O R T                  #" "Yellow"
-    Write-Centered "#              DNS Selector  v2.0                             #" "Yellow"
-    Write-Centered "#                                                              #" "Yellow"
-    Write-Centered "################################################################" "Yellow"
-    Write-Host ""
+    if ($atlasToolkitReady) {
+        Write-Host ''
+        Write-AtlasHeader -Title 'ATLAS PC SUPPORT' -Color Yellow
+        Write-AtlasStep ("DNS Selector {0}" -f $txt.VerStr)
+        Write-Host ''
+    } else {
+        Write-Host ""
+        Write-Centered "################################################################" "Yellow"
+        Write-Centered "#                                                              #" "Yellow"
+        Write-Centered "#           A T L A S   P C   S U P P O R T                  #" "Yellow"
+        Write-Centered "#              DNS Selector  v2.0                             #" "Yellow"
+        Write-Centered "#                                                              #" "Yellow"
+        Write-Centered "################################################################" "Yellow"
+        Write-Host ""
+    }
     Write-Host "$lm[ $($txt.CurrentDNS) ]" -ForegroundColor DarkCyan
     $statusLines = Get-DNSStatusLines
     foreach ($sl in $statusLines) {
