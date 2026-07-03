@@ -120,7 +120,8 @@ jobs:
           foreach ($path in $targets) {
             $tokens = $null
             $errors = $null
-            [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors) | Out-Null
+            $text = Get-Content -Raw -LiteralPath $path -Encoding UTF8
+            [System.Management.Automation.Language.Parser]::ParseInput($text, $path, [ref]$tokens, [ref]$errors) | Out-Null
             if ($errors.Count -gt 0) {
               $fail++
               Write-Host "::error file=$path::Parse errors:"
