@@ -18,6 +18,7 @@ $Host.UI.RawUI.ForegroundColor = "Gray"
 $Host.UI.RawUI.WindowTitle = "FastCopy Edition v3 - Atlas PC Support"
 try { $Host.UI.RawUI.WindowSize = New-Object System.Management.Automation.Host.Size(110, 48) } catch {}
 $ErrorActionPreference = "Continue"
+$atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
 
 # ==================== BUSCAR FASTCOPY ====================
 
@@ -121,6 +122,38 @@ function Write-Centered {
     $W = try { $Host.UI.RawUI.WindowSize.Width } catch { 80 }
     $Pad = [math]::Max(0, [math]::Floor(($W - $Text.Length) / 2))
     Write-Host (" " * $Pad + $Text) -ForegroundColor $Color
+}
+
+function _Write-AtlasHeaderCompat {
+    param([string]$Title, [string]$Subtitle = '')
+    if ($atlasToolkitReady) {
+        Write-Host ''
+        Write-AtlasHeader -Title $Title -Color Yellow
+        if (-not [string]::IsNullOrWhiteSpace($Subtitle)) { Write-AtlasStep $Subtitle }
+        Write-Host ''
+        return
+    }
+    Write-Host "`n"
+    Write-Centered "==========================================================" "Cyan"
+    Write-Centered "           FASTCOPY EDITION v3" "Yellow"
+    Write-Centered "     Multi-source Copy · Profiles · MD5 Verify" "DarkGray"
+    Write-Centered "==========================================================" "Cyan"
+    Write-Host ""
+}
+
+function _Write-AtlasStepCompat {
+    param([string]$Message, [ConsoleColor]$FallbackColor = 'Yellow')
+    if ($atlasToolkitReady) { Write-AtlasStep $Message; return }
+    Write-Centered $Message $FallbackColor
+}
+
+function _Wait-AtlasExitCompat {
+    param([string]$Message)
+    if ($atlasToolkitReady -and (Get-Command Wait-AtlasExit -ErrorAction SilentlyContinue)) {
+        Wait-AtlasExit -Message $Message
+        return
+    }
+    $null = Read-Host $Message
 }
 
 function Clean-Path {
@@ -371,7 +404,7 @@ function Compare-BeforeCopy {
     param([string[]]$Origins, [string]$Destino)
     
     Write-Host ""
-    Write-Centered "ANALIZANDO DIFERENCIAS..." "Yellow"
+    _Write-AtlasStepCompat -Message "ANALIZANDO DIFERENCIAS..." -FallbackColor Yellow
     Write-Host ""
     
     $totalNew = 0; $totalModified = 0; $totalEqual = 0; $totalSizeNew = 0; $totalSizeMod = 0
@@ -574,7 +607,7 @@ function Export-CopyReport {
 function Test-CopyIntegrity {
     param([string]$Origen, [string]$Destino, [int]$SampleSize = 15)
     Write-Host ""
-    Write-Centered "VERIFYING MD5 INTEGRITY..." "Yellow"
+    _Write-AtlasStepCompat -Message "VERIFYING MD5 INTEGRITY..." -FallbackColor Yellow
     Write-Host ""
 
     $srcStats = Get-FolderStats $Origen
@@ -636,7 +669,7 @@ function Start-FastCopy {
     )
 
     Write-Host ""
-    Write-Centered "EJECUTANDO FASTCOPY (${DiskType} | ${Mode} | speed=${SpeedMode})" "Yellow"
+    _Write-AtlasStepCompat -Message "EJECUTANDO FASTCOPY (${DiskType} | ${Mode} | speed=${SpeedMode})" -FallbackColor Yellow
     Write-Host ""
 
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
@@ -733,11 +766,17 @@ Clear-Host
 $fastCopyExe = Find-FastCopy
 
 if (-not $fastCopyExe) {
-    Write-Host ""
-    Write-Centered "============================================" "Red"
-    Write-Centered "FASTCOPY NO ENCONTRADO" "Red"
-    Write-Centered "============================================" "Red"
-    Write-Host ""
+    if ($atlasToolkitReady) {
+        Write-Host ''
+        Write-AtlasHeader -Title "FASTCOPY NO ENCONTRADO" -Color Red
+        Write-Host ''
+    } else {
+        Write-Host ""
+        Write-Centered "============================================" "Red"
+        Write-Centered "FASTCOPY NO ENCONTRADO" "Red"
+        Write-Centered "============================================" "Red"
+        Write-Host ""
+    }
     Write-Host "    Searched in:" -ForegroundColor DarkGray
     Write-Host "    - Script folder ($PSScriptRoot)" -ForegroundColor DarkGray
     Write-Host "    - Program Files" -ForegroundColor DarkGray
@@ -762,13 +801,13 @@ if (-not $fastCopyExe) {
             Write-Host ""
             Write-Host "    Download ERROR: $($_.Exception.Message)" -ForegroundColor Red
             Write-Host "    Descarga manual: https://fastcopy.jp" -ForegroundColor Yellow
-            Read-Host "    ENTER to exit"
+            _Wait-AtlasExitCompat -Message "    ENTER to exit"
             return
         }
     } else {
         Write-Host "    Open https://fastcopy.jp and place FastCopy.exe at:" -ForegroundColor Gray
         Write-Host "      $env:LOCALAPPDATA\AtlasPC\apps\FastCopy\" -ForegroundColor Gray
-        Read-Host "    ENTER to exit"
+        _Wait-AtlasExitCompat -Message "    ENTER to exit"
         return
     }
 }
@@ -777,12 +816,7 @@ if (-not $fastCopyExe) {
 
 do {
     Clear-Host
-    Write-Host "`n"
-    Write-Centered "==========================================================" "Cyan"
-    Write-Centered "           FASTCOPY EDITION v3" "Yellow"
-    Write-Centered "     Multi-source Copy · Profiles · MD5 Verify" "DarkGray"
-    Write-Centered "==========================================================" "Cyan"
-    Write-Host ""
+    _Write-AtlasHeaderCompat -Title "FASTCOPY EDITION v3" -Subtitle "Multi-source Copy · Profiles · MD5 Verify"
     Write-Host "    Motor: $(Split-Path $fastCopyExe -Leaf)" -ForegroundColor DarkGray
     Write-Host ""
     Write-Centered "[ 1 ] Copia normal (un origen)" "White"
