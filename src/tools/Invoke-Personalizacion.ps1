@@ -134,6 +134,7 @@ $T = @{
 $lang = _Atlas-DetectLang
 if (-not $T.ContainsKey($lang)) { $lang = 'en' }
 $L = $T[$lang]
+$atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
 
 # ==========================================
 # CONSOLE & WIN32 SETUP
@@ -171,21 +172,33 @@ function Write-Centered {
 
 function Show-Header {
     Clear-Host
+    if ($atlasToolkitReady) {
+        Write-AtlasHeader -Title $L.Brand -Color Yellow
+        return
+    }
     Write-Host "`n"
-    Write-Centered $L.Sep "Yellow"
-    Write-Centered $L.Brand "Yellow"
-    Write-Centered $L.Sep "Yellow"
+    Write-Centered $L.Sep 'Yellow'
+    Write-Centered $L.Brand 'Yellow'
+    Write-Centered $L.Sep 'Yellow'
     Write-Host "`n"
 }
 
 function Confirm-AtlasTweak {
     Write-Host ''
-    Write-Centered $L.ConfirmPrompt 'Yellow'
+    if ($atlasToolkitReady) {
+        Write-AtlasWarn $L.ConfirmPrompt
+    } else {
+        Write-Centered $L.ConfirmPrompt 'Yellow'
+    }
     $resp = Read-Host
     return ($resp -match '^[SsYy]$')
 }
 
 function Wait-Return {
+    if ($atlasToolkitReady -and (Get-Command Wait-AtlasExit -ErrorAction SilentlyContinue)) {
+        Wait-AtlasExit -Message $L.PressEnter
+        return
+    }
     Write-Host ''
     Write-Centered $L.PressEnter 'Gray'
     [void](Read-Host)

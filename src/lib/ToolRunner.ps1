@@ -9,7 +9,9 @@
 #   3. Descarga remota: $script:AtlasToolsBaseUrl
 #
 # Seguridad:
-#   - Valida SHA-256 cuando existe hash esperado en $script:AtlasToolHashes.
+#   - Valida SHA-256 de cada tool contra $script:AtlasToolHashes.
+#   - Fail-closed para usb/cache/download cuando no hay hash esperado.
+#   - Fail-open solo para local-src (modo desarrollo).
 #   - Descargas se escriben primero a .download y luego se mueven atomicamente.
 #   - Nunca usa EncodedCommand (reduce heuristicas AV).
 #
@@ -100,8 +102,12 @@ function Test-AtlasToolFileIntegrity {
 
     $expected = Get-AtlasToolExpectedHash -FileName $FileName
     if (-not $expected) {
-        Write-AtlasLog "Sin hash esperado para '$FileName' (origen=$SourceLabel)." -Level WARN -Tool 'Runner'
-        return $true
+        if ($SourceLabel -eq 'local-src') {
+            Write-AtlasLog "Sin hash esperado para '$FileName' en local-src; permitido solo para desarrollo." -Level WARN -Tool 'Runner'
+            return $true
+        }
+        Write-AtlasLog "Sin hash esperado para '$FileName' (origen=$SourceLabel). Bloqueado por politica fail-closed." -Level ERROR -Tool 'Runner'
+        return $false
     }
 
     $actual = Get-AtlasSHA256 -Path $Path

@@ -1,0 +1,15 @@
+# Enforce consistent line endings for text files in this repo.
+* text=auto
+
+# PowerShell and config files should remain LF in git history.
+*.ps1  text eol=lf
+*.psm1 text eol=lf
+*.psd1 text eol=lf
+*.json text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.md   text eol=lf
+*.sha256 text eol=lf
+
+# Keep launcher blob byte-stable (hash validation is byte-exact at runtime).
+launcher.ps1 -text
