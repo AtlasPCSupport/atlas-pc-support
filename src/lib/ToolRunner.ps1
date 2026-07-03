@@ -480,6 +480,23 @@ function Invoke-AtlasTool {
     [System.IO.File]::WriteAllText($tempScript, $sb.ToString(), $utf8WithBom)
     Unblock-AtlasFile -Path $tempScript
 
+    # Validate wrapper parse before launch to avoid "nothing happens" failures.
+    try {
+        $parseErrors = $null
+        $parseTokens = $null
+        [System.Management.Automation.Language.Parser]::ParseFile($tempScript, [ref]$parseTokens, [ref]$parseErrors) | Out-Null
+        if ($parseErrors -and $parseErrors.Count -gt 0) {
+            $first = $parseErrors[0]
+            $line = if ($first.Extent -and $first.Extent.StartLineNumber) { $first.Extent.StartLineNumber } else { '?' }
+            $msg = "Wrapper invalido para '$($Tool.name)' (linea $line): $($first.Message)"
+            Write-AtlasLog $msg -Level ERROR -Tool 'Runner'
+            [System.Windows.MessageBox]::Show($msg, 'Atlas PC Support', 'OK', 'Error') | Out-Null
+            return
+        }
+    } catch {
+        Write-AtlasLog "No se pudo validar parser del wrapper temporal: $_" -Level WARN -Tool 'Runner'
+    }
+
     $psExe = 'powershell.exe'
     if ($script:AtlasPS7CachedPath -and (Test-Path -LiteralPath $script:AtlasPS7CachedPath)) {
         $psExe = $script:AtlasPS7CachedPath

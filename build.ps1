@@ -201,7 +201,7 @@ $epilog = $epilog -replace "`r`n", "`n"
 $manifestEscaped = $manifest.Replace("'", "''")
 $xamlEscaped     = $xamlTemplate.Replace("'", "''")
 $toolHashesEscaped = $toolHashesJson.Replace("'", "''")
-$toolkitEscaped  = $toolkitSource.Replace("'", "''")
+$toolkitEscaped  = $toolkitSource
 
 $embeddedData = (@"
 

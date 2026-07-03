@@ -1,7 +1,7 @@
 # ============================================================
 #  Atlas PC Support — launcher.ps1 (compilado)
 #  Versión: 1.0.0
-#  Build:   2026-07-03 13:58:45
+#  Build:   2026-07-03 14:22:01
 #  Repo:    https://github.com/mikepchelper-spec/atlas-pc-support
 #
 #  Uso:
@@ -19,7 +19,7 @@
 # ============================================================
 
 $script:AtlasVersion = '1.0.0'
-$script:AtlasBuildDate = '2026-07-03 13:58:45'
+$script:AtlasBuildDate = '2026-07-03 14:22:01'
 $script:AtlasToolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/src/tools'
 
 $script:AtlasToolsManifest = @'
@@ -321,7 +321,7 @@ $script:AtlasToolsManifest = @'
 
 $script:AtlasToolHashesJson = @'
 {
-  "generatedAt": "2026-07-03T13:58:45.3220927-05:00",
+  "generatedAt": "2026-07-03T14:22:01.8699993-05:00",
   "algorithm": "SHA256",
   "files": {
     "Invoke-ActualizarPowerShell.ps1": "bebc42e1da74f2a425c3823397827eaf132b790e8e75c124725a6ca7f48353cc",
@@ -1007,8 +1007,8 @@ function Write-AtlasHeader {
         [Parameter(Mandatory, Position = 0)] [string]$Title,
         [System.ConsoleColor]$Color = [System.ConsoleColor]::Cyan
     )
-    $line = ''='' * ([Math]::Min(60, [Math]::Max(12, $Title.Length + 6)))
-    Write-Host ''''
+    $line = '=' * ([Math]::Min(60, [Math]::Max(12, $Title.Length + 6)))
+    Write-Host ''
     Write-Host $line -ForegroundColor $Color
     Write-Host ("  {0}" -f $Title) -ForegroundColor $Color
     Write-Host $line -ForegroundColor $Color
@@ -1040,8 +1040,8 @@ function Write-AtlasFailure {
 
 function Wait-AtlasExit {
     [CmdletBinding()]
-    param([string]$Message = ''Presiona ENTER para cerrar'')
-    Write-Host ''''
+    param([string]$Message = 'Presiona ENTER para cerrar')
+    Write-Host ''
     [void](Read-Host $Message)
 }
 
@@ -1049,7 +1049,7 @@ function Get-AtlasReportDir {
     [CmdletBinding()]
     [OutputType([string])]
     param([string]$SubFolder)
-    $base = Join-Path $env:USERPROFILE ''Documents\AtlasPC\reports''
+    $base = Join-Path $env:USERPROFILE 'Documents\AtlasPC\reports'
     $dir  = if ($SubFolder) { Join-Path $base $SubFolder } else { $base }
     if (-not (Test-Path -LiteralPath $dir)) {
         New-Item -ItemType Directory -Path $dir -Force | Out-Null
@@ -1062,12 +1062,12 @@ function Get-AtlasReportPath {
     [OutputType([string])]
     param(
         [Parameter(Mandatory)] [string]$Prefix,
-        [string]$Extension = ''html'',
+        [string]$Extension = 'html',
         [string]$SubFolder
     )
     $dir   = Get-AtlasReportDir -SubFolder $SubFolder
-    $stamp = Get-Date -Format ''yyyy-MM-dd_HHmmss''
-    $ext   = $Extension.TrimStart(''.'')
+    $stamp = Get-Date -Format 'yyyy-MM-dd_HHmmss'
+    $ext   = $Extension.TrimStart('.')
     return (Join-Path $dir ("{0}_{1}.{2}" -f $Prefix, $stamp, $ext))
 }
 
@@ -1076,7 +1076,7 @@ function ConvertTo-AtlasHtmlEncoded {
     [OutputType([string])]
     param([Parameter(Mandatory, ValueFromPipeline)][AllowEmptyString()][string]$Text)
     process {
-        if ($null -eq $Text) { return '''' }
+        if ($null -eq $Text) { return '' }
         return [System.Net.WebUtility]::HtmlEncode($Text)
     }
 }
@@ -1087,13 +1087,13 @@ function ConvertTo-AtlasHtmlDocument {
     param(
         [Parameter(Mandatory)] [string]$Title,
         [Parameter(Mandatory)] [string]$BodyHtml,
-        [string]$AccentColor = ''#0078D4'',
+        [string]$AccentColor = '#0078D4',
         [string]$Subtitle
     )
     $safeTitle    = ConvertTo-AtlasHtmlEncoded $Title
-    $safeSubtitle = if ($Subtitle) { ConvertTo-AtlasHtmlEncoded $Subtitle } else { '''' }
-    $generated    = (Get-Date -Format ''yyyy-MM-dd HH:mm:ss'')
-    $subtitleHtml = if ($safeSubtitle) { "<p class=''subtitle''>$safeSubtitle</p>" } else { '''' }
+    $safeSubtitle = if ($Subtitle) { ConvertTo-AtlasHtmlEncoded $Subtitle } else { '' }
+    $generated    = (Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+    $subtitleHtml = if ($safeSubtitle) { "<p class='subtitle'>$safeSubtitle</p>" } else { '' }
     return @"
 <!DOCTYPE html>
 <html lang="es">
@@ -1104,7 +1104,7 @@ function ConvertTo-AtlasHtmlDocument {
 <style>
   :root { --accent: $AccentColor; }
   * { box-sizing: border-box; }
-  body { font-family: ''Segoe UI'', system-ui, sans-serif; margin: 0; color: #1b1b1b; background: #f3f3f3; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; color: #1b1b1b; background: #f3f3f3; }
   header { background: var(--accent); color: #fff; padding: 24px 32px; }
   header h1 { margin: 0; font-size: 22px; }
   header .subtitle { margin: 6px 0 0; opacity: .9; font-size: 14px; }
@@ -3141,6 +3141,23 @@ function Invoke-AtlasTool {
     $utf8WithBom = [System.Text.UTF8Encoding]::new($true)
     [System.IO.File]::WriteAllText($tempScript, $sb.ToString(), $utf8WithBom)
     Unblock-AtlasFile -Path $tempScript
+
+    # Validate wrapper parse before launch to avoid "nothing happens" failures.
+    try {
+        $parseErrors = $null
+        $parseTokens = $null
+        [System.Management.Automation.Language.Parser]::ParseFile($tempScript, [ref]$parseTokens, [ref]$parseErrors) | Out-Null
+        if ($parseErrors -and $parseErrors.Count -gt 0) {
+            $first = $parseErrors[0]
+            $line = if ($first.Extent -and $first.Extent.StartLineNumber) { $first.Extent.StartLineNumber } else { '?' }
+            $msg = "Wrapper invalido para '$($Tool.name)' (linea $line): $($first.Message)"
+            Write-AtlasLog $msg -Level ERROR -Tool 'Runner'
+            [System.Windows.MessageBox]::Show($msg, 'Atlas PC Support', 'OK', 'Error') | Out-Null
+            return
+        }
+    } catch {
+        Write-AtlasLog "No se pudo validar parser del wrapper temporal: $_" -Level WARN -Tool 'Runner'
+    }
 
     $psExe = 'powershell.exe'
     if ($script:AtlasPS7CachedPath -and (Test-Path -LiteralPath $script:AtlasPS7CachedPath)) {
