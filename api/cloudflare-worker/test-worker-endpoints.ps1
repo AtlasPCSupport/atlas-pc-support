@@ -11,6 +11,15 @@ function Get-FirstLine {
     return (($Text -split "`r?`n") | Select-Object -First 1)
 }
 
+function Convert-ToText {
+    param($Value)
+    if ($null -eq $Value) { return '' }
+    if ($Value -is [byte[]]) {
+        return [System.Text.Encoding]::UTF8.GetString($Value)
+    }
+    return [string]$Value
+}
+
 function Test-ShaLine {
     param([string]$Text, [string]$FileName)
     if (-not $Text) { return $false }
@@ -35,14 +44,17 @@ foreach ($t in $tests) {
     try {
         $res = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec $TimeoutSec -ErrorAction Stop
         $ok = ($res.StatusCode -eq $t.ExpectStatus)
-        $first = Get-FirstLine -Text $res.Content
+        $bodyText = Convert-ToText -Value $res.Content
+        $first = Get-FirstLine -Text $bodyText
 
         switch ($t.Kind) {
-            'bootstrap'    { $ok = $ok -and ($res.Content -match '(?m)^\s*#\s*Atlas PC Support - get\.ps1') }
+            'bootstrap'    { $ok = $ok -and ($bodyText -match '(?m)^\s*#\s*Atlas PC Support - get\.ps1') }
             'launcher_sha' { $ok = $ok -and (Test-ShaLine -Text $first -FileName 'launcher.ps1') }
             'tools_sha'    { $ok = $ok -and (Test-ShaLine -Text $first -FileName 'tool-hashes.json') }
-            'install_bat'  { $ok = $ok -and ($res.Content -match '(?im)^@echo off') }
-            'install_ps1'  { $ok = $ok -and ($res.Content -match '(?m)^#') }
+            'install_bat'  {
+                $ok = $ok -and ($bodyText -match '(?im)^@echo off')
+            }
+            'install_ps1'  { $ok = $ok -and ($bodyText -match '(?m)^#') }
             'install_sha'  { $ok = $ok -and ($first -match '^[a-f0-9]{64}\s+install-rustdesk\.ps1') }
             'healthz'      { $ok = $ok -and ($first -eq 'ok') }
         }
