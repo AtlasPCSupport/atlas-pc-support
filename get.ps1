@@ -9,7 +9,7 @@ $ErrorActionPreference = 'Stop'
 $launcherUrl  = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/launcher.ps1'
 $launcherShaUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/launcher.ps1.sha256'
 $launcherOutOfBandShaUrl = 'https://toolspanel.atlaspcsupport.com/launcher.sha256'
-$requireLauncherOutOfBandSha = $false
+$requireLauncherOutOfBandSha = $true
 $codeloadZipUrl = 'https://codeload.github.com/mikepchelper-spec/atlas-pc-support/zip/refs/heads/main'
 $launcherApiUrl = 'https://api.github.com/repos/mikepchelper-spec/atlas-pc-support/contents/launcher.ps1?ref=main'
 $launcherShaApiUrl = 'https://api.github.com/repos/mikepchelper-spec/atlas-pc-support/contents/launcher.ps1.sha256?ref=main'

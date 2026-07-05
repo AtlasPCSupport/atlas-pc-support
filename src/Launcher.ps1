@@ -62,7 +62,7 @@ $script:AtlasToolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec
 # Use a separate control plane (e.g. Cloudflare Worker secret route) and set
 # DigestRequired=$true once the route is deployed and maintained on each release.
 $script:AtlasToolHashesDigestUrl = 'https://toolspanel.atlaspcsupport.com/tool-hashes.sha256'
-$script:AtlasToolHashesDigestRequired = $false
+$script:AtlasToolHashesDigestRequired = $true
 
 # Tabla de hashes esperados para validar integridad de tools descargadas.
 $script:AtlasToolHashes = @{}
