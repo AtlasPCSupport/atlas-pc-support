@@ -1,0 +1,14 @@
+{
+  "name": "atlas-cloudflare-worker",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Versioned Cloudflare Worker for toolspanel.atlaspcsupport.com",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "tail": "wrangler tail"
+  },
+  "devDependencies": {
+    "wrangler": "^4.24.3"
+  }
+}

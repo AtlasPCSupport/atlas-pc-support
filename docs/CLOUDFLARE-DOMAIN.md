@@ -104,10 +104,19 @@ irm "https://toolspanel.atlaspcsupport.com?ref=devin/alguna-rama" | iex
 
 ## Worker code (with private-repo support)
 
+> Fuente de verdad versionada: [`api/cloudflare-worker/src/index.js`](../api/cloudflare-worker/src/index.js).  
+> Si usas Wrangler, despliega ese proyecto directamente:
+> 
+> ```powershell
+> cd api/cloudflare-worker
+> npm install
+> npm run deploy
+> ```
+
 ```javascript
 // atlas-launcher — sirve scripts de Atlas bajo tu dominio.
 //
-//   /                     → launcher.ps1 (PUBLIC repo)
+//   /                     → get.ps1 (PUBLIC repo)
 //   /launcher.sha256      → hash out-of-band para launcher (Worker secret)
 //   /tool-hashes.sha256   → hash out-of-band para tool-hashes.json (Worker secret)
 //   /install.bat          → onboarding/install.bat (PUBLIC repo)
@@ -252,12 +261,12 @@ export default {
       });
     }
 
-    // ROUTE: / (default) → launcher.ps1 from public repo
+    // ROUTE: / (default) → get.ps1 from public repo
     const ref = url.searchParams.get("ref") || "main";
-    let upstream  = await fetchPublic("launcher.ps1", ref);
+    let upstream  = await fetchPublic("get.ps1", ref);
     let actualRef = ref;
     if (!upstream.ok && ref !== "main") {
-      upstream  = await fetchPublic("launcher.ps1", "main");
+      upstream  = await fetchPublic("get.ps1", "main");
       actualRef = "main";
     }
     if (!upstream.ok) {

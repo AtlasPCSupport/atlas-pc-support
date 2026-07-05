@@ -95,13 +95,26 @@ You need a fine-grained Personal Access Token that lets the Worker read the priv
 
 ### 5. Update the Cloudflare Worker code
 
-Replace your current Worker code with the version in [`docs/CLOUDFLARE-DOMAIN.md`](../docs/CLOUDFLARE-DOMAIN.md) under "Worker code (with private-repo support)". The new version:
+Deploy the versioned Worker project in [`api/cloudflare-worker`](../api/cloudflare-worker):
+
+```powershell
+cd api/cloudflare-worker
+npm install
+npm run deploy
+```
+
+The new version:
 
 - Keeps your existing `launcher.ps1` behavior unchanged.
 - Adds a route `/install.bat` → public repo (no auth).
 - Adds a route `/install.ps1` → private repo (uses `GITHUB_PAT`).
+- Adds routes `/launcher.sha256` and `/tool-hashes.sha256` for out-of-band digest verification.
 
-Click **"Save and deploy"**.
+Before deploy, set/update these Worker secrets:
+
+- `GITHUB_PAT`
+- `ATLAS_LAUNCHER_SHA256`
+- `ATLAS_TOOL_HASHES_SHA256`
 
 That's it. The whole flow is now live at `https://toolspanel.atlaspcsupport.com/install.bat`.
 
@@ -112,6 +125,14 @@ After step 5, open a private/incognito browser tab and visit:
 - `https://toolspanel.atlaspcsupport.com/install.bat` → should download a .bat file (~3 KB).
 - `https://toolspanel.atlaspcsupport.com/install.ps1` → should display the PowerShell script (after step 2, with your real config inside).
 - `https://toolspanel.atlaspcsupport.com/install.ps1.sha256` → should return one-line SHA256 metadata.
+- `https://toolspanel.atlaspcsupport.com/launcher.sha256` → should return `64-hex launcher.ps1`.
+- `https://toolspanel.atlaspcsupport.com/tool-hashes.sha256` → should return `64-hex tool-hashes.json`.
+
+Or run the automated check from repo root:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ./api/cloudflare-worker/test-worker-endpoints.ps1
+```
 
 If you get a 502 or empty response on `/install.ps1`, double-check:
 - The PAT has Contents:Read on the handoff repo.
