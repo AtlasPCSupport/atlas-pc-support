@@ -113,6 +113,40 @@ function Get-AtlasToolHashesRemoteUrl {
     return $null
 }
 
+function Get-AtlasToolHashesDigestUrl {
+    [CmdletBinding()]
+    param()
+
+    if ($script:AtlasToolHashesDigestUrl) {
+        $url = [string]$script:AtlasToolHashesDigestUrl
+        if (-not [string]::IsNullOrWhiteSpace($url)) { return $url.Trim() }
+    }
+    return $null
+}
+
+function Get-AtlasExpectedDigestFromRemote {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][string]$DigestUrl,
+        [string]$Label = 'digest'
+    )
+
+    try {
+        $ProgressPreference = 'SilentlyContinue'
+        $raw = (Invoke-WebRequest -Uri ($DigestUrl + '?v=' + [guid]::NewGuid().ToString('N').Substring(0,8)) `
+            -UseBasicParsing -TimeoutSec 20 -ErrorAction Stop).Content
+        $expected = (($raw -split '\s+') | Where-Object { $_ } | Select-Object -First 1).ToLowerInvariant()
+        if ($expected -match '^[a-f0-9]{64}$') {
+            return $expected
+        }
+        Write-AtlasLog "Digest remoto invalido para $Label en $DigestUrl" -Level WARN -Tool 'Runner'
+        return $null
+    } catch {
+        Write-AtlasLog "No se pudo obtener digest remoto ($Label): $_" -Level WARN -Tool 'Runner'
+        return $null
+    }
+}
+
 function Refresh-AtlasToolHashesFromRemote {
     [CmdletBinding()]
     param([string]$FileName)
@@ -125,6 +159,31 @@ function Refresh-AtlasToolHashesFromRemote {
         $ProgressPreference = 'SilentlyContinue'
         Invoke-WebRequest -Uri ($hashUrl + '?v=' + [guid]::NewGuid().ToString('N').Substring(0,8)) `
             -OutFile $tmpPath -UseBasicParsing -TimeoutSec 30 -ErrorAction Stop
+
+        $digestRequired = $false
+        if ($null -ne $script:AtlasToolHashesDigestRequired) {
+            $digestRequired = [bool]$script:AtlasToolHashesDigestRequired
+        }
+        $digestUrl = Get-AtlasToolHashesDigestUrl
+        if ($digestUrl) {
+            $expectedDigest = Get-AtlasExpectedDigestFromRemote -DigestUrl $digestUrl -Label 'tool-hashes.json'
+            if (-not $expectedDigest) {
+                if ($digestRequired) {
+                    Write-AtlasLog "Digest remoto requerido para tool-hashes pero no disponible." -Level ERROR -Tool 'Runner'
+                    return $false
+                }
+            } else {
+                $actualDigest = (Get-FileHash -LiteralPath $tmpPath -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant()
+                if ($actualDigest -ne $expectedDigest) {
+                    Write-AtlasLog "tool-hashes.json rechazado por digest out-of-band. Esperado=$expectedDigest Actual=$actualDigest" -Level ERROR -Tool 'Runner'
+                    return $false
+                }
+                Write-AtlasLog "Digest out-of-band validado para tool-hashes.json." -Level INFO -Tool 'Runner'
+            }
+        } elseif ($digestRequired) {
+            Write-AtlasLog "Digest out-of-band requerido para tool-hashes pero no configurado." -Level ERROR -Tool 'Runner'
+            return $false
+        }
 
         $raw = Get-Content -Raw -LiteralPath $tmpPath -Encoding UTF8 -ErrorAction Stop
         $obj = ConvertFrom-AtlasJson $raw

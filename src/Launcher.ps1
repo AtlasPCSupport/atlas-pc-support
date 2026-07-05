@@ -58,6 +58,12 @@ if ($ps7) {
 # Fuente remota para scripts de herramientas (fallback cuando no hay USB/cache).
 $script:AtlasToolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/src/tools'
 
+# Optional out-of-band digest channel for config/tool-hashes.json.
+# Use a separate control plane (e.g. Cloudflare Worker secret route) and set
+# DigestRequired=$true once the route is deployed and maintained on each release.
+$script:AtlasToolHashesDigestUrl = 'https://toolspanel.atlaspcsupport.com/tool-hashes.sha256'
+$script:AtlasToolHashesDigestRequired = $false
+
 # Tabla de hashes esperados para validar integridad de tools descargadas.
 $script:AtlasToolHashes = @{}
 $toolHashesPath = Join-Path $script:AtlasRoot 'config\tool-hashes.json'
