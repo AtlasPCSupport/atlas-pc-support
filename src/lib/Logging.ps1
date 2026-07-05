@@ -10,11 +10,16 @@ function Initialize-AtlasLog {
         [string]$LogPath = (Expand-AtlasPath "%LOCALAPPDATA%\AtlasPC\logs")
     )
 
-    if (-not (Test-Path $LogPath)) {
-        New-Item -ItemType Directory -Path $LogPath -Force | Out-Null
+    $resolvedLogPath = Initialize-AtlasSecureDirectory -Path $LogPath
+    if (-not $resolvedLogPath) {
+        $resolvedLogPath = Expand-AtlasPath $LogPath
+        if (-not (Test-Path -LiteralPath $resolvedLogPath)) {
+            New-Item -ItemType Directory -Path $resolvedLogPath -Force | Out-Null
+        }
     }
+
     $date = Get-Date -Format "yyyy-MM-dd"
-    $script:AtlasLogFile = Join-Path $LogPath "atlas-$date.log"
+    $script:AtlasLogFile = Join-Path $resolvedLogPath "atlas-$date.log"
 
     $header = @"
 
@@ -25,6 +30,7 @@ function Initialize-AtlasLog {
 ================================================================
 "@
     Add-Content -Path $script:AtlasLogFile -Value $header -Encoding UTF8
+    [void](Set-AtlasPathAcl -Path $script:AtlasLogFile)
     return $script:AtlasLogFile
 }
 

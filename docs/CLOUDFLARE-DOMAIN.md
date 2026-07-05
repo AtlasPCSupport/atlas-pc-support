@@ -70,6 +70,10 @@ guardado como secret.
    - Type: **Secret** | Name: `GITHUB_PAT` | Value: pegar el token.
    - **Save and deploy**.
 
+3. **En el repo privado**, guarda también el checksum:
+   - `install-rustdesk.ps1`
+   - `install-rustdesk.ps1.sha256` (formato estándar: `<sha256>  install-rustdesk.ps1`)
+
 ### 4. Comprobar
 
 ```powershell
@@ -99,6 +103,7 @@ irm "https://toolspanel.atlaspcsupport.com?ref=devin/alguna-rama" | iex
 //   /                     → launcher.ps1 (PUBLIC repo)
 //   /install.bat          → onboarding/install.bat (PUBLIC repo)
 //   /install.ps1          → install-rustdesk.ps1 (PRIVATE repo, requires GITHUB_PAT)
+//   /install.ps1.sha256   → install-rustdesk.ps1.sha256 (PRIVATE repo, requires GITHUB_PAT)
 //
 // Query params (only on /):
 //   ?ref=<branch|tag|sha>  pinear versión (default: main)
@@ -109,7 +114,8 @@ irm "https://toolspanel.atlaspcsupport.com?ref=devin/alguna-rama" | iex
 
 const PUBLIC_REPO  = "mikepchelper-spec/atlas-pc-support";
 const PRIVATE_REPO = "mikepchelper-spec/atlas-pc-support-handoff";
-const PRIVATE_PS1  = "install-rustdesk.ps1"; // file at root of private repo
+const PRIVATE_PS1  = "install-rustdesk.ps1";        // file at root of private repo
+const PRIVATE_SHA  = "install-rustdesk.ps1.sha256"; // file at root of private repo
 
 export default {
   async fetch(request, env) {
@@ -173,6 +179,30 @@ export default {
         return new Response(
           `# Atlas: failed to fetch private .ps1 (${upstream.status}).\n` +
           `Write-Error "Atlas onboarding script unreachable. Check GITHUB_PAT scope and file exists at root of private repo."\n`,
+          { status: 502, headers: { "Content-Type": "text/plain; charset=utf-8" } }
+        );
+      }
+      return new Response(await upstream.text(), {
+        status: 200,
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Cache-Control": "public, max-age=30"
+        }
+      });
+    }
+
+    // ROUTE: /install.ps1.sha256 → private checksum sidecar
+    if (path === "/install.ps1.sha256") {
+      if (!env.GITHUB_PAT) {
+        return new Response(
+          "# Atlas: GITHUB_PAT not configured in Cloudflare Worker secrets.\n",
+          { status: 500, headers: { "Content-Type": "text/plain; charset=utf-8" } }
+        );
+      }
+      const upstream = await fetchPrivate(PRIVATE_SHA);
+      if (!upstream.ok) {
+        return new Response(
+          `# Atlas: failed to fetch private checksum (${upstream.status}).\n`,
           { status: 502, headers: { "Content-Type": "text/plain; charset=utf-8" } }
         );
       }

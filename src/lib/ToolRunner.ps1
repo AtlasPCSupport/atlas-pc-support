@@ -16,7 +16,7 @@
 #   - Nunca usa EncodedCommand (reduce heuristicas AV).
 #
 # Estabilidad:
-#   - Limpia wrappers temporales antiguos en %TEMP%\AtlasPC.
+#   - Limpia wrappers temporales antiguos en %LOCALAPPDATA%\AtlasPC\secure-run.
 #   - Cache con refresco por antiguedad para evitar "version congelada".
 # ============================================================
 
@@ -25,6 +25,25 @@ if (-not $script:AtlasToolCacheMaxAgeHours) {
 }
 if (-not $script:AtlasToolHashes) {
     $script:AtlasToolHashes = @{}
+}
+
+function Get-AtlasSecureRunDir {
+    [CmdletBinding()]
+    param()
+
+    if ($script:AtlasSecureRunDir -and (Test-Path -LiteralPath $script:AtlasSecureRunDir)) {
+        return $script:AtlasSecureRunDir
+    }
+
+    $dir = Initialize-AtlasSecureDirectory -Path '%LOCALAPPDATA%\AtlasPC\secure-run'
+    if (-not $dir) {
+        $dir = Expand-AtlasPath '%LOCALAPPDATA%\AtlasPC\secure-run'
+        if (-not (Test-Path -LiteralPath $dir)) {
+            New-Item -ItemType Directory -Path $dir -Force | Out-Null
+        }
+    }
+    $script:AtlasSecureRunDir = $dir
+    return $script:AtlasSecureRunDir
 }
 
 function Unblock-AtlasFile {
@@ -101,7 +120,7 @@ function Refresh-AtlasToolHashesFromRemote {
     $hashUrl = Get-AtlasToolHashesRemoteUrl
     if (-not $hashUrl) { return $false }
 
-    $tmpPath = Join-Path $env:TEMP ("atlas-tool-hashes-" + [guid]::NewGuid().ToString('N') + '.json')
+    $tmpPath = Join-Path (Get-AtlasSecureRunDir) ("atlas-tool-hashes-" + [guid]::NewGuid().ToString('N') + '.json')
     try {
         $ProgressPreference = 'SilentlyContinue'
         Invoke-WebRequest -Uri ($hashUrl + '?v=' + [guid]::NewGuid().ToString('N').Substring(0,8)) `
@@ -191,17 +210,18 @@ function Test-AtlasToolFileIntegrity {
 function Invoke-AtlasRunnerTempCleanup {
     [CmdletBinding()]
     param(
-        [string]$TempDir = (Join-Path $env:TEMP 'AtlasPC'),
+        [string]$TempDir,
         [int]$MaxAgeHours = 24
     )
 
+    if (-not $TempDir) { $TempDir = Get-AtlasSecureRunDir }
     if (-not (Test-Path -LiteralPath $TempDir)) { return }
 
     $cutoff = (Get-Date).AddHours(-1 * [math]::Abs($MaxAgeHours))
     try {
         Get-ChildItem -LiteralPath $TempDir -File -ErrorAction SilentlyContinue |
             Where-Object {
-                ($_.Name -like 'run-*.ps1' -or $_.Name -like 'run-*.cmd') -and
+                ($_.Name -like 'run-*.ps1' -or $_.Name -like 'run-*.cmd' -or $_.Name -like 'atlas-tool-hashes-*.json') -and
                 $_.LastWriteTime -lt $cutoff
             } |
             ForEach-Object {
@@ -469,7 +489,7 @@ function Invoke-AtlasTool {
     [void]$sb.AppendLine('    try { Remove-Item -LiteralPath $PSCommandPath -Force -ErrorAction SilentlyContinue } catch {}')
     [void]$sb.AppendLine('}')
 
-    $tempDir = Join-Path $env:TEMP 'AtlasPC'
+    $tempDir = Get-AtlasSecureRunDir
     if (-not (Test-Path -LiteralPath $tempDir)) {
         New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
     }
