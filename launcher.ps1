@@ -1,7 +1,7 @@
 # ============================================================
 #  Atlas PC Support — launcher.ps1 (compilado)
 #  Versión: 1.0.0
-#  Build:   2026-07-03 14:36:08
+#  Build:   2026-07-04 19:47:06
 #  Repo:    https://github.com/mikepchelper-spec/atlas-pc-support
 #
 #  Uso:
@@ -19,7 +19,7 @@
 # ============================================================
 
 $script:AtlasVersion = '1.0.0'
-$script:AtlasBuildDate = '2026-07-03 14:36:08'
+$script:AtlasBuildDate = '2026-07-04 19:47:06'
 $script:AtlasToolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/src/tools'
 
 $script:AtlasToolsManifest = @'
@@ -321,7 +321,7 @@ $script:AtlasToolsManifest = @'
 
 $script:AtlasToolHashesJson = @'
 {
-  "generatedAt": "2026-07-03T14:36:08.9867476-05:00",
+  "generatedAt": "2026-07-04T19:47:06.4526853-05:00",
   "algorithm": "SHA256",
   "files": {
     "Invoke-ActualizarPowerShell.ps1": "bebc42e1da74f2a425c3823397827eaf132b790e8e75c124725a6ca7f48353cc",
@@ -1276,6 +1276,50 @@ function Expand-AtlasPath {
     return [System.Environment]::ExpandEnvironmentVariables($Path)
 }
 
+function Set-AtlasPathAcl {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [switch]$CurrentUserOnly
+    )
+
+    if (-not (Test-Path -LiteralPath $Path)) { return $false }
+    if ($env:OS -ne 'Windows_NT') { return $true }
+
+    try {
+        $item = Get-Item -LiteralPath $Path -ErrorAction Stop
+        $perm = if ($item.PSIsContainer) { '(OI)(CI)F' } else { 'F' }
+        $sid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+        if (-not $sid) { return $false }
+
+        & icacls $Path '/inheritance:r' | Out-Null
+        & icacls $Path '/grant:r' ("*{0}:{1}" -f $sid, $perm) | Out-Null
+        if (-not $CurrentUserOnly) {
+            & icacls $Path '/grant:r' ("*S-1-5-18:{0}" -f $perm) | Out-Null
+            & icacls $Path '/grant:r' ("*S-1-5-32-544:{0}" -f $perm) | Out-Null
+        }
+        return $true
+    } catch {
+        return $false
+    }
+}
+
+function Initialize-AtlasSecureDirectory {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [switch]$CurrentUserOnly
+    )
+
+    $expanded = Expand-AtlasPath $Path
+    if (-not $expanded) { return $null }
+    if (-not (Test-Path -LiteralPath $expanded)) {
+        New-Item -ItemType Directory -Path $expanded -Force | Out-Null
+    }
+    [void](Set-AtlasPathAcl -Path $expanded -CurrentUserOnly:$CurrentUserOnly)
+    return $expanded
+}
+
 
 # ---- lib\Strings.ps1 ----
 # ============================================================
@@ -1908,9 +1952,16 @@ function Invoke-AsAdmin {
         [switch]$Wait
     )
 
-    # Write the block to a temp file and run with -File instead of -EncodedCommand.
-    # -EncodedCommand triggers AV heuristics on many endpoints.
-    $tmp = Join-Path $env:TEMP ("atlas-admin-" + [guid]::NewGuid().ToString('N').Substring(0,8) + ".ps1")
+    # Write the block to a per-user secure directory and run with -File instead
+    # of -EncodedCommand. -EncodedCommand triggers AV heuristics on many endpoints.
+    $secureRunDir = Initialize-AtlasSecureDirectory -Path '%LOCALAPPDATA%\AtlasPC\secure-run'
+    if (-not $secureRunDir) {
+        $secureRunDir = Join-Path $env:LOCALAPPDATA 'AtlasPC\secure-run'
+        if (-not (Test-Path -LiteralPath $secureRunDir)) {
+            New-Item -ItemType Directory -Path $secureRunDir -Force | Out-Null
+        }
+    }
+    $tmp = Join-Path $secureRunDir ("atlas-admin-" + [guid]::NewGuid().ToString('N').Substring(0,8) + ".ps1")
     try {
         $payload = @(
             '$ErrorActionPreference = ''Continue'''
@@ -1962,11 +2013,16 @@ function Initialize-AtlasLog {
         [string]$LogPath = (Expand-AtlasPath "%LOCALAPPDATA%\AtlasPC\logs")
     )
 
-    if (-not (Test-Path $LogPath)) {
-        New-Item -ItemType Directory -Path $LogPath -Force | Out-Null
+    $resolvedLogPath = Initialize-AtlasSecureDirectory -Path $LogPath
+    if (-not $resolvedLogPath) {
+        $resolvedLogPath = Expand-AtlasPath $LogPath
+        if (-not (Test-Path -LiteralPath $resolvedLogPath)) {
+            New-Item -ItemType Directory -Path $resolvedLogPath -Force | Out-Null
+        }
     }
+
     $date = Get-Date -Format "yyyy-MM-dd"
-    $script:AtlasLogFile = Join-Path $LogPath "atlas-$date.log"
+    $script:AtlasLogFile = Join-Path $resolvedLogPath "atlas-$date.log"
 
     $header = @"
 
@@ -1977,6 +2033,7 @@ function Initialize-AtlasLog {
 ================================================================
 "@
     Add-Content -Path $script:AtlasLogFile -Value $header -Encoding UTF8
+    [void](Set-AtlasPathAcl -Path $script:AtlasLogFile)
     return $script:AtlasLogFile
 }
 
@@ -2678,7 +2735,7 @@ function Initialize-AtlasPS7 {
 #   - Nunca usa EncodedCommand (reduce heuristicas AV).
 #
 # Estabilidad:
-#   - Limpia wrappers temporales antiguos en %TEMP%\AtlasPC.
+#   - Limpia wrappers temporales antiguos en %LOCALAPPDATA%\AtlasPC\secure-run.
 #   - Cache con refresco por antiguedad para evitar "version congelada".
 # ============================================================
 
@@ -2687,6 +2744,25 @@ if (-not $script:AtlasToolCacheMaxAgeHours) {
 }
 if (-not $script:AtlasToolHashes) {
     $script:AtlasToolHashes = @{}
+}
+
+function Get-AtlasSecureRunDir {
+    [CmdletBinding()]
+    param()
+
+    if ($script:AtlasSecureRunDir -and (Test-Path -LiteralPath $script:AtlasSecureRunDir)) {
+        return $script:AtlasSecureRunDir
+    }
+
+    $dir = Initialize-AtlasSecureDirectory -Path '%LOCALAPPDATA%\AtlasPC\secure-run'
+    if (-not $dir) {
+        $dir = Expand-AtlasPath '%LOCALAPPDATA%\AtlasPC\secure-run'
+        if (-not (Test-Path -LiteralPath $dir)) {
+            New-Item -ItemType Directory -Path $dir -Force | Out-Null
+        }
+    }
+    $script:AtlasSecureRunDir = $dir
+    return $script:AtlasSecureRunDir
 }
 
 function Unblock-AtlasFile {
@@ -2763,7 +2839,7 @@ function Refresh-AtlasToolHashesFromRemote {
     $hashUrl = Get-AtlasToolHashesRemoteUrl
     if (-not $hashUrl) { return $false }
 
-    $tmpPath = Join-Path $env:TEMP ("atlas-tool-hashes-" + [guid]::NewGuid().ToString('N') + '.json')
+    $tmpPath = Join-Path (Get-AtlasSecureRunDir) ("atlas-tool-hashes-" + [guid]::NewGuid().ToString('N') + '.json')
     try {
         $ProgressPreference = 'SilentlyContinue'
         Invoke-WebRequest -Uri ($hashUrl + '?v=' + [guid]::NewGuid().ToString('N').Substring(0,8)) `
@@ -2853,17 +2929,18 @@ function Test-AtlasToolFileIntegrity {
 function Invoke-AtlasRunnerTempCleanup {
     [CmdletBinding()]
     param(
-        [string]$TempDir = (Join-Path $env:TEMP 'AtlasPC'),
+        [string]$TempDir,
         [int]$MaxAgeHours = 24
     )
 
+    if (-not $TempDir) { $TempDir = Get-AtlasSecureRunDir }
     if (-not (Test-Path -LiteralPath $TempDir)) { return }
 
     $cutoff = (Get-Date).AddHours(-1 * [math]::Abs($MaxAgeHours))
     try {
         Get-ChildItem -LiteralPath $TempDir -File -ErrorAction SilentlyContinue |
             Where-Object {
-                ($_.Name -like 'run-*.ps1' -or $_.Name -like 'run-*.cmd') -and
+                ($_.Name -like 'run-*.ps1' -or $_.Name -like 'run-*.cmd' -or $_.Name -like 'atlas-tool-hashes-*.json') -and
                 $_.LastWriteTime -lt $cutoff
             } |
             ForEach-Object {
@@ -3131,7 +3208,7 @@ function Invoke-AtlasTool {
     [void]$sb.AppendLine('    try { Remove-Item -LiteralPath $PSCommandPath -Force -ErrorAction SilentlyContinue } catch {}')
     [void]$sb.AppendLine('}')
 
-    $tempDir = Join-Path $env:TEMP 'AtlasPC'
+    $tempDir = Get-AtlasSecureRunDir
     if (-not (Test-Path -LiteralPath $tempDir)) {
         New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
     }

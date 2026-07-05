@@ -53,9 +53,16 @@ function Invoke-AsAdmin {
         [switch]$Wait
     )
 
-    # Write the block to a temp file and run with -File instead of -EncodedCommand.
-    # -EncodedCommand triggers AV heuristics on many endpoints.
-    $tmp = Join-Path $env:TEMP ("atlas-admin-" + [guid]::NewGuid().ToString('N').Substring(0,8) + ".ps1")
+    # Write the block to a per-user secure directory and run with -File instead
+    # of -EncodedCommand. -EncodedCommand triggers AV heuristics on many endpoints.
+    $secureRunDir = Initialize-AtlasSecureDirectory -Path '%LOCALAPPDATA%\AtlasPC\secure-run'
+    if (-not $secureRunDir) {
+        $secureRunDir = Join-Path $env:LOCALAPPDATA 'AtlasPC\secure-run'
+        if (-not (Test-Path -LiteralPath $secureRunDir)) {
+            New-Item -ItemType Directory -Path $secureRunDir -Force | Out-Null
+        }
+    }
+    $tmp = Join-Path $secureRunDir ("atlas-admin-" + [guid]::NewGuid().ToString('N').Substring(0,8) + ".ps1")
     try {
         $payload = @(
             '$ErrorActionPreference = ''Continue'''

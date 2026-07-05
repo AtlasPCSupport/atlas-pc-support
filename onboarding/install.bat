@@ -67,12 +67,36 @@ echo     [4/4] Generando contrasena unica para esta PC
 echo.
 
 REM ---- Run the PowerShell installer (served by CF Worker) -----
-REM The Worker fetches install-rustdesk.ps1 from the PRIVATE repo
-REM (atlas-pc-support-handoff) using a GitHub PAT stored as a
-REM Worker secret. See docs/CLOUDFLARE-DOMAIN.md.
+REM Hardening: NEVER execute remote code directly from memory (iex+iwr).
+REM We now:
+REM   1) Download install.ps1.sha256
+REM   2) Download install.ps1 to a .download file
+REM   3) Verify SHA-256
+REM   4) Execute local verified file via -File
+REM The Worker fetches install-rustdesk.ps1 (+ .sha256) from the PRIVATE repo
+REM (atlas-pc-support-handoff) using a GitHub PAT stored as a Worker secret.
+REM See docs/CLOUDFLARE-DOMAIN.md.
 set "PS_URL=https://toolspanel.atlaspcsupport.com/install.ps1"
+set "PS_SHA_URL=https://toolspanel.atlaspcsupport.com/install.ps1.sha256"
+set "PS_SCRIPT_NAME=install-rustdesk.ps1"
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command "& {Set-ExecutionPolicy Bypass -Scope Process -Force; iex (iwr -UseBasicParsing -Uri '%PS_URL%').Content}"
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+  "$ErrorActionPreference='Stop';" ^
+  "$url='%PS_URL%'; $shaUrl='%PS_SHA_URL%';" ^
+  "$root=Join-Path $env:LOCALAPPDATA 'AtlasPC\onboarding'; if(-not (Test-Path -LiteralPath $root)){New-Item -ItemType Directory -Path $root -Force | Out-Null};" ^
+  "$tmp=Join-Path $root ('%PS_SCRIPT_NAME%.download'); $dst=Join-Path $root '%PS_SCRIPT_NAME%';" ^
+  "Write-Host '  [>] Descargando checksum remoto...' -ForegroundColor Cyan;" ^
+  "$shaRaw=(Invoke-WebRequest -Uri ($shaUrl+'?v='+[guid]::NewGuid().ToString('N')) -UseBasicParsing -TimeoutSec 30 -ErrorAction Stop).Content;" ^
+  "$expected=((($shaRaw -split '\s+') | Where-Object { $_ })[0]).ToLowerInvariant();" ^
+  "if(-not $expected -or $expected -notmatch '^[a-f0-9]{64}$'){throw 'Checksum remoto invalido o no disponible.'};" ^
+  "Write-Host '  [>] Descargando instalador...' -ForegroundColor Cyan;" ^
+  "Invoke-WebRequest -Uri ($url+'?v='+[guid]::NewGuid().ToString('N')) -OutFile $tmp -UseBasicParsing -TimeoutSec 60 -ErrorAction Stop;" ^
+  "$actual=(Get-FileHash -LiteralPath $tmp -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant();" ^
+  "if($actual -ne $expected){Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue;throw ('Integridad fallida. Esperado SHA256='+$expected+', obtenido='+$actual)};" ^
+  "Move-Item -LiteralPath $tmp -Destination $dst -Force; Unblock-File -LiteralPath $dst -ErrorAction SilentlyContinue;" ^
+  "Write-Host ('  [OK] SHA-256: ' + $actual) -ForegroundColor Green;" ^
+  "& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $dst;" ^
+  "if($global:LASTEXITCODE -ne $null){exit $global:LASTEXITCODE}else{exit 0}"
 
 set "RC=%errorlevel%"
 echo.

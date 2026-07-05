@@ -134,3 +134,47 @@ function Expand-AtlasPath {
     if (-not $Path) { return "" }
     return [System.Environment]::ExpandEnvironmentVariables($Path)
 }
+
+function Set-AtlasPathAcl {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [switch]$CurrentUserOnly
+    )
+
+    if (-not (Test-Path -LiteralPath $Path)) { return $false }
+    if ($env:OS -ne 'Windows_NT') { return $true }
+
+    try {
+        $item = Get-Item -LiteralPath $Path -ErrorAction Stop
+        $perm = if ($item.PSIsContainer) { '(OI)(CI)F' } else { 'F' }
+        $sid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+        if (-not $sid) { return $false }
+
+        & icacls $Path '/inheritance:r' | Out-Null
+        & icacls $Path '/grant:r' ("*{0}:{1}" -f $sid, $perm) | Out-Null
+        if (-not $CurrentUserOnly) {
+            & icacls $Path '/grant:r' ("*S-1-5-18:{0}" -f $perm) | Out-Null
+            & icacls $Path '/grant:r' ("*S-1-5-32-544:{0}" -f $perm) | Out-Null
+        }
+        return $true
+    } catch {
+        return $false
+    }
+}
+
+function Initialize-AtlasSecureDirectory {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [switch]$CurrentUserOnly
+    )
+
+    $expanded = Expand-AtlasPath $Path
+    if (-not $expanded) { return $null }
+    if (-not (Test-Path -LiteralPath $expanded)) {
+        New-Item -ItemType Directory -Path $expanded -Force | Out-Null
+    }
+    [void](Set-AtlasPathAcl -Path $expanded -CurrentUserOnly:$CurrentUserOnly)
+    return $expanded
+}

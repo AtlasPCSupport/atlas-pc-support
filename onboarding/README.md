@@ -10,18 +10,19 @@ A two-piece installer that bootstraps RustDesk on a new client's PC, pre-configu
 |---|---|---|
 | `onboarding/install.bat` | **public** (this repo) | Clients download and double-click. Contains no secrets. |
 | `install-rustdesk.ps1` | **private** ([atlas-pc-support-handoff](https://github.com/mikepchelper-spec/atlas-pc-support-handoff)) | Contains the exported RustDesk *Server Config* string (host + ed25519 pubkey). The pubkey is technically public-by-design, but keeping it out of a public, search-indexed repo is a sensible defense in depth. |
-| Cloudflare Worker `atlas-launcher` | Cloudflare account | Routes `toolspanel.atlaspcsupport.com/install.ps1` → fetches the .ps1 from the **private** repo using a GitHub PAT stored as a Worker secret. |
+| `install-rustdesk.ps1.sha256` | **private** (`atlas-pc-support-handoff`) | Integrity sidecar. `install.bat` verifies this SHA-256 before running `install.ps1`. |
+| Cloudflare Worker `atlas-launcher` | Cloudflare account | Routes `toolspanel.atlaspcsupport.com/install.ps1` and `/install.ps1.sha256` → fetches both files from the **private** repo using a GitHub PAT stored as a Worker secret. |
 
 End-to-end flow:
 
 ```
 client browser   →   toolspanel.atlaspcsupport.com/install.bat   →   GitHub raw (public repo)
 double-click     →   install.bat self-elevates              →   UAC prompt
-.bat fetches     →   toolspanel.atlaspcsupport.com/install.ps1   →   Cloudflare Worker
+.bat fetches     →   toolspanel.atlaspcsupport.com/install.ps1 + /install.ps1.sha256   →   Cloudflare Worker
                                                              ↓
                                                      api.github.com (Bearer $GITHUB_PAT)
                                                              ↓
-                                                     atlas-pc-support-handoff/install-rustdesk.ps1
+                                                     atlas-pc-support-handoff/install-rustdesk.ps1 (+ .sha256)
 .ps1 executes    →   downloads latest RustDesk → installs → applies config → generates password → popup
 ```
 
@@ -48,9 +49,14 @@ C:\ProgramData\Atlas\rustdesk-onboarding-<timestamp>.txt
 
 This is the **5-step list** you do once. After this, every new client is just step 1-6 of the workflow above.
 
-### 1. Add the .ps1 to the private handoff repo
+### 1. Add the onboarding files to the private handoff repo
 
-The PR that introduces this folder also opens a companion PR in `atlas-pc-support-handoff` that adds `install-rustdesk.ps1` (with a placeholder for your config). Merge that PR.
+The PR that introduces this folder also opens a companion PR in `atlas-pc-support-handoff` that adds:
+
+- `install-rustdesk.ps1` (with a placeholder for your config)
+- `install-rustdesk.ps1.sha256`
+
+Merge that PR.
 
 ### 2. Paste your RustDesk Server Config into the .ps1
 
@@ -62,6 +68,7 @@ The PR that introduces this folder also opens a companion PR in `atlas-pc-suppor
    $AtlasRustDeskConfig = '<<PASTE-EXPORTED-CONFIG-HERE>>'
    ```
 5. Commit directly to `main`.
+6. Recalculate and commit `install-rustdesk.ps1.sha256` after every `.ps1` change.
 
 Until you do this, the .ps1 will refuse to run and print a helpful error.
 
@@ -104,6 +111,7 @@ After step 5, open a private/incognito browser tab and visit:
 
 - `https://toolspanel.atlaspcsupport.com/install.bat` → should download a .bat file (~3 KB).
 - `https://toolspanel.atlaspcsupport.com/install.ps1` → should display the PowerShell script (after step 2, with your real config inside).
+- `https://toolspanel.atlaspcsupport.com/install.ps1.sha256` → should return one-line SHA256 metadata.
 
 If you get a 502 or empty response on `/install.ps1`, double-check:
 - The PAT has Contents:Read on the handoff repo.
@@ -127,6 +135,7 @@ When [Tool C — RustDesk integrado] lands in the panel, this folder becomes red
 |---|---|---|
 | `# Atlas: GITHUB_PAT not configured` in the .ps1 output | Worker secret missing | Step 4 of one-time setup. |
 | `# Atlas: failed to fetch private .ps1 (404)` | PAT lacks access to the handoff repo, or the `.ps1` filename in the worker doesn't match the one in the private repo | Verify PAT scope (Contents:Read on `atlas-pc-support-handoff`). Verify file is named `install-rustdesk.ps1` at repo root. |
+| `Checksum remoto invalido o no disponible` | Missing or stale `install-rustdesk.ps1.sha256`, or Worker route `/install.ps1.sha256` not deployed | Generate/update `.sha256` in private repo and deploy the updated Worker code. |
 | `# Atlas: failed to fetch private .ps1 (401)` | PAT expired or revoked | Regenerate, replace the secret in Cloudflare. |
 | `Onboarding aborted: missing server config.` | You haven't pasted your Server Config into `$AtlasRustDeskConfig` in the private .ps1 | Step 2 of one-time setup. |
 | Popup never appears, console exits with `cannot find rustdesk.exe` | RustDesk silent installer was blocked by AV | Whitelist temp dir + retry, or install RustDesk first manually then re-run the PS script. |
