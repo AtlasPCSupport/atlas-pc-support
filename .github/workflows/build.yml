@@ -41,6 +41,11 @@ jobs:
           # detectar si alguien edito src/ sin reconstruir launcher.ps1.
           . ./tests/Assert-LauncherFresh.ps1
 
+      - name: Security guards (bootstrap/runtime hardening)
+        shell: pwsh
+        run: |
+          . ./tests/Test-SecurityGuards.ps1
+
       - name: Build launcher.ps1
         shell: pwsh
         run: |
