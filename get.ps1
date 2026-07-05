@@ -8,6 +8,8 @@ $ErrorActionPreference = 'Stop'
 
 $launcherUrl  = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/launcher.ps1'
 $launcherShaUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/launcher.ps1.sha256'
+$launcherOutOfBandShaUrl = 'https://toolspanel.atlaspcsupport.com/launcher.sha256'
+$requireLauncherOutOfBandSha = $false
 $codeloadZipUrl = 'https://codeload.github.com/mikepchelper-spec/atlas-pc-support/zip/refs/heads/main'
 $launcherApiUrl = 'https://api.github.com/repos/mikepchelper-spec/atlas-pc-support/contents/launcher.ps1?ref=main'
 $launcherShaApiUrl = 'https://api.github.com/repos/mikepchelper-spec/atlas-pc-support/contents/launcher.ps1.sha256?ref=main'
@@ -100,6 +102,19 @@ function Get-RemoteTextWithFallback {
     return [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String(($apiResponse.content -replace '\s', '')))
 }
 
+function Get-Sha256FromText {
+    param([string]$Text)
+    if (-not $Text) { return $null }
+    $sha = (($Text -split '\s+') | Where-Object { $_ } | Select-Object -First 1).ToLowerInvariant()
+    if ($sha -and $sha -match '^[a-f0-9]{64}$') { return $sha }
+    return $null
+}
+
+function Get-DirectRemoteText {
+    param([Parameter(Mandatory = $true)][string]$Url)
+    return (Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 30 -ErrorAction Stop).Content
+}
+
 # Keep launcher at a stable path so ToolRunner can read its AST at runtime.
 $atlasDir     = Join-Path $env:LOCALAPPDATA 'AtlasPC'
 if (-not (Test-Path $atlasDir)) { New-Item -ItemType Directory -Path $atlasDir -Force | Out-Null }
@@ -124,10 +139,29 @@ $shaRaw = Get-RemoteTextWithFallback `
     -RelativePath 'launcher.ps1.sha256' `
     -ApiUrl $launcherShaApiUrl `
     -Headers $githubApiHeaders
-$expectedHash = (($shaRaw -split '\s+') | Where-Object { $_ } | Select-Object -First 1).ToLowerInvariant()
+$expectedHash = Get-Sha256FromText -Text $shaRaw
 if (-not $expectedHash -or $expectedHash -notmatch '^[a-f0-9]{64}$') {
     throw "Invalid checksum metadata from server."
 }
+
+try {
+    $oobRaw = Get-DirectRemoteText -Url ($launcherOutOfBandShaUrl + '?v=' + [guid]::NewGuid().ToString('N'))
+    $oobHash = Get-Sha256FromText -Text $oobRaw
+    if (-not $oobHash) {
+        if ($requireLauncherOutOfBandSha) {
+            throw "Out-of-band launcher checksum is invalid or unavailable."
+        }
+        Write-Warning "Out-of-band launcher checksum invalid/unavailable. Continuing with repo checksum."
+    } elseif ($oobHash -ne $expectedHash) {
+        throw "Checksum mismatch between repo and out-of-band channel. Repo=$expectedHash OOB=$oobHash"
+    } else {
+        Write-Host "  [OK] Out-of-band SHA-256 matched." -ForegroundColor Green
+    }
+} catch {
+    if ($requireLauncherOutOfBandSha) { throw }
+    Write-Warning "Out-of-band checksum check failed: $($_.Exception.Message)"
+}
+
 $actualHash = (Get-FileHash -LiteralPath $launcherTempPath -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant()
 if ($actualHash -ne $expectedHash) {
     Remove-Item -LiteralPath $launcherTempPath -Force -ErrorAction SilentlyContinue

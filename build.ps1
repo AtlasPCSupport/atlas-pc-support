@@ -276,6 +276,7 @@ $toolHashesPath = Join-Path $PSScriptRoot 'config\tool-hashes.json'
 
 # Sidecar de integridad del launcher distribuible (consumido por get.ps1).
 $launcherHash = (Get-FileHash -LiteralPath $OutFile -Algorithm SHA256).Hash.ToLowerInvariant()
+$toolHashesFileSha = (Get-FileHash -LiteralPath $toolHashesPath -Algorithm SHA256).Hash.ToLowerInvariant()
 $launcherName = Split-Path -Leaf $OutFile
 $launcherShaPath = "$OutFile.sha256"
 [System.IO.File]::WriteAllText(
@@ -291,6 +292,8 @@ $fi = Get-Item $OutFile
 Write-Host "  Tamaño:  $([math]::Round($fi.Length / 1KB, 1)) KB ($([math]::Round($fi.Length / 1MB, 2)) MB)" -ForegroundColor Gray
 Write-Host "  Build:   $buildDate" -ForegroundColor Gray
 Write-Host "  Hash:    $launcherHash" -ForegroundColor Gray
+Write-Host "  Hashes:  $toolHashesFileSha  (config/tool-hashes.json)" -ForegroundColor Gray
 Write-Host "  SHA256:  $launcherShaPath" -ForegroundColor Gray
 Write-Host "  Tools:   $toolHashesPath" -ForegroundColor Gray
+Write-Host "  OOB tip: set Worker secrets ATLAS_LAUNCHER_SHA256 and ATLAS_TOOL_HASHES_SHA256 with values above." -ForegroundColor DarkGray
 Write-Host ""

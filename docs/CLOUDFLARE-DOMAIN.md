@@ -48,7 +48,7 @@ Ya funciona bajo `atlas-launcher.<tu-subdominio>.workers.dev`. Falta atarlo a tu
 2. Escribe `toolspanel.atlaspcsupport.com`.
 3. Cloudflare crea el DNS automáticamente y propaga en minutos.
 
-### 3. (Solo si vas a usar `/install.ps1`) — Añadir el GitHub PAT
+### 3. Configurar secrets del Worker (PAT + hashes out-of-band)
 
 El endpoint `/install.ps1` lee del repo PRIVADO `atlas-pc-support-handoff`.
 Para que el Worker pueda leerlo, necesita un **GitHub Personal Access Token**
@@ -73,6 +73,13 @@ guardado como secret.
 3. **En el repo privado**, guarda también el checksum:
    - `install-rustdesk.ps1`
    - `install-rustdesk.ps1.sha256` (formato estándar: `<sha256>  install-rustdesk.ps1`)
+
+4. **(Recomendado, para hardening fase 2)** añadir dos secrets más:
+   - `ATLAS_LAUNCHER_SHA256`: SHA-256 actual de `launcher.ps1`
+   - `ATLAS_TOOL_HASHES_SHA256`: SHA-256 actual de `config/tool-hashes.json`
+
+   Estos dos valores se sirven por rutas dedicadas del Worker y permiten validación
+   out-of-band desde el cliente.
 
 ### 4. Comprobar
 
@@ -101,6 +108,8 @@ irm "https://toolspanel.atlaspcsupport.com?ref=devin/alguna-rama" | iex
 // atlas-launcher — sirve scripts de Atlas bajo tu dominio.
 //
 //   /                     → launcher.ps1 (PUBLIC repo)
+//   /launcher.sha256      → hash out-of-band para launcher (Worker secret)
+//   /tool-hashes.sha256   → hash out-of-band para tool-hashes.json (Worker secret)
 //   /install.bat          → onboarding/install.bat (PUBLIC repo)
 //   /install.ps1          → install-rustdesk.ps1 (PRIVATE repo, requires GITHUB_PAT)
 //   /install.ps1.sha256   → install-rustdesk.ps1.sha256 (PRIVATE repo, requires GITHUB_PAT)
@@ -145,6 +154,34 @@ export default {
           cf: { cacheTtl: 30, cacheEverything: true }
         }
       );
+
+    // ROUTE: /launcher.sha256 → out-of-band launcher checksum (Worker secret)
+    if (path === "/launcher.sha256") {
+      if (!env.ATLAS_LAUNCHER_SHA256) {
+        return new Response("# Atlas: ATLAS_LAUNCHER_SHA256 not configured.\n", {
+          status: 500,
+          headers: { "Content-Type": "text/plain; charset=utf-8" }
+        });
+      }
+      return new Response(`${env.ATLAS_LAUNCHER_SHA256}  launcher.ps1\n`, {
+        status: 200,
+        headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "public, max-age=30" }
+      });
+    }
+
+    // ROUTE: /tool-hashes.sha256 → out-of-band tool-hashes checksum (Worker secret)
+    if (path === "/tool-hashes.sha256") {
+      if (!env.ATLAS_TOOL_HASHES_SHA256) {
+        return new Response("# Atlas: ATLAS_TOOL_HASHES_SHA256 not configured.\n", {
+          status: 500,
+          headers: { "Content-Type": "text/plain; charset=utf-8" }
+        });
+      }
+      return new Response(`${env.ATLAS_TOOL_HASHES_SHA256}  tool-hashes.json\n`, {
+        status: 200,
+        headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "public, max-age=30" }
+      });
+    }
 
     // ROUTE: /install.bat → public onboarding/install.bat (download)
     if (path === "/install.bat") {
