@@ -31,6 +31,10 @@ After applying both, you can delete this `docs/ci/` folder (optional).
   `tests/Assert-LauncherFresh.ps1` on the pristine checkout, before the build
   step, to block PRs that edit `src/` without rebuilding `launcher.ps1` /
   `config/tool-hashes.json`. Timestamp- and EOL-insensitive (no false positives).
+- **New `Security guards` step** — runs `tests/Test-SecurityGuards.ps1` to
+  fail fast on high-risk regressions (direct `Invoke-Expression/iex` command
+  execution, `-EncodedCommand`, insecure onboarding pattern, and fallback to
+  `%TEMP%\AtlasPC` for privileged runtime wrappers).
 - All previous steps are preserved unchanged.
 
 ### `auto-merge.yml`
