@@ -603,6 +603,63 @@ Generado por Atlas PC Support - Preparar USB Offline
         return $false
     }
 
+    function Invoke-ExternalProcessWithTimeout {
+        param(
+            [Parameter(Mandatory)][string]$FilePath,
+            [string[]]$ArgumentList = @(),
+            [int]$TimeoutSec = 180
+        )
+
+        try {
+            $proc = Start-Process -FilePath $FilePath -ArgumentList $ArgumentList -PassThru -ErrorAction Stop
+        } catch {
+            return @{
+                Started   = $false
+                Completed = $false
+                TimedOut  = $false
+                ExitCode  = $null
+                Error     = $_.Exception.Message
+            }
+        }
+
+        $timedOut = $false
+        try {
+            Wait-Process -Id $proc.Id -Timeout $TimeoutSec -ErrorAction Stop
+        } catch {
+            if ($proc -and -not $proc.HasExited) {
+                $timedOut = $true
+            }
+        }
+
+        if ($timedOut) {
+            try {
+                # Kill process tree to avoid orphan installer children.
+                & taskkill.exe /PID $proc.Id /T /F > $null 2>&1
+            } catch {}
+            return @{
+                Started   = $true
+                Completed = $false
+                TimedOut  = $true
+                ExitCode  = $null
+                Error     = 'timeout'
+            }
+        }
+
+        $exitCode = $null
+        try {
+            $proc.Refresh()
+            $exitCode = $proc.ExitCode
+        } catch {}
+
+        return @{
+            Started   = $true
+            Completed = $true
+            TimedOut  = $false
+            ExitCode  = $exitCode
+            Error     = $null
+        }
+    }
+
     function Download-FastCopy {
         param([string]$AppsDir)
 
@@ -620,22 +677,37 @@ Generado por Atlas PC Support - Preparar USB Offline
             if ($sz -gt 200KB) {
                 Write-Centered ($L.FCInstOk -f (Format-Size $sz)) 'Green'
                 Write-Centered $L.FCExtract 'DarkGray'
-                $p = Start-Process -FilePath $installer -ArgumentList @(
+                $extractResult = Invoke-ExternalProcessWithTimeout -FilePath $installer -ArgumentList @(
                     '/EXTRACT64', '/NOSUBDIR', '/AGREE_LICENSE', ("/DIR=`"$AppsDir`"")
-                ) -Wait -PassThru -ErrorAction SilentlyContinue
-                if ($p -and $p.ExitCode -eq 0 -and (Test-Path (Join-Path $AppsDir 'FastCopy.exe'))) {
+                ) -TimeoutSec 180
+                if ($extractResult.TimedOut) {
+                    Write-Centered '[!] FastCopy extraction timed out (>180s). Trying /SILENT ...' 'Yellow'
+                } elseif (-not $extractResult.Started) {
+                    Write-Centered ("[!] Could not start extractor: {0}" -f $extractResult.Error) 'Yellow'
+                }
+
+                if ($extractResult.Completed -and $extractResult.ExitCode -eq 0 -and (Test-Path (Join-Path $AppsDir 'FastCopy.exe'))) {
                     Write-Centered $L.FCExtractOk 'Green'
                     Remove-Item $installer -ErrorAction SilentlyContinue
                 } else {
                     # /EXTRACT64 failed or not supported — retry with /SILENT install
                     Write-Centered $L.FCExtractF 'Yellow'
-                    $p2 = Start-Process -FilePath $installer -ArgumentList @(
+                    $silentResult = Invoke-ExternalProcessWithTimeout -FilePath $installer -ArgumentList @(
                         '/SILENT', '/AGREE_LICENSE', ("/DIR=`"$AppsDir`"")
-                    ) -Wait -PassThru -ErrorAction SilentlyContinue
-                    if ($p2 -and $p2.ExitCode -eq 0) {
-                        Write-Centered $L.FCExtractOk 'Green'
+                    ) -TimeoutSec 180
+                    if ($silentResult.TimedOut) {
+                        Write-Centered '[!] /SILENT install timed out (>180s). Leaving installer for manual run.' 'Yellow'
+                    } elseif (-not $silentResult.Started) {
+                        Write-Centered ("[!] Could not start /SILENT install: {0}" -f $silentResult.Error) 'Yellow'
                     }
-                    Remove-Item $installer -ErrorAction SilentlyContinue
+                    if ($silentResult.Completed -and $silentResult.ExitCode -eq 0 -and (Test-Path (Join-Path $AppsDir 'FastCopy.exe'))) {
+                        Write-Centered $L.FCExtractOk 'Green'
+                        Remove-Item $installer -ErrorAction SilentlyContinue
+                        return $true
+                    }
+                    # Keep installer on USB for manual install when auto-mode fails.
+                    Write-Centered ("[!] Installer kept for manual install: {0}" -f $installer) 'DarkGray'
+                    return $false
                 }
                 return $true
             }

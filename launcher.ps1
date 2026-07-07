@@ -1,7 +1,7 @@
 # ============================================================
 #  Atlas PC Support — launcher.ps1 (compilado)
 #  Versión: 1.0.0
-#  Build:   2026-07-06 19:53:48
+#  Build:   2026-07-06 20:10:58
 #  Repo:    https://github.com/mikepchelper-spec/atlas-pc-support
 #
 #  Uso:
@@ -19,7 +19,7 @@
 # ============================================================
 
 $script:AtlasVersion = '1.0.0'
-$script:AtlasBuildDate = '2026-07-06 19:53:48'
+$script:AtlasBuildDate = '2026-07-06 20:10:58'
 $script:AtlasToolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/src/tools'
 
 $script:AtlasToolsManifest = @'
@@ -332,7 +332,7 @@ $script:AtlasToolsManifest = @'
 
 $script:AtlasToolHashesJson = @'
 {
-    "generatedAt":  "2026-07-06T19:53:49.0541045-05:00",
+    "generatedAt":  "2026-07-06T20:10:58.8115354-05:00",
     "algorithm":  "SHA256",
     "files":  {
                   "Invoke-ActualizarPowerShell.ps1":  "bebc42e1da74f2a425c3823397827eaf132b790e8e75c124725a6ca7f48353cc",
@@ -356,7 +356,7 @@ $script:AtlasToolHashesJson = @'
                   "Invoke-MenorPrivilegio.ps1":  "1f0c63ad3081d0ad8d10fb8fea68ddc7de49918988032d4f2985a66442de0426",
                   "Invoke-PartsUpgrade.ps1":  "d8703a7ff9a2c6cc8aa42caedc4457451174b0ae0c6fa70d7b8a76038c03d3be",
                   "Invoke-Personalizacion.ps1":  "0212b1ac489832ac2d87242849dbd7be5e2a96ef80604f272a2f586d05cde5e3",
-                  "Invoke-PrepararUSB.ps1":  "302aac0035f17edaf136378dd2e0e9fb5693d115dbe44a7beced6b62c832ee75",
+                  "Invoke-PrepararUSB.ps1":  "5b43d6c5b3eb6f564d02a851614d914c99b1be2b2b9bddb712c1adceb148dd06",
                   "Invoke-PrinterDoctor.ps1":  "fe78e343744f8182427a6c157f54e7a24185fe950dba86ca193bd02541a243d2",
                   "Invoke-RespaldoControladores.ps1":  "7110fe4ab262e29990b76060e63b2a026069390c6494e1f968965897a60b76e7",
                   "Invoke-Robocopy.ps1":  "29f5abf91d82946d6fd7ffd7786de8165ad3e481e7075e7654fd4071328f0a7a",
