@@ -191,6 +191,17 @@
       "dependencies": []
     },
     {
+      "id": "respaldo-controladores",
+      "name": "Driver Backup (External BAT)",
+      "description": "Runs local script C:\\Users\\FMS\\Desktop\\Herramientas\\Respaldo-Controladores.bat. If missing, asks for a custom .bat/.cmd path and saves it.",
+      "category": "copia",
+      "function": "Invoke-RespaldoControladores",
+      "source": "Invoke-RespaldoControladores.ps1",
+      "requiresAdmin": true,
+      "runsInNewWindow": true,
+      "dependencies": []
+    },
+    {
       "id": "robocopy",
       "name": "Robocopy Mirror",
       "description": "Optimized robocopy-based copy: mirror mode, retries, centralized logging.",
