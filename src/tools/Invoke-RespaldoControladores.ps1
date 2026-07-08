@@ -9,7 +9,6 @@ function Invoke-RespaldoControladores {
     param()
 
     $toolTitle = 'Driver Backup (External BAT)'
-    $defaultPath = 'C:\Users\FMS\Desktop\Herramientas\Respaldo-Controladores.bat'
     $configDir = Join-Path $env:LOCALAPPDATA 'AtlasPC'
     $configPath = Join-Path $configDir 'external-tools.json'
 
@@ -79,9 +78,13 @@ function Invoke-RespaldoControladores {
 
     function _Resolve-ExistingPath {
         param([string[]]$Candidates)
+        $seen = @{}
         foreach ($candidate in $Candidates) {
             $normalized = _Normalize-Path -Value $candidate
             if (-not $normalized) { continue }
+            $key = $normalized.ToLowerInvariant()
+            if ($seen.ContainsKey($key)) { continue }
+            $seen[$key] = $true
             if (Test-Path -LiteralPath $normalized) {
                 try {
                     return (Resolve-Path -LiteralPath $normalized -ErrorAction Stop).Path
@@ -96,16 +99,34 @@ function Invoke-RespaldoControladores {
     _Write-Title
 
     $savedPath = _Get-SavedPath
+    $desktopPath = $null
+    $publicDesktopPath = $null
+    try { $desktopPath = [Environment]::GetFolderPath('Desktop') } catch {}
+    try { $publicDesktopPath = [Environment]::GetFolderPath('CommonDesktopDirectory') } catch {}
+    $offlineRoot = _Normalize-Path -Value $env:ATLAS_OFFLINE_ROOT
+
     $candidatePaths = @(
         $env:ATLAS_DRIVER_BACKUP_BAT,
         $savedPath,
-        $defaultPath
+        (if ($desktopPath) { Join-Path $desktopPath 'Herramientas\Respaldo-Controladores.bat' }),
+        (if ($desktopPath) { Join-Path $desktopPath 'Respaldo-Controladores.bat' }),
+        (if ($publicDesktopPath) { Join-Path $publicDesktopPath 'Herramientas\Respaldo-Controladores.bat' }),
+        (if ($publicDesktopPath) { Join-Path $publicDesktopPath 'Respaldo-Controladores.bat' }),
+        (if ($offlineRoot) { Join-Path $offlineRoot 'Herramientas\Respaldo-Controladores.bat' }),
+        (if ($offlineRoot) { Join-Path $offlineRoot 'deps\Herramientas\Respaldo-Controladores.bat' }),
+        (if ($offlineRoot) { Join-Path $offlineRoot 'deps\external\Respaldo-Controladores.bat' })
     )
 
     $batPath = _Resolve-ExistingPath -Candidates $candidatePaths
     if (-not $batPath) {
         Write-Host 'Configured paths not found.' -ForegroundColor Yellow
-        Write-Host "Default expected path: $defaultPath" -ForegroundColor DarkGray
+        Write-Host 'Common expected locations:' -ForegroundColor DarkGray
+        if ($desktopPath) {
+            Write-Host ("  - " + (Join-Path $desktopPath 'Herramientas\Respaldo-Controladores.bat')) -ForegroundColor DarkGray
+        }
+        if ($publicDesktopPath) {
+            Write-Host ("  - " + (Join-Path $publicDesktopPath 'Herramientas\Respaldo-Controladores.bat')) -ForegroundColor DarkGray
+        }
         Write-Host ''
         $manualPath = Read-Host "Type the full path to your .bat/.cmd file (or press ENTER to cancel)"
         if ([string]::IsNullOrWhiteSpace($manualPath)) {

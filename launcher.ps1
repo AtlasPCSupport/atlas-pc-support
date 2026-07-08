@@ -1,7 +1,7 @@
 # ============================================================
 #  Atlas PC Support — launcher.ps1 (compilado)
 #  Versión: 1.0.0
-#  Build:   2026-07-06 20:10:58
+#  Build:   2026-07-07 19:02:04
 #  Repo:    https://github.com/mikepchelper-spec/atlas-pc-support
 #
 #  Uso:
@@ -19,7 +19,7 @@
 # ============================================================
 
 $script:AtlasVersion = '1.0.0'
-$script:AtlasBuildDate = '2026-07-06 20:10:58'
+$script:AtlasBuildDate = '2026-07-07 19:02:04'
 $script:AtlasToolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/src/tools'
 
 $script:AtlasToolsManifest = @'
@@ -218,7 +218,7 @@ $script:AtlasToolsManifest = @'
     {
       "id": "respaldo-controladores",
       "name": "Driver Backup (External BAT)",
-      "description": "Runs local script C:\\Users\\FMS\\Desktop\\Herramientas\\Respaldo-Controladores.bat. If missing, asks for a custom .bat/.cmd path and saves it.",
+      "description": "Runs Respaldo-Controladores.bat from common desktop/USB locations. If missing, asks for a custom .bat/.cmd path and saves it.",
       "category": "copia",
       "function": "Invoke-RespaldoControladores",
       "source": "Invoke-RespaldoControladores.ps1",
@@ -332,7 +332,7 @@ $script:AtlasToolsManifest = @'
 
 $script:AtlasToolHashesJson = @'
 {
-    "generatedAt":  "2026-07-06T20:10:58.8115354-05:00",
+    "generatedAt":  "2026-07-07T19:02:05.1376075-05:00",
     "algorithm":  "SHA256",
     "files":  {
                   "Invoke-ActualizarPowerShell.ps1":  "bebc42e1da74f2a425c3823397827eaf132b790e8e75c124725a6ca7f48353cc",
@@ -358,7 +358,7 @@ $script:AtlasToolHashesJson = @'
                   "Invoke-Personalizacion.ps1":  "0212b1ac489832ac2d87242849dbd7be5e2a96ef80604f272a2f586d05cde5e3",
                   "Invoke-PrepararUSB.ps1":  "5b43d6c5b3eb6f564d02a851614d914c99b1be2b2b9bddb712c1adceb148dd06",
                   "Invoke-PrinterDoctor.ps1":  "fe78e343744f8182427a6c157f54e7a24185fe950dba86ca193bd02541a243d2",
-                  "Invoke-RespaldoControladores.ps1":  "7110fe4ab262e29990b76060e63b2a026069390c6494e1f968965897a60b76e7",
+                  "Invoke-RespaldoControladores.ps1":  "a5427ac9f6bd16744871289c01b7a2c2aaa2ebd9c8cdcdc2ff48b58198899d09",
                   "Invoke-Robocopy.ps1":  "29f5abf91d82946d6fd7ffd7786de8165ad3e481e7075e7654fd4071328f0a7a",
                   "Invoke-SelectorDNS.ps1":  "71ed1eb9a2087f02c7f2810dd25f819a6dcfb8d9a897fbcc9de1a12341bf4e94",
                   "Invoke-StopServices.ps1":  "04013323966c6326b13567a265001a74731ab3bf28c9264b6c7348a4441d56fe"

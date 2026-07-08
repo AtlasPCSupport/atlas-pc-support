@@ -193,7 +193,7 @@
     {
       "id": "respaldo-controladores",
       "name": "Driver Backup (External BAT)",
-      "description": "Runs local script C:\\Users\\FMS\\Desktop\\Herramientas\\Respaldo-Controladores.bat. If missing, asks for a custom .bat/.cmd path and saves it.",
+      "description": "Runs Respaldo-Controladores.bat from common desktop/USB locations. If missing, asks for a custom .bat/.cmd path and saves it.",
       "category": "copia",
       "function": "Invoke-RespaldoControladores",
       "source": "Invoke-RespaldoControladores.ps1",
