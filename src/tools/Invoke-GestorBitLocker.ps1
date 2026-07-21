@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Invoke-GestorBitLocker
 # Migrado de: GestorBitLocker.ps1
 # Atlas PC Support — v1.0
@@ -672,7 +672,9 @@ while ($true) {
                     
                     # QR / Imagen imprimible
                     Write-Host ""
-                    Write-Host "    Generate printable image of keys? [Y/N]" -ForegroundColor Yellow
+                    Write-Host "    [!] SECURITY WARNING: Saving plaintext recovery keys as images on Desktop" -ForegroundColor Red
+                    Write-Host "        creates a physical security risk. Do NOT leave this file on client desktop." -ForegroundColor Yellow
+                    Write-Host "    Generate printable card image of keys? [Y/N]" -ForegroundColor Yellow
                     $qrSel = Read-Host "    >"
                     if ($qrSel -match '^[SsYy]$') {
                         foreach ($kInfo in $clavesParaQR) {

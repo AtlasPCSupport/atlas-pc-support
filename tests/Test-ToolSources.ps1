@@ -14,10 +14,10 @@
 #>
 [CmdletBinding()]
 param(
-    [string]$LauncherPath = (Join-Path $PSScriptRoot '..' 'launcher.ps1'),
-    [string]$ManifestPath = (Join-Path $PSScriptRoot '..' 'config' 'tools.json'),
-    [string]$ToolHashesPath = (Join-Path $PSScriptRoot '..' 'config' 'tool-hashes.json'),
-    [string]$ToolsDir = (Join-Path $PSScriptRoot '..' 'src' 'tools')
+    [string]$LauncherPath = (Join-Path (Split-Path -Parent $PSScriptRoot) 'launcher.ps1'),
+    [string]$ManifestPath = (Join-Path (Split-Path -Parent $PSScriptRoot) 'config\tools.json'),
+    [string]$ToolHashesPath = (Join-Path (Split-Path -Parent $PSScriptRoot) 'config\tool-hashes.json'),
+    [string]$ToolsDir = (Join-Path (Split-Path -Parent $PSScriptRoot) 'src\tools')
 )
 
 $ErrorActionPreference = 'Stop'
@@ -37,7 +37,8 @@ function Write-CheckFail {
 function Get-AstParseErrors {
     param([Parameter(Mandatory)][string]$Path)
     $errs = $null
-    $null = [System.Management.Automation.Language.Parser]::ParseFile($Path, [ref]$null, [ref]$errs)
+    $text = Get-Content -Raw -LiteralPath $Path -Encoding UTF8
+    $null = [System.Management.Automation.Language.Parser]::ParseInput($text, $Path, [ref]$null, [ref]$errs)
     return @($errs)
 }
 

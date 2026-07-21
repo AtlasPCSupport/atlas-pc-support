@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+#Requires -Version 5.1
 <#
 .SYNOPSIS
   Compila el launcher distribuible `launcher.ps1` (raíz del repo) a partir
@@ -22,7 +22,7 @@ $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
 
 function Get-EmbeddedContent {
     param([string]$Path)
-    $content = Get-Content -Raw -Path $Path -Encoding UTF8
+    $content = [System.IO.File]::ReadAllText($Path, [System.Text.Encoding]::UTF8)
     # Normaliza saltos de línea
     return $content -replace "`r`n", "`n"
 }
@@ -32,7 +32,7 @@ function Get-AtlasNormalizedTextSha256 {
     param([Parameter(Mandatory)][string]$Path)
 
     # Canonical UTF-8 + LF hash to avoid CRLF/LF drift across environments.
-    $text = Get-Content -Raw -LiteralPath $Path -Encoding UTF8
+    $text = [System.IO.File]::ReadAllText($Path, [System.Text.Encoding]::UTF8)
     $normalized = ($text -replace "`r`n", "`n") -replace "`r", "`n"
     $bytes = [System.Text.UTF8Encoding]::new($false).GetBytes($normalized)
     $sha = [System.Security.Cryptography.SHA256]::Create()
@@ -54,7 +54,7 @@ $toolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-su
 # Mapa de hashes SHA-256 de herramientas (integridad en ToolRunner).
 $toolHashMap = [ordered]@{}
 Get-ChildItem -Path (Join-Path $src 'tools') -Filter 'Invoke-*.ps1' -File |
-    Sort-Object -Property Name |
+    Sort-Object -Property { $_.Name.ToLowerInvariant() } |
     ForEach-Object {
         $toolHashMap[$_.Name] = Get-AtlasNormalizedTextSha256 -Path $_.FullName
     }
@@ -133,8 +133,8 @@ $guiContent = Get-EmbeddedContent (Join-Path $src 'gui\MainWindow.ps1')
 
 $banner = (@"
 # ============================================================
-#  Atlas PC Support — launcher.ps1 (compilado)
-#  Versión: $version
+#  Atlas PC Support - launcher.ps1 (compilado)
+#  Version: $version
 #  Build:   $buildDate
 #  Repo:    https://github.com/mikepchelper-spec/atlas-pc-support
 #
@@ -142,7 +142,7 @@ $banner = (@"
 #      Save get.ps1 locally and run: pwsh -ExecutionPolicy Bypass -File get.ps1
 #
 #  Este archivo es AUTOGENERADO por build.ps1. NO lo edites a mano.
-#  Las fuentes están en src/.
+#  Las fuentes estan en src/.
 # ============================================================
 "@) -replace "`r`n", "`n"
 
@@ -238,7 +238,7 @@ $output = @(
     $embeddedData
     ""
     "# ============================================================"
-    "#  LIBRERÍAS (lib/)"
+    "#  LIBRERIAS (lib/)"
     "# ============================================================"
     ""
     $libContent
@@ -265,8 +265,6 @@ $output = @(
 # We chose path (b) wins: file in the repo / on raw.githubusercontent.com
 # stays BOM-less so `irm | iex` works for everyone. The offline USB path
 # already has self-healing BOM repair in bootstrap.ps1 (PR #53), so when
-# launcher.ps1 lands on disk via the bootstrap, the BOM is prepended
-# right before run-launcher.ps1 invokes it. WriteAllText() emits the
 # BOM-less variant on both Windows and Linux pwsh.
 [System.IO.File]::WriteAllText($OutFile, $output, $utf8NoBom)
 
@@ -286,10 +284,10 @@ $launcherShaPath = "$OutFile.sha256"
 )
 
 Write-Host ""
-Write-Host "  Atlas PC Support — build completado" -ForegroundColor Green
+Write-Host "  Atlas PC Support - build completado" -ForegroundColor Green
 Write-Host "  Archivo: $OutFile" -ForegroundColor Gray
 $fi = Get-Item $OutFile
-Write-Host "  Tamaño:  $([math]::Round($fi.Length / 1KB, 1)) KB ($([math]::Round($fi.Length / 1MB, 2)) MB)" -ForegroundColor Gray
+Write-Host ("  Tamano:  {0} KB ({1} MB)" -f [math]::Round($fi.Length / 1KB, 1), [math]::Round($fi.Length / 1MB, 2)) -ForegroundColor Gray
 Write-Host "  Build:   $buildDate" -ForegroundColor Gray
 Write-Host "  Hash:    $launcherHash" -ForegroundColor Gray
 Write-Host "  Hashes:  $toolHashesFileSha  (config/tool-hashes.json)" -ForegroundColor Gray

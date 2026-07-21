@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Invoke-GPUCheck
 # GPU diagnostics with optional stress test and report export.
 # Atlas PC Support
@@ -364,15 +364,42 @@ function Invoke-GPUCheck {
     }
 
     function Wait-WithProgress {
-        param([int]$Seconds, [string]$Label)
+        param(
+            [int]$Seconds,
+            [string]$Label,
+            [System.Diagnostics.Process]$StressProc = $null
+        )
         if ($Seconds -le 0) { return }
         Write-Host ("[GPU Check] {0} ({1}s)" -f $Label, $Seconds) -ForegroundColor Cyan
         $elapsed = 0
+        $maxTempLimit = 93
+
         while ($elapsed -lt $Seconds) {
-            $step = [Math]::Min(15, $Seconds - $elapsed)
-            Start-Sleep -Seconds $step
-            $elapsed += $step
-            if (($elapsed % 60) -eq 0 -or $elapsed -eq $Seconds) {
+            Start-Sleep -Seconds 2
+            $elapsed += 2
+
+            try {
+                $gpuSensors = Get-CimInstance -Namespace root\wmi -ClassName MSAcpi_ThermalZoneTemperature -ErrorAction SilentlyContinue
+                if ($gpuSensors) {
+                    foreach ($sensor in $gpuSensors) {
+                        $tempC = [Math]::Round(($sensor.CurrentTemperature / 10) - 273.15, 1)
+                        if ($tempC -ge $maxTempLimit) {
+                            Write-Host ("  [!] THERMAL WATCHDOG STOP: System temp reached {0}°C (Max Limit: {1}°C)" -f $tempC, $maxTempLimit) -ForegroundColor Red
+                            if ($StressProc -and -not $StressProc.HasExited) {
+                                Stop-Proc -Process $StressProc
+                            }
+                            return
+                        }
+                    }
+                }
+            } catch {}
+
+            if ($StressProc -and $StressProc.HasExited -and $elapsed -lt ($Seconds - 5)) {
+                Write-Host "  [!] Stress process exited early (driver crash or TDR detected)." -ForegroundColor Yellow
+                return
+            }
+
+            if (($elapsed % 15) -eq 0 -or $elapsed -eq $Seconds) {
                 Write-Host ("  {0}/{1} sec" -f $elapsed, $Seconds) -ForegroundColor Gray
             }
         }
