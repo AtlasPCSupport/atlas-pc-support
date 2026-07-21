@@ -38,6 +38,9 @@ function Get-AtlasNormalizedArtifact {
     $t = $t -replace '(?m)^#\s+Build:.*$',                  '#  Build: <normalized>'
     $t = $t -replace '(?m)^\$script:AtlasBuildDate\s*=.*$',  '$script:AtlasBuildDate = <normalized>'
     $t = $t -replace '"generatedAt"\s*:\s*"[^"]*"',          '"generatedAt": "<normalized>"'
+    # Normalizar formato e indentacion de JSON (difiere entre PowerShell 5.1 en Windows y PS 7 en Linux).
+    $t = $t -replace '":\s+', '": '
+    $t = $t -replace '(?m)^\s+', ''
     return $t
 }
 
