@@ -107,12 +107,10 @@ function Invoke-Deduplicador {
 
             # 2. Localizar app_deduplicar.py
             $possiblePaths = @(
-                "D:\1.ATLASPCSUPPORT\MANUALES\ATLAS PC SUPPORT\SERVICIOS FUNCIONALES\IMMICH\scripts\app_deduplicar.py",
-                "C:\1.ATLASPCSUPPORT\MANUALES\ATLAS PC SUPPORT\SERVICIOS FUNCIONALES\IMMICH\scripts\app_deduplicar.py",
+                (Join-Path $env:LOCALAPPDATA 'AtlasPC\scripts\app_deduplicar.py'),
                 (Join-Path $PSScriptRoot "app_deduplicar.py"),
                 (Join-Path $PSScriptRoot "scripts\app_deduplicar.py"),
                 (Join-Path (Split-Path -Parent $PSScriptRoot) "scripts\app_deduplicar.py"),
-                (Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) "scripts\app_deduplicar.py"),
                 (Join-Path (Get-Location).Path "scripts\app_deduplicar.py"),
                 (Join-Path (Get-Location).Path "app_deduplicar.py")
             )
@@ -126,7 +124,7 @@ function Invoke-Deduplicador {
             if (-not $scriptPath) {
                 Write-Host $T.ScNotF -ForegroundColor Yellow
                 $scriptPath = Read-Host $T.ScPrompt
-                if (-not (Test-Path -LiteralPath $scriptPath)) {
+                if ([string]::IsNullOrWhiteSpace($scriptPath) -or -not (Test-Path -LiteralPath $scriptPath)) {
                     Write-Host " [ERROR] Archivo no encontrado en la ruta especificada." -ForegroundColor Red
                     Write-Host ''
                     Pause-Deduplicador -Message $T.Next
@@ -135,9 +133,10 @@ function Invoke-Deduplicador {
             }
 
             # 3. Solicitar carpeta a escanear
-            $folderInput = Read-Host $T.FolderP
+            $defaultPictures = [Environment]::GetFolderPath('MyPictures')
+            $folderInput = Read-Host ($T.FolderP -replace '\[.*?\]', "[$defaultPictures]")
             if ([string]::IsNullOrWhiteSpace($folderInput)) {
-                $folderPath = "D:\0.MULTIMEDIA\memes"
+                $folderPath = $defaultPictures
             } else {
                 # First check if the entire input exists (handles single unquoted folder with spaces)
                 $trimmedInput = $folderInput.Trim().Trim('"').Trim("'").Trim()

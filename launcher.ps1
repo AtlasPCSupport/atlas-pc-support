@@ -1,7 +1,7 @@
 ﻿# ============================================================
 #  Atlas PC Support â€” launcher.ps1 (compilado)
 #  VersiÃ³n: 1.0.0
-#  Build:   2026-07-21 14:44:24
+#  Build:   2026-07-21 14:47:52
 #  Repo:    https://github.com/mikepchelper-spec/atlas-pc-support
 #
 #  Uso:
@@ -19,7 +19,7 @@
 # ============================================================
 
 $script:AtlasVersion = '1.0.0'
-$script:AtlasBuildDate = '2026-07-21 14:44:24'
+$script:AtlasBuildDate = '2026-07-21 14:47:52'
 $script:AtlasToolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/src/tools'
 
 $script:AtlasToolsManifest = @'
@@ -332,20 +332,20 @@ $script:AtlasToolsManifest = @'
 
 $script:AtlasToolHashesJson = @'
 {
-    "generatedAt":  "2026-07-21T14:44:24.6884446-05:00",
+    "generatedAt":  "2026-07-21T14:47:52.3947103-05:00",
     "algorithm":  "SHA256",
     "files":  {
                   "Invoke-ActualizarPowerShell.ps1":  "094062f8ebf7c9279dc8eeedaf2e635e6fad889630feb1e73ce73ab4bb107304",
                   "Invoke-AIReadiness.ps1":  "6f734eac4cdc9d3c8da7ba3b84fda9ad31fa596c2af239f8d69dd8ee3bcce280",
                   "Invoke-AuditoriaRouter.ps1":  "6500c6bfdc3f37e19ba3a66e3c6d348d0c9a50e782859918e10fc2ed344df8f6",
-                  "Invoke-Deduplicador.ps1":  "ba59fd597a4fb3568b02647538f2d76c5b982613415922974d7f7703e4427075",
+                  "Invoke-Deduplicador.ps1":  "b48df614411e9ace66f0c774ded389d1146fdc5c9f40867e92c15ad8bf0a5e3b",
                   "Invoke-DiagnosticoEventos.ps1":  "d8bcd80253e7118747e819618f8814729d615ff2fc359d7740ccad97b9c6cb1b",
                   "Invoke-DiagnosticoMaster.ps1":  "55b07593b743e653bbe47f887710edb2392c13e2811bdc755e62855f077c79f5",
                   "Invoke-EntregaPC.ps1":  "39c67f82b5d54917ada480702e75e3e4b77c5f3aa8eb9f68db75ddcae8133c85",
                   "Invoke-ExtraerLicencias.ps1":  "03310f849ee3d4c826a984565aa9e6b51a0bca57f9f450d4c302eb8e97500f22",
                   "Invoke-Fase0.ps1":  "87f903655a9873823f44091b8adf696242556e2332a26183bea67618d07cf41a",
                   "Invoke-FastCopy.ps1":  "22c76639e7c2208a98d68446f2864ee6171dc7aabbca16de70e18c715b16e0e8",
-                  "Invoke-GestorBitLocker.ps1":  "fd2c3644ac65faa0c7c39d7253772e413914101a481cefae8000a68c4f89fcc4",
+                  "Invoke-GestorBitLocker.ps1":  "da6bb20b8e689b180e5ea20ad3274bdbf960279b6c5517db695edff90df13675",
                   "Invoke-GPUCheck.ps1":  "ec3c2e1c0a24d5ea6b38c40694bd0dd18a132102d518aa399c859fdb92bf9e28",
                   "Invoke-HostsManager.ps1":  "fe26ffe69919dc72b3cce423df40364e597caf387c72ce5e7d961ba42eba6e35",
                   "Invoke-InstalarMicrosoftStore.ps1":  "a96e3adf0507b6d0fa9ea4777e0141dda0c29f067e8e1dfcfa487c0b17a8105d",
