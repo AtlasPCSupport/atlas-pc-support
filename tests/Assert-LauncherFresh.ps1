@@ -38,6 +38,9 @@ function Get-AtlasNormalizedArtifact {
     $t = $t -replace '(?m)^#\s+Build:.*$',                  '#  Build: <normalized>'
     $t = $t -replace '(?m)^\$script:AtlasBuildDate\s*=.*$',  '$script:AtlasBuildDate = <normalized>'
     $t = $t -replace '"generatedAt"\s*:\s*"[^"]*"',          '"generatedAt": "<normalized>"'
+    # Normalizar formato e indentacion de JSON (difiere entre PowerShell 5.1 en Windows y PS 7 en Linux).
+    $t = $t -replace '":\s+', '": '
+    $t = $t -replace '(?m)^\s+', ''
     return $t
 }
 
@@ -49,14 +52,14 @@ foreach ($p in @($launcherPath, $hashesPath, $buildScript)) {
     if (-not (Test-Path -LiteralPath $p)) { throw "No existe ruta requerida: $p" }
 }
 
-$committedLauncher = Get-AtlasNormalizedArtifact (Get-Content -Raw -LiteralPath $launcherPath)
-$committedHashes   = Get-AtlasNormalizedArtifact (Get-Content -Raw -LiteralPath $hashesPath)
+$committedLauncher = Get-AtlasNormalizedArtifact ([System.IO.File]::ReadAllText($launcherPath, [System.Text.Encoding]::UTF8))
+$committedHashes   = Get-AtlasNormalizedArtifact ([System.IO.File]::ReadAllText($hashesPath, [System.Text.Encoding]::UTF8))
 
 Write-Host '[..] Reconstruyendo launcher desde src/ para comparar...' -ForegroundColor Cyan
 & $buildScript | Out-Null
 
-$rebuiltLauncher = Get-AtlasNormalizedArtifact (Get-Content -Raw -LiteralPath $launcherPath)
-$rebuiltHashes   = Get-AtlasNormalizedArtifact (Get-Content -Raw -LiteralPath $hashesPath)
+$rebuiltLauncher = Get-AtlasNormalizedArtifact ([System.IO.File]::ReadAllText($launcherPath, [System.Text.Encoding]::UTF8))
+$rebuiltHashes   = Get-AtlasNormalizedArtifact ([System.IO.File]::ReadAllText($hashesPath, [System.Text.Encoding]::UTF8))
 
 $stale = $false
 

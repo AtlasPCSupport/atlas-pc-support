@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Invoke-PrepararUSB  ->  Build Offline USB
 #
 # i18n: Option A (en default + full es secondary). Function name
@@ -1438,22 +1438,46 @@ if (-not (Test-Path `$launcher)) {
 if (`$needsDownload) {
     # Cache-bust to defeat any stale Cloudflare/CDN edge cache.
     `$bust = [Guid]::NewGuid().ToString('N')
+    `$tempDownload = "`$launcher.download"
+    `$shaUrl = "https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/launcher.ps1.sha256?v=`$bust"
+    `$noCacheHdr = @{ 'Cache-Control' = 'no-cache'; 'Pragma' = 'no-cache' }
+    `$ok = `$false
+
+    # Try fetching expected SHA-256
+    `$expectedSha = `$null
+    try {
+        `$shaContent = (Invoke-WebRequest -Uri `$shaUrl -UseBasicParsing -TimeoutSec 30 -Headers `$noCacheHdr -ErrorAction Stop).Content
+        if (`$shaContent) {
+            `$expectedSha = ((`$shaContent -split '\s+') | Where-Object { `$_ } | Select-Object -First 1).ToLowerInvariant()
+        }
+    } catch { }
+
     `$urls = @(
         ('https://toolspanel.atlaspcsupport.com/?v=' + `$bust),
         ('https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/launcher.ps1?v=' + `$bust)
     )
-    `$noCacheHdr = @{ 'Cache-Control' = 'no-cache'; 'Pragma' = 'no-cache' }
-    `$ok = `$false
+
     foreach (`$u in `$urls) {
         try {
             `$ProgressPreference = 'SilentlyContinue'
-            Invoke-WebRequest -Uri `$u -OutFile `$launcher -UseBasicParsing -TimeoutSec 60 -Headers `$noCacheHdr -ErrorAction Stop
-            if ((Get-Item `$launcher).Length -gt 100KB) {
-                Write-Host ("$msgDLOk" -f `$u) -ForegroundColor Green
-                `$ok = `$true; break
+            Invoke-WebRequest -Uri `$u -OutFile `$tempDownload -UseBasicParsing -TimeoutSec 60 -Headers `$noCacheHdr -ErrorAction Stop
+            
+            if (Test-Path `$tempDownload) {
+                `$calcSha = (Get-FileHash -Algorithm SHA256 -LiteralPath `$tempDownload).Hash.ToLowerInvariant()
+                if (`$expectedSha -and `$calcSha -ne `$expectedSha) {
+                    Write-Host ("  [!] SHA-256 mismatch for `$u. Expected: `$expectedSha, Calc: `$calcSha") -ForegroundColor Red
+                    Remove-Item -LiteralPath `$tempDownload -Force -ErrorAction SilentlyContinue
+                    continue
+                }
+                if ((Get-Item `$tempDownload).Length -gt 100KB) {
+                    Move-Item -LiteralPath `$tempDownload -Destination `$launcher -Force -ErrorAction Stop
+                    Write-Host ("$msgDLOk" -f `$u) -ForegroundColor Green
+                    `$ok = `$true; break
+                }
             }
         } catch {
             Write-Host ("$msgDLFail" -f `$_.Exception.Message) -ForegroundColor Yellow
+            if (Test-Path `$tempDownload) { Remove-Item -LiteralPath `$tempDownload -Force -ErrorAction SilentlyContinue }
         }
     }
     if (-not `$ok) {

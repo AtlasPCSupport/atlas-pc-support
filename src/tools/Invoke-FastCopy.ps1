@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Invoke-FastCopy
 # Migrado de: FastCopy.ps1
 # Atlas PC Support — v1.0
@@ -42,77 +42,19 @@ function Find-FastCopy {
 }
 
 function Install-FastCopyAuto {
-    # Descarga el installer oficial de FastCopy (fastcopy.jp redirige a GitHub),
-    # lo ejecuta silenciosamente a %LOCALAPPDATA%\AtlasPC\apps\FastCopy y
-    # devuelve la ruta al .exe.
-    $targetDir = Join-Path $env:LOCALAPPDATA 'AtlasPC\apps\FastCopy'
-    if (-not (Test-Path $targetDir)) {
-        New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
-    }
-
-    # URLs en orden de preferencia (version mas reciente primero).
-    # fastcopy.jp hace redirect 302 a GitHub/FastCopyLab.
-    $urls = @(
-        'https://fastcopy.jp/archive/FastCopy5.11.2_installer.exe',
-        'https://github.com/FastCopyLab/FastCopyDist2/raw/main/FastCopy5.11.2_installer.exe',
-        'https://fastcopy.jp/archive/FastCopy5.9.0_installer.exe'
-    )
-
-    $installerPath = Join-Path $env:TEMP ("FastCopy-installer-" + [guid]::NewGuid().ToString('N').Substring(0,8) + ".exe")
-    $ok = $false
-    foreach ($url in $urls) {
-        Write-Host "    Descargando: $url" -ForegroundColor Gray
+    # Resolve FastCopy via dependency manager with SHA-256 validation
+    if (Get-Command Resolve-AtlasDependency -ErrorAction SilentlyContinue) {
         try {
-            $ProgressPreference = 'SilentlyContinue'
-            Invoke-WebRequest -Uri $url -OutFile $installerPath -UseBasicParsing -TimeoutSec 120 -ErrorAction Stop
-            if ((Get-Item $installerPath).Length -gt 200KB) { $ok = $true; break }
+            $depPath = Resolve-AtlasDependency -Name 'FastCopy' -InstallIfMissing
+            if ($depPath -and (Test-Path $depPath)) { return $depPath }
         } catch {
-            Write-Host "    Fallo: $($_.Exception.Message)" -ForegroundColor Yellow
+            Write-Host "    [!] Dependency manager notice: $($_.Exception.Message)" -ForegroundColor Yellow
         }
-    }
-    if (-not $ok) { throw "No se pudo descargar el installer de FastCopy." }
-
-    # El installer oficial de FastCopy NO es InnoSetup; es custom.
-    # Switches (segun el propio installedr):
-    #   /SILENT ... silent install
-    #   /DIR=<dir> ... target dir
-    #   /EXTRACT64 ... extraer only archivos (sin instalar)
-    #   /NOSUBDIR ... no crear subcarpeta
-    #   /AGREE_LICENSE ... aceptar licencia
-    # Usamos /EXTRACT64 para only dejar los archivos en $targetDir
-    # sin modificar menu inicio / Program Files / registro.
-    Write-Host "    Extracting FastCopy a $targetDir ..." -ForegroundColor Gray
-    $procArgs = @('/EXTRACT64', '/NOSUBDIR', '/AGREE_LICENSE', ("/DIR=`"$targetDir`""))
-    try {
-        $p = Start-Process -FilePath $installerPath -ArgumentList $procArgs -Wait -PassThru -ErrorAction Stop
-        if ($p.ExitCode -ne 0) {
-            Write-Host "    /EXTRACT64 finished with code $($p.ExitCode). Trying /SILENT install..." -ForegroundColor Yellow
-            $p2 = Start-Process -FilePath $installerPath -ArgumentList @('/SILENT', '/AGREE_LICENSE', ("/DIR=`"$targetDir`"")) -Wait -PassThru -ErrorAction Stop
-            if ($p2.ExitCode -ne 0) {
-                Write-Host "    /SILENT also failed. Running in interactive mode..." -ForegroundColor Yellow
-                Start-Process -FilePath $installerPath -Wait
-            }
-        }
-    } catch {
-        throw "Fallo ejecutando el installedr: $($_.Exception.Message)"
-    } finally {
-        Remove-Item $installerPath -ErrorAction SilentlyContinue
     }
 
-    # Buscar el .exe en target (el installer puede poner FastCopy.exe directo o en subcarpeta).
-    $exe = Get-ChildItem -Path $targetDir -Filter 'FastCopy.exe' -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-    if (-not $exe) {
-        # Si el user eligio el default (Program Files), buscar ahi.
-        $fallbacks = @(
-            "$env:ProgramFiles\FastCopy\FastCopy.exe",
-            "${env:ProgramFiles(x86)}\FastCopy\FastCopy.exe"
-        )
-        foreach ($fb in $fallbacks) {
-            if (Test-Path $fb) { $exe = Get-Item $fb; break }
-        }
-    }
-    if (-not $exe) { throw "FastCopy.exe not found after installation." }
-    return $exe.FullName
+    $existing = Find-FastCopy
+    if ($existing) { return $existing }
+    throw "FastCopy dependency could not be resolved."
 }
 
 # ==================== FUNCIONES BASE ====================
