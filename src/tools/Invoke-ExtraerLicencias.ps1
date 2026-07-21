@@ -662,126 +662,6 @@ function Get-InstalledProductKeys {
     Wait-AtlasReturn -Message "Press ENTER to return"
 }
 
-# ============================================================================
-#  OPCION 7: Navegadores (Edge / Chrome) - con consentimiento explicito
-# ============================================================================
-function Get-BrowserPasswords {
-    Show-Header
-    Write-Centered -Text "--- BROWSER PASSWORDS (Edge / Chrome) ---" -Color Red
-    Write-Host ""
-    Write-Centered -Text "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" -Color Yellow
-    Write-Centered -Text "                  LEGAL WARNING" -Color Yellow
-    Write-Centered -Text "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" -Color Yellow
-    Write-Host ""
-    Write-Centered -Text " - This function extracts credentials stored in the browser" -Color White
-    Write-Centered -Text "   of the CURRENT Windows USER." -Color White
-    Write-Centered -Text " - This is EXTREMELY sensitive information." -Color White
-    Write-Centered -Text " - Only use on your own equipment or with EXPLICIT WRITTEN" -Color White
-    Write-Centered -Text "   AUTHORIZATION from the equipment owner." -Color White
-    Write-Centered -Text " - The Windows user must confirm acceptance of extraction." -Color White
-    Write-Centered -Text " - Atlas PC Support does not store or transmit this data." -Color White
-    Write-Host ""
-    $c1 = Read-Host " Type exactly: AUTHORIZE  to continue"
-    if ($c1 -ne 'AUTHORIZE' -and $c1 -ne 'AUTORIZO') {
-        Write-Centered -Text "[X] Cancelled. No passwords were extracted." -Color Red
-        Write-Host ""
-        Wait-AtlasReturn -Message "Press ENTER to return"
-        return
-    }
-
-    $results = @()
-
-    # Browsers basados en Chromium: Edge, Chrome, Brave, Opera GX
-    $profiles = @(
-        @{ Nombre='Edge';   Base="$env:LOCALAPPDATA\Microsoft\Edge\User Data" },
-        @{ Nombre='Chrome'; Base="$env:LOCALAPPDATA\Google\Chrome\User Data" },
-        @{ Nombre='Brave';  Base="$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data" },
-        @{ Nombre='Opera';  Base="$env:APPDATA\Opera Software\Opera Stable" }
-    )
-
-    try {
-        Add-Type -AssemblyName System.Security -ErrorAction SilentlyContinue
-    } catch { }
-
-    foreach ($br in $profiles) {
-        if (-not (Test-Path $br.Base)) { continue }
-        Write-Host ""
-        Write-Centered -Text ("--- Analyzing {0} ---" -f $br.Nombre) -Color Cyan
-
-        # Obtener master key (DPAPI)
-        $localState = Join-Path $br.Base 'Local State'
-        $masterKey = $null
-        if (Test-Path $localState) {
-            try {
-                $ls = Get-Content $localState -Raw -Encoding UTF8 | ConvertFrom-Json
-                $b64 = $ls.os_crypt.encrypted_key
-                if ($b64) {
-                    $buf = [Convert]::FromBase64String($b64)
-                    # Prefijo "DPAPI" de 5 bytes
-                    $dpapiBlob = $buf[5..($buf.Length - 1)]
-                    $mk = [System.Security.Cryptography.ProtectedData]::Unprotect($dpapiBlob, $null, 'CurrentUser')
-                    $masterKey = $mk
-                }
-            } catch {
-                Write-Centered -Text ("[!] Could not get master key from {0}: {1}" -f $br.Nombre, $_.Exception.Message) -Color Yellow
-            }
-        }
-        if (-not $masterKey) {
-            Write-Centered -Text ("[!] Without master key, passwords from {0} cannot be decrypted." -f $br.Nombre) -Color Yellow
-            continue
-        }
-
-        # Enumerar todos los perfiles ("Default", "Profile 1", etc)
-        $dirs = @(Get-ChildItem -Path $br.Base -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -eq 'Default' -or $_.Name -like 'Profile*' })
-        if ($br.Nombre -eq 'Opera') { $dirs = @([PSCustomObject]@{ FullName = $br.Base; Name = 'Opera Stable' }) }
-
-        foreach ($d in $dirs) {
-            $loginDb = Join-Path $d.FullName 'Login Data'
-            if (-not (Test-Path $loginDb)) { continue }
-            $tmp = Join-Path $env:TEMP "atlas_logindb_$([guid]::NewGuid().ToString('N')).db"
-            try {
-                Copy-Item $loginDb $tmp -Force -ErrorAction Stop
-            } catch {
-                Write-Centered -Text ("[!] Could not copy DB of {0} ({1}). Close the browser." -f $br.Nombre, $d.Name) -Color Yellow
-                continue
-            }
-            try {
-                Add-Type -Path 'System.Data.SQLite.dll' -ErrorAction SilentlyContinue
-            } catch { }
-            # Sin System.Data.SQLite no podemos leer la DB directamente. Dejamos el info:
-            Write-Centered -Text ("   Login DB: {0}" -f $loginDb) -Color DarkGray
-            Write-Centered -Text "   [i] SQLite extraction not available without external dependency." -Color DarkGray
-            Write-Centered -Text "       Copy the DB manually with a SQLite viewer if you need to see entries." -Color DarkGray
-            $results += [pscustomobject]@{
-                Navegador = $br.Nombre
-                Perfil = $d.Name
-                Ruta = $loginDb
-                Estado = 'DB located; decryption requires external SQLite tool'
-            }
-            Remove-Item $tmp -Force -ErrorAction SilentlyContinue
-        }
-    }
-
-    Write-Host ""
-    if ($results.Count -eq 0) {
-        Write-Centered -Text "[!] No browsers detected with accessible credentials." -Color Yellow
-    } else {
-        Write-Centered -Text "[i] Browsers with located DB:" -Color Cyan
-        foreach ($r in $results) {
-            Write-Centered -Text ("  - {0} / {1}" -f $r.Navegador, $r.Perfil) -Color White
-        }
-        Write-Host ""
-        Write-Centered -Text "To export passwords legitimately:" -Color Yellow
-        Write-Centered -Text "  Edge:   edge://settings/passwords -> menu ... -> Export passwords" -Color Gray
-        Write-Centered -Text "  Chrome: chrome://settings/passwords -> ... -> Export passwords" -Color Gray
-        Write-Centered -Text "  Brave:  brave://settings/passwords -> ... -> Export" -Color Gray
-        Write-Centered -Text "(This official method asks for the current user's Windows password.)" -Color DarkGray
-    }
-
-    Write-Host ""
-    Wait-AtlasReturn -Message "Press ENTER to return"
-}
-
 # Bucle principal
 $menuLoop = $true
 while ($menuLoop) {
@@ -794,7 +674,6 @@ while ($menuLoop) {
     Write-Centered -Text "[ 4 ] Full Report (OS, BIOS, Current and Authenticity)" -Color White
     Write-Centered -Text "[ 5 ] Extract Office Keys (OSPP/SPP + Registry)" -Color Cyan
     Write-Centered -Text "[ 6 ] Installed product keys (DigitalProductId)" -Color Cyan
-    Write-Centered -Text "[ 7 ] Browsers (Edge/Chrome) - REQUIRES AUTHORIZATION" -Color Yellow
     Write-Centered -Text "[ 0 ] Exit" -Color Red
     Write-Host "`n"
     
@@ -807,7 +686,6 @@ while ($menuLoop) {
         '4' { Get-OsInfo }
         '5' { Get-OfficeKeys }
         '6' { Get-InstalledProductKeys }
-        '7' { Get-BrowserPasswords }
         '0' { $menuLoop = $false }
     }
 }

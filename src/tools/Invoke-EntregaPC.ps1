@@ -88,8 +88,8 @@ function Invoke-EntregaPC {
             HtmlSigCust  = 'Customer signature'
             HtmlDateLine = 'Handover date: ____________________'
             HtmlFooter   = 'Atlas PC Support - Report generated automatically - Save this file or print to PDF for the record'
-            BtnPrint     = '🖨  Print / Save PDF'
-            BtnCheckAll  = '☑ Check all'
+            BtnPrint     = '[Print / Save PDF]'
+            BtnCheckAll  = '[Check all]'
             ColModel     = 'Model'
             ColSerial    = 'Serial'
             ColSize      = 'Size'
@@ -201,8 +201,8 @@ function Invoke-EntregaPC {
             HtmlSigCust  = 'Firma Cliente'
             HtmlDateLine = 'Fecha entrega: ____________________'
             HtmlFooter   = 'Atlas PC Support - Reporte generado automaticamente - Guarda este archivo o impr. a PDF para registro'
-            BtnPrint     = '🖨  Imprimir / Guardar PDF'
-            BtnCheckAll  = '☑ Marcar todos'
+            BtnPrint     = '[Imprimir / Guardar PDF]'
+            BtnCheckAll  = '[Marcar todos]'
             ColModel     = 'Modelo'
             ColSerial    = 'Serial'
             ColSize      = 'Tamano'
@@ -541,7 +541,12 @@ function Generar-ChecklistEntrega {
             $rk = $v.KeyProtector | Where-Object { $_.KeyProtectorType -eq 'RecoveryPassword' }
             $keys = ''
             foreach ($r in $rk) {
-                $keys += "<div class='key-block'><div class='muted small'>Key ID: $(_Esc-Html $r.KeyProtectorId)</div><code>$(_Esc-Html $r.RecoveryPassword)</code></div>"
+                $maskedKey = "[Recovery Key Protected - Escrow Active]"
+                if ($r.RecoveryPassword -and $r.RecoveryPassword.Length -gt 6) {
+                    $lastChars = $r.RecoveryPassword.Substring($r.RecoveryPassword.Length - 6)
+                    $maskedKey = "••••-••••-••••-••••-••••-••••-••••-$lastChars"
+                }
+                $keys += "<div class='key-block'><div class='muted small'>Key ID: $(_Esc-Html $r.KeyProtectorId)</div><code>$(_Esc-Html $maskedKey)</code></div>"
             }
             $bitlockerRows += "<tr><th>$(_Esc-Html $v.MountPoint)</th><td>$status$keys</td></tr>"
         }

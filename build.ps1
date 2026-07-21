@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+#Requires -Version 5.1
 <#
 .SYNOPSIS
   Compila el launcher distribuible `launcher.ps1` (raíz del repo) a partir
@@ -267,8 +267,8 @@ $output = @(
 # already has self-healing BOM repair in bootstrap.ps1 (PR #53), so when
 # launcher.ps1 lands on disk via the bootstrap, the BOM is prepended
 # right before run-launcher.ps1 invokes it. WriteAllText() emits the
-# BOM-less variant on both Windows and Linux pwsh.
-[System.IO.File]::WriteAllText($OutFile, $output, $utf8NoBom)
+$utf8WithBom = [System.Text.UTF8Encoding]::new($true)
+[System.IO.File]::WriteAllText($OutFile, $output, $utf8WithBom)
 
 # Persistir hash map de tools para launcher DEV / tests.
 $toolHashesPath = Join-Path $PSScriptRoot 'config\tool-hashes.json'
@@ -286,10 +286,10 @@ $launcherShaPath = "$OutFile.sha256"
 )
 
 Write-Host ""
-Write-Host "  Atlas PC Support — build completado" -ForegroundColor Green
+Write-Host "  Atlas PC Support - build completado" -ForegroundColor Green
 Write-Host "  Archivo: $OutFile" -ForegroundColor Gray
 $fi = Get-Item $OutFile
-Write-Host "  Tamaño:  $([math]::Round($fi.Length / 1KB, 1)) KB ($([math]::Round($fi.Length / 1MB, 2)) MB)" -ForegroundColor Gray
+Write-Host ("  Tamano:  {0} KB ({1} MB)" -f [math]::Round($fi.Length / 1KB, 1), [math]::Round($fi.Length / 1MB, 2)) -ForegroundColor Gray
 Write-Host "  Build:   $buildDate" -ForegroundColor Gray
 Write-Host "  Hash:    $launcherHash" -ForegroundColor Gray
 Write-Host "  Hashes:  $toolHashesFileSha  (config/tool-hashes.json)" -ForegroundColor Gray

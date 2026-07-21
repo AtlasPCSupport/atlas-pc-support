@@ -834,7 +834,7 @@ function Invoke-InstalarPaquetes {
                 # Skip pure spinner / progress frames (single char -,\,|,/,or
                 # just the Unicode spinner glyphs winget uses).
                 if ($stripped -match '^[\-\\\|/]$') { continue }
-                if ($stripped -match '^[█▒░■▓▄▀]+$') { continue }
+                if ($stripped -match '^[#=\-\[\]\.\s]+$') { continue }
                 # Skip empty-after-strip lines only if they were originally
                 # control-heavy (keep genuine blank separators between header
                 # and rows).

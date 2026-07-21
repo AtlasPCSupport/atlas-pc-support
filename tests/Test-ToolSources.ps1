@@ -14,10 +14,10 @@
 #>
 [CmdletBinding()]
 param(
-    [string]$LauncherPath = (Join-Path $PSScriptRoot '..' 'launcher.ps1'),
-    [string]$ManifestPath = (Join-Path $PSScriptRoot '..' 'config' 'tools.json'),
-    [string]$ToolHashesPath = (Join-Path $PSScriptRoot '..' 'config' 'tool-hashes.json'),
-    [string]$ToolsDir = (Join-Path $PSScriptRoot '..' 'src' 'tools')
+    [string]$LauncherPath = (Join-Path (Split-Path -Parent $PSScriptRoot) 'launcher.ps1'),
+    [string]$ManifestPath = (Join-Path (Split-Path -Parent $PSScriptRoot) 'config\tools.json'),
+    [string]$ToolHashesPath = (Join-Path (Split-Path -Parent $PSScriptRoot) 'config\tool-hashes.json'),
+    [string]$ToolsDir = (Join-Path (Split-Path -Parent $PSScriptRoot) 'src\tools')
 )
 
 $ErrorActionPreference = 'Stop'

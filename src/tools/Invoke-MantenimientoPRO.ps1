@@ -557,15 +557,16 @@ $script:TaskDefinitions = @(
         Write-Log "System Info recopilada" "OK"
     }},
 
-    @{ Num=3; Title="REPARACION DE NUCLEO (SFC + DISM)"; Est=300; Code={
-        Write-Host "  1. SFC /scannow ..." -ForegroundColor Cyan
-        $SFC = Start-Process "sfc.exe" -ArgumentList "/scannow" -NoNewWindow -Wait -PassThru
-        if ($SFC.ExitCode -eq 0) { Write-Host "  SFC: OK" -ForegroundColor Green; Write-Log "SFC completed without errors." "OK" }
-        else { Write-Host "  SFC: Codigo $($SFC.ExitCode)" -ForegroundColor Yellow; Write-Log "SFC finalizo con codigo $($SFC.ExitCode)" "WARN" }
-        Write-Host "  2. DISM RestoreHealth ..." -ForegroundColor Cyan
+    @{ Num=3; Title="REPARACION DE NUCLEO (DISM + SFC)"; Est=300; Code={
+        Write-Host "  1. DISM RestoreHealth (reparar almacen de componentes)..." -ForegroundColor Cyan
         $DISM = Start-Process "dism.exe" -ArgumentList "/Online /Cleanup-Image /RestoreHealth" -NoNewWindow -Wait -PassThru
         if ($DISM.ExitCode -eq 0) { Write-Host "  DISM: OK" -ForegroundColor Green; Write-Log "DISM RestoreHealth completed." "OK" }
         else { Write-Host "  DISM: Codigo $($DISM.ExitCode)" -ForegroundColor Yellow; Write-Log "DISM finalizo con codigo $($DISM.ExitCode)" "WARN" }
+
+        Write-Host "  2. SFC /scannow (verificar integridad de archivos de sistema)..." -ForegroundColor Cyan
+        $SFC = Start-Process "sfc.exe" -ArgumentList "/scannow" -NoNewWindow -Wait -PassThru
+        if ($SFC.ExitCode -eq 0) { Write-Host "  SFC: OK" -ForegroundColor Green; Write-Log "SFC completed without errors." "OK" }
+        else { Write-Host "  SFC: Codigo $($SFC.ExitCode)" -ForegroundColor Yellow; Write-Log "SFC finalizo con codigo $($SFC.ExitCode)" "WARN" }
     }},
 
     @{ Num=4; Title="HEALTH CHECK DE DRIVERS"; Est=20; Code={
@@ -695,7 +696,7 @@ $script:TaskDefinitions = @(
 
     @{ Num=8; Title="LIMPIEZA DE TEMPORALES"; Est=15; Code={
         $TotalSize = 0; $TotalFiles = 0
-        $Folders = @("$env:TEMP", "C:\Windows\Temp", "$env:windir\Prefetch")
+        $Folders = @("$env:TEMP", "C:\Windows\Temp")
         foreach ($Folder in $Folders) {
             Write-Host "  Analizando: $Folder" -ForegroundColor Cyan
             if (Test-Path $Folder) {
@@ -723,9 +724,7 @@ $script:TaskDefinitions = @(
     }},
 
     @{ Num=9; Title="LIMPIEZA DE NAVEGADORES"; Est=20; Code={
-        Write-Host "  Closing navegadores..." -ForegroundColor Yellow
-        Start-Sleep 2
-        Stop-Process -Name "chrome","msedge","firefox" -Force -EA SilentlyContinue
+        Write-Host "  Limpiando cache de navegadores (sin forzar cierre)..." -ForegroundColor Yellow
         $cacheFolders = @("Cache", "Cache_Data", "Code Cache", "GPUCache", "Service Worker\CacheStorage")
         foreach ($browser in @(
             @{Name="Chrome"; Path="$env:LOCALAPPDATA\Google\Chrome\User Data"},

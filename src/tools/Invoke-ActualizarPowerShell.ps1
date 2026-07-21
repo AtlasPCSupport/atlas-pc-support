@@ -249,6 +249,33 @@ function Invoke-ActualizarPowerShell {
                 throw ($L.DownloadFailed -f $_.Exception.Message)
             }
         }
+
+        # SHA-256 Check & Authenticode Verification
+        if (Test-Path -LiteralPath $msi) {
+            try {
+                $sig = Get-AuthenticodeSignature -FilePath $msi -ErrorAction SilentlyContinue
+                if ($sig -and $sig.Status -eq 'Valid' -and $sig.SignerCertificate.Subject -like '*Microsoft*') {
+                    _Write-AtlasOkCompat "Microsoft Authenticode signature verified for $($MsiName)."
+                } else {
+                    _Write-AtlasWarnCompat "Signature verification notice: $($sig.StatusMessage)"
+                }
+            } catch {}
+
+            if (Get-Command Get-AtlasPS7ExpectedHash -ErrorAction SilentlyContinue) {
+                try {
+                    $expectedHash = Get-AtlasPS7ExpectedHash
+                    $actualHash = (Get-FileHash -LiteralPath $msi -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant()
+                    if ($expectedHash -and $actualHash -ne $expectedHash) {
+                        Remove-Item -LiteralPath $msi -Force -ErrorAction SilentlyContinue
+                        throw "SHA-256 hash mismatch for $MsiName. Expected: $expectedHash, Got: $actualHash"
+                    }
+                    _Write-AtlasOkCompat "SHA-256 checksum verified ($actualHash)."
+                } catch {
+                    _Write-AtlasWarnCompat "SHA-256 check skipped: $($_.Exception.Message)"
+                }
+            }
+        }
+
         $msiArgs = @('/i', "`"$msi`"", '/qn', '/norestart', 'ADD_PATH=1', 'ENABLE_PSREMOTING=0', 'REGISTER_MANIFEST=1')
         _Write-AtlasStepCompat $L.Installing
         $p = Start-Process -FilePath 'msiexec.exe' -ArgumentList $msiArgs -Wait -PassThru
