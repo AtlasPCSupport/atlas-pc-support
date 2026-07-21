@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env pwsh
+#!/usr/bin/env pwsh
 <#
 .SYNOPSIS
     Valida coherencia de launcher, manifest y hashes de tools.
@@ -37,7 +37,8 @@ function Write-CheckFail {
 function Get-AstParseErrors {
     param([Parameter(Mandatory)][string]$Path)
     $errs = $null
-    $null = [System.Management.Automation.Language.Parser]::ParseFile($Path, [ref]$null, [ref]$errs)
+    $text = Get-Content -Raw -LiteralPath $Path -Encoding UTF8
+    $null = [System.Management.Automation.Language.Parser]::ParseInput($text, $Path, [ref]$null, [ref]$errs)
     return @($errs)
 }
 

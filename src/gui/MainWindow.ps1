@@ -1,5 +1,5 @@
-﻿# ============================================================
-# Atlas PC Support — MainWindow.ps1
+# ============================================================
+# Atlas PC Support - MainWindow.ps1
 # Construye la ventana WPF, aplica branding, renderiza herramientas.
 # ============================================================
 

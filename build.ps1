@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+#Requires -Version 5.1
 <#
 .SYNOPSIS
   Compila el launcher distribuible `launcher.ps1` (raíz del repo) a partir
@@ -265,10 +265,8 @@ $output = @(
 # We chose path (b) wins: file in the repo / on raw.githubusercontent.com
 # stays BOM-less so `irm | iex` works for everyone. The offline USB path
 # already has self-healing BOM repair in bootstrap.ps1 (PR #53), so when
-# launcher.ps1 lands on disk via the bootstrap, the BOM is prepended
-# right before run-launcher.ps1 invokes it. WriteAllText() emits the
-$utf8WithBom = [System.Text.UTF8Encoding]::new($true)
-[System.IO.File]::WriteAllText($OutFile, $output, $utf8WithBom)
+# BOM-less variant on both Windows and Linux pwsh.
+[System.IO.File]::WriteAllText($OutFile, $output, $utf8NoBom)
 
 # Persistir hash map de tools para launcher DEV / tests.
 $toolHashesPath = Join-Path $PSScriptRoot 'config\tool-hashes.json'

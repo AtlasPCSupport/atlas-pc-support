@@ -1,4 +1,4 @@
-﻿# ============================================================
+# ============================================================
 # Atlas PC Support - Branding loader
 # Carga branding.json del repo o de una ruta personalizada.
 # Los revendedores / técnicos editan branding.json para cambiar
@@ -42,11 +42,11 @@ function Get-AtlasBranding {
         brand = @{
             name         = "ATLAS PC SUPPORT"
             shortName    = "Atlas"
-            tagline      = "Panel unificado de soporte técnico para Windows"
+            tagline      = "Panel unificado de soporte tecnico para Windows"
             version      = "1.0.0"
             companyUrl   = "https://github.com/mikepchelper-spec/atlas-pc-support"
             supportEmail = ""
-            copyright    = "© 2026 Atlas PC Support"
+            copyright    = "(c) 2026 Atlas PC Support"
         }
         theme = @{
             accentColor      = "#FF5500"
@@ -58,7 +58,7 @@ function Get-AtlasBranding {
         }
         language = "auto"
         window = @{
-            title       = "ATLAS PC SUPPORT · Panel v1.0"
+            title       = "ATLAS PC SUPPORT - Panel v1.0"
             width       = 1100
             height      = 720
             minWidth    = 900
@@ -70,17 +70,17 @@ function Get-AtlasBranding {
             autoElevate        = $true
             logPath            = "%LOCALAPPDATA%\AtlasPC\logs"
             dependenciesPath   = "%LOCALAPPDATA%\AtlasPC\bin"
-            defaultCategory    = "Diagnóstico"
+            defaultCategory    = "Diagnostico"
             confirmBeforeRun   = $false
         }
         categories = @(
-            @{ id = "diagnostico";    label = "Diagnóstico";    icon = "🔍"; order = 1 }
-            @{ id = "mantenimiento";  label = "Mantenimiento";  icon = "🛠"; order = 2 }
-            @{ id = "copia";          label = "Backup & Sync";  icon = "📁"; order = 3 }
-            @{ id = "redes";          label = "Redes";          icon = "🌐"; order = 4 }
-            @{ id = "seguridad";      label = "Seguridad";      icon = "🔒"; order = 5 }
-            @{ id = "software";       label = "Software";       icon = "📦"; order = 6 }
-            @{ id = "entrega";        label = "Entrega";        icon = "✅"; order = 7 }
+            @{ id = "diagnostico";    label = "Diagnostico";    icon = "DIAG";  order = 1 }
+            @{ id = "mantenimiento";  label = "Mantenimiento";  icon = "MAINT"; order = 2 }
+            @{ id = "copia";          label = "Backup & Sync";  icon = "SYNC";  order = 3 }
+            @{ id = "redes";          label = "Redes";          icon = "NET";   order = 4 }
+            @{ id = "seguridad";      label = "Seguridad";      icon = "SEC";   order = 5 }
+            @{ id = "software";       label = "Software";       icon = "SOFT";  order = 6 }
+            @{ id = "entrega";        label = "Entrega";        icon = "HAND";  order = 7 }
         )
     }
 
@@ -104,7 +104,7 @@ function Get-AtlasBranding {
                 Write-Verbose "Branding cargado desde: $path"
                 return (Merge-AtlasBranding $defaultBranding $userBranding)
             } catch {
-                Write-Warning "No se pudo parsear $path — usando branding por defecto. Error: $_"
+                Write-Warning "No se pudo parsear $path - usando branding por defecto. Error: $_"
             }
         }
     }

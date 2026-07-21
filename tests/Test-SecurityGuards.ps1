@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env pwsh
+#!/usr/bin/env pwsh
 <#
 .SYNOPSIS
     Security regression guards for high-risk bootstrap/runtime patterns.
@@ -50,7 +50,8 @@ function Parse-PsFile {
     param([Parameter(Mandatory)][string]$Path)
     $tokens = $null
     $errors = $null
-    $ast = [System.Management.Automation.Language.Parser]::ParseFile($Path, [ref]$tokens, [ref]$errors)
+    $text = Get-Content -Raw -LiteralPath $Path -Encoding UTF8
+    $ast = [System.Management.Automation.Language.Parser]::ParseInput($text, $Path, [ref]$tokens, [ref]$errors)
     return @{
         Ast    = $ast
         Tokens = @($tokens)
