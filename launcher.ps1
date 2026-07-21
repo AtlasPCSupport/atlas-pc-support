@@ -1,7 +1,7 @@
 # ============================================================
 #  Atlas PC Support â€” launcher.ps1 (compilado)
 #  VersiÃ³n: 1.0.0
-#  Build:   2026-07-21 15:25:23
+#  Build:   2026-07-21 15:36:36
 #  Repo:    https://github.com/mikepchelper-spec/atlas-pc-support
 #
 #  Uso:
@@ -19,7 +19,7 @@
 # ============================================================
 
 $script:AtlasVersion = '1.0.0'
-$script:AtlasBuildDate = '2026-07-21 15:25:23'
+$script:AtlasBuildDate = '2026-07-21 15:36:36'
 $script:AtlasToolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/src/tools'
 
 $script:AtlasToolsManifest = @'
@@ -332,7 +332,7 @@ $script:AtlasToolsManifest = @'
 
 $script:AtlasToolHashesJson = @'
 {
-    "generatedAt":  "2026-07-21T15:25:24.3638252-05:00",
+    "generatedAt":  "2026-07-21T15:36:36.7961146-05:00",
     "algorithm":  "SHA256",
     "files":  {
                   "Invoke-ActualizarPowerShell.ps1":  "094062f8ebf7c9279dc8eeedaf2e635e6fad889630feb1e73ce73ab4bb107304",
@@ -1195,11 +1195,11 @@ function Get-AtlasBranding {
         brand = @{
             name         = "ATLAS PC SUPPORT"
             shortName    = "Atlas"
-            tagline      = "Panel unificado de soporte tecnico para Windows"
+            tagline      = "Panel unificado de soporte técnico para Windows"
             version      = "1.0.0"
             companyUrl   = "https://github.com/mikepchelper-spec/atlas-pc-support"
             supportEmail = ""
-            copyright    = "(c) 2026 Atlas PC Support"
+            copyright    = "© 2026 Atlas PC Support"
         }
         theme = @{
             accentColor      = "#FF5500"
@@ -1211,7 +1211,7 @@ function Get-AtlasBranding {
         }
         language = "auto"
         window = @{
-            title       = "ATLAS PC SUPPORT - Panel v1.0"
+            title       = "ATLAS PC SUPPORT · Panel v1.0"
             width       = 1100
             height      = 720
             minWidth    = 900
@@ -1223,17 +1223,17 @@ function Get-AtlasBranding {
             autoElevate        = $true
             logPath            = "%LOCALAPPDATA%\AtlasPC\logs"
             dependenciesPath   = "%LOCALAPPDATA%\AtlasPC\bin"
-            defaultCategory    = "Diagnostico"
+            defaultCategory    = "Diagnóstico"
             confirmBeforeRun   = $false
         }
         categories = @(
-            @{ id = "diagnostico";    label = "Diagnostico";    icon = "DIAG";  order = 1 }
-            @{ id = "mantenimiento";  label = "Mantenimiento";  icon = "MAINT"; order = 2 }
-            @{ id = "copia";          label = "Backup & Sync";  icon = "SYNC";  order = 3 }
-            @{ id = "redes";          label = "Redes";          icon = "NET";   order = 4 }
-            @{ id = "seguridad";      label = "Seguridad";      icon = "SEC";   order = 5 }
-            @{ id = "software";       label = "Software";       icon = "SOFT";  order = 6 }
-            @{ id = "entrega";        label = "Entrega";        icon = "HAND";  order = 7 }
+            @{ id = "diagnostico";    label = "Diagnóstico";    icon = "🔍"; order = 1 }
+            @{ id = "mantenimiento";  label = "Mantenimiento";  icon = "🛠"; order = 2 }
+            @{ id = "copia";          label = "Backup & Sync";  icon = "📁"; order = 3 }
+            @{ id = "redes";          label = "Redes";          icon = "🌐"; order = 4 }
+            @{ id = "seguridad";      label = "Seguridad";      icon = "🔒"; order = 5 }
+            @{ id = "software";       label = "Software";       icon = "📦"; order = 6 }
+            @{ id = "entrega";        label = "Entrega";        icon = "✅"; order = 7 }
         )
     }
 
@@ -1257,7 +1257,7 @@ function Get-AtlasBranding {
                 Write-Verbose "Branding cargado desde: $path"
                 return (Merge-AtlasBranding $defaultBranding $userBranding)
             } catch {
-                Write-Warning "No se pudo parsear $path - usando branding por defecto. Error: $_"
+                Write-Warning "No se pudo parsear $path — usando branding por defecto. Error: $_"
             }
         }
     }
@@ -1342,55 +1342,55 @@ function Initialize-AtlasSecureDirectory {
 
 $script:AtlasStringsDict = @{
     'es' = @{
-        'app.tagline'             = 'Panel unificado de soporte tecnico para Windows'
+        'app.tagline'             = 'Panel unificado de soporte técnico para Windows'
         'search.placeholder'      = 'Buscar herramienta...'
         'category.all'            = 'Todo'
-        'category.diagnostico'    = 'Diagnostico'
+        'category.diagnostico'    = 'Diagnóstico'
         'category.mantenimiento'  = 'Mantenimiento'
         'category.copia'          = 'Backup & Sync'
         'category.redes'          = 'Redes'
         'category.seguridad'      = 'Seguridad'
         'category.software'       = 'Software'
         'category.entrega'        = 'Entrega'
-        'header.admin'            = '[Admin]'
-        'header.user'             = '[User]'
-        'header.logs'             = '[Logs]'
-        'header.about'            = '[Info]'
-        'button.run'              = '[Run]'
-        'badge.requiresAdmin'     = '[Requires Admin]'
+        'header.admin'            = '🛡  Admin'
+        'header.user'             = '👤 Usuario'
+        'header.logs'             = '📋 Logs'
+        'header.about'            = 'ℹ️ Acerca de'
+        'button.run'              = '▶  Ejecutar'
+        'badge.requiresAdmin'     = '🛡  requiere admin'
         'status.ready'            = 'Listo'
         'status.launching'        = 'Lanzando: {0}...'
-        'status.lastRun'          = 'Listo - ultima: {0}'
+        'status.lastRun'          = 'Listo — última: {0}'
         'status.toolsShown'       = '{0} herramienta(s) mostrada(s)'
-        'logs.empty'              = 'Aun no hay logs. Ejecuta alguna herramienta primero.'
+        'logs.empty'              = 'Aún no hay logs. Ejecuta alguna herramienta primero.'
         'about.title'             = 'Acerca de'
         'about.description'       = 'Panel inspirado en WinUtil (Chris Titus Tech).{NEWLINE}Licencia: MIT.'
         'about.web'               = 'Web'
         'tool.closePrompt'        = 'Presiona Enter para cerrar esta ventana...'
         'tool.error'              = '[!] Error en {0}: {1}'
-        'tool.notLoaded'          = "No se pudo serializar la funcion '{0}'. ¿Esta cargada?"
-        'footer.coffee'           = 'Invitame un cafe'
-        'footer.coffeeTooltip'    = 'Apoya el proyecto con una donacion via PayPal'
+        'tool.notLoaded'          = "No se pudo serializar la función '{0}'. ¿Está cargada?"
+        'footer.coffee'           = 'Invítame un café'
+        'footer.coffeeTooltip'    = 'Apoya el proyecto con una donación vía PayPal'
         'header.language'         = 'Idioma'
         'header.languageTooltip'  = 'Cambiar idioma del panel'
         'header.restartTooltip'   = 'Reiniciar el panel (aplica el cambio de idioma)'
         'language.restartRequired'= 'Reinicia el panel para aplicar el nuevo idioma.'
-        'restart.instructions'    = "El panel se cerrara ahora.{NEWLINE}{NEWLINE}Para reabrirlo, vuelve a ejecutar:{NEWLINE}  irm ""https://toolspanel.atlaspcsupport.com"" | iex"
+        'restart.instructions'    = "El panel se cerrará ahora.{NEWLINE}{NEWLINE}Para reabrirlo, vuelve a ejecutar:{NEWLINE}  irm ""https://toolspanel.atlaspcsupport.com"" | iex"
         'dash.cpu'                = 'CPU'
         'dash.ram'                = 'RAM'
         'dash.disk'               = 'Disco'
         'dash.alerts'             = 'Alertas'
-        'dash.alerts.none'        = 'Sin alertas - el equipo esta bien.'
+        'dash.alerts.none'        = 'Sin alertas — el equipo está bien.'
         'dash.refreshTooltip'     = 'Actualizar dashboard ahora'
         'dash.monitor.on'         = 'Monitor ON'
         'dash.monitor.off'        = 'Monitor OFF'
         'dash.monitor.tooltip'    = 'Activar/desactivar monitor de recursos en vivo'
-        'dash.monitor.paused'     = 'Monitor de recursos apagado - pulsa Monitor OFF para activarlo.'
+        'dash.monitor.paused'     = 'Monitor de recursos apagado — pulsa Monitor OFF para activarlo.'
         'dash.alert.cpu'          = 'CPU al {0}%'
         'dash.alert.ram'          = 'RAM al {0}%'
         'dash.alert.disk'         = 'Disco {0} al {1}% lleno'
-        'dash.alert.uptime'       = 'Uptime alto ({0} dias) - considera reiniciar'
-        'dash.alert.battery'      = 'Bateria baja ({0}%)'
+        'dash.alert.uptime'       = 'Uptime alto ({0} días) — considera reiniciar'
+        'dash.alert.battery'      = 'Batería baja ({0}%)'
         'dash.alert.pendingReboot'= 'Reinicio pendiente de Windows Update'
         'sidebar.header'          = 'EQUIPO'
         'sidebar.host'            = 'Hostname'
@@ -1400,7 +1400,7 @@ $script:AtlasStringsDict = @{
         'sidebar.ram'             = 'RAM total'
         'sidebar.uptime'          = 'Encendido desde'
         'sidebar.ip'              = 'IP local'
-        'sidebar.lastSync'        = 'Ultima actualizacion'
+        'sidebar.lastSync'        = 'Última actualización'
         'sidebar.uptimeFmt'       = '{0}d {1}h {2}m'
         'dash.disk.detail'        = '{0}% ({1} GB libres)'
     }
@@ -1415,15 +1415,15 @@ $script:AtlasStringsDict = @{
         'category.seguridad'      = 'Security'
         'category.software'       = 'Software'
         'category.entrega'        = 'Handover'
-        'header.admin'            = '[Admin]'
-        'header.user'             = '[User]'
-        'header.logs'             = '[Logs]'
-        'header.about'            = '[Info]'
-        'button.run'              = '[Run]'
-        'badge.requiresAdmin'     = '[Requires Admin]'
+        'header.admin'            = '🛡  Admin'
+        'header.user'             = '👤 User'
+        'header.logs'             = '📋 Logs'
+        'header.about'            = 'ℹ️ About'
+        'button.run'              = '▶  Run'
+        'badge.requiresAdmin'     = '🛡  requires admin'
         'status.ready'            = 'Ready'
         'status.launching'        = 'Launching: {0}...'
-        'status.lastRun'          = 'Ready - last: {0}'
+        'status.lastRun'          = 'Ready — last: {0}'
         'status.toolsShown'       = '{0} tool(s) shown'
         'logs.empty'              = 'No logs yet. Run a tool first.'
         'about.title'             = 'About'
@@ -3344,7 +3344,7 @@ function Invoke-AtlasTool {
 # ============================================================
 
 # ============================================================
-# Atlas PC Support - MainWindow.ps1
+# Atlas PC Support — MainWindow.ps1
 # Construye la ventana WPF, aplica branding, renderiza herramientas.
 # ============================================================
 

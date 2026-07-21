@@ -1,4 +1,4 @@
-﻿# ============================================================
+# ============================================================
 # Atlas PC Support - get.ps1
 # Downloads the launcher to a temp file and runs it with -File.
 # Save locally and run:  pwsh -ExecutionPolicy Bypass -File get.ps1

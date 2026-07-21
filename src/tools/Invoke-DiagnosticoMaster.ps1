@@ -1,4 +1,4 @@
-﻿# ============================================================
+# ============================================================
 # Invoke-DiagnosticoMaster  ->  Full System Report
 # i18n: Option A (en default + es secondary). Function name kept
 # as Invoke-DiagnosticoMaster for tools.json compatibility.

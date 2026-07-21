@@ -1,4 +1,4 @@
-﻿function Invoke-DiagnosticoEventos {
+function Invoke-DiagnosticoEventos {
     <#
     .SYNOPSIS
       Event Log Analyzer: reads the Windows Event Viewer and explains

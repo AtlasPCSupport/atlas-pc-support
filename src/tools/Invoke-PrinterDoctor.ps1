@@ -1,4 +1,4 @@
-﻿function Invoke-PrinterDoctor {
+function Invoke-PrinterDoctor {
     <#
     .SYNOPSIS
       Printer Doctor: safe Windows printer diagnostics and optional repairs.

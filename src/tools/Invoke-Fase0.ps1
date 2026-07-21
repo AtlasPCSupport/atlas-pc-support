@@ -1,4 +1,4 @@
-﻿# ============================================================
+# ============================================================
 # Invoke-Fase0  ->  Disable Legacy IPv6 Tunnels
 #
 # i18n: Option A (en default + full es secondary). Tool-internal

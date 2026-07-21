@@ -1,4 +1,4 @@
-﻿# ============================================================
+# ============================================================
 # Invoke-InstalarMicrosoftStore  ->  Install Microsoft Store
 #
 # Installs the Microsoft Store on systems where it is absent

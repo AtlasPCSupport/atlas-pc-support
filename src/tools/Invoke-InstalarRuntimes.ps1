@@ -1,4 +1,4 @@
-﻿# ============================================================
+# ============================================================
 # Invoke-InstalarRuntimes  ->  Install Runtime Dependencies
 #
 # Installs common Windows runtime packages in two modes:

@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string]$GithubPat = $env:GITHUB_PAT,
     [string]$LauncherShaPath = '..\..\launcher.ps1.sha256',
     [string]$ToolHashesPath = '..\..\config\tool-hashes.json'

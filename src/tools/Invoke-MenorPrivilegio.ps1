@@ -1,4 +1,4 @@
-﻿# ============================================================
+# ============================================================
 # Invoke-MenorPrivilegio  ->  Local Account Hardening
 #
 # i18n: Option A (en default + full es secondary). Function name

@@ -1,4 +1,4 @@
-﻿# ============================================================
+# ============================================================
 # Invoke-HostsManager  ->  Hosts File Editor
 #
 # i18n: Option A (en default + full es secondary). Function name

@@ -1,4 +1,4 @@
-﻿#Requires -Modules Pester
+#Requires -Modules Pester
 <#
 .SYNOPSIS
     Pruebas unitarias (Pester v5) para el ToolKit compartido y para el
@@ -6,13 +6,13 @@
     Ejecutar:  Invoke-Pester -Path tests/Lib.Tests.ps1
 #>
 
-BeforeAll {
-    $script:Root      = Split-Path -Parent $PSScriptRoot
-    $script:ToolKit   = Join-Path $script:Root 'src/lib/ToolKit.ps1'
-    . $script:ToolKit
-}
-
 Describe 'ToolKit - helpers de consola' {
+    BeforeAll {
+        $script:Root      = Split-Path -Parent $PSScriptRoot
+        $script:ToolKit   = Join-Path $script:Root 'src/lib/ToolKit.ps1'
+        . $script:ToolKit
+    }
+
     It 'Write-AtlasHeader/Step/Success/Warn/Failure no lanzan' {
         { Write-AtlasHeader 'Prueba' } | Should -Not -Throw
         { Write-AtlasStep 'a' }        | Should -Not -Throw
@@ -100,6 +100,8 @@ Invoke-FakeTool
         Set-Content -LiteralPath $tmp -Value $wrapper -Encoding UTF8
         try {
             $pwsh = (Get-Process -Id $PID).Path
+            if (-not $pwsh) { $pwsh = (Get-Command pwsh -ErrorAction SilentlyContinue).Source }
+            if (-not $pwsh) { $pwsh = (Get-Command powershell -ErrorAction SilentlyContinue).Source }
             $out  = & $pwsh -NoProfile -File $tmp 2>&1 | Out-String
             $out  | Should -Match 'helper-ok'
             $out  | Should -Match 'HTML-OK'
