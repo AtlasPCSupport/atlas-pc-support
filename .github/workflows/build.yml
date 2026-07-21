@@ -92,8 +92,9 @@ jobs:
       - name: Unit tests (Pester v5)
         shell: pwsh
         run: |
-          Install-Module Pester -Scope CurrentUser -Force -MinimumVersion 5.5.0 -SkipPublisherCheck -ErrorAction Stop
-          Import-Module Pester -MinimumVersion 5.5.0 -Force
+          Install-Module Pester -Scope CurrentUser -Force -MinimumVersion 5.5.0 -MaximumVersion 5.99.99 -SkipPublisherCheck -ErrorAction Stop
+          Remove-Module Pester -Force -ErrorAction SilentlyContinue
+          Import-Module Pester -MinimumVersion 5.5.0 -MaximumVersion 5.99.99 -Force
           Invoke-Pester -Path ./tests/Lib.Tests.ps1 -Output Detailed -CI
 
       - name: Upload built launcher
