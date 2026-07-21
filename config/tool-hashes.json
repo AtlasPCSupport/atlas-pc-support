@@ -1,5 +1,5 @@
 {
-    "generatedAt":  "2026-07-21T14:47:52.3947103-05:00",
+    "generatedAt":  "2026-07-21T15:00:22.9849439-05:00",
     "algorithm":  "SHA256",
     "files":  {
                   "Invoke-ActualizarPowerShell.ps1":  "094062f8ebf7c9279dc8eeedaf2e635e6fad889630feb1e73ce73ab4bb107304",
@@ -8,7 +8,7 @@
                   "Invoke-Deduplicador.ps1":  "b48df614411e9ace66f0c774ded389d1146fdc5c9f40867e92c15ad8bf0a5e3b",
                   "Invoke-DiagnosticoEventos.ps1":  "d8bcd80253e7118747e819618f8814729d615ff2fc359d7740ccad97b9c6cb1b",
                   "Invoke-DiagnosticoMaster.ps1":  "55b07593b743e653bbe47f887710edb2392c13e2811bdc755e62855f077c79f5",
-                  "Invoke-EntregaPC.ps1":  "39c67f82b5d54917ada480702e75e3e4b77c5f3aa8eb9f68db75ddcae8133c85",
+                  "Invoke-EntregaPC.ps1":  "efd068e45dacef5d7460ad5abe3df8394e2e74b219777ca2434dfaa3cf85d80e",
                   "Invoke-ExtraerLicencias.ps1":  "03310f849ee3d4c826a984565aa9e6b51a0bca57f9f450d4c302eb8e97500f22",
                   "Invoke-Fase0.ps1":  "87f903655a9873823f44091b8adf696242556e2332a26183bea67618d07cf41a",
                   "Invoke-FastCopy.ps1":  "22c76639e7c2208a98d68446f2864ee6171dc7aabbca16de70e18c715b16e0e8",

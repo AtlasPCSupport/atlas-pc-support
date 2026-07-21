@@ -129,12 +129,21 @@ function Invoke-EntregaPC {
                 'Customer documents recovered and restored',
                 'Customer-requested programs installed'
             )
+            RemoveUserTitle = '--- REMOVE USER ACCOUNT ---'
+            ChangePwdTitle  = '--- CHANGE USER PASSWORD ---'
+            NoUsersFound    = '   [!] No local user accounts found.'
+            UserRemovedOk   = "   [OK] User account '{0}' deleted."
+            AskNewPwdFor    = "   -> New password for '{0}' (type blindly and press ENTER. Leave blank for no password)"
+            PwdChangedOk    = "   [OK] Password updated for '{0}'."
+            NoPwdSetOk      = "   [OK] Password removed for '{0}'."
             MainOpt1     = '[ 1 ]  Hand over computer (current user: {0})'
             MainOpt2     = '[ 2 ]  Create an additional new user'
-            MainOpt3     = '[ 3 ]  Rename computer'
-            MainOpt4     = '[ 4 ]  Generate HANDOVER CHECKLIST (report)'
-            MainOpt5     = '[ 5 ]  Quit and close tool'
-            MainPrompt   = 'Select an option [1-5]'
+            MainOpt3     = '[ 3 ]  Remove a user account'
+            MainOpt4     = '[ 4 ]  Change password of a user'
+            MainOpt5     = '[ 5 ]  Rename computer'
+            MainOpt6     = '[ 6 ]  Generate HANDOVER CHECKLIST (report)'
+            MainOpt7     = '[ 7 ]  Quit and close tool'
+            MainPrompt   = 'Select an option [1-7]'
             BadOption    = 'Invalid option.'
         }
         es = @{
@@ -242,12 +251,21 @@ function Invoke-EntregaPC {
                 'Documentos de cliente recuperados y restaurados',
                 'Programas solicitados por el cliente instalados'
             )
+            RemoveUserTitle = '--- QUITAR CUENTA DE USUARIO ---'
+            ChangePwdTitle  = '--- CAMBIAR CONTRASENA DE USUARIO ---'
+            NoUsersFound    = '   [!] No se encontraron cuentas locales de usuario.'
+            UserRemovedOk   = "   [OK] Cuenta de usuario '{0}' eliminada correctamente."
+            AskNewPwdFor    = "   -> Nueva contrasena para '{0}' (Escriba a ciegas y presione ENTER. Deje en blanco para sin clave)"
+            PwdChangedOk    = "   [OK] Contrasena actualizada para '{0}'."
+            NoPwdSetOk      = "   [OK] Se elimino la contrasena para '{0}'."
             MainOpt1     = '[ 1 ]  Entregar equipo (Usuario actual: {0})'
             MainOpt2     = '[ 2 ]  Crear un usuario nuevo adicional'
-            MainOpt3     = '[ 3 ]  Renombrar equipo'
-            MainOpt4     = '[ 4 ]  Generar CHECKLIST DE ENTREGA (reporte)'
-            MainOpt5     = '[ 5 ]  Salir y cerrar herramienta'
-            MainPrompt   = 'Seleccione una opcion [1-5]'
+            MainOpt3     = '[ 3 ]  Quitar cuenta de usuario'
+            MainOpt4     = '[ 4 ]  Cambiar contrasena de un usuario'
+            MainOpt5     = '[ 5 ]  Renombrar equipo'
+            MainOpt6     = '[ 6 ]  Generar CHECKLIST DE ENTREGA (reporte)'
+            MainOpt7     = '[ 7 ]  Salir y cerrar herramienta'
+            MainPrompt   = 'Seleccione una opcion [1-7]'
             BadOption    = 'Opcion no valida.'
         }
     }
@@ -373,6 +391,128 @@ function Crear-NuevoUsuario {
             $UsersGroup = Get-LocalGroup | Where-Object SID -eq "S-1-5-32-545"
             Add-LocalGroupMember -Group $UsersGroup -Member $newUser
             Write-Host $L.GrantedStd -ForegroundColor Green
+        }
+    } catch {
+        Write-Host ("`n" + ($L.ErrFmt -f $_.Exception.Message)) -ForegroundColor Red
+    }
+    Wait-AtlasReturn -Message $L.ReturnHint
+}
+
+function Get-AtlasLocalUsersList {
+    try {
+        return @(Get-LocalUser -ErrorAction Stop)
+    } catch {
+        return @(Get-CimInstance Win32_UserAccount -Filter "LocalAccount=True" -ErrorAction SilentlyContinue | ForEach-Object {
+            [pscustomobject]@{ Name = $_.Name; Enabled = -not $_.Disabled; FullName = $_.FullName }
+        })
+    }
+}
+
+function Quitar-UsuarioLocal {
+    Escribir-Centrado $L.RemoveUserTitle "Cyan"
+    Write-Host ""
+    Write-Host $L.CancelHint -ForegroundColor DarkGray
+    Write-Host ""
+
+    $users = Get-AtlasLocalUsersList
+    if ($users.Count -eq 0) {
+        Write-Host $L.NoUsersFound -ForegroundColor Yellow
+        Wait-AtlasReturn -Message $L.ReturnHint
+        return
+    }
+
+    Write-Host "   Local Accounts:" -ForegroundColor Cyan
+    for ($i = 0; $i -lt $users.Count; $i++) {
+        $u = $users[$i]
+        $statusStr = if ($u.Enabled) { "Enabled" } else { "Disabled" }
+        $dispStr = if ($u.FullName) { " ($($u.FullName))" } else { "" }
+        Write-Host ("   [{0}] {1}{2} - Status: {3}" -f ($i + 1), $u.Name, $dispStr, $statusStr) -ForegroundColor White
+    }
+    Write-Host ""
+
+    $sel = Read-Host "   Select user number to remove (0 to cancel)"
+    if ($sel -eq '0' -or [string]::IsNullOrWhiteSpace($sel)) { return }
+
+    $index = 0
+    if (-not [int]::TryParse($sel, [ref]$index) -or $index -lt 1 -or $index -gt $users.Count) {
+        Write-Host "`n   [ERROR] Invalid selection." -ForegroundColor Red
+        Wait-AtlasReturn -Message $L.ReturnHint
+        return
+    }
+
+    $targetUser = $users[$index - 1].Name
+
+    if ($targetUser -eq $env:USERNAME) {
+        Write-Host "`n   [!] WARNING: Cannot delete the currently logged-in account ($targetUser)." -ForegroundColor Red
+        Wait-AtlasReturn -Message $L.ReturnHint
+        return
+    }
+
+    $confirm = Read-Host ("`n   ARE YOU SURE you want to DELETE user '$targetUser'? Type 'DELETE' to confirm")
+    if ($confirm -ne 'DELETE' -and $confirm -ne 'BORRAR') {
+        Write-Host "   [X] Cancelled. Account '$targetUser' was NOT deleted." -ForegroundColor Yellow
+        Wait-AtlasReturn -Message $L.ReturnHint
+        return
+    }
+
+    try {
+        Remove-LocalUser -Name $targetUser -ErrorAction Stop
+        Write-Host ("`n" + ($L.UserRemovedOk -f $targetUser)) -ForegroundColor Green
+    } catch {
+        try {
+            net user "$targetUser" /delete | Out-Null
+            Write-Host ("`n" + ($L.UserRemovedOk -f $targetUser)) -ForegroundColor Green
+        } catch {
+            Write-Host ("`n" + ($L.ErrFmt -f $_.Exception.Message)) -ForegroundColor Red
+        }
+    }
+    Wait-AtlasReturn -Message $L.ReturnHint
+}
+
+function Cambiar-PasswordUsuario {
+    Escribir-Centrado $L.ChangePwdTitle "Cyan"
+    Write-Host ""
+    Write-Host $L.CancelHint -ForegroundColor DarkGray
+    Write-Host ""
+
+    $users = Get-AtlasLocalUsersList
+    if ($users.Count -eq 0) {
+        Write-Host $L.NoUsersFound -ForegroundColor Yellow
+        Wait-AtlasReturn -Message $L.ReturnHint
+        return
+    }
+
+    Write-Host "   Local Accounts:" -ForegroundColor Cyan
+    for ($i = 0; $i -lt $users.Count; $i++) {
+        $u = $users[$i]
+        $statusStr = if ($u.Enabled) { "Enabled" } else { "Disabled" }
+        $dispStr = if ($u.FullName) { " ($($u.FullName))" } else { "" }
+        Write-Host ("   [{0}] {1}{2} - Status: {3}" -f ($i + 1), $u.Name, $dispStr, $statusStr) -ForegroundColor White
+    }
+    Write-Host ""
+
+    $sel = Read-Host "   Select user number to change password (0 to cancel)"
+    if ($sel -eq '0' -or [string]::IsNullOrWhiteSpace($sel)) { return }
+
+    $index = 0
+    if (-not [int]::TryParse($sel, [ref]$index) -or $index -lt 1 -or $index -gt $users.Count) {
+        Write-Host "`n   [ERROR] Invalid selection." -ForegroundColor Red
+        Wait-AtlasReturn -Message $L.ReturnHint
+        return
+    }
+
+    $targetUser = $users[$index - 1].Name
+
+    Write-Host ($L.AskNewPwdFor -f $targetUser) -ForegroundColor Yellow
+    $securePassword = Read-Host $L.AskPwdLbl -AsSecureString
+
+    try {
+        if ($securePassword.Length -gt 0) {
+            Set-LocalUser -Name $targetUser -Password $securePassword -ErrorAction Stop
+            Write-Host ("`n" + ($L.PwdChangedOk -f $targetUser)) -ForegroundColor Green
+        } else {
+            Set-LocalUser -Name $targetUser -NoPassword -ErrorAction Stop
+            Write-Host ("`n" + ($L.NoPwdSetOk -f $targetUser)) -ForegroundColor Green
         }
     } catch {
         Write-Host ("`n" + ($L.ErrFmt -f $_.Exception.Message)) -ForegroundColor Red
@@ -788,14 +928,18 @@ while ($true) {
     $l3 = $L.MainOpt3
     $l4 = $L.MainOpt4
     $l5 = $L.MainOpt5
+    $l6 = $L.MainOpt6
+    $l7 = $L.MainOpt7
 
-    $maxLen = [math]::Max($l1.Length, [math]::Max($l2.Length, [math]::Max($l3.Length, [math]::Max($l4.Length, $l5.Length))))
+    $maxLen = [math]::Max($l1.Length, [math]::Max($l2.Length, [math]::Max($l3.Length, [math]::Max($l4.Length, [math]::Max($l5.Length, [math]::Max($l6.Length, $l7.Length))))))
 
     Escribir-Centrado $l1.PadRight($maxLen) "White"
     Escribir-Centrado $l2.PadRight($maxLen) "White"
     Escribir-Centrado $l3.PadRight($maxLen) "White"
-    Escribir-Centrado $l4.PadRight($maxLen) "Green"
-    Escribir-Centrado $l5.PadRight($maxLen) "DarkGray"
+    Escribir-Centrado $l4.PadRight($maxLen) "White"
+    Escribir-Centrado $l5.PadRight($maxLen) "White"
+    Escribir-Centrado $l6.PadRight($maxLen) "Green"
+    Escribir-Centrado $l7.PadRight($maxLen) "DarkGray"
     Write-Host ""
 
     $textoPrompt = $L.MainPrompt
@@ -807,9 +951,11 @@ while ($true) {
     switch ($opcion) {
         '1' { Mostrar-Encabezado; Modificar-UsuarioActual }
         '2' { Mostrar-Encabezado; Crear-NuevoUsuario }
-        '3' { Mostrar-Encabezado; Renombrar-Equipo }
-        '4' { Mostrar-Encabezado; Generar-ChecklistEntrega }
-        '5' { Clear-Host; return }
+        '3' { Mostrar-Encabezado; Quitar-UsuarioLocal }
+        '4' { Mostrar-Encabezado; Cambiar-PasswordUsuario }
+        '5' { Mostrar-Encabezado; Renombrar-Equipo }
+        '6' { Mostrar-Encabezado; Generar-ChecklistEntrega }
+        '7' { Clear-Host; return }
         default { Escribir-Centrado $L.BadOption "Red"; Start-Sleep -s 1 }
     }
 }
