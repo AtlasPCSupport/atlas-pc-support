@@ -54,7 +54,7 @@ $toolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-su
 # Mapa de hashes SHA-256 de herramientas (integridad en ToolRunner).
 $toolHashMap = [ordered]@{}
 Get-ChildItem -Path (Join-Path $src 'tools') -Filter 'Invoke-*.ps1' -File |
-    Sort-Object -Property Name |
+    Sort-Object -Property { $_.Name.ToLowerInvariant() } |
     ForEach-Object {
         $toolHashMap[$_.Name] = Get-AtlasNormalizedTextSha256 -Path $_.FullName
     }
