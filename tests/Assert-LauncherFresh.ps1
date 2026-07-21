@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 <#
 .SYNOPSIS
     Detecta un launcher.ps1 / tool-hashes.json "stale": commiteados sin

@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Invoke-GPUCheck
 # GPU diagnostics with optional stress test and report export.
 # Atlas PC Support

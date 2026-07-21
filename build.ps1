@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
   Compila el launcher distribuible `launcher.ps1` (raíz del repo) a partir

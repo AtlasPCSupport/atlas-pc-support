@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Invoke-Personalizacion  ->  Windows Tweaks
 #
 # i18n: Option A (en default + full es secondary). Function name

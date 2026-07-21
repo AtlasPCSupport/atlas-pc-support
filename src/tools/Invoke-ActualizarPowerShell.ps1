@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Invoke-ActualizarPowerShell  ->  Install / Update PowerShell 7
 #
 # i18n: Option A (en default + full es secondary). Tool-internal

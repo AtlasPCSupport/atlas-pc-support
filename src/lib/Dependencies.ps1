@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Atlas PC Support - Dependency manager
 # Resuelve y descarga dependencias externas (FastCopy, etc.)
 # a %LOCALAPPDATA%\AtlasPC\bin\ bajo demanda.

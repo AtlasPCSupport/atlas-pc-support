@@ -1,4 +1,4 @@
-function Invoke-AIReadiness {
+﻿function Invoke-AIReadiness {
     <#
     .SYNOPSIS
       AI Readiness Assessment: self-contained local/cloud AI readiness audit.

@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$BaseUrl = 'https://toolspanel.atlaspcsupport.com',
     [int]$TimeoutSec = 30
 )

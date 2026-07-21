@@ -1,4 +1,4 @@
-function Invoke-KeyboardDoctor {
+﻿function Invoke-KeyboardDoctor {
     <#
     .SYNOPSIS
       Keyboard Doctor: safe ghost-typing / keyboard-fault triage.

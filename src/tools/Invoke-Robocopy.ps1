@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Invoke-Robocopy  ->  Robocopy Mirror
 #
 # i18n: Option A (en default + full es secondary). Function name

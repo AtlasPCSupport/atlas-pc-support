@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Invoke-PrepararUSB  ->  Build Offline USB
 #
 # i18n: Option A (en default + full es secondary). Function name

@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Atlas PC Support - Branding loader
 # Carga branding.json del repo o de una ruta personalizada.
 # Los revendedores / técnicos editan branding.json para cambiar

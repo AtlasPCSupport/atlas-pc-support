@@ -1,4 +1,4 @@
-#Requires -Modules Pester
+﻿#Requires -Modules Pester
 <#
 .SYNOPSIS
     Pruebas unitarias (Pester v5) para el ToolKit compartido y para el

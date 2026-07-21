@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Invoke-InstalarPaquetes  ->  Bulk App Installer (winget)
 #
 # Pilot tool for the EN/ES i18n migration ("Option A" — strings

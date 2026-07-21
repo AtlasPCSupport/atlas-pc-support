@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Atlas PC Support - Tool toolkit (helpers compartidos para TOOLS)
 #
 # A diferencia del resto de lib/, este archivo esta pensado para estar

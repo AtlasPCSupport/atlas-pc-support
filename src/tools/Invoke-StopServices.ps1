@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Invoke-StopServices  ->  Service Optimizer
 #
 # i18n: Option A (en default + full es secondary). Function name

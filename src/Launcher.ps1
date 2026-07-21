@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Atlas PC Support — Launcher (DEV / modo código fuente)
 # Para desarrollo local. Carga módulos desde src/.
 # El launcher.ps1 de distribución (en raíz del repo) se genera

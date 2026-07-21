@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Atlas PC Support - Tool runner
 # Ejecuta una herramienta en una nueva ventana de PowerShell.
 #

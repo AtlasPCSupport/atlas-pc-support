@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Atlas PC Support - Strings / i18n
 # Supported languages: en (default), es, pt, fr, de, it, ro
 # To add another: copy the 'en' block and translate the values.
