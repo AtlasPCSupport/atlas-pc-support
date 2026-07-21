@@ -22,7 +22,7 @@ $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
 
 function Get-EmbeddedContent {
     param([string]$Path)
-    $content = Get-Content -Raw -Path $Path -Encoding UTF8
+    $content = [System.IO.File]::ReadAllText($Path, [System.Text.Encoding]::UTF8)
     # Normaliza saltos de línea
     return $content -replace "`r`n", "`n"
 }
@@ -32,7 +32,7 @@ function Get-AtlasNormalizedTextSha256 {
     param([Parameter(Mandatory)][string]$Path)
 
     # Canonical UTF-8 + LF hash to avoid CRLF/LF drift across environments.
-    $text = Get-Content -Raw -LiteralPath $Path -Encoding UTF8
+    $text = [System.IO.File]::ReadAllText($Path, [System.Text.Encoding]::UTF8)
     $normalized = ($text -replace "`r`n", "`n") -replace "`r", "`n"
     $bytes = [System.Text.UTF8Encoding]::new($false).GetBytes($normalized)
     $sha = [System.Security.Cryptography.SHA256]::Create()

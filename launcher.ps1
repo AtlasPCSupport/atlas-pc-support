@@ -1,7 +1,7 @@
 # ============================================================
 #  Atlas PC Support â€” launcher.ps1 (compilado)
 #  VersiÃ³n: 1.0.0
-#  Build:   2026-07-21 15:20:58
+#  Build:   2026-07-21 15:25:23
 #  Repo:    https://github.com/mikepchelper-spec/atlas-pc-support
 #
 #  Uso:
@@ -19,7 +19,7 @@
 # ============================================================
 
 $script:AtlasVersion = '1.0.0'
-$script:AtlasBuildDate = '2026-07-21 15:20:58'
+$script:AtlasBuildDate = '2026-07-21 15:25:23'
 $script:AtlasToolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/src/tools'
 
 $script:AtlasToolsManifest = @'
@@ -332,7 +332,7 @@ $script:AtlasToolsManifest = @'
 
 $script:AtlasToolHashesJson = @'
 {
-    "generatedAt":  "2026-07-21T15:20:58.4623506-05:00",
+    "generatedAt":  "2026-07-21T15:25:24.3638252-05:00",
     "algorithm":  "SHA256",
     "files":  {
                   "Invoke-ActualizarPowerShell.ps1":  "094062f8ebf7c9279dc8eeedaf2e635e6fad889630feb1e73ce73ab4bb107304",

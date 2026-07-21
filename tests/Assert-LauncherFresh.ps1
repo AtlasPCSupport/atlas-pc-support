@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env pwsh
+#!/usr/bin/env pwsh
 <#
 .SYNOPSIS
     Detecta un launcher.ps1 / tool-hashes.json "stale": commiteados sin
@@ -49,14 +49,14 @@ foreach ($p in @($launcherPath, $hashesPath, $buildScript)) {
     if (-not (Test-Path -LiteralPath $p)) { throw "No existe ruta requerida: $p" }
 }
 
-$committedLauncher = Get-AtlasNormalizedArtifact (Get-Content -Raw -LiteralPath $launcherPath)
-$committedHashes   = Get-AtlasNormalizedArtifact (Get-Content -Raw -LiteralPath $hashesPath)
+$committedLauncher = Get-AtlasNormalizedArtifact ([System.IO.File]::ReadAllText($launcherPath, [System.Text.Encoding]::UTF8))
+$committedHashes   = Get-AtlasNormalizedArtifact ([System.IO.File]::ReadAllText($hashesPath, [System.Text.Encoding]::UTF8))
 
 Write-Host '[..] Reconstruyendo launcher desde src/ para comparar...' -ForegroundColor Cyan
 & $buildScript | Out-Null
 
-$rebuiltLauncher = Get-AtlasNormalizedArtifact (Get-Content -Raw -LiteralPath $launcherPath)
-$rebuiltHashes   = Get-AtlasNormalizedArtifact (Get-Content -Raw -LiteralPath $hashesPath)
+$rebuiltLauncher = Get-AtlasNormalizedArtifact ([System.IO.File]::ReadAllText($launcherPath, [System.Text.Encoding]::UTF8))
+$rebuiltHashes   = Get-AtlasNormalizedArtifact ([System.IO.File]::ReadAllText($hashesPath, [System.Text.Encoding]::UTF8))
 
 $stale = $false
 
