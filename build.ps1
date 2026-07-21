@@ -133,8 +133,8 @@ $guiContent = Get-EmbeddedContent (Join-Path $src 'gui\MainWindow.ps1')
 
 $banner = (@"
 # ============================================================
-#  Atlas PC Support — launcher.ps1 (compilado)
-#  Versión: $version
+#  Atlas PC Support - launcher.ps1 (compilado)
+#  Version: $version
 #  Build:   $buildDate
 #  Repo:    https://github.com/mikepchelper-spec/atlas-pc-support
 #
@@ -142,7 +142,7 @@ $banner = (@"
 #      Save get.ps1 locally and run: pwsh -ExecutionPolicy Bypass -File get.ps1
 #
 #  Este archivo es AUTOGENERADO por build.ps1. NO lo edites a mano.
-#  Las fuentes están en src/.
+#  Las fuentes estan en src/.
 # ============================================================
 "@) -replace "`r`n", "`n"
 
@@ -238,7 +238,7 @@ $output = @(
     $embeddedData
     ""
     "# ============================================================"
-    "#  LIBRERÍAS (lib/)"
+    "#  LIBRERIAS (lib/)"
     "# ============================================================"
     ""
     $libContent

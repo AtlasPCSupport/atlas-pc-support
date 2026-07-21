@@ -1,14 +1,14 @@
 # ============================================================
-#  Atlas PC Support â€” launcher.ps1 (compilado)
-#  VersiÃ³n: 1.0.0
-#  Build:   2026-07-21 15:52:17
+#  Atlas PC Support - launcher.ps1 (compilado)
+#  Version: 1.0.0
+#  Build:   2026-07-21 15:56:43
 #  Repo:    https://github.com/mikepchelper-spec/atlas-pc-support
 #
 #  Uso:
 #      Save get.ps1 locally and run: pwsh -ExecutionPolicy Bypass -File get.ps1
 #
 #  Este archivo es AUTOGENERADO por build.ps1. NO lo edites a mano.
-#  Las fuentes estÃ¡n en src/.
+#  Las fuentes estan en src/.
 # ============================================================
 
 #Requires -Version 5.1
@@ -19,7 +19,7 @@
 # ============================================================
 
 $script:AtlasVersion = '1.0.0'
-$script:AtlasBuildDate = '2026-07-21 15:52:17'
+$script:AtlasBuildDate = '2026-07-21 15:56:43'
 $script:AtlasToolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/src/tools'
 
 $script:AtlasToolsManifest = @'
@@ -332,7 +332,7 @@ $script:AtlasToolsManifest = @'
 
 $script:AtlasToolHashesJson = @'
 {
-    "generatedAt":  "2026-07-21T15:52:17.2297955-05:00",
+    "generatedAt":  "2026-07-21T15:56:43.8327665-05:00",
     "algorithm":  "SHA256",
     "files":  {
                   "Invoke-ActualizarPowerShell.ps1":  "094062f8ebf7c9279dc8eeedaf2e635e6fad889630feb1e73ce73ab4bb107304",
@@ -1147,7 +1147,7 @@ $BodyHtml
 '@
 
 # ============================================================
-#  LIBRERÃAS (lib/)
+#  LIBRERIAS (lib/)
 # ============================================================
 
 # ---- lib\Branding.ps1 ----
