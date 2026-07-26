@@ -1,7 +1,7 @@
 # ============================================================
 #  Atlas PC Support - launcher.ps1 (compilado)
 #  Version: 1.0.0
-#  Build:   2026-07-21 16:06:59
+#  Build:   2026-07-25 22:48:29
 #  Repo:    https://github.com/mikepchelper-spec/atlas-pc-support
 #
 #  Uso:
@@ -19,7 +19,7 @@
 # ============================================================
 
 $script:AtlasVersion = '1.0.0'
-$script:AtlasBuildDate = '2026-07-21 16:06:59'
+$script:AtlasBuildDate = '2026-07-25 22:48:29'
 $script:AtlasToolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/src/tools'
 
 $script:AtlasToolsManifest = @'
@@ -332,37 +332,37 @@ $script:AtlasToolsManifest = @'
 
 $script:AtlasToolHashesJson = @'
 {
-    "generatedAt":  "2026-07-21T16:06:59.5742037-05:00",
-    "algorithm":  "SHA256",
-    "files":  {
-                  "Invoke-ActualizarPowerShell.ps1":  "094062f8ebf7c9279dc8eeedaf2e635e6fad889630feb1e73ce73ab4bb107304",
-                  "Invoke-AIReadiness.ps1":  "6f734eac4cdc9d3c8da7ba3b84fda9ad31fa596c2af239f8d69dd8ee3bcce280",
-                  "Invoke-AuditoriaRouter.ps1":  "6500c6bfdc3f37e19ba3a66e3c6d348d0c9a50e782859918e10fc2ed344df8f6",
-                  "Invoke-Deduplicador.ps1":  "b48df614411e9ace66f0c774ded389d1146fdc5c9f40867e92c15ad8bf0a5e3b",
-                  "Invoke-DiagnosticoEventos.ps1":  "d8bcd80253e7118747e819618f8814729d615ff2fc359d7740ccad97b9c6cb1b",
-                  "Invoke-DiagnosticoMaster.ps1":  "55b07593b743e653bbe47f887710edb2392c13e2811bdc755e62855f077c79f5",
-                  "Invoke-EntregaPC.ps1":  "efd068e45dacef5d7460ad5abe3df8394e2e74b219777ca2434dfaa3cf85d80e",
-                  "Invoke-ExtraerLicencias.ps1":  "03310f849ee3d4c826a984565aa9e6b51a0bca57f9f450d4c302eb8e97500f22",
-                  "Invoke-Fase0.ps1":  "87f903655a9873823f44091b8adf696242556e2332a26183bea67618d07cf41a",
-                  "Invoke-FastCopy.ps1":  "22c76639e7c2208a98d68446f2864ee6171dc7aabbca16de70e18c715b16e0e8",
-                  "Invoke-GestorBitLocker.ps1":  "da6bb20b8e689b180e5ea20ad3274bdbf960279b6c5517db695edff90df13675",
-                  "Invoke-GPUCheck.ps1":  "ec3c2e1c0a24d5ea6b38c40694bd0dd18a132102d518aa399c859fdb92bf9e28",
-                  "Invoke-HostsManager.ps1":  "fe26ffe69919dc72b3cce423df40364e597caf387c72ce5e7d961ba42eba6e35",
-                  "Invoke-InstalarMicrosoftStore.ps1":  "a96e3adf0507b6d0fa9ea4777e0141dda0c29f067e8e1dfcfa487c0b17a8105d",
-                  "Invoke-InstalarPaquetes.ps1":  "3d4fc31116319b2d2e14733ea61ca0e62dc88819655070672e844cc4ca89160a",
-                  "Invoke-InstalarRuntimes.ps1":  "1baad75ad5ccd5ce0459f8fb2e00e7ebca3eecbf0b56bb27483e197f5bcd3c29",
-                  "Invoke-KeyboardDoctor.ps1":  "f4e2e484b3b08ccbc3d829b3893df82719943f6dc226f0e26dc72d0203cd5660",
-                  "Invoke-MantenimientoPRO.ps1":  "475d9f7dd1cc3c7e26ee4afac6b0e698e65644216796a8fbb7a440ff323ce245",
-                  "Invoke-MenorPrivilegio.ps1":  "1f0c63ad3081d0ad8d10fb8fea68ddc7de49918988032d4f2985a66442de0426",
-                  "Invoke-PartsUpgrade.ps1":  "d8703a7ff9a2c6cc8aa42caedc4457451174b0ae0c6fa70d7b8a76038c03d3be",
-                  "Invoke-Personalizacion.ps1":  "0212b1ac489832ac2d87242849dbd7be5e2a96ef80604f272a2f586d05cde5e3",
-                  "Invoke-PrepararUSB.ps1":  "17abb8c974a3c9609a35498553bae7eeabf3d6a1c9630051e85b9b1ebf306413",
-                  "Invoke-PrinterDoctor.ps1":  "fe78e343744f8182427a6c157f54e7a24185fe950dba86ca193bd02541a243d2",
-                  "Invoke-RespaldoControladores.ps1":  "eb813133976f704c216e1fd8280d3869384040c67ee51fa72a007501edebedb5",
-                  "Invoke-Robocopy.ps1":  "29f5abf91d82946d6fd7ffd7786de8165ad3e481e7075e7654fd4071328f0a7a",
-                  "Invoke-SelectorDNS.ps1":  "71ed1eb9a2087f02c7f2810dd25f819a6dcfb8d9a897fbcc9de1a12341bf4e94",
-                  "Invoke-StopServices.ps1":  "04013323966c6326b13567a265001a74731ab3bf28c9264b6c7348a4441d56fe"
-              }
+  "generatedAt": "2026-07-25T22:48:29.9502049-05:00",
+  "algorithm": "SHA256",
+  "files": {
+    "Invoke-ActualizarPowerShell.ps1": "094062f8ebf7c9279dc8eeedaf2e635e6fad889630feb1e73ce73ab4bb107304",
+    "Invoke-AIReadiness.ps1": "6f734eac4cdc9d3c8da7ba3b84fda9ad31fa596c2af239f8d69dd8ee3bcce280",
+    "Invoke-AuditoriaRouter.ps1": "6500c6bfdc3f37e19ba3a66e3c6d348d0c9a50e782859918e10fc2ed344df8f6",
+    "Invoke-Deduplicador.ps1": "b48df614411e9ace66f0c774ded389d1146fdc5c9f40867e92c15ad8bf0a5e3b",
+    "Invoke-DiagnosticoEventos.ps1": "d8bcd80253e7118747e819618f8814729d615ff2fc359d7740ccad97b9c6cb1b",
+    "Invoke-DiagnosticoMaster.ps1": "55b07593b743e653bbe47f887710edb2392c13e2811bdc755e62855f077c79f5",
+    "Invoke-EntregaPC.ps1": "efd068e45dacef5d7460ad5abe3df8394e2e74b219777ca2434dfaa3cf85d80e",
+    "Invoke-ExtraerLicencias.ps1": "03310f849ee3d4c826a984565aa9e6b51a0bca57f9f450d4c302eb8e97500f22",
+    "Invoke-Fase0.ps1": "87f903655a9873823f44091b8adf696242556e2332a26183bea67618d07cf41a",
+    "Invoke-FastCopy.ps1": "22c76639e7c2208a98d68446f2864ee6171dc7aabbca16de70e18c715b16e0e8",
+    "Invoke-GestorBitLocker.ps1": "da6bb20b8e689b180e5ea20ad3274bdbf960279b6c5517db695edff90df13675",
+    "Invoke-GPUCheck.ps1": "ec3c2e1c0a24d5ea6b38c40694bd0dd18a132102d518aa399c859fdb92bf9e28",
+    "Invoke-HostsManager.ps1": "fe26ffe69919dc72b3cce423df40364e597caf387c72ce5e7d961ba42eba6e35",
+    "Invoke-InstalarMicrosoftStore.ps1": "a96e3adf0507b6d0fa9ea4777e0141dda0c29f067e8e1dfcfa487c0b17a8105d",
+    "Invoke-InstalarPaquetes.ps1": "bc790f0f0ae5cd57800c595182485f1b64ea47635d75627d72182f610d9bfa03",
+    "Invoke-InstalarRuntimes.ps1": "1baad75ad5ccd5ce0459f8fb2e00e7ebca3eecbf0b56bb27483e197f5bcd3c29",
+    "Invoke-KeyboardDoctor.ps1": "f4e2e484b3b08ccbc3d829b3893df82719943f6dc226f0e26dc72d0203cd5660",
+    "Invoke-MantenimientoPRO.ps1": "475d9f7dd1cc3c7e26ee4afac6b0e698e65644216796a8fbb7a440ff323ce245",
+    "Invoke-MenorPrivilegio.ps1": "1f0c63ad3081d0ad8d10fb8fea68ddc7de49918988032d4f2985a66442de0426",
+    "Invoke-PartsUpgrade.ps1": "d8703a7ff9a2c6cc8aa42caedc4457451174b0ae0c6fa70d7b8a76038c03d3be",
+    "Invoke-Personalizacion.ps1": "0212b1ac489832ac2d87242849dbd7be5e2a96ef80604f272a2f586d05cde5e3",
+    "Invoke-PrepararUSB.ps1": "17abb8c974a3c9609a35498553bae7eeabf3d6a1c9630051e85b9b1ebf306413",
+    "Invoke-PrinterDoctor.ps1": "fe78e343744f8182427a6c157f54e7a24185fe950dba86ca193bd02541a243d2",
+    "Invoke-RespaldoControladores.ps1": "eb813133976f704c216e1fd8280d3869384040c67ee51fa72a007501edebedb5",
+    "Invoke-Robocopy.ps1": "29f5abf91d82946d6fd7ffd7786de8165ad3e481e7075e7654fd4071328f0a7a",
+    "Invoke-SelectorDNS.ps1": "71ed1eb9a2087f02c7f2810dd25f819a6dcfb8d9a897fbcc9de1a12341bf4e94",
+    "Invoke-StopServices.ps1": "04013323966c6326b13567a265001a74731ab3bf28c9264b6c7348a4441d56fe"
+  }
 }
 '@
 
