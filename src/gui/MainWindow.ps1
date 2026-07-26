@@ -172,6 +172,7 @@ function Expand-AtlasXaml {
         'SIDEBAR_UPTIME'     = (ConvertTo-AtlasXamlSafe (Get-AtlasString 'sidebar.uptime'))
         'SIDEBAR_IP'         = (ConvertTo-AtlasXamlSafe (Get-AtlasString 'sidebar.ip'))
         'SIDEBAR_LASTSYNC'   = (ConvertTo-AtlasXamlSafe (Get-AtlasString 'sidebar.lastSync'))
+        'SIDEBAR_LOAD_BTN'   = (ConvertTo-AtlasXamlSafe (Get-AtlasString 'sidebar.loadBtn'))
     }
     foreach ($k in $map.Keys) {
         $Xaml = $Xaml.Replace("{{$k}}", [string]$map[$k])
@@ -447,7 +448,7 @@ function Initialize-AtlasDashboard {
     if ($sideUser) {
         $sideUser.Text = if ($env:USERDOMAIN) { "$env:USERDOMAIN\$env:USERNAME" } else { $env:USERNAME }
     }
-    $onDemandTxt = & $strFn 'sidebar.onDemand'
+    $onDemandTxt = Get-AtlasString 'sidebar.onDemand'
     if (-not $onDemandTxt) { $onDemandTxt = '[Bajo Demanda]' }
     if ($sideOS)     { $sideOS.Text     = $onDemandTxt }
     if ($sideCpu)    { $sideCpu.Text    = $onDemandTxt }
@@ -464,6 +465,7 @@ function Initialize-AtlasDashboard {
     $dashAlerts   = $Window.FindName('DashAlertsText')
     $btnDashRefresh = $Window.FindName('BtnDashRefresh')
     $btnDashMonitorToggle = $Window.FindName('BtnDashMonitorToggle')
+    $btnLoadSysInfo = $Window.FindName('BtnLoadSysInfo')
 
     $monitorOffText = Get-AtlasString 'dash.monitor.off'
     $monitorOnText = Get-AtlasString 'dash.monitor.on'
@@ -489,6 +491,39 @@ function Initialize-AtlasDashboard {
     $staticFn     = ${function:Get-AtlasStaticSystemInfo}
     $alertsFn     = ${function:Get-AtlasDashboardAlerts}
 
+    # --- Sidebar system info loader (one-shot, independent of monitor) ---
+    $loadSysInfoAction = {
+        try {
+            $static2 = & $staticFn
+            if ($sideOS -and $static2.OSCaption) {
+                $os = if ($static2.OSBuild) { "$($static2.OSCaption) (build $($static2.OSBuild))" } else { $static2.OSCaption }
+                $sideOS.Text = $os
+            }
+            if ($sideCpu -and $static2.CpuName) {
+                $sideCpu.Text = $static2.CpuName
+            }
+            if ($sideRam -and $static2.TotalRamGB -gt 0) {
+                $sideRam.Text = "$($static2.TotalRamGB) GB"
+            }
+
+            $snap2 = & $liveFn
+            if ($sideIp -and $snap2.IpAddress) { $sideIp.Text = $snap2.IpAddress }
+            if ($sideUptime -and $snap2.Uptime -and $static2.LastBoot) {
+                $upFmt = & $strFn 'sidebar.uptimeFmt' `
+                    ([int]$snap2.Uptime.TotalDays) `
+                    ($snap2.Uptime.Hours) `
+                    ($snap2.Uptime.Minutes)
+                $sideUptime.Text = "$($static2.LastBoot.ToString('yyyy-MM-dd HH:mm'))  ($upFmt)"
+            }
+            if ($sideLastSync) {
+                $sideLastSync.Text = (Get-Date).ToString('HH:mm:ss')
+            }
+        } catch {
+            try { & $logFn "Load system info failed: $_" -Level WARN -Tool 'UI' } catch { }
+        }
+    }
+
+    # --- Resource monitor tick (CPU/RAM/Disk bars + alerts only) ---
     $tickAction = {
         try {
             $snap = & $liveFn
@@ -504,28 +539,6 @@ function Initialize-AtlasDashboard {
             if ($null -ne $snap.DiskPercent) {
                 $dashDiskVal.Text = & $strFn 'dash.disk.detail' $snap.DiskPercent $snap.DiskFreeGB
                 $dashDiskBar.Value = $snap.DiskPercent
-            }
-
-            if ($sideIp -and $snap.IpAddress) { $sideIp.Text = $snap.IpAddress }
-
-            # Static info (cached) — populates sidebar fields on demand.
-            $static2 = & $staticFn
-            if ($sideOS -and $static2.OSCaption) {
-                $os = if ($static2.OSBuild) { "$($static2.OSCaption) (build $($static2.OSBuild))" } else { $static2.OSCaption }
-                $sideOS.Text = $os
-            }
-            if ($sideCpu -and $static2.CpuName) {
-                $sideCpu.Text = $static2.CpuName
-            }
-            if ($sideRam -and $static2.TotalRamGB -gt 0) {
-                $sideRam.Text = "$($static2.TotalRamGB) GB"
-            }
-            if ($sideUptime -and $snap.Uptime -and $static2.LastBoot) {
-                $upFmt = & $strFn 'sidebar.uptimeFmt' `
-                    ([int]$snap.Uptime.TotalDays) `
-                    ($snap.Uptime.Hours) `
-                    ($snap.Uptime.Minutes)
-                $sideUptime.Text = "$($static2.LastBoot.ToString('yyyy-MM-dd HH:mm'))  ($upFmt)"
             }
 
             $alerts = & $alertsFn -Snap $snap
@@ -551,6 +564,8 @@ function Initialize-AtlasDashboard {
     # $dashCpuVal/$sideHost/$logFn/etc. are all resolvable when the tick runs.
     $tickClosed = $tickAction.GetNewClosure()
     $script:AtlasDashboardTick = $tickClosed
+    $loadSysInfoClosed = $loadSysInfoAction.GetNewClosure()
+    $script:AtlasLoadSysInfo = $loadSysInfoClosed
     try {
         & $logFn ("Dashboard tick handler initialized: {0}" -f ($script:AtlasDashboardTick.GetType().FullName)) -Level DEBUG -Tool 'UI'
     } catch { }
@@ -639,6 +654,22 @@ function Initialize-AtlasDashboard {
         })
     }
 
+    # Wire the sidebar "Load Info" button (one-shot system info, independent of monitor).
+    if ($btnLoadSysInfo) {
+        $btnLoadSysInfo.Add_Click({
+            try {
+                $infoToRun = if ($script:AtlasLoadSysInfo -is [scriptblock]) { $script:AtlasLoadSysInfo } else { $loadSysInfoClosed }
+                if ($infoToRun -is [scriptblock]) {
+                    & $infoToRun
+                } else {
+                    throw "LoadSysInfo handler no disponible."
+                }
+            } catch {
+                try { & $logFn "Sidebar load sys info click failed: $_" -Level WARN -Tool 'UI' } catch { }
+            }
+        })
+    }
+
     # Keep startup instant. System info reading & live monitor stay off until requested on demand.
     $bootstrapAction = {
         try {
@@ -666,6 +697,7 @@ function Initialize-AtlasDashboard {
             $script:AtlasDashboardTick = $null
             $script:AtlasDashboardStartMonitor = $null
             $script:AtlasDashboardStopMonitor = $null
+            $script:AtlasLoadSysInfo = $null
             $script:AtlasLiveSnapshotCache = $null
             $script:AtlasLiveSnapshotAt = [datetime]::MinValue
         } catch { }
