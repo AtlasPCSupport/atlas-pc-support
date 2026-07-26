@@ -221,10 +221,21 @@ function Install-AtlasWingetUnattended {
 
     $ErrorActionPreference = 'Stop'
 
-    function _Log {
-        param([string]$Msg)
-        if ($LogQueue) { $LogQueue.Enqueue($Msg) }
-        else { Write-Host $Msg }
+    function _InstallAppxPackage {
+        param(
+            [string]$Path,
+            [string]$StepLabel
+        )
+        try {
+            Add-AppxPackage -Path $Path -ErrorAction Stop
+        } catch {
+            $msg = $_.Exception.Message
+            if ($msg -match '0x80073D06' -or $msg -match 'higher version' -or $msg -match 'versión superior' -or $msg -match 'already installed' -or $msg -match 'ya está instalada' -or $msg -match 'ya esta instalada') {
+                _Log ("{0} Ya hay una version igual o superior instalada." -f $StepLabel)
+            } else {
+                throw $_
+            }
+        }
     }
 
     try {
@@ -233,7 +244,7 @@ function Install-AtlasWingetUnattended {
         Invoke-WebRequest -Uri 'https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx' -OutFile $vclibsPath -UseBasicParsing -TimeoutSec 120
 
         _Log '[1/3] Instalando VCLibs...'
-        Add-AppxPackage -Path $vclibsPath -ErrorAction Stop
+        _InstallAppxPackage -Path $vclibsPath -StepLabel '[1/3]'
         Remove-Item -LiteralPath $vclibsPath -Force -ErrorAction SilentlyContinue
 
         _Log '[2/3] Descargando dependencia UI.Xaml 2.8...'
@@ -241,7 +252,7 @@ function Install-AtlasWingetUnattended {
         Invoke-WebRequest -Uri 'https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx' -OutFile $uiXamlPath -UseBasicParsing -TimeoutSec 120
 
         _Log '[2/3] Instalando UI.Xaml...'
-        Add-AppxPackage -Path $uiXamlPath -ErrorAction Stop
+        _InstallAppxPackage -Path $uiXamlPath -StepLabel '[2/3]'
         Remove-Item -LiteralPath $uiXamlPath -Force -ErrorAction SilentlyContinue
 
         _Log '[3/3] Descargando App Installer (winget) msixbundle...'
@@ -249,7 +260,7 @@ function Install-AtlasWingetUnattended {
         Invoke-WebRequest -Uri 'https://aka.ms/getwinget' -OutFile $wingetBundlePath -UseBasicParsing -TimeoutSec 180
 
         _Log '[3/3] Instalando App Installer (winget)...'
-        Add-AppxPackage -Path $wingetBundlePath -ErrorAction Stop
+        _InstallAppxPackage -Path $wingetBundlePath -StepLabel '[3/3]'
         Remove-Item -LiteralPath $wingetBundlePath -Force -ErrorAction SilentlyContinue
 
         _Log '[OK] Instalacion desatendida de winget completada exitosamente.'

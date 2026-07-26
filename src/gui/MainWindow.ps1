@@ -599,10 +599,17 @@ function Initialize-AtlasDashboard {
             }
             $script:AtlasDashboardMonitorEnabled = $false
             if ($btnDashMonitorToggle) { $btnDashMonitorToggle.Content = $monitorOffText }
+            if ($dashCpuVal)  { $dashCpuVal.Text  = '--%' }
+            if ($dashCpuBar)  { $dashCpuBar.Value = 0 }
+            if ($dashRamVal)  { $dashRamVal.Text  = '--' }
+            if ($dashRamBar)  { $dashRamBar.Value = 0 }
+            if ($dashDiskVal) { $dashDiskVal.Text = '--' }
+            if ($dashDiskBar) { $dashDiskBar.Value = 0 }
             if ($dashAlerts) {
                 $dashAlerts.Text = $monitorPausedText
                 $dashAlerts.Foreground = [System.Windows.Media.Brushes]::Gray
             }
+            try { & $logFn "Dashboard monitor stopped." -Level DEBUG -Tool 'UI' } catch { }
         } catch {
             try { & $logFn "Dashboard monitor stop failed: $_" -Level WARN -Tool 'UI' } catch { }
         }

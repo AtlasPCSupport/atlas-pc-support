@@ -1,7 +1,7 @@
 # ============================================================
 #  Atlas PC Support - launcher.ps1 (compilado)
 #  Version: 1.0.0
-#  Build:   2026-07-26 17:37:40
+#  Build:   2026-07-26 17:53:23
 #  Repo:    https://github.com/mikepchelper-spec/atlas-pc-support
 #
 #  Uso:
@@ -19,7 +19,7 @@
 # ============================================================
 
 $script:AtlasVersion = '1.0.0'
-$script:AtlasBuildDate = '2026-07-26 17:37:40'
+$script:AtlasBuildDate = '2026-07-26 17:53:23'
 $script:AtlasToolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/src/tools'
 
 $script:AtlasToolsManifest = @'
@@ -332,7 +332,7 @@ $script:AtlasToolsManifest = @'
 
 $script:AtlasToolHashesJson = @'
 {
-  "generatedAt": "2026-07-26T17:37:40.2247985-05:00",
+  "generatedAt": "2026-07-26T17:53:23.2352114-05:00",
   "algorithm": "SHA256",
   "files": {
     "Invoke-ActualizarPowerShell.ps1": "094062f8ebf7c9279dc8eeedaf2e635e6fad889630feb1e73ce73ab4bb107304",
@@ -349,7 +349,7 @@ $script:AtlasToolHashesJson = @'
     "Invoke-GPUCheck.ps1": "ec3c2e1c0a24d5ea6b38c40694bd0dd18a132102d518aa399c859fdb92bf9e28",
     "Invoke-HostsManager.ps1": "fe26ffe69919dc72b3cce423df40364e597caf387c72ce5e7d961ba42eba6e35",
     "Invoke-InstalarMicrosoftStore.ps1": "a96e3adf0507b6d0fa9ea4777e0141dda0c29f067e8e1dfcfa487c0b17a8105d",
-    "Invoke-InstalarPaquetes.ps1": "d3bb1dec4e250d20bb1a8ab21d4a660415103344b3fd031100d2769cbc903607",
+    "Invoke-InstalarPaquetes.ps1": "cc4b5036b06db5129b35eb744561f47bff7198524d423c2d77760e994208a103",
     "Invoke-InstalarRuntimes.ps1": "1baad75ad5ccd5ce0459f8fb2e00e7ebca3eecbf0b56bb27483e197f5bcd3c29",
     "Invoke-KeyboardDoctor.ps1": "f4e2e484b3b08ccbc3d829b3893df82719943f6dc226f0e26dc72d0203cd5660",
     "Invoke-MantenimientoPRO.ps1": "475d9f7dd1cc3c7e26ee4afac6b0e698e65644216796a8fbb7a440ff323ce245",
@@ -1234,10 +1234,21 @@ function Install-AtlasWingetUnattended {
 
     $ErrorActionPreference = 'Stop'
 
-    function _Log {
-        param([string]$Msg)
-        if ($LogQueue) { $LogQueue.Enqueue($Msg) }
-        else { Write-Host $Msg }
+    function _InstallAppxPackage {
+        param(
+            [string]$Path,
+            [string]$StepLabel
+        )
+        try {
+            Add-AppxPackage -Path $Path -ErrorAction Stop
+        } catch {
+            $msg = $_.Exception.Message
+            if ($msg -match '0x80073D06' -or $msg -match 'higher version' -or $msg -match 'versión superior' -or $msg -match 'already installed' -or $msg -match 'ya está instalada' -or $msg -match 'ya esta instalada') {
+                _Log ("{0} Ya hay una version igual o superior instalada." -f $StepLabel)
+            } else {
+                throw $_
+            }
+        }
     }
 
     try {
@@ -1246,7 +1257,7 @@ function Install-AtlasWingetUnattended {
         Invoke-WebRequest -Uri 'https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx' -OutFile $vclibsPath -UseBasicParsing -TimeoutSec 120
 
         _Log '[1/3] Instalando VCLibs...'
-        Add-AppxPackage -Path $vclibsPath -ErrorAction Stop
+        _InstallAppxPackage -Path $vclibsPath -StepLabel '[1/3]'
         Remove-Item -LiteralPath $vclibsPath -Force -ErrorAction SilentlyContinue
 
         _Log '[2/3] Descargando dependencia UI.Xaml 2.8...'
@@ -1254,7 +1265,7 @@ function Install-AtlasWingetUnattended {
         Invoke-WebRequest -Uri 'https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx' -OutFile $uiXamlPath -UseBasicParsing -TimeoutSec 120
 
         _Log '[2/3] Instalando UI.Xaml...'
-        Add-AppxPackage -Path $uiXamlPath -ErrorAction Stop
+        _InstallAppxPackage -Path $uiXamlPath -StepLabel '[2/3]'
         Remove-Item -LiteralPath $uiXamlPath -Force -ErrorAction SilentlyContinue
 
         _Log '[3/3] Descargando App Installer (winget) msixbundle...'
@@ -1262,7 +1273,7 @@ function Install-AtlasWingetUnattended {
         Invoke-WebRequest -Uri 'https://aka.ms/getwinget' -OutFile $wingetBundlePath -UseBasicParsing -TimeoutSec 180
 
         _Log '[3/3] Instalando App Installer (winget)...'
-        Add-AppxPackage -Path $wingetBundlePath -ErrorAction Stop
+        _InstallAppxPackage -Path $wingetBundlePath -StepLabel '[3/3]'
         Remove-Item -LiteralPath $wingetBundlePath -Force -ErrorAction SilentlyContinue
 
         _Log '[OK] Instalacion desatendida de winget completada exitosamente.'
@@ -2442,10 +2453,21 @@ function Install-AtlasWingetUnattended {
 
     $ErrorActionPreference = 'Stop'
 
-    function _Log {
-        param([string]$Msg)
-        if ($LogQueue) { $LogQueue.Enqueue($Msg) }
-        else { Write-Host $Msg }
+    function _InstallAppxPackage {
+        param(
+            [string]$Path,
+            [string]$StepLabel
+        )
+        try {
+            Add-AppxPackage -Path $Path -ErrorAction Stop
+        } catch {
+            $msg = $_.Exception.Message
+            if ($msg -match '0x80073D06' -or $msg -match 'higher version' -or $msg -match 'versión superior' -or $msg -match 'already installed' -or $msg -match 'ya está instalada' -or $msg -match 'ya esta instalada') {
+                _Log ("{0} Ya hay una version igual o superior instalada." -f $StepLabel)
+            } else {
+                throw $_
+            }
+        }
     }
 
     try {
@@ -2454,7 +2476,7 @@ function Install-AtlasWingetUnattended {
         Invoke-WebRequest -Uri 'https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx' -OutFile $vclibsPath -UseBasicParsing -TimeoutSec 120
 
         _Log '[1/3] Instalando VCLibs...'
-        Add-AppxPackage -Path $vclibsPath -ErrorAction Stop
+        _InstallAppxPackage -Path $vclibsPath -StepLabel '[1/3]'
         Remove-Item -LiteralPath $vclibsPath -Force -ErrorAction SilentlyContinue
 
         _Log '[2/3] Descargando dependencia UI.Xaml 2.8...'
@@ -2462,7 +2484,7 @@ function Install-AtlasWingetUnattended {
         Invoke-WebRequest -Uri 'https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx' -OutFile $uiXamlPath -UseBasicParsing -TimeoutSec 120
 
         _Log '[2/3] Instalando UI.Xaml...'
-        Add-AppxPackage -Path $uiXamlPath -ErrorAction Stop
+        _InstallAppxPackage -Path $uiXamlPath -StepLabel '[2/3]'
         Remove-Item -LiteralPath $uiXamlPath -Force -ErrorAction SilentlyContinue
 
         _Log '[3/3] Descargando App Installer (winget) msixbundle...'
@@ -2470,7 +2492,7 @@ function Install-AtlasWingetUnattended {
         Invoke-WebRequest -Uri 'https://aka.ms/getwinget' -OutFile $wingetBundlePath -UseBasicParsing -TimeoutSec 180
 
         _Log '[3/3] Instalando App Installer (winget)...'
-        Add-AppxPackage -Path $wingetBundlePath -ErrorAction Stop
+        _InstallAppxPackage -Path $wingetBundlePath -StepLabel '[3/3]'
         Remove-Item -LiteralPath $wingetBundlePath -Force -ErrorAction SilentlyContinue
 
         _Log '[OK] Instalacion desatendida de winget completada exitosamente.'
@@ -4206,10 +4228,17 @@ function Initialize-AtlasDashboard {
             }
             $script:AtlasDashboardMonitorEnabled = $false
             if ($btnDashMonitorToggle) { $btnDashMonitorToggle.Content = $monitorOffText }
+            if ($dashCpuVal)  { $dashCpuVal.Text  = '--%' }
+            if ($dashCpuBar)  { $dashCpuBar.Value = 0 }
+            if ($dashRamVal)  { $dashRamVal.Text  = '--' }
+            if ($dashRamBar)  { $dashRamBar.Value = 0 }
+            if ($dashDiskVal) { $dashDiskVal.Text = '--' }
+            if ($dashDiskBar) { $dashDiskBar.Value = 0 }
             if ($dashAlerts) {
                 $dashAlerts.Text = $monitorPausedText
                 $dashAlerts.Foreground = [System.Windows.Media.Brushes]::Gray
             }
+            try { & $logFn "Dashboard monitor stopped." -Level DEBUG -Tool 'UI' } catch { }
         } catch {
             try { & $logFn "Dashboard monitor stop failed: $_" -Level WARN -Tool 'UI' } catch { }
         }
