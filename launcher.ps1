@@ -1,7 +1,7 @@
 # ============================================================
 #  Atlas PC Support - launcher.ps1 (compilado)
 #  Version: 1.0.0
-#  Build:   2026-07-26 17:03:52
+#  Build:   2026-07-26 17:23:01
 #  Repo:    https://github.com/mikepchelper-spec/atlas-pc-support
 #
 #  Uso:
@@ -19,7 +19,7 @@
 # ============================================================
 
 $script:AtlasVersion = '1.0.0'
-$script:AtlasBuildDate = '2026-07-26 17:03:52'
+$script:AtlasBuildDate = '2026-07-26 17:23:01'
 $script:AtlasToolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/src/tools'
 
 $script:AtlasToolsManifest = @'
@@ -332,7 +332,7 @@ $script:AtlasToolsManifest = @'
 
 $script:AtlasToolHashesJson = @'
 {
-  "generatedAt": "2026-07-26T17:03:52.9341686-05:00",
+  "generatedAt": "2026-07-26T17:23:02.0899136-05:00",
   "algorithm": "SHA256",
   "files": {
     "Invoke-ActualizarPowerShell.ps1": "094062f8ebf7c9279dc8eeedaf2e635e6fad889630feb1e73ce73ab4bb107304",
@@ -1562,10 +1562,10 @@ $script:AtlasStringsDict = @{
         'dash.alerts'             = 'Alerts'
         'dash.alerts.none'        = 'No alerts — system looks healthy.'
         'dash.refreshTooltip'     = 'Refresh dashboard now'
-        'dash.monitor.on'         = 'Monitor ON'
-        'dash.monitor.off'        = 'Monitor OFF'
-        'dash.monitor.tooltip'    = 'Turn live resource monitor on/off'
-        'dash.monitor.paused'     = 'Resource monitor is off — click Monitor OFF to enable it.'
+        'dash.monitor.on'         = '⏹ Pause Monitoring'
+        'dash.monitor.off'        = '▶ Enable Monitoring'
+        'dash.monitor.tooltip'    = 'Turn system info reading & live resource monitor on/off'
+        'dash.monitor.paused'     = 'Monitoring disabled — click "▶ Enable Monitoring" to load metrics.'
         'dash.alert.cpu'          = 'CPU at {0}%'
         'dash.alert.ram'          = 'RAM at {0}%'
         'dash.alert.disk'         = 'Disk {0} at {1}% used'
@@ -1582,6 +1582,7 @@ $script:AtlasStringsDict = @{
         'sidebar.ip'              = 'Local IP'
         'sidebar.lastSync'        = 'Last refresh'
         'sidebar.uptimeFmt'       = '{0}d {1}h {2}m'
+        'sidebar.onDemand'        = '[On Demand]'
         'dash.disk.detail'        = '{0}% ({1} GB free)'
     }
     'ro' = @{
@@ -4026,11 +4027,13 @@ function Initialize-AtlasDashboard {
     if ($sideUser) {
         $sideUser.Text = if ($env:USERDOMAIN) { "$env:USERDOMAIN\$env:USERNAME" } else { $env:USERNAME }
     }
-    $loadingTxt = '...'
-    if ($sideOS)     { $sideOS.Text     = $loadingTxt }
-    if ($sideCpu)    { $sideCpu.Text    = $loadingTxt }
-    if ($sideRam)    { $sideRam.Text    = $loadingTxt }
-    if ($sideUptime) { $sideUptime.Text = $loadingTxt }
+    $onDemandTxt = & $strFn 'sidebar.onDemand'
+    if (-not $onDemandTxt) { $onDemandTxt = '[Bajo Demanda]' }
+    if ($sideOS)     { $sideOS.Text     = $onDemandTxt }
+    if ($sideCpu)    { $sideCpu.Text    = $onDemandTxt }
+    if ($sideRam)    { $sideRam.Text    = $onDemandTxt }
+    if ($sideUptime) { $sideUptime.Text = $onDemandTxt }
+    if ($sideIp)     { $sideIp.Text     = $onDemandTxt }
 
     $dashCpuVal   = $Window.FindName('DashCpuValue')
     $dashCpuBar   = $Window.FindName('DashCpuBar')
@@ -4085,17 +4088,16 @@ function Initialize-AtlasDashboard {
 
             if ($sideIp -and $snap.IpAddress) { $sideIp.Text = $snap.IpAddress }
 
-            # Static info (cached) — also drives the sidebar fields that
-            # were left as "..." during phase-1 instant fill.
+            # Static info (cached) — populates sidebar fields on demand.
             $static2 = & $staticFn
-            if ($sideOS -and $sideOS.Text -eq '...' -and $static2.OSCaption) {
+            if ($sideOS -and $static2.OSCaption) {
                 $os = if ($static2.OSBuild) { "$($static2.OSCaption) (build $($static2.OSBuild))" } else { $static2.OSCaption }
                 $sideOS.Text = $os
             }
-            if ($sideCpu -and $sideCpu.Text -eq '...' -and $static2.CpuName) {
+            if ($sideCpu -and $static2.CpuName) {
                 $sideCpu.Text = $static2.CpuName
             }
-            if ($sideRam -and $sideRam.Text -eq '...' -and $static2.TotalRamGB -gt 0) {
+            if ($sideRam -and $static2.TotalRamGB -gt 0) {
                 $sideRam.Text = "$($static2.TotalRamGB) GB"
             }
             if ($sideUptime -and $snap.Uptime -and $static2.LastBoot) {
@@ -4217,38 +4219,11 @@ function Initialize-AtlasDashboard {
         })
     }
 
-    # Keep startup cheap. The live monitor stays off until the user enables it.
+    # Keep startup instant. System info reading & live monitor stay off until requested on demand.
     $bootstrapAction = {
         try {
             if ($script:AtlasDashboardBooted) { return }
             $script:AtlasDashboardBooted = $true
-
-            $static2 = & $staticFn
-            if ($sideOS -and $static2.OSCaption) {
-                $os = if ($static2.OSBuild) { "$($static2.OSCaption) (build $($static2.OSBuild))" } else { $static2.OSCaption }
-                $sideOS.Text = $os
-            }
-            if ($sideCpu -and $static2.CpuName) {
-                $sideCpu.Text = $static2.CpuName
-            }
-            if ($sideRam -and $static2.TotalRamGB -gt 0) {
-                $sideRam.Text = "$($static2.TotalRamGB) GB"
-            }
-
-            $snap2 = & $liveFn
-            if ($sideIp -and $snap2.IpAddress) {
-                $sideIp.Text = $snap2.IpAddress
-            }
-            if ($sideUptime -and $snap2.Uptime -and $static2.LastBoot) {
-                $upFmt = & $strFn 'sidebar.uptimeFmt' `
-                    ([int]$snap2.Uptime.TotalDays) `
-                    ($snap2.Uptime.Hours) `
-                    ($snap2.Uptime.Minutes)
-                $sideUptime.Text = "$($static2.LastBoot.ToString('yyyy-MM-dd HH:mm'))  ($upFmt)"
-            }
-            if ($sideLastSync) {
-                $sideLastSync.Text = (Get-Date).ToString('HH:mm:ss')
-            }
 
             $stopToRun = if ($script:AtlasDashboardStopMonitor -is [scriptblock]) { $script:AtlasDashboardStopMonitor } else { $stopClosed }
             if ($stopToRun -is [scriptblock]) { & $stopToRun }
