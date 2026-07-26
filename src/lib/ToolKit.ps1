@@ -213,3 +213,51 @@ function Get-AtlasWingetCapabilities {
     return $caps
 }
 
+function Install-AtlasWingetUnattended {
+    [CmdletBinding()]
+    param(
+        [System.Collections.Concurrent.ConcurrentQueue[string]]$LogQueue
+    )
+
+    $ErrorActionPreference = 'Stop'
+
+    function _Log {
+        param([string]$Msg)
+        if ($LogQueue) { $LogQueue.Enqueue($Msg) }
+        else { Write-Host $Msg }
+    }
+
+    try {
+        _Log '[1/3] Descargando dependencia VCLibs UWP...'
+        $vclibsPath = Join-Path $env:TEMP 'Microsoft.VCLibs.x64.14.00.Desktop.appx'
+        Invoke-WebRequest -Uri 'https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx' -OutFile $vclibsPath -UseBasicParsing -TimeoutSec 120
+
+        _Log '[1/3] Instalando VCLibs...'
+        Add-AppxPackage -Path $vclibsPath -ErrorAction Stop
+        Remove-Item -LiteralPath $vclibsPath -Force -ErrorAction SilentlyContinue
+
+        _Log '[2/3] Descargando dependencia UI.Xaml 2.8...'
+        $uiXamlPath = Join-Path $env:TEMP 'Microsoft.UI.Xaml.2.8.x64.appx'
+        Invoke-WebRequest -Uri 'https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx' -OutFile $uiXamlPath -UseBasicParsing -TimeoutSec 120
+
+        _Log '[2/3] Instalando UI.Xaml...'
+        Add-AppxPackage -Path $uiXamlPath -ErrorAction Stop
+        Remove-Item -LiteralPath $uiXamlPath -Force -ErrorAction SilentlyContinue
+
+        _Log '[3/3] Descargando App Installer (winget) msixbundle...'
+        $wingetBundlePath = Join-Path $env:TEMP 'Microsoft.DesktopAppInstaller.msixbundle'
+        Invoke-WebRequest -Uri 'https://aka.ms/getwinget' -OutFile $wingetBundlePath -UseBasicParsing -TimeoutSec 180
+
+        _Log '[3/3] Instalando App Installer (winget)...'
+        Add-AppxPackage -Path $wingetBundlePath -ErrorAction Stop
+        Remove-Item -LiteralPath $wingetBundlePath -Force -ErrorAction SilentlyContinue
+
+        _Log '[OK] Instalacion desatendida de winget completada exitosamente.'
+        return $true
+    } catch {
+        _Log ("[X] Error al instalar winget desatendido: {0}" -f $_.Exception.Message)
+        return $false
+    }
+}
+
+

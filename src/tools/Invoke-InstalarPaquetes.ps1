@@ -45,7 +45,9 @@ function Invoke-InstalarPaquetes {
             SubTitle             = 'Bulk software installer via winget · Atlas PC Support'
             WingetVersion           = 'winget version: {0}'
             WingetUnavailable       = 'winget is not available on this system.'
-            WingetUnavailableWin10  = 'winget is not installed. Windows 10 requires App Installer from Microsoft Store (build 17763+).'
+            WingetUnavailableWin10  = 'winget is not installed. Click "[+] Install winget" to install automatically.'
+            InstallWingetBtn        = '[+] Install winget'
+            InstallingWinget        = '[...] Installing winget...'
             MenuSelectAll           = 'Select All'
             MenuDeselectAll         = 'Deselect All'
             MenuLoadProfile         = '[+] Load Profile'
@@ -96,7 +98,9 @@ function Invoke-InstalarPaquetes {
             SubTitle                = 'Instalación masiva de software con winget · Atlas PC Support'
             WingetVersion           = 'Versión de winget: {0}'
             WingetUnavailable       = 'winget no está disponible en este sistema.'
-            WingetUnavailableWin10  = 'winget no está instalado. En Windows 10 requiere App Installer desde Microsoft Store (build 17763 o superior).'
+            WingetUnavailableWin10  = 'winget no está instalado. Haz clic en "[+] Instalar winget" para instalarlo automáticamente.'
+            InstallWingetBtn        = '[+] Instalar winget'
+            InstallingWinget        = '[...] Instalando winget...'
             MenuSelectAll        = 'Seleccionar Todo'
             MenuDeselectAll      = 'Desmarcar Todo'
             MenuLoadProfile      = '[+] Cargar Perfil'
@@ -344,8 +348,11 @@ function Invoke-InstalarPaquetes {
     $nsVal        = if ($L -and $L.NoSelection)     { $L.NoSelection }     else { 'Sin seleccion' }
     $noSel        = ConvertTo-XmlEscaped $nsVal
 
-    $ibVal        = if ($L -and $L.InstallBtn)      { $L.InstallBtn }      else { 'Instalar' }
-    $instBtn      = ConvertTo-XmlEscaped $ibVal
+    $ibVal             = if ($L -and $L.InstallBtn)      { $L.InstallBtn }      else { 'Instalar' }
+    $instBtn           = ConvertTo-XmlEscaped $ibVal
+
+    $iwVal             = if ($L -and $L.InstallWingetBtn) { $L.InstallWingetBtn } else { '[+] Instalar winget' }
+    $installWingetBtn  = ConvertTo-XmlEscaped $iwVal
 
     $llVal        = if ($L -and $L.LiveLog)         { $L.LiveLog }         else { 'Log' }
     $liveLog      = ConvertTo-XmlEscaped $llVal
@@ -564,6 +571,7 @@ function Invoke-InstalarPaquetes {
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock x:Name="TxtWingetVer" Text="winget: ..." Foreground="#D0D5DD" VerticalAlignment="Center" Margin="0,0,14,0"/>
+                    <Button x:Name="BtnInstallWingetAuto" Content="$installWingetBtn" Style="{StaticResource AccentBtn}" Visibility="Collapsed" Padding="12,6" FontSize="12" VerticalAlignment="Center"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -658,21 +666,22 @@ function Invoke-InstalarPaquetes {
 
     # Store control references safely inside $window.Tag
     $window.Tag = @{
-        TxtWingetVer      = $window.FindName('TxtWingetVer')
-        BtnSelectAll      = $window.FindName('BtnSelectAll')
-        BtnDeselectAll    = $window.FindName('BtnDeselectAll')
-        BtnLoadProfile    = $window.FindName('BtnLoadProfile')
-        BtnSaveProfile    = $window.FindName('BtnSaveProfile')
-        TxtSearchQuery    = $window.FindName('TxtSearchQuery')
-        BtnSearchWinget   = $window.FindName('BtnSearchWinget')
-        TabCategories     = $window.FindName('TabCategories')
-        TxtSelectionCount = $window.FindName('TxtSelectionCount')
-        TxtSelectionList  = $window.FindName('TxtSelectionList')
-        BtnInstall        = $window.FindName('BtnInstall')
-        BtnClearLog       = $window.FindName('BtnClearLog')
-        TxtConsoleLog     = $window.FindName('TxtConsoleLog')
-        PrgInstall        = $window.FindName('PrgInstall')
-        L                 = $L
+        TxtWingetVer         = $window.FindName('TxtWingetVer')
+        BtnInstallWingetAuto = $window.FindName('BtnInstallWingetAuto')
+        BtnSelectAll         = $window.FindName('BtnSelectAll')
+        BtnDeselectAll       = $window.FindName('BtnDeselectAll')
+        BtnLoadProfile       = $window.FindName('BtnLoadProfile')
+        BtnSaveProfile       = $window.FindName('BtnSaveProfile')
+        TxtSearchQuery       = $window.FindName('TxtSearchQuery')
+        BtnSearchWinget      = $window.FindName('BtnSearchWinget')
+        TabCategories        = $window.FindName('TabCategories')
+        TxtSelectionCount    = $window.FindName('TxtSelectionCount')
+        TxtSelectionList     = $window.FindName('TxtSelectionList')
+        BtnInstall           = $window.FindName('BtnInstall')
+        BtnClearLog          = $window.FindName('BtnClearLog')
+        TxtConsoleLog        = $window.FindName('TxtConsoleLog')
+        PrgInstall           = $window.FindName('PrgInstall')
+        L                    = $L
     }
 
     $ui = $window.Tag
@@ -696,13 +705,18 @@ function Invoke-InstalarPaquetes {
     # Detect Winget version and set UI state
     if (Test-WingetAvailable) {
         $ver = if ($script:WingetCaps -and $script:WingetCaps.Version) { $script:WingetCaps.Version } else { '1.x' }
-        if ($ui.TxtWingetVer) { $ui.TxtWingetVer.Text = ($L.WingetVersion -f $ver) }
+        if ($ui.TxtWingetVer) {
+            $ui.TxtWingetVer.Text = ($L.WingetVersion -f $ver)
+            $ui.TxtWingetVer.Foreground = [System.Windows.Media.Brushes]::Dimgray
+        }
+        if ($ui.BtnInstallWingetAuto) { $ui.BtnInstallWingetAuto.Visibility = 'Collapsed' }
     } else {
         if ($ui.TxtWingetVer) {
             $msgUnavail = if ($L -and $L.WingetUnavailableWin10) { $L.WingetUnavailableWin10 } else { $L.WingetUnavailable }
             $ui.TxtWingetVer.Text = $msgUnavail
-            $ui.TxtWingetVer.Foreground = [System.Windows.Media.Brushes]::Red
+            $ui.TxtWingetVer.Foreground = [System.Windows.Media.Brushes]::OrangeRed
         }
+        if ($ui.BtnInstallWingetAuto) { $ui.BtnInstallWingetAuto.Visibility = 'Visible' }
         if ($ui.BtnInstall) { $ui.BtnInstall.IsEnabled = $false }
         if ($ui.BtnSearchWinget) { $ui.BtnSearchWinget.IsEnabled = $false }
     }
@@ -907,6 +921,115 @@ function Invoke-InstalarPaquetes {
                     & $LogMessage ("Load profile error: " + $_.Exception.Message)
                 }
             }
+        })
+    }
+
+    # Event: Unattended Winget Install
+    if ($ui.BtnInstallWingetAuto) {
+        $ui.BtnInstallWingetAuto.add_Click({
+            if (-not $window -or -not $window.Tag) { return }
+            $ctl = $window.Tag
+            if (-not $ctl.BtnInstallWingetAuto) { return }
+
+            $ctl.BtnInstallWingetAuto.IsEnabled = $false
+            $ctl.BtnInstallWingetAuto.Content = $L.InstallingWinget
+            & $LogMessage '[>] Iniciando instalacion desatendida de winget (App Installer)...'
+
+            $logQueue = [System.Collections.Concurrent.ConcurrentQueue[string]]::new()
+            $rs = [System.Management.Automation.Runspaces.RunspaceFactory]::CreateRunspace()
+            $rs.Open()
+            $ps = [System.Management.Automation.PowerShell]::Create()
+            $ps.Runspace = $rs
+
+            $null = $ps.AddScript({
+                param($queue)
+                if (-not (Get-Command Install-AtlasWingetUnattended -ErrorAction SilentlyContinue)) {
+                    function Install-AtlasWingetUnattended {
+                        param($LogQueue)
+                        $ErrorActionPreference = 'Stop'
+                        function _Log { param([string]$Msg) if ($LogQueue) { $LogQueue.Enqueue($Msg) } else { Write-Host $Msg } }
+                        try {
+                            _Log '[1/3] Descargando dependencia VCLibs UWP...'
+                            $vclibsPath = Join-Path $env:TEMP 'Microsoft.VCLibs.x64.14.00.Desktop.appx'
+                            Invoke-WebRequest -Uri 'https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx' -OutFile $vclibsPath -UseBasicParsing -TimeoutSec 120
+                            _Log '[1/3] Instalando VCLibs...'
+                            Add-AppxPackage -Path $vclibsPath -ErrorAction Stop
+                            Remove-Item -LiteralPath $vclibsPath -Force -ErrorAction SilentlyContinue
+
+                            _Log '[2/3] Descargando dependencia UI.Xaml 2.8...'
+                            $uiXamlPath = Join-Path $env:TEMP 'Microsoft.UI.Xaml.2.8.x64.appx'
+                            Invoke-WebRequest -Uri 'https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx' -OutFile $uiXamlPath -UseBasicParsing -TimeoutSec 120
+                            _Log '[2/3] Instalando UI.Xaml...'
+                            Add-AppxPackage -Path $uiXamlPath -ErrorAction Stop
+                            Remove-Item -LiteralPath $uiXamlPath -Force -ErrorAction SilentlyContinue
+
+                            _Log '[3/3] Descargando App Installer (winget) msixbundle...'
+                            $wingetBundlePath = Join-Path $env:TEMP 'Microsoft.DesktopAppInstaller.msixbundle'
+                            Invoke-WebRequest -Uri 'https://aka.ms/getwinget' -OutFile $wingetBundlePath -UseBasicParsing -TimeoutSec 180
+                            _Log '[3/3] Instalando App Installer (winget)...'
+                            Add-AppxPackage -Path $wingetBundlePath -ErrorAction Stop
+                            Remove-Item -LiteralPath $wingetBundlePath -Force -ErrorAction SilentlyContinue
+
+                            _Log '[OK] Instalacion desatendida de winget completada exitosamente.'
+                            return $true
+                        } catch {
+                            _Log ("[X] Error al instalar winget desatendido: {0}" -f $_.Exception.Message)
+                            return $false
+                        }
+                    }
+                }
+                return (Install-AtlasWingetUnattended -LogQueue $queue)
+            }).AddArgument($logQueue)
+
+            $asyncResult = $ps.BeginInvoke()
+            $timer = [System.Windows.Threading.DispatcherTimer]::new()
+            $timer.Interval = [TimeSpan]::FromMilliseconds(150)
+
+            $tickHandler = {
+                $msg = $null
+                if ($logQueue) {
+                    while ($logQueue.TryDequeue([ref]$msg)) {
+                        if ($ctl -and $ctl.TxtConsoleLog) {
+                            $stamp = (Get-Date -Format 'HH:mm:ss')
+                            $ctl.TxtConsoleLog.AppendText("[$stamp] $msg`n")
+                            $ctl.TxtConsoleLog.ScrollToEnd()
+                        }
+                    }
+                }
+
+                if ($asyncResult -and $asyncResult.IsCompleted) {
+                    if ($timer) { $timer.Stop() }
+                    $res = try { $ps.EndInvoke($asyncResult) } catch { $null }
+                    try { $ps.Dispose() } catch {}
+                    try { $rs.Dispose() } catch {}
+
+                    # Re-detect winget path and capabilities
+                    $script:WingetPath = Get-AtlasWingetPath
+                    $script:WingetCaps = Get-AtlasWingetCapabilities -WingetPath $script:WingetPath
+
+                    if ($script:WingetPath -and $script:WingetCaps.Available) {
+                        if ($ctl.TxtWingetVer) {
+                            $ver = if ($script:WingetCaps.Version) { $script:WingetCaps.Version } else { '1.x' }
+                            $ctl.TxtWingetVer.Text = ($ctl.L.WingetVersion -f $ver)
+                            $ctl.TxtWingetVer.Foreground = [System.Windows.Media.Brushes]::LightGreen
+                        }
+                        if ($ctl.BtnInstallWingetAuto) { $ctl.BtnInstallWingetAuto.Visibility = 'Collapsed' }
+                        if ($ctl.BtnInstall) { $ctl.BtnInstall.IsEnabled = $true }
+                        if ($ctl.BtnSearchWinget) { $ctl.BtnSearchWinget.IsEnabled = $true }
+                        if ($script:AllCheckBoxes) {
+                            foreach ($cb in $script:AllCheckBoxes) { if ($cb) { $cb.IsEnabled = $true } }
+                        }
+                    } else {
+                        if ($ctl.BtnInstallWingetAuto) {
+                            $ctl.BtnInstallWingetAuto.IsEnabled = $true
+                            $ctl.BtnInstallWingetAuto.Content = $ctl.L.InstallWingetBtn
+                        }
+                    }
+                }
+            }.GetNewClosure()
+
+            $timer.add_Tick($tickHandler)
+            $timer.Start()
         })
     }
 
