@@ -571,7 +571,7 @@ function Invoke-InstalarPaquetes {
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock x:Name="TxtWingetVer" Text="winget: ..." Foreground="#D0D5DD" VerticalAlignment="Center" Margin="0,0,14,0"/>
-                    <Button x:Name="BtnInstallWingetAuto" Content="$installWingetBtn" Style="{StaticResource AccentBtn}" Visibility="Collapsed" Padding="12,6" FontSize="12" VerticalAlignment="Center"/>
+                    <Button x:Name="BtnInstallWingetAuto" Content="$installWingetBtn" Style="{StaticResource PrimaryBtn}" Visibility="Collapsed" Padding="12,6" FontSize="12" VerticalAlignment="Center"/>
                 </StackPanel>
             </Grid>
         </Border>
