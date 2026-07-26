@@ -962,25 +962,45 @@ function Invoke-InstalarPaquetes {
                             }
                         }
                         try {
-                            _Log '[1/3] Descargando dependencia VCLibs UWP...'
+                            _Log '[1/4] Descargando dependencia VCLibs UWP...'
                             $vclibsPath = Join-Path $env:TEMP 'Microsoft.VCLibs.x64.14.00.Desktop.appx'
                             Invoke-WebRequest -Uri 'https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx' -OutFile $vclibsPath -UseBasicParsing -TimeoutSec 120
-                            _Log '[1/3] Instalando VCLibs...'
-                            _InstallAppxPackage -Path $vclibsPath -StepLabel '[1/3]'
+                            _Log '[1/4] Instalando VCLibs...'
+                            _InstallAppxPackage -Path $vclibsPath -StepLabel '[1/4]'
                             Remove-Item -LiteralPath $vclibsPath -Force -ErrorAction SilentlyContinue
 
-                            _Log '[2/3] Descargando dependencia UI.Xaml 2.8...'
+                            _Log '[2/4] Descargando dependencia UI.Xaml 2.8...'
                             $uiXamlPath = Join-Path $env:TEMP 'Microsoft.UI.Xaml.2.8.x64.appx'
                             Invoke-WebRequest -Uri 'https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx' -OutFile $uiXamlPath -UseBasicParsing -TimeoutSec 120
-                            _Log '[2/3] Instalando UI.Xaml...'
-                            _InstallAppxPackage -Path $uiXamlPath -StepLabel '[2/3]'
+                            _Log '[2/4] Instalando UI.Xaml...'
+                            _InstallAppxPackage -Path $uiXamlPath -StepLabel '[2/4]'
                             Remove-Item -LiteralPath $uiXamlPath -Force -ErrorAction SilentlyContinue
 
-                            _Log '[3/3] Descargando App Installer (winget) msixbundle...'
+                            _Log '[3/4] Descargando dependencia WindowsAppRuntime 1.8...'
+                            $depsZipPath = Join-Path $env:TEMP 'DesktopAppInstaller_Dependencies.zip'
+                            Invoke-WebRequest -Uri 'https://github.com/microsoft/winget-cli/releases/download/v1.29.280/DesktopAppInstaller_Dependencies.zip' -OutFile $depsZipPath -UseBasicParsing -TimeoutSec 180
+
+                            _Log '[3/4] Instalando WindowsAppRuntime 1.8...'
+                            Add-Type -AssemblyName System.IO.Compression.FileSystem
+                            $zip = [System.IO.Compression.ZipFile]::OpenRead($depsZipPath)
+                            $entry = $zip.Entries | Where-Object { $_.FullName -like '*x64*WindowsAppRuntime*.appx' } | Select-Object -First 1
+                            if ($entry) {
+                                $appRuntimePath = Join-Path $env:TEMP $entry.Name
+                                [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $appRuntimePath, $true)
+                                $zip.Dispose()
+                                _InstallAppxPackage -Path $appRuntimePath -StepLabel '[3/4]'
+                                Remove-Item -LiteralPath $appRuntimePath -Force -ErrorAction SilentlyContinue
+                            } else {
+                                $zip.Dispose()
+                                _Log '[3/4] Advertencia: No se encontro WindowsAppRuntime en el paquete de dependencias.'
+                            }
+                            Remove-Item -LiteralPath $depsZipPath -Force -ErrorAction SilentlyContinue
+
+                            _Log '[4/4] Descargando App Installer (winget) msixbundle...'
                             $wingetBundlePath = Join-Path $env:TEMP 'Microsoft.DesktopAppInstaller.msixbundle'
                             Invoke-WebRequest -Uri 'https://aka.ms/getwinget' -OutFile $wingetBundlePath -UseBasicParsing -TimeoutSec 180
-                            _Log '[3/3] Instalando App Installer (winget)...'
-                            _InstallAppxPackage -Path $wingetBundlePath -StepLabel '[3/3]'
+                            _Log '[4/4] Instalando App Installer (winget)...'
+                            _InstallAppxPackage -Path $wingetBundlePath -StepLabel '[4/4]'
                             Remove-Item -LiteralPath $wingetBundlePath -Force -ErrorAction SilentlyContinue
 
                             _Log '[OK] Instalacion desatendida de winget completada exitosamente.'

@@ -1,7 +1,7 @@
 # ============================================================
 #  Atlas PC Support - launcher.ps1 (compilado)
 #  Version: 1.0.0
-#  Build:   2026-07-26 17:53:23
+#  Build:   2026-07-26 18:05:51
 #  Repo:    https://github.com/mikepchelper-spec/atlas-pc-support
 #
 #  Uso:
@@ -19,7 +19,7 @@
 # ============================================================
 
 $script:AtlasVersion = '1.0.0'
-$script:AtlasBuildDate = '2026-07-26 17:53:23'
+$script:AtlasBuildDate = '2026-07-26 18:05:51'
 $script:AtlasToolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/src/tools'
 
 $script:AtlasToolsManifest = @'
@@ -332,7 +332,7 @@ $script:AtlasToolsManifest = @'
 
 $script:AtlasToolHashesJson = @'
 {
-  "generatedAt": "2026-07-26T17:53:23.2352114-05:00",
+  "generatedAt": "2026-07-26T18:05:51.8573011-05:00",
   "algorithm": "SHA256",
   "files": {
     "Invoke-ActualizarPowerShell.ps1": "094062f8ebf7c9279dc8eeedaf2e635e6fad889630feb1e73ce73ab4bb107304",
@@ -349,7 +349,7 @@ $script:AtlasToolHashesJson = @'
     "Invoke-GPUCheck.ps1": "ec3c2e1c0a24d5ea6b38c40694bd0dd18a132102d518aa399c859fdb92bf9e28",
     "Invoke-HostsManager.ps1": "fe26ffe69919dc72b3cce423df40364e597caf387c72ce5e7d961ba42eba6e35",
     "Invoke-InstalarMicrosoftStore.ps1": "a96e3adf0507b6d0fa9ea4777e0141dda0c29f067e8e1dfcfa487c0b17a8105d",
-    "Invoke-InstalarPaquetes.ps1": "cc4b5036b06db5129b35eb744561f47bff7198524d423c2d77760e994208a103",
+    "Invoke-InstalarPaquetes.ps1": "3d5c4170366a7111f422a39c9c7bd6592630e038fc188ffd8bce7c394e398633",
     "Invoke-InstalarRuntimes.ps1": "1baad75ad5ccd5ce0459f8fb2e00e7ebca3eecbf0b56bb27483e197f5bcd3c29",
     "Invoke-KeyboardDoctor.ps1": "f4e2e484b3b08ccbc3d829b3893df82719943f6dc226f0e26dc72d0203cd5660",
     "Invoke-MantenimientoPRO.ps1": "475d9f7dd1cc3c7e26ee4afac6b0e698e65644216796a8fbb7a440ff323ce245",
@@ -1252,28 +1252,45 @@ function Install-AtlasWingetUnattended {
     }
 
     try {
-        _Log '[1/3] Descargando dependencia VCLibs UWP...'
+        _Log '[1/4] Descargando dependencia VCLibs UWP...'
         $vclibsPath = Join-Path $env:TEMP 'Microsoft.VCLibs.x64.14.00.Desktop.appx'
         Invoke-WebRequest -Uri 'https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx' -OutFile $vclibsPath -UseBasicParsing -TimeoutSec 120
-
-        _Log '[1/3] Instalando VCLibs...'
-        _InstallAppxPackage -Path $vclibsPath -StepLabel '[1/3]'
+        _Log '[1/4] Instalando VCLibs...'
+        _InstallAppxPackage -Path $vclibsPath -StepLabel '[1/4]'
         Remove-Item -LiteralPath $vclibsPath -Force -ErrorAction SilentlyContinue
 
-        _Log '[2/3] Descargando dependencia UI.Xaml 2.8...'
+        _Log '[2/4] Descargando dependencia UI.Xaml 2.8...'
         $uiXamlPath = Join-Path $env:TEMP 'Microsoft.UI.Xaml.2.8.x64.appx'
         Invoke-WebRequest -Uri 'https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx' -OutFile $uiXamlPath -UseBasicParsing -TimeoutSec 120
-
-        _Log '[2/3] Instalando UI.Xaml...'
-        _InstallAppxPackage -Path $uiXamlPath -StepLabel '[2/3]'
+        _Log '[2/4] Instalando UI.Xaml...'
+        _InstallAppxPackage -Path $uiXamlPath -StepLabel '[2/4]'
         Remove-Item -LiteralPath $uiXamlPath -Force -ErrorAction SilentlyContinue
 
-        _Log '[3/3] Descargando App Installer (winget) msixbundle...'
+        _Log '[3/4] Descargando dependencia WindowsAppRuntime 1.8...'
+        $depsZipPath = Join-Path $env:TEMP 'DesktopAppInstaller_Dependencies.zip'
+        Invoke-WebRequest -Uri 'https://github.com/microsoft/winget-cli/releases/download/v1.29.280/DesktopAppInstaller_Dependencies.zip' -OutFile $depsZipPath -UseBasicParsing -TimeoutSec 180
+
+        _Log '[3/4] Instalando WindowsAppRuntime 1.8...'
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        $zip = [System.IO.Compression.ZipFile]::OpenRead($depsZipPath)
+        $entry = $zip.Entries | Where-Object { $_.FullName -like '*x64*WindowsAppRuntime*.appx' } | Select-Object -First 1
+        if ($entry) {
+            $appRuntimePath = Join-Path $env:TEMP $entry.Name
+            [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $appRuntimePath, $true)
+            $zip.Dispose()
+            _InstallAppxPackage -Path $appRuntimePath -StepLabel '[3/4]'
+            Remove-Item -LiteralPath $appRuntimePath -Force -ErrorAction SilentlyContinue
+        } else {
+            $zip.Dispose()
+            _Log '[3/4] Advertencia: No se encontro WindowsAppRuntime en el paquete de dependencias.'
+        }
+        Remove-Item -LiteralPath $depsZipPath -Force -ErrorAction SilentlyContinue
+
+        _Log '[4/4] Descargando App Installer (winget) msixbundle...'
         $wingetBundlePath = Join-Path $env:TEMP 'Microsoft.DesktopAppInstaller.msixbundle'
         Invoke-WebRequest -Uri 'https://aka.ms/getwinget' -OutFile $wingetBundlePath -UseBasicParsing -TimeoutSec 180
-
-        _Log '[3/3] Instalando App Installer (winget)...'
-        _InstallAppxPackage -Path $wingetBundlePath -StepLabel '[3/3]'
+        _Log '[4/4] Instalando App Installer (winget)...'
+        _InstallAppxPackage -Path $wingetBundlePath -StepLabel '[4/4]'
         Remove-Item -LiteralPath $wingetBundlePath -Force -ErrorAction SilentlyContinue
 
         _Log '[OK] Instalacion desatendida de winget completada exitosamente.'
@@ -2471,28 +2488,45 @@ function Install-AtlasWingetUnattended {
     }
 
     try {
-        _Log '[1/3] Descargando dependencia VCLibs UWP...'
+        _Log '[1/4] Descargando dependencia VCLibs UWP...'
         $vclibsPath = Join-Path $env:TEMP 'Microsoft.VCLibs.x64.14.00.Desktop.appx'
         Invoke-WebRequest -Uri 'https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx' -OutFile $vclibsPath -UseBasicParsing -TimeoutSec 120
-
-        _Log '[1/3] Instalando VCLibs...'
-        _InstallAppxPackage -Path $vclibsPath -StepLabel '[1/3]'
+        _Log '[1/4] Instalando VCLibs...'
+        _InstallAppxPackage -Path $vclibsPath -StepLabel '[1/4]'
         Remove-Item -LiteralPath $vclibsPath -Force -ErrorAction SilentlyContinue
 
-        _Log '[2/3] Descargando dependencia UI.Xaml 2.8...'
+        _Log '[2/4] Descargando dependencia UI.Xaml 2.8...'
         $uiXamlPath = Join-Path $env:TEMP 'Microsoft.UI.Xaml.2.8.x64.appx'
         Invoke-WebRequest -Uri 'https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx' -OutFile $uiXamlPath -UseBasicParsing -TimeoutSec 120
-
-        _Log '[2/3] Instalando UI.Xaml...'
-        _InstallAppxPackage -Path $uiXamlPath -StepLabel '[2/3]'
+        _Log '[2/4] Instalando UI.Xaml...'
+        _InstallAppxPackage -Path $uiXamlPath -StepLabel '[2/4]'
         Remove-Item -LiteralPath $uiXamlPath -Force -ErrorAction SilentlyContinue
 
-        _Log '[3/3] Descargando App Installer (winget) msixbundle...'
+        _Log '[3/4] Descargando dependencia WindowsAppRuntime 1.8...'
+        $depsZipPath = Join-Path $env:TEMP 'DesktopAppInstaller_Dependencies.zip'
+        Invoke-WebRequest -Uri 'https://github.com/microsoft/winget-cli/releases/download/v1.29.280/DesktopAppInstaller_Dependencies.zip' -OutFile $depsZipPath -UseBasicParsing -TimeoutSec 180
+
+        _Log '[3/4] Instalando WindowsAppRuntime 1.8...'
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        $zip = [System.IO.Compression.ZipFile]::OpenRead($depsZipPath)
+        $entry = $zip.Entries | Where-Object { $_.FullName -like '*x64*WindowsAppRuntime*.appx' } | Select-Object -First 1
+        if ($entry) {
+            $appRuntimePath = Join-Path $env:TEMP $entry.Name
+            [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $appRuntimePath, $true)
+            $zip.Dispose()
+            _InstallAppxPackage -Path $appRuntimePath -StepLabel '[3/4]'
+            Remove-Item -LiteralPath $appRuntimePath -Force -ErrorAction SilentlyContinue
+        } else {
+            $zip.Dispose()
+            _Log '[3/4] Advertencia: No se encontro WindowsAppRuntime en el paquete de dependencias.'
+        }
+        Remove-Item -LiteralPath $depsZipPath -Force -ErrorAction SilentlyContinue
+
+        _Log '[4/4] Descargando App Installer (winget) msixbundle...'
         $wingetBundlePath = Join-Path $env:TEMP 'Microsoft.DesktopAppInstaller.msixbundle'
         Invoke-WebRequest -Uri 'https://aka.ms/getwinget' -OutFile $wingetBundlePath -UseBasicParsing -TimeoutSec 180
-
-        _Log '[3/3] Instalando App Installer (winget)...'
-        _InstallAppxPackage -Path $wingetBundlePath -StepLabel '[3/3]'
+        _Log '[4/4] Instalando App Installer (winget)...'
+        _InstallAppxPackage -Path $wingetBundlePath -StepLabel '[4/4]'
         Remove-Item -LiteralPath $wingetBundlePath -Force -ErrorAction SilentlyContinue
 
         _Log '[OK] Instalacion desatendida de winget completada exitosamente.'
