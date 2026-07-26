@@ -293,5 +293,4 @@ Write-Host "  Hash:    $launcherHash" -ForegroundColor Gray
 Write-Host "  Hashes:  $toolHashesFileSha  (config/tool-hashes.json)" -ForegroundColor Gray
 Write-Host "  SHA256:  $launcherShaPath" -ForegroundColor Gray
 Write-Host "  Tools:   $toolHashesPath" -ForegroundColor Gray
-Write-Host "  OOB tip: set Worker secrets ATLAS_LAUNCHER_SHA256 and ATLAS_TOOL_HASHES_SHA256 with values above." -ForegroundColor DarkGray
 Write-Host ""

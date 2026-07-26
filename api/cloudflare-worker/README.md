@@ -9,6 +9,12 @@ Versioned Worker code for:
 - `https://toolspanel.atlaspcsupport.com/install.ps1`
 - `https://toolspanel.atlaspcsupport.com/install.ps1.sha256`
 
+## How it works
+
+The `/launcher.sha256` and `/tool-hashes.sha256` endpoints proxy their
+values **live from the GitHub repo** (with 30s Cloudflare edge cache).
+No manual secret updates are needed after merging to `main`.
+
 ## Prerequisites
 
 - Node.js 20+
@@ -17,19 +23,10 @@ Versioned Worker code for:
 
 ## Set/Rotate Worker Secrets
 
-Run from this folder:
+Only `GITHUB_PAT` needs to be set (for private repo access):
 
 ```powershell
 npx wrangler secret put GITHUB_PAT
-npx wrangler secret put ATLAS_LAUNCHER_SHA256
-npx wrangler secret put ATLAS_TOOL_HASHES_SHA256
-```
-
-Use current digest values from the main repo:
-
-```powershell
-Get-Content ../../launcher.ps1.sha256
-(Get-FileHash ../../config/tool-hashes.json -Algorithm SHA256).Hash.ToLower()
 ```
 
 Or run the helper script:
