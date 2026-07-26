@@ -1,4 +1,4 @@
-﻿# ============================================================
+# ============================================================
 # Invoke-InstalarPaquetes  ->  Bulk App Installer (winget) GUI
 #
 # Interfaz Gráfica (WPF Panel) moderna para Atlas PC Support.
@@ -43,58 +43,60 @@ function Invoke-InstalarPaquetes {
         en = @{
             Title                = 'ATLAS PC SUPPORT - BULK APP INSTALLER (winget)'
             SubTitle             = 'Bulk software installer via winget · Atlas PC Support'
-            WingetVersion        = 'winget version: {0}'
-            WingetUnavailable    = 'winget is not available on this system.'
-            MenuSelectAll        = 'Select All'
-            MenuDeselectAll      = 'Deselect All'
-            MenuLoadProfile      = '[+] Load Profile'
-            MenuSaveProfile      = '[*] Save Profile'
-            SearchPlaceholder    = 'Type app name (e.g. VLC)...'
-            SearchBtn            = '[>] Search Winget'
-            CurrentSelection     = 'Current selection: {0} package(s)'
-            NoSelection          = 'No packages selected.'
-            InstallBtn           = '[>] INSTALL SELECTION'
-            InstallingBtn        = '[...] Installing...'
-            LiveLog              = 'Live Installation Log:'
-            ClearLog             = 'Clear Log'
-            CleanTempName        = 'Clean Temporary Files'
-            CleanTempCategory    = 'Cleanup'
-            CleaningTemp         = 'Cleaning temporary files...'
-            CleanupSummary       = 'Total freed: {0:N1} MB'
-            NoteRequiresLic      = 'requires license'
-            CategoryBrowsers     = 'Browsers'
-            CategoryMultimedia   = 'Multimedia'
-            CategoryOffice       = 'Office'
-            CategoryCommunic     = 'Communication'
-            CategoryUtilities    = 'Utilities'
-            CategoryDevelop      = 'Development'
-            CategorySecurity     = 'Security'
-            CategoryNetwork      = 'Network'
-            CategoryGaming       = 'Gaming'
-            CategoryNotes        = 'Notes & Productivity'
-            CategorySearch       = 'Search Results'
-            ProfilePromptTitle   = 'Save Profile'
-            ProfilePromptMsg     = 'Enter a name for this profile (e.g. client-alice):'
-            ProfileSaved         = 'Profile saved: {0}'
-            ProfileLoaded        = 'Loaded profile "{0}" with {1} package(s).'
-            NoSelectionToInst    = 'No packages selected to install.'
-            InstallStarted       = 'Starting installation of {0} package(s)...'
-            Installing           = '[>] Installing: {0} ({1})...'
-            InstalledOK          = '[OK] Successfully installed: {0}'
-            AlreadyInstalled     = '[=] Already installed: {0}'
-            InstallFailed        = '[X] Failed installing {0} (Exit code: {1})'
-            InstallTimeout       = '[!] Timeout installing {0} (exceeded 3 minutes)'
-            InstallException     = '[X] Exception installing {0}: {1}'
-            Summary              = 'Installation finished: {0} OK / {1} already installed / {2} failed'
-            Searching            = '[>] Searching winget for: "{0}"...'
-            SearchDone           = '[OK] Found {0} result(s) for "{0}".'
-            SearchNoResults      = '[!] No results found for "{0}".'
+            WingetVersion           = 'winget version: {0}'
+            WingetUnavailable       = 'winget is not available on this system.'
+            WingetUnavailableWin10  = 'winget is not installed. Windows 10 requires App Installer from Microsoft Store (build 17763+).'
+            MenuSelectAll           = 'Select All'
+            MenuDeselectAll         = 'Deselect All'
+            MenuLoadProfile         = '[+] Load Profile'
+            MenuSaveProfile         = '[*] Save Profile'
+            SearchPlaceholder       = 'Type app name (e.g. VLC)...'
+            SearchBtn               = '[>] Search Winget'
+            CurrentSelection        = 'Current selection: {0} package(s)'
+            NoSelection             = 'No packages selected.'
+            InstallBtn              = '[>] INSTALL SELECTION'
+            InstallingBtn           = '[...] Installing...'
+            LiveLog                 = 'Live Installation Log:'
+            ClearLog                = 'Clear Log'
+            CleanTempName           = 'Clean Temporary Files'
+            CleanTempCategory       = 'Cleanup'
+            CleaningTemp            = 'Cleaning temporary files...'
+            CleanupSummary          = 'Total freed: {0:N1} MB'
+            NoteRequiresLic         = 'requires license'
+            CategoryBrowsers        = 'Browsers'
+            CategoryMultimedia      = 'Multimedia'
+            CategoryOffice          = 'Office'
+            CategoryCommunic        = 'Communication'
+            CategoryUtilities       = 'Utilities'
+            CategoryDevelop         = 'Development'
+            CategorySecurity        = 'Security'
+            CategoryNetwork         = 'Network'
+            CategoryGaming          = 'Gaming'
+            CategoryNotes           = 'Notes & Productivity'
+            CategorySearch          = 'Search Results'
+            ProfilePromptTitle      = 'Save Profile'
+            ProfilePromptMsg        = 'Enter a name for this profile (e.g. client-alice):'
+            ProfileSaved            = 'Profile saved: {0}'
+            ProfileLoaded           = 'Loaded profile "{0}" with {1} package(s).'
+            NoSelectionToInst       = 'No packages selected to install.'
+            InstallStarted          = 'Starting installation of {0} package(s)...'
+            Installing              = '[>] Installing: {0} ({1})...'
+            InstalledOK             = '[OK] Successfully installed: {0}'
+            AlreadyInstalled        = '[=] Already installed: {0}'
+            InstallFailed           = '[X] Failed installing {0} (Exit code: {1})'
+            InstallTimeout          = '[!] Timeout installing {0} (exceeded 3 minutes)'
+            InstallException        = '[X] Exception installing {0}: {1}'
+            Summary                 = 'Installation finished: {0} OK / {1} already installed / {2} failed'
+            Searching               = '[>] Searching winget for: "{0}"...'
+            SearchDone              = '[OK] Found {0} result(s) for "{0}".'
+            SearchNoResults         = '[!] No results found for "{0}".'
         }
         es = @{
-            Title                = 'ATLAS PC SUPPORT - INSTALADOR DE PAQUETES (winget)'
-            SubTitle             = 'Instalación masiva de software con winget · Atlas PC Support'
-            WingetVersion        = 'Versión de winget: {0}'
-            WingetUnavailable    = 'winget no está disponible en este sistema.'
+            Title                   = 'ATLAS PC SUPPORT - INSTALADOR DE PAQUETES (winget)'
+            SubTitle                = 'Instalación masiva de software con winget · Atlas PC Support'
+            WingetVersion           = 'Versión de winget: {0}'
+            WingetUnavailable       = 'winget no está disponible en este sistema.'
+            WingetUnavailableWin10  = 'winget no está instalado. En Windows 10 requiere App Installer desde Microsoft Store (build 17763 o superior).'
             MenuSelectAll        = 'Seleccionar Todo'
             MenuDeselectAll      = 'Desmarcar Todo'
             MenuLoadProfile      = '[+] Cargar Perfil'
@@ -257,9 +259,58 @@ function Invoke-InstalarPaquetes {
         )
     }
 
-    function Test-WingetAvailable {
-        $cmd = Get-Command winget.exe -ErrorAction SilentlyContinue
-        return ($null -ne $cmd)
+    if (-not (Get-Command Get-AtlasWingetPath -ErrorAction SilentlyContinue)) {
+        function script:Get-AtlasWingetPath {
+            [CmdletBinding()]
+            param()
+            $cmd = Get-Command winget.exe -ErrorAction SilentlyContinue
+            if ($cmd -and $cmd.Source -and (Test-Path -LiteralPath $cmd.Source)) { return $cmd.Source }
+            try {
+                $pkg = Get-AppxPackage -Name 'Microsoft.DesktopAppInstaller' -ErrorAction SilentlyContinue |
+                       Sort-Object -Property Version -Descending | Select-Object -First 1
+                if ($pkg -and $pkg.InstallLocation) {
+                    $exe = Join-Path $pkg.InstallLocation 'winget.exe'
+                    if (Test-Path -LiteralPath $exe) { return $exe }
+                }
+            } catch {}
+            try {
+                $candidates = Get-ChildItem -Path 'C:\Program Files\WindowsApps' -Filter 'winget.exe' -Recurse -ErrorAction SilentlyContinue |
+                              Where-Object { $_.DirectoryName -like '*Microsoft.DesktopAppInstaller*' } |
+                              Sort-Object -Property FullName -Descending
+                if ($candidates) { return $candidates[0].FullName }
+            } catch {}
+            return $null
+        }
+    }
+
+    if (-not (Get-Command Get-AtlasWingetCapabilities -ErrorAction SilentlyContinue)) {
+        function script:Get-AtlasWingetCapabilities {
+            [CmdletBinding()]
+            param([string]$WingetPath)
+            $caps = [ordered]@{ Available = $false; Version = $null; SupportsNoInteract = $false; SupportsMsStore = $false }
+            if (-not $WingetPath -or -not (Test-Path -LiteralPath $WingetPath)) { return $caps }
+            $caps.Available = $true
+            $raw = try { (& $WingetPath --version 2>$null | Select-Object -First 1) } catch { $null }
+            if (-not $raw) { return $caps }
+            $text = ([string]$raw).Trim().TrimStart('v')
+            $caps.Version = $text
+            $parsed = $null
+            if ([version]::TryParse(($text -split '-')[0], [ref]$parsed)) {
+                $caps.SupportsNoInteract = ($parsed -ge [version]'1.3')
+                $caps.SupportsMsStore    = ($parsed -ge [version]'1.2')
+            } else {
+                $caps.SupportsNoInteract = $true
+                $caps.SupportsMsStore    = $true
+            }
+            return $caps
+        }
+    }
+
+    $script:WingetPath = Get-AtlasWingetPath
+    $script:WingetCaps = Get-AtlasWingetCapabilities -WingetPath $script:WingetPath
+
+    function script:Test-WingetAvailable {
+        return [bool]($script:WingetPath -and $script:WingetCaps.Available)
     }
 
     # Helper for XML attribute escaping
@@ -642,15 +693,18 @@ function Invoke-InstalarPaquetes {
         }
     }
 
-    # Detect Winget version
+    # Detect Winget version and set UI state
     if (Test-WingetAvailable) {
-        $ver = try { (& winget.exe --version 2>$null).Trim() } catch { '1.x' }
+        $ver = if ($script:WingetCaps -and $script:WingetCaps.Version) { $script:WingetCaps.Version } else { '1.x' }
         if ($ui.TxtWingetVer) { $ui.TxtWingetVer.Text = ($L.WingetVersion -f $ver) }
     } else {
         if ($ui.TxtWingetVer) {
-            $ui.TxtWingetVer.Text = $L.WingetUnavailable
+            $msgUnavail = if ($L -and $L.WingetUnavailableWin10) { $L.WingetUnavailableWin10 } else { $L.WingetUnavailable }
+            $ui.TxtWingetVer.Text = $msgUnavail
             $ui.TxtWingetVer.Foreground = [System.Windows.Media.Brushes]::Red
         }
+        if ($ui.BtnInstall) { $ui.BtnInstall.IsEnabled = $false }
+        if ($ui.BtnSearchWinget) { $ui.BtnSearchWinget.IsEnabled = $false }
     }
 
     # Update Selection Summary Card
@@ -874,7 +928,7 @@ function Invoke-InstalarPaquetes {
             $ps.Runspace = $rs
 
             $null = $ps.AddScript({
-                param($term)
+                param($term, $WingetExecutable, $SupportsNoInteract, $SupportsMsStore)
                 $esc = [char]0x1B
                 $cleanLines = {
                     param([object[]]$Raw)
@@ -894,32 +948,26 @@ function Invoke-InstalarPaquetes {
                     param([string[]]$Lines, [string]$SourceTag)
                     $sepIdx = -1
                     for ($i = 0; $i -lt $Lines.Count; $i++) {
-                        if ($Lines[$i] -match '^[\s\-─━]+$' -and $Lines[$i] -match '[\-─━]{3,}') {
-                            $sepIdx = $i; break
-                        }
+                        if ($Lines[$i] -match '^-{3,}') { $sepIdx = $i; break }
                     }
-                    if ($sepIdx -lt 1) { return @() }
-                    $headerLine = $Lines[$sepIdx - 1]
-                    $sepLine    = $Lines[$sepIdx]
-                    $cols = @()
-                    foreach ($m in [regex]::Matches($sepLine, '[\-─━]+')) {
-                        $cols += @{ Start = $m.Index; Length = $m.Length }
+                    if ($sepIdx -le 0) { return @() }
+
+                    $hdrLine = $Lines[$sepIdx - 1]
+                    $sepLine = $Lines[$sepIdx]
+
+                    $cols = [regex]::Matches($sepLine, '-+') | ForEach-Object {
+                        @{ Start = $_.Index; Length = $_.Length }
                     }
-                    if ($cols.Count -lt 2) {
-                        $cols = @()
-                        foreach ($m in [regex]::Matches($headerLine, '\S+')) {
-                            $cols += @{ Start = $m.Index; Length = $m.Length }
-                        }
-                        if ($cols.Count -lt 2) { return @() }
-                    }
+                    if ($cols.Count -eq 0) { return @() }
+
                     $colNames = @()
-                    for ($c = 0; $c -lt $cols.Count; $c++) {
-                        $start = $cols[$c].Start
-                        $end   = if ($c -lt $cols.Count - 1) { $cols[$c+1].Start } else { $headerLine.Length }
-                        $end   = [Math]::Min($end, $headerLine.Length)
-                        $name  = if ($start -lt $headerLine.Length) { $headerLine.Substring($start, $end - $start).Trim() } else { '' }
-                        $colNames += $name
+                    foreach ($c in $cols) {
+                        $start = $c.Start
+                        if ($start -ge $hdrLine.Length) { $colNames += 'Col'; continue }
+                        $len = [Math]::Min($c.Length, $hdrLine.Length - $start)
+                        $colNames += $hdrLine.Substring($start, $len).Trim()
                     }
+
                     $results = @()
                     for ($i = $sepIdx + 1; $i -lt $Lines.Count; $i++) {
                         $line = $Lines[$i]
@@ -952,9 +1000,15 @@ function Invoke-InstalarPaquetes {
                     return $results
                 }
 
+                $exe = if ($WingetExecutable -and (Test-Path -LiteralPath $WingetExecutable)) { $WingetExecutable } else { 'winget.exe' }
+                $sources = @('winget')
+                if ($SupportsMsStore) { $sources += 'msstore' }
+
                 $allRes = @()
-                foreach ($src in @('winget', 'msstore')) {
-                    $out = try { & winget.exe search $term --source $src --accept-source-agreements --disable-interactivity 2>&1 } catch { $null }
+                foreach ($src in $sources) {
+                    $searchArgs = @('search', $term, '--source', $src, '--accept-source-agreements')
+                    if ($SupportsNoInteract) { $searchArgs += '--disable-interactivity' }
+                    $out = try { & $exe $searchArgs 2>&1 } catch { $null }
                     if ($out) {
                         $lines = & $cleanLines @($out | ForEach-Object { [string]$_ })
                         $parsed = Parse-SearchOutputInner -Lines $lines -SourceTag $src
@@ -962,7 +1016,9 @@ function Invoke-InstalarPaquetes {
                     }
                 }
                 if ($allRes.Count -eq 0) {
-                    $out = try { & winget.exe search $term --accept-source-agreements --disable-interactivity 2>&1 } catch { $null }
+                    $searchArgs = @('search', $term, '--accept-source-agreements')
+                    if ($SupportsNoInteract) { $searchArgs += '--disable-interactivity' }
+                    $out = try { & $exe $searchArgs 2>&1 } catch { $null }
                     if ($out) {
                         $lines = & $cleanLines @($out | ForEach-Object { [string]$_ })
                         $parsed = Parse-SearchOutputInner -Lines $lines -SourceTag ''
@@ -970,7 +1026,7 @@ function Invoke-InstalarPaquetes {
                     }
                 }
                 return @{ Query = $term; Results = $allRes }
-            }).AddArgument($query)
+            }).AddArgument($query).AddArgument($script:WingetPath).AddArgument([bool]($script:WingetCaps -and $script:WingetCaps.SupportsNoInteract)).AddArgument([bool]($script:WingetCaps -and $script:WingetCaps.SupportsMsStore))
 
             $asyncResult = $ps.BeginInvoke()
 
@@ -1085,7 +1141,7 @@ function Invoke-InstalarPaquetes {
             $ps.Runspace = $rs
 
             $null = $ps.AddScript({
-                param($packages, $logQueue, $progressQueue, $L_Installing, $L_InstalledOK, $L_AlreadyInstalled, $L_InstallFailed, $L_InstallTimeout, $L_InstallException, $ID_MIGRATIONS, $L_CleaningTemp, $L_CleanupSummary)
+                param($packages, $logQueue, $progressQueue, $L_Installing, $L_InstalledOK, $L_AlreadyInstalled, $L_InstallFailed, $L_InstallTimeout, $L_InstallException, $ID_MIGRATIONS, $L_CleaningTemp, $L_CleanupSummary, $WingetExecutable, $SupportsNoInteract, $SupportsMsStore)
 
                 function Resolve-PackageIdInner {
                     param([hashtable]$Pkg, [hashtable]$Migrations)
@@ -1149,14 +1205,25 @@ function Invoke-InstalarPaquetes {
                     try {
                         $pkgToInstall = Resolve-PackageIdInner -Pkg $p -Migrations $ID_MIGRATIONS
                         $wingetArgs = @('install', '--id', $pkgToInstall.Id, '--exact', '--silent',
-                                        '--disable-interactivity',
                                         '--accept-package-agreements', '--accept-source-agreements')
+
+                        if ($SupportsNoInteract) {
+                            $wingetArgs += '--disable-interactivity'
+                        }
+
                         if ($pkgToInstall.Source -and [string]$pkgToInstall.Source -ne '') {
-                            $wingetArgs += @('--source', [string]$pkgToInstall.Source)
+                            if ([string]$pkgToInstall.Source -ne 'msstore' -or $SupportsMsStore) {
+                                $wingetArgs += @('--source', [string]$pkgToInstall.Source)
+                            } else {
+                                $logQueue.Enqueue("[!] $($p.Name): fuente msstore no soportada por esta version de winget")
+                                $failCount++
+                                $progressQueue.Enqueue($i + 1)
+                                continue
+                            }
                         }
 
                         $pinfo = New-Object System.Diagnostics.ProcessStartInfo
-                        $pinfo.FileName = 'winget.exe'
+                        $pinfo.FileName = if ($WingetExecutable -and (Test-Path -LiteralPath $WingetExecutable)) { $WingetExecutable } else { 'winget.exe' }
                         $pinfo.Arguments = ($wingetArgs -join ' ')
                         $pinfo.UseShellExecute = $false
                         $pinfo.CreateNoWindow = $true
@@ -1173,23 +1240,25 @@ function Invoke-InstalarPaquetes {
                             $logQueue.Enqueue(($L_InstallTimeout -f $p.Name))
                         } else {
                             $exitCode = $proc.ExitCode
-                            switch ($exitCode) {
-                                0 {
-                                    $okCount++
-                                    $logQueue.Enqueue(($L_InstalledOK -f $p.Name))
-                                }
-                                -1978335189 {
-                                    $alreadyCount++
-                                    $logQueue.Enqueue(($L_AlreadyInstalled -f $p.Name))
-                                }
-                                -1978335212 {
-                                    $alreadyCount++
-                                    $logQueue.Enqueue(($L_AlreadyInstalled -f $p.Name))
-                                }
-                                default {
-                                    $failCount++
-                                    $logQueue.Enqueue(($L_InstallFailed -f $p.Name, $exitCode))
-                                }
+                            $alreadyInstalledCodes = @(
+                                -1978335189,   # APPINSTALLER_CLI_ERROR_UPDATE_NOT_APPLICABLE
+                                -1978335212,   # APPINSTALLER_CLI_ERROR_PACKAGE_ALREADY_INSTALLED
+                                -1978335135,   # APPINSTALLER_CLI_ERROR_NO_APPLICABLE_UPDATE
+                                2316632083,    # 0x8A150013 unsigned
+                                2316632068,    # 0x8A150004 unsigned
+                                2316632145     # 0x8A150051 unsigned
+                            )
+
+                            if ($exitCode -eq 0) {
+                                $okCount++
+                                $logQueue.Enqueue(($L_InstalledOK -f $p.Name))
+                            } elseif ($alreadyInstalledCodes -contains $exitCode) {
+                                $alreadyCount++
+                                $logQueue.Enqueue(($L_AlreadyInstalled -f $p.Name))
+                            } else {
+                                $failCount++
+                                $formattedExit = if ($exitCode -lt 0) { ('0x{0:X8}' -f $exitCode) } else { $exitCode }
+                                $logQueue.Enqueue(($L_InstallFailed -f $p.Name, $formattedExit))
                             }
                         }
                     } catch {
@@ -1201,7 +1270,7 @@ function Invoke-InstalarPaquetes {
                 }
 
                 return @{ OK = $okCount; Already = $alreadyCount; Fail = $failCount }
-            }).AddArgument($selectedPkgs).AddArgument($logQueue).AddArgument($progressQueue).AddArgument($L.Installing).AddArgument($L.InstalledOK).AddArgument($L.AlreadyInstalled).AddArgument($L.InstallFailed).AddArgument($L.InstallTimeout).AddArgument($L.InstallException).AddArgument($ID_MIGRATIONS).AddArgument($L.CleaningTemp).AddArgument($L.CleanupSummary)
+            }).AddArgument($selectedPkgs).AddArgument($logQueue).AddArgument($progressQueue).AddArgument($L.Installing).AddArgument($L.InstalledOK).AddArgument($L.AlreadyInstalled).AddArgument($L.InstallFailed).AddArgument($L.InstallTimeout).AddArgument($L.InstallException).AddArgument($ID_MIGRATIONS).AddArgument($L.CleaningTemp).AddArgument($L.CleanupSummary).AddArgument($script:WingetPath).AddArgument([bool]($script:WingetCaps -and $script:WingetCaps.SupportsNoInteract)).AddArgument([bool]($script:WingetCaps -and $script:WingetCaps.SupportsMsStore))
 
             $asyncResult = $ps.BeginInvoke()
 

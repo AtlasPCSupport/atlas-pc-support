@@ -144,3 +144,72 @@ $BodyHtml
 </html>
 "@
 }
+
+function Get-AtlasWingetPath {
+    [CmdletBinding()]
+    param()
+
+    # 1) PATH normal
+    $cmd = Get-Command winget.exe -ErrorAction SilentlyContinue
+    if ($cmd -and $cmd.Source -and (Test-Path -LiteralPath $cmd.Source)) {
+        return $cmd.Source
+    }
+
+    # 2) Ruta real del paquete Appx (evita el alias de WindowsApps de 0 bytes o faltante en admin elevacion)
+    try {
+        $pkg = Get-AppxPackage -Name 'Microsoft.DesktopAppInstaller' -ErrorAction SilentlyContinue |
+               Sort-Object -Property Version -Descending |
+               Select-Object -First 1
+
+        if ($pkg -and $pkg.InstallLocation) {
+            $exe = Join-Path $pkg.InstallLocation 'winget.exe'
+            if (Test-Path -LiteralPath $exe) { return $exe }
+        }
+    } catch {}
+
+    # 3) Elevado: buscar en Program Files\WindowsApps (si corre como admin diferente)
+    try {
+        $candidates = Get-ChildItem -Path 'C:\Program Files\WindowsApps' `
+                                    -Filter 'winget.exe' -Recurse -ErrorAction SilentlyContinue |
+                      Where-Object { $_.DirectoryName -like '*Microsoft.DesktopAppInstaller*' } |
+                      Sort-Object -Property FullName -Descending
+
+        if ($candidates) { return $candidates[0].FullName }
+    } catch {}
+
+    return $null
+}
+
+function Get-AtlasWingetCapabilities {
+    [CmdletBinding()]
+    param([string]$WingetPath)
+
+    $caps = [ordered]@{
+        Available          = $false
+        Version            = $null
+        SupportsNoInteract = $false
+        SupportsMsStore    = $false
+    }
+
+    if (-not $WingetPath -or -not (Test-Path -LiteralPath $WingetPath)) { return $caps }
+
+    $caps.Available = $true
+
+    $raw = try { (& $WingetPath --version 2>$null | Select-Object -First 1) } catch { $null }
+    if (-not $raw) { return $caps }
+
+    $text = ([string]$raw).Trim().TrimStart('v')
+    $caps.Version = $text
+
+    $parsed = $null
+    if ([version]::TryParse(($text -split '-')[0], [ref]$parsed)) {
+        $caps.SupportsNoInteract = ($parsed -ge [version]'1.3')
+        $caps.SupportsMsStore    = ($parsed -ge [version]'1.2')
+    } else {
+        $caps.SupportsNoInteract = $true
+        $caps.SupportsMsStore    = $true
+    }
+
+    return $caps
+}
+

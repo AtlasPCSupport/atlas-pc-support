@@ -76,6 +76,32 @@ Describe 'ToolKit Unit Tests' {
         }
     }
 
+    Context 'ToolKit - Get-AtlasWingetPath y Get-AtlasWingetCapabilities' {
+        It 'Get-AtlasWingetPath no lanza y devuelve string o null' {
+            $path = Get-AtlasWingetPath
+            if ($path) {
+                $path | Should -BeOfType [string]
+            } else {
+                $path | Should -BeNullOrEmpty
+            }
+        }
+
+        It 'Get-AtlasWingetCapabilities evalua capacidades para ruta nula' {
+            $caps = Get-AtlasWingetCapabilities -WingetPath $null
+            $caps.Available | Should -BeFalse
+            $caps.SupportsNoInteract | Should -BeFalse
+            $caps.SupportsMsStore | Should -BeFalse
+        }
+
+        It 'Get-AtlasWingetCapabilities evalua capacidades si winget esta instalado' {
+            $path = Get-AtlasWingetPath
+            if ($path) {
+                $caps = Get-AtlasWingetCapabilities -WingetPath $path
+                $caps.Available | Should -BeTrue
+            }
+        }
+    }
+
     Context 'ToolRunner - inyeccion del ToolKit en una tool aislada' {
         It 'una tool en proceso aislado puede usar los helpers inyectados' {
             $toolkitSource = Get-Content -Raw -LiteralPath $script:ToolKit
