@@ -1,7 +1,7 @@
 # ============================================================
 #  Atlas PC Support - launcher.ps1 (compilado)
 #  Version: 1.0.0
-#  Build:   2026-07-26 17:26:49
+#  Build:   2026-07-26 17:37:40
 #  Repo:    https://github.com/mikepchelper-spec/atlas-pc-support
 #
 #  Uso:
@@ -19,7 +19,7 @@
 # ============================================================
 
 $script:AtlasVersion = '1.0.0'
-$script:AtlasBuildDate = '2026-07-26 17:26:49'
+$script:AtlasBuildDate = '2026-07-26 17:37:40'
 $script:AtlasToolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/src/tools'
 
 $script:AtlasToolsManifest = @'
@@ -332,7 +332,7 @@ $script:AtlasToolsManifest = @'
 
 $script:AtlasToolHashesJson = @'
 {
-  "generatedAt": "2026-07-26T17:26:49.9561981-05:00",
+  "generatedAt": "2026-07-26T17:37:40.2247985-05:00",
   "algorithm": "SHA256",
   "files": {
     "Invoke-ActualizarPowerShell.ps1": "094062f8ebf7c9279dc8eeedaf2e635e6fad889630feb1e73ce73ab4bb107304",
@@ -837,11 +837,25 @@ $script:AtlasXamlTemplate = @'
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
-                        <TextBlock Text="{{SIDEBAR_HEADER}}"
-                                   Foreground="{StaticResource TextMutedBrush}"
-                                   FontSize="11"
-                                   FontWeight="SemiBold"
-                                   Margin="0,0,0,12"/>
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Text="{{SIDEBAR_HEADER}}"
+                                       Foreground="{StaticResource TextMutedBrush}"
+                                       FontSize="11"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center"/>
+                            <Button x:Name="BtnLoadSysInfo"
+                                    Content="{{SIDEBAR_LOAD_BTN}}"
+                                    Grid.Column="1"
+                                    Style="{StaticResource AtlasSecondaryButton}"
+                                    Padding="8,4"
+                                    FontSize="11"
+                                    VerticalAlignment="Center"/>
+                        </Grid>
 
                         <!-- Hostname -->
                         <TextBlock Text="{{SIDEBAR_HOST}}"
@@ -1519,6 +1533,8 @@ $script:AtlasStringsDict = @{
         'sidebar.ip'              = 'IP local'
         'sidebar.lastSync'        = 'Última actualización'
         'sidebar.uptimeFmt'       = '{0}d {1}h {2}m'
+        'sidebar.onDemand'        = '[Bajo Demanda]'
+        'sidebar.loadBtn'         = '▶ Leer Info'
         'dash.disk.detail'        = '{0}% ({1} GB libres)'
     }
     'en' = @{
@@ -1583,6 +1599,7 @@ $script:AtlasStringsDict = @{
         'sidebar.lastSync'        = 'Last refresh'
         'sidebar.uptimeFmt'       = '{0}d {1}h {2}m'
         'sidebar.onDemand'        = '[On Demand]'
+        'sidebar.loadBtn'         = '▶ Load Info'
         'dash.disk.detail'        = '{0}% ({1} GB free)'
     }
     'ro' = @{
@@ -1646,6 +1663,8 @@ $script:AtlasStringsDict = @{
         'sidebar.ip'              = 'IP local'
         'sidebar.lastSync'        = 'Ultima actualizare'
         'sidebar.uptimeFmt'       = '{0}z {1}h {2}m'
+        'sidebar.onDemand'        = '[La cerere]'
+        'sidebar.loadBtn'         = '▶ Citește Info'
         'dash.disk.detail'        = '{0}% ({1} GB liberi)'
     }
     'pt' = @{
@@ -1709,6 +1728,8 @@ $script:AtlasStringsDict = @{
         'sidebar.ip'              = 'IP local'
         'sidebar.lastSync'        = 'Última atualização'
         'sidebar.uptimeFmt'       = '{0}d {1}h {2}m'
+        'sidebar.onDemand'        = '[Sob Demanda]'
+        'sidebar.loadBtn'         = '▶ Carregar Info'
         'dash.disk.detail'        = '{0}% ({1} GB livres)'
     }
     'fr' = @{
@@ -1772,6 +1793,8 @@ $script:AtlasStringsDict = @{
         'sidebar.ip'              = 'IP locale'
         'sidebar.lastSync'        = 'Dernière actu'
         'sidebar.uptimeFmt'       = '{0}j {1}h {2}m'
+        'sidebar.onDemand'        = '[À la demande]'
+        'sidebar.loadBtn'         = '▶ Charger Info'
         'dash.disk.detail'        = '{0}% ({1} Go libres)'
     }
     'de' = @{
@@ -1835,6 +1858,8 @@ $script:AtlasStringsDict = @{
         'sidebar.ip'              = 'Lokale IP'
         'sidebar.lastSync'        = 'Letzte Aktualisierung'
         'sidebar.uptimeFmt'       = '{0}T {1}h {2}m'
+        'sidebar.onDemand'        = '[Auf Anfrage]'
+        'sidebar.loadBtn'         = '▶ Info laden'
         'dash.disk.detail'        = '{0}% ({1} GB frei)'
     }
     'it' = @{
@@ -1898,6 +1923,8 @@ $script:AtlasStringsDict = @{
         'sidebar.ip'              = 'IP locale'
         'sidebar.lastSync'        = 'Ultimo aggiornamento'
         'sidebar.uptimeFmt'       = '{0}g {1}h {2}m'
+        'sidebar.onDemand'        = '[Su richiesta]'
+        'sidebar.loadBtn'         = '▶ Carica Info'
         'dash.disk.detail'        = '{0}% ({1} GB liberi)'
     }
 }
@@ -3752,6 +3779,7 @@ function Expand-AtlasXaml {
         'SIDEBAR_UPTIME'     = (ConvertTo-AtlasXamlSafe (Get-AtlasString 'sidebar.uptime'))
         'SIDEBAR_IP'         = (ConvertTo-AtlasXamlSafe (Get-AtlasString 'sidebar.ip'))
         'SIDEBAR_LASTSYNC'   = (ConvertTo-AtlasXamlSafe (Get-AtlasString 'sidebar.lastSync'))
+        'SIDEBAR_LOAD_BTN'   = (ConvertTo-AtlasXamlSafe (Get-AtlasString 'sidebar.loadBtn'))
     }
     foreach ($k in $map.Keys) {
         $Xaml = $Xaml.Replace("{{$k}}", [string]$map[$k])
@@ -4027,7 +4055,7 @@ function Initialize-AtlasDashboard {
     if ($sideUser) {
         $sideUser.Text = if ($env:USERDOMAIN) { "$env:USERDOMAIN\$env:USERNAME" } else { $env:USERNAME }
     }
-    $onDemandTxt = & $strFn 'sidebar.onDemand'
+    $onDemandTxt = Get-AtlasString 'sidebar.onDemand'
     if (-not $onDemandTxt) { $onDemandTxt = '[Bajo Demanda]' }
     if ($sideOS)     { $sideOS.Text     = $onDemandTxt }
     if ($sideCpu)    { $sideCpu.Text    = $onDemandTxt }
@@ -4044,6 +4072,7 @@ function Initialize-AtlasDashboard {
     $dashAlerts   = $Window.FindName('DashAlertsText')
     $btnDashRefresh = $Window.FindName('BtnDashRefresh')
     $btnDashMonitorToggle = $Window.FindName('BtnDashMonitorToggle')
+    $btnLoadSysInfo = $Window.FindName('BtnLoadSysInfo')
 
     $monitorOffText = Get-AtlasString 'dash.monitor.off'
     $monitorOnText = Get-AtlasString 'dash.monitor.on'
@@ -4069,6 +4098,39 @@ function Initialize-AtlasDashboard {
     $staticFn     = ${function:Get-AtlasStaticSystemInfo}
     $alertsFn     = ${function:Get-AtlasDashboardAlerts}
 
+    # --- Sidebar system info loader (one-shot, independent of monitor) ---
+    $loadSysInfoAction = {
+        try {
+            $static2 = & $staticFn
+            if ($sideOS -and $static2.OSCaption) {
+                $os = if ($static2.OSBuild) { "$($static2.OSCaption) (build $($static2.OSBuild))" } else { $static2.OSCaption }
+                $sideOS.Text = $os
+            }
+            if ($sideCpu -and $static2.CpuName) {
+                $sideCpu.Text = $static2.CpuName
+            }
+            if ($sideRam -and $static2.TotalRamGB -gt 0) {
+                $sideRam.Text = "$($static2.TotalRamGB) GB"
+            }
+
+            $snap2 = & $liveFn
+            if ($sideIp -and $snap2.IpAddress) { $sideIp.Text = $snap2.IpAddress }
+            if ($sideUptime -and $snap2.Uptime -and $static2.LastBoot) {
+                $upFmt = & $strFn 'sidebar.uptimeFmt' `
+                    ([int]$snap2.Uptime.TotalDays) `
+                    ($snap2.Uptime.Hours) `
+                    ($snap2.Uptime.Minutes)
+                $sideUptime.Text = "$($static2.LastBoot.ToString('yyyy-MM-dd HH:mm'))  ($upFmt)"
+            }
+            if ($sideLastSync) {
+                $sideLastSync.Text = (Get-Date).ToString('HH:mm:ss')
+            }
+        } catch {
+            try { & $logFn "Load system info failed: $_" -Level WARN -Tool 'UI' } catch { }
+        }
+    }
+
+    # --- Resource monitor tick (CPU/RAM/Disk bars + alerts only) ---
     $tickAction = {
         try {
             $snap = & $liveFn
@@ -4084,28 +4146,6 @@ function Initialize-AtlasDashboard {
             if ($null -ne $snap.DiskPercent) {
                 $dashDiskVal.Text = & $strFn 'dash.disk.detail' $snap.DiskPercent $snap.DiskFreeGB
                 $dashDiskBar.Value = $snap.DiskPercent
-            }
-
-            if ($sideIp -and $snap.IpAddress) { $sideIp.Text = $snap.IpAddress }
-
-            # Static info (cached) — populates sidebar fields on demand.
-            $static2 = & $staticFn
-            if ($sideOS -and $static2.OSCaption) {
-                $os = if ($static2.OSBuild) { "$($static2.OSCaption) (build $($static2.OSBuild))" } else { $static2.OSCaption }
-                $sideOS.Text = $os
-            }
-            if ($sideCpu -and $static2.CpuName) {
-                $sideCpu.Text = $static2.CpuName
-            }
-            if ($sideRam -and $static2.TotalRamGB -gt 0) {
-                $sideRam.Text = "$($static2.TotalRamGB) GB"
-            }
-            if ($sideUptime -and $snap.Uptime -and $static2.LastBoot) {
-                $upFmt = & $strFn 'sidebar.uptimeFmt' `
-                    ([int]$snap.Uptime.TotalDays) `
-                    ($snap.Uptime.Hours) `
-                    ($snap.Uptime.Minutes)
-                $sideUptime.Text = "$($static2.LastBoot.ToString('yyyy-MM-dd HH:mm'))  ($upFmt)"
             }
 
             $alerts = & $alertsFn -Snap $snap
@@ -4131,6 +4171,8 @@ function Initialize-AtlasDashboard {
     # $dashCpuVal/$sideHost/$logFn/etc. are all resolvable when the tick runs.
     $tickClosed = $tickAction.GetNewClosure()
     $script:AtlasDashboardTick = $tickClosed
+    $loadSysInfoClosed = $loadSysInfoAction.GetNewClosure()
+    $script:AtlasLoadSysInfo = $loadSysInfoClosed
     try {
         & $logFn ("Dashboard tick handler initialized: {0}" -f ($script:AtlasDashboardTick.GetType().FullName)) -Level DEBUG -Tool 'UI'
     } catch { }
@@ -4219,6 +4261,22 @@ function Initialize-AtlasDashboard {
         })
     }
 
+    # Wire the sidebar "Load Info" button (one-shot system info, independent of monitor).
+    if ($btnLoadSysInfo) {
+        $btnLoadSysInfo.Add_Click({
+            try {
+                $infoToRun = if ($script:AtlasLoadSysInfo -is [scriptblock]) { $script:AtlasLoadSysInfo } else { $loadSysInfoClosed }
+                if ($infoToRun -is [scriptblock]) {
+                    & $infoToRun
+                } else {
+                    throw "LoadSysInfo handler no disponible."
+                }
+            } catch {
+                try { & $logFn "Sidebar load sys info click failed: $_" -Level WARN -Tool 'UI' } catch { }
+            }
+        })
+    }
+
     # Keep startup instant. System info reading & live monitor stay off until requested on demand.
     $bootstrapAction = {
         try {
@@ -4246,6 +4304,7 @@ function Initialize-AtlasDashboard {
             $script:AtlasDashboardTick = $null
             $script:AtlasDashboardStartMonitor = $null
             $script:AtlasDashboardStopMonitor = $null
+            $script:AtlasLoadSysInfo = $null
             $script:AtlasLiveSnapshotCache = $null
             $script:AtlasLiveSnapshotAt = [datetime]::MinValue
         } catch { }

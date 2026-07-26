@@ -66,6 +66,8 @@ $script:AtlasStringsDict = @{
         'sidebar.ip'              = 'IP local'
         'sidebar.lastSync'        = 'Última actualización'
         'sidebar.uptimeFmt'       = '{0}d {1}h {2}m'
+        'sidebar.onDemand'        = '[Bajo Demanda]'
+        'sidebar.loadBtn'         = '▶ Leer Info'
         'dash.disk.detail'        = '{0}% ({1} GB libres)'
     }
     'en' = @{
@@ -130,6 +132,7 @@ $script:AtlasStringsDict = @{
         'sidebar.lastSync'        = 'Last refresh'
         'sidebar.uptimeFmt'       = '{0}d {1}h {2}m'
         'sidebar.onDemand'        = '[On Demand]'
+        'sidebar.loadBtn'         = '▶ Load Info'
         'dash.disk.detail'        = '{0}% ({1} GB free)'
     }
     'ro' = @{
@@ -193,6 +196,8 @@ $script:AtlasStringsDict = @{
         'sidebar.ip'              = 'IP local'
         'sidebar.lastSync'        = 'Ultima actualizare'
         'sidebar.uptimeFmt'       = '{0}z {1}h {2}m'
+        'sidebar.onDemand'        = '[La cerere]'
+        'sidebar.loadBtn'         = '▶ Citește Info'
         'dash.disk.detail'        = '{0}% ({1} GB liberi)'
     }
     'pt' = @{
@@ -256,6 +261,8 @@ $script:AtlasStringsDict = @{
         'sidebar.ip'              = 'IP local'
         'sidebar.lastSync'        = 'Última atualização'
         'sidebar.uptimeFmt'       = '{0}d {1}h {2}m'
+        'sidebar.onDemand'        = '[Sob Demanda]'
+        'sidebar.loadBtn'         = '▶ Carregar Info'
         'dash.disk.detail'        = '{0}% ({1} GB livres)'
     }
     'fr' = @{
@@ -319,6 +326,8 @@ $script:AtlasStringsDict = @{
         'sidebar.ip'              = 'IP locale'
         'sidebar.lastSync'        = 'Dernière actu'
         'sidebar.uptimeFmt'       = '{0}j {1}h {2}m'
+        'sidebar.onDemand'        = '[À la demande]'
+        'sidebar.loadBtn'         = '▶ Charger Info'
         'dash.disk.detail'        = '{0}% ({1} Go libres)'
     }
     'de' = @{
@@ -382,6 +391,8 @@ $script:AtlasStringsDict = @{
         'sidebar.ip'              = 'Lokale IP'
         'sidebar.lastSync'        = 'Letzte Aktualisierung'
         'sidebar.uptimeFmt'       = '{0}T {1}h {2}m'
+        'sidebar.onDemand'        = '[Auf Anfrage]'
+        'sidebar.loadBtn'         = '▶ Info laden'
         'dash.disk.detail'        = '{0}% ({1} GB frei)'
     }
     'it' = @{
@@ -445,6 +456,8 @@ $script:AtlasStringsDict = @{
         'sidebar.ip'              = 'IP locale'
         'sidebar.lastSync'        = 'Ultimo aggiornamento'
         'sidebar.uptimeFmt'       = '{0}g {1}h {2}m'
+        'sidebar.onDemand'        = '[Su richiesta]'
+        'sidebar.loadBtn'         = '▶ Carica Info'
         'dash.disk.detail'        = '{0}% ({1} GB liberi)'
     }
 }
