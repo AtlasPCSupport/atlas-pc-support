@@ -64,12 +64,6 @@ async function fetchPrivate(filePath, env, ref = "main") {
   );
 }
 
-function parseShaFromSecret(value) {
-  if (!value) return null;
-  const token = String(value).trim().split(/\s+/)[0].toLowerCase();
-  return /^[a-f0-9]{64}$/.test(token) ? token : null;
-}
-
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -80,19 +74,25 @@ export default {
       return asText(200, "ok\n");
     }
 
+    // Live proxy from repo — no manual secrets needed.
     if (path === "/launcher.sha256") {
-      const sha = parseShaFromSecret(env.ATLAS_LAUNCHER_SHA256);
-      if (!sha) {
-        return asText(500, "# Atlas: ATLAS_LAUNCHER_SHA256 not configured.\n");
+      const upstream = await fetchPublic("launcher.ps1.sha256", ref);
+      if (!upstream.ok) {
+        return asText(502, `# Atlas: launcher.ps1.sha256 not found (${upstream.status}).\n`);
       }
-      return asText(200, `${sha}  launcher.ps1\n`);
+      return asText(200, await upstream.text());
     }
 
     if (path === "/tool-hashes.sha256") {
-      const sha = parseShaFromSecret(env.ATLAS_TOOL_HASHES_SHA256);
-      if (!sha) {
-        return asText(500, "# Atlas: ATLAS_TOOL_HASHES_SHA256 not configured.\n");
+      const upstream = await fetchPublic("config/tool-hashes.json", ref);
+      if (!upstream.ok) {
+        return asText(502, `# Atlas: tool-hashes.json not found (${upstream.status}).\n`);
       }
+      const body = await upstream.arrayBuffer();
+      const hashBuf = await crypto.subtle.digest("SHA-256", body);
+      const sha = [...new Uint8Array(hashBuf)]
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
       return asText(200, `${sha}  tool-hashes.json\n`);
     }
 
