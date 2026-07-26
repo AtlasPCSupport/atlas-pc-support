@@ -1,7 +1,7 @@
 # ============================================================
 #  Atlas PC Support - launcher.ps1 (compilado)
 #  Version: 1.0.0
-#  Build:   2026-07-25 22:48:29
+#  Build:   2026-07-25 23:22:00
 #  Repo:    https://github.com/mikepchelper-spec/atlas-pc-support
 #
 #  Uso:
@@ -19,7 +19,7 @@
 # ============================================================
 
 $script:AtlasVersion = '1.0.0'
-$script:AtlasBuildDate = '2026-07-25 22:48:29'
+$script:AtlasBuildDate = '2026-07-25 23:22:00'
 $script:AtlasToolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/src/tools'
 
 $script:AtlasToolsManifest = @'
@@ -332,7 +332,7 @@ $script:AtlasToolsManifest = @'
 
 $script:AtlasToolHashesJson = @'
 {
-  "generatedAt": "2026-07-25T22:48:29.9502049-05:00",
+  "generatedAt": "2026-07-25T23:22:01.0682987-05:00",
   "algorithm": "SHA256",
   "files": {
     "Invoke-ActualizarPowerShell.ps1": "094062f8ebf7c9279dc8eeedaf2e635e6fad889630feb1e73ce73ab4bb107304",
@@ -349,7 +349,7 @@ $script:AtlasToolHashesJson = @'
     "Invoke-GPUCheck.ps1": "ec3c2e1c0a24d5ea6b38c40694bd0dd18a132102d518aa399c859fdb92bf9e28",
     "Invoke-HostsManager.ps1": "fe26ffe69919dc72b3cce423df40364e597caf387c72ce5e7d961ba42eba6e35",
     "Invoke-InstalarMicrosoftStore.ps1": "a96e3adf0507b6d0fa9ea4777e0141dda0c29f067e8e1dfcfa487c0b17a8105d",
-    "Invoke-InstalarPaquetes.ps1": "bc790f0f0ae5cd57800c595182485f1b64ea47635d75627d72182f610d9bfa03",
+    "Invoke-InstalarPaquetes.ps1": "f7eac2cbd688d9b2fe03b9e2b4265b96d130141a61bb0e43283044974f055fad",
     "Invoke-InstalarRuntimes.ps1": "1baad75ad5ccd5ce0459f8fb2e00e7ebca3eecbf0b56bb27483e197f5bcd3c29",
     "Invoke-KeyboardDoctor.ps1": "f4e2e484b3b08ccbc3d829b3893df82719943f6dc226f0e26dc72d0203cd5660",
     "Invoke-MantenimientoPRO.ps1": "475d9f7dd1cc3c7e26ee4afac6b0e698e65644216796a8fbb7a440ff323ce245",
@@ -1143,6 +1143,75 @@ $BodyHtml
 </html>
 "@
 }
+
+function Get-AtlasWingetPath {
+    [CmdletBinding()]
+    param()
+
+    # 1) PATH normal
+    $cmd = Get-Command winget.exe -ErrorAction SilentlyContinue
+    if ($cmd -and $cmd.Source -and (Test-Path -LiteralPath $cmd.Source)) {
+        return $cmd.Source
+    }
+
+    # 2) Ruta real del paquete Appx (evita el alias de WindowsApps de 0 bytes o faltante en admin elevacion)
+    try {
+        $pkg = Get-AppxPackage -Name 'Microsoft.DesktopAppInstaller' -ErrorAction SilentlyContinue |
+               Sort-Object -Property Version -Descending |
+               Select-Object -First 1
+
+        if ($pkg -and $pkg.InstallLocation) {
+            $exe = Join-Path $pkg.InstallLocation 'winget.exe'
+            if (Test-Path -LiteralPath $exe) { return $exe }
+        }
+    } catch {}
+
+    # 3) Elevado: buscar en Program Files\WindowsApps (si corre como admin diferente)
+    try {
+        $candidates = Get-ChildItem -Path 'C:\Program Files\WindowsApps' `
+                                    -Filter 'winget.exe' -Recurse -ErrorAction SilentlyContinue |
+                      Where-Object { $_.DirectoryName -like '*Microsoft.DesktopAppInstaller*' } |
+                      Sort-Object -Property FullName -Descending
+
+        if ($candidates) { return $candidates[0].FullName }
+    } catch {}
+
+    return $null
+}
+
+function Get-AtlasWingetCapabilities {
+    [CmdletBinding()]
+    param([string]$WingetPath)
+
+    $caps = [ordered]@{
+        Available          = $false
+        Version            = $null
+        SupportsNoInteract = $false
+        SupportsMsStore    = $false
+    }
+
+    if (-not $WingetPath -or -not (Test-Path -LiteralPath $WingetPath)) { return $caps }
+
+    $caps.Available = $true
+
+    $raw = try { (& $WingetPath --version 2>$null | Select-Object -First 1) } catch { $null }
+    if (-not $raw) { return $caps }
+
+    $text = ([string]$raw).Trim().TrimStart('v')
+    $caps.Version = $text
+
+    $parsed = $null
+    if ([version]::TryParse(($text -split '-')[0], [ref]$parsed)) {
+        $caps.SupportsNoInteract = ($parsed -ge [version]'1.3')
+        $caps.SupportsMsStore    = ($parsed -ge [version]'1.2')
+    } else {
+        $caps.SupportsNoInteract = $true
+        $caps.SupportsMsStore    = $true
+    }
+
+    return $caps
+}
+
 
 '@
 
@@ -2220,6 +2289,75 @@ $BodyHtml
 </html>
 "@
 }
+
+function Get-AtlasWingetPath {
+    [CmdletBinding()]
+    param()
+
+    # 1) PATH normal
+    $cmd = Get-Command winget.exe -ErrorAction SilentlyContinue
+    if ($cmd -and $cmd.Source -and (Test-Path -LiteralPath $cmd.Source)) {
+        return $cmd.Source
+    }
+
+    # 2) Ruta real del paquete Appx (evita el alias de WindowsApps de 0 bytes o faltante en admin elevacion)
+    try {
+        $pkg = Get-AppxPackage -Name 'Microsoft.DesktopAppInstaller' -ErrorAction SilentlyContinue |
+               Sort-Object -Property Version -Descending |
+               Select-Object -First 1
+
+        if ($pkg -and $pkg.InstallLocation) {
+            $exe = Join-Path $pkg.InstallLocation 'winget.exe'
+            if (Test-Path -LiteralPath $exe) { return $exe }
+        }
+    } catch {}
+
+    # 3) Elevado: buscar en Program Files\WindowsApps (si corre como admin diferente)
+    try {
+        $candidates = Get-ChildItem -Path 'C:\Program Files\WindowsApps' `
+                                    -Filter 'winget.exe' -Recurse -ErrorAction SilentlyContinue |
+                      Where-Object { $_.DirectoryName -like '*Microsoft.DesktopAppInstaller*' } |
+                      Sort-Object -Property FullName -Descending
+
+        if ($candidates) { return $candidates[0].FullName }
+    } catch {}
+
+    return $null
+}
+
+function Get-AtlasWingetCapabilities {
+    [CmdletBinding()]
+    param([string]$WingetPath)
+
+    $caps = [ordered]@{
+        Available          = $false
+        Version            = $null
+        SupportsNoInteract = $false
+        SupportsMsStore    = $false
+    }
+
+    if (-not $WingetPath -or -not (Test-Path -LiteralPath $WingetPath)) { return $caps }
+
+    $caps.Available = $true
+
+    $raw = try { (& $WingetPath --version 2>$null | Select-Object -First 1) } catch { $null }
+    if (-not $raw) { return $caps }
+
+    $text = ([string]$raw).Trim().TrimStart('v')
+    $caps.Version = $text
+
+    $parsed = $null
+    if ([version]::TryParse(($text -split '-')[0], [ref]$parsed)) {
+        $caps.SupportsNoInteract = ($parsed -ge [version]'1.3')
+        $caps.SupportsMsStore    = ($parsed -ge [version]'1.2')
+    } else {
+        $caps.SupportsNoInteract = $true
+        $caps.SupportsMsStore    = $true
+    }
+
+    return $caps
+}
+
 
 
 # ---- lib\Dependencies.ps1 ----
