@@ -86,7 +86,7 @@ function Invoke-InstalarPaquetes {
             InstalledOK             = '[OK] Successfully installed: {0}'
             AlreadyInstalled        = '[=] Already installed: {0}'
             InstallFailed           = '[X] Failed installing {0} (Exit code: {1})'
-            InstallTimeout          = '[!] Timeout installing {0} (exceeded 3 minutes)'
+            InstallTimeout          = '[!] Timeout installing {0} (exceeded 10 minutes)'
             InstallException        = '[X] Exception installing {0}: {1}'
             Summary                 = 'Installation finished: {0} OK / {1} already installed / {2} failed'
             Searching               = '[>] Searching winget for: "{0}"...'
@@ -139,7 +139,7 @@ function Invoke-InstalarPaquetes {
             InstalledOK          = '[OK] Instalado correctamente: {0}'
             AlreadyInstalled     = '[=] Ya instalado: {0}'
             InstallFailed        = '[X] Falló la instalación de {0} (Código: {1})'
-            InstallTimeout       = '[!] Tiempo agotado al instalar {0} (superó 3 minutos)'
+            InstallTimeout       = '[!] Tiempo agotado al instalar {0} (superó 10 minutos)'
             InstallException     = '[X] Excepción instalando {0}: {1}'
             Summary              = 'Instalación finalizada: {0} OK / {1} ya instalados / {2} fallidos'
             Searching            = '[>] Buscando en winget: "{0}"...'
@@ -1388,8 +1388,8 @@ function Invoke-InstalarPaquetes {
 
                         $proc = [System.Diagnostics.Process]::Start($pinfo)
 
-                        # 3 minutes timeout per installer
-                        $exited = $proc.WaitForExit(180000)
+                        # 10 minutes timeout per installer
+                        $exited = $proc.WaitForExit(600000)
                         if (-not $exited) {
                             try { $proc.Kill() } catch {}
                             $failCount++
