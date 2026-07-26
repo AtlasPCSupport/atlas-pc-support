@@ -1,7 +1,7 @@
 # ============================================================
 #  Atlas PC Support - launcher.ps1 (compilado)
 #  Version: 1.0.0
-#  Build:   2026-07-25 23:22:00
+#  Build:   2026-07-26 17:03:52
 #  Repo:    https://github.com/mikepchelper-spec/atlas-pc-support
 #
 #  Uso:
@@ -19,7 +19,7 @@
 # ============================================================
 
 $script:AtlasVersion = '1.0.0'
-$script:AtlasBuildDate = '2026-07-25 23:22:00'
+$script:AtlasBuildDate = '2026-07-26 17:03:52'
 $script:AtlasToolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/src/tools'
 
 $script:AtlasToolsManifest = @'
@@ -332,7 +332,7 @@ $script:AtlasToolsManifest = @'
 
 $script:AtlasToolHashesJson = @'
 {
-  "generatedAt": "2026-07-25T23:22:01.0682987-05:00",
+  "generatedAt": "2026-07-26T17:03:52.9341686-05:00",
   "algorithm": "SHA256",
   "files": {
     "Invoke-ActualizarPowerShell.ps1": "094062f8ebf7c9279dc8eeedaf2e635e6fad889630feb1e73ce73ab4bb107304",
@@ -349,7 +349,7 @@ $script:AtlasToolHashesJson = @'
     "Invoke-GPUCheck.ps1": "ec3c2e1c0a24d5ea6b38c40694bd0dd18a132102d518aa399c859fdb92bf9e28",
     "Invoke-HostsManager.ps1": "fe26ffe69919dc72b3cce423df40364e597caf387c72ce5e7d961ba42eba6e35",
     "Invoke-InstalarMicrosoftStore.ps1": "a96e3adf0507b6d0fa9ea4777e0141dda0c29f067e8e1dfcfa487c0b17a8105d",
-    "Invoke-InstalarPaquetes.ps1": "f7eac2cbd688d9b2fe03b9e2b4265b96d130141a61bb0e43283044974f055fad",
+    "Invoke-InstalarPaquetes.ps1": "71e4462c448556d962d46df372f5385a06dcf1a4885c4fbf137d78c0807bb421",
     "Invoke-InstalarRuntimes.ps1": "1baad75ad5ccd5ce0459f8fb2e00e7ebca3eecbf0b56bb27483e197f5bcd3c29",
     "Invoke-KeyboardDoctor.ps1": "f4e2e484b3b08ccbc3d829b3893df82719943f6dc226f0e26dc72d0203cd5660",
     "Invoke-MantenimientoPRO.ps1": "475d9f7dd1cc3c7e26ee4afac6b0e698e65644216796a8fbb7a440ff323ce245",
@@ -1211,6 +1211,54 @@ function Get-AtlasWingetCapabilities {
 
     return $caps
 }
+
+function Install-AtlasWingetUnattended {
+    [CmdletBinding()]
+    param(
+        [System.Collections.Concurrent.ConcurrentQueue[string]]$LogQueue
+    )
+
+    $ErrorActionPreference = 'Stop'
+
+    function _Log {
+        param([string]$Msg)
+        if ($LogQueue) { $LogQueue.Enqueue($Msg) }
+        else { Write-Host $Msg }
+    }
+
+    try {
+        _Log '[1/3] Descargando dependencia VCLibs UWP...'
+        $vclibsPath = Join-Path $env:TEMP 'Microsoft.VCLibs.x64.14.00.Desktop.appx'
+        Invoke-WebRequest -Uri 'https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx' -OutFile $vclibsPath -UseBasicParsing -TimeoutSec 120
+
+        _Log '[1/3] Instalando VCLibs...'
+        Add-AppxPackage -Path $vclibsPath -ErrorAction Stop
+        Remove-Item -LiteralPath $vclibsPath -Force -ErrorAction SilentlyContinue
+
+        _Log '[2/3] Descargando dependencia UI.Xaml 2.8...'
+        $uiXamlPath = Join-Path $env:TEMP 'Microsoft.UI.Xaml.2.8.x64.appx'
+        Invoke-WebRequest -Uri 'https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx' -OutFile $uiXamlPath -UseBasicParsing -TimeoutSec 120
+
+        _Log '[2/3] Instalando UI.Xaml...'
+        Add-AppxPackage -Path $uiXamlPath -ErrorAction Stop
+        Remove-Item -LiteralPath $uiXamlPath -Force -ErrorAction SilentlyContinue
+
+        _Log '[3/3] Descargando App Installer (winget) msixbundle...'
+        $wingetBundlePath = Join-Path $env:TEMP 'Microsoft.DesktopAppInstaller.msixbundle'
+        Invoke-WebRequest -Uri 'https://aka.ms/getwinget' -OutFile $wingetBundlePath -UseBasicParsing -TimeoutSec 180
+
+        _Log '[3/3] Instalando App Installer (winget)...'
+        Add-AppxPackage -Path $wingetBundlePath -ErrorAction Stop
+        Remove-Item -LiteralPath $wingetBundlePath -Force -ErrorAction SilentlyContinue
+
+        _Log '[OK] Instalacion desatendida de winget completada exitosamente.'
+        return $true
+    } catch {
+        _Log ("[X] Error al instalar winget desatendido: {0}" -f $_.Exception.Message)
+        return $false
+    }
+}
+
 
 
 '@
@@ -2357,6 +2405,54 @@ function Get-AtlasWingetCapabilities {
 
     return $caps
 }
+
+function Install-AtlasWingetUnattended {
+    [CmdletBinding()]
+    param(
+        [System.Collections.Concurrent.ConcurrentQueue[string]]$LogQueue
+    )
+
+    $ErrorActionPreference = 'Stop'
+
+    function _Log {
+        param([string]$Msg)
+        if ($LogQueue) { $LogQueue.Enqueue($Msg) }
+        else { Write-Host $Msg }
+    }
+
+    try {
+        _Log '[1/3] Descargando dependencia VCLibs UWP...'
+        $vclibsPath = Join-Path $env:TEMP 'Microsoft.VCLibs.x64.14.00.Desktop.appx'
+        Invoke-WebRequest -Uri 'https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx' -OutFile $vclibsPath -UseBasicParsing -TimeoutSec 120
+
+        _Log '[1/3] Instalando VCLibs...'
+        Add-AppxPackage -Path $vclibsPath -ErrorAction Stop
+        Remove-Item -LiteralPath $vclibsPath -Force -ErrorAction SilentlyContinue
+
+        _Log '[2/3] Descargando dependencia UI.Xaml 2.8...'
+        $uiXamlPath = Join-Path $env:TEMP 'Microsoft.UI.Xaml.2.8.x64.appx'
+        Invoke-WebRequest -Uri 'https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx' -OutFile $uiXamlPath -UseBasicParsing -TimeoutSec 120
+
+        _Log '[2/3] Instalando UI.Xaml...'
+        Add-AppxPackage -Path $uiXamlPath -ErrorAction Stop
+        Remove-Item -LiteralPath $uiXamlPath -Force -ErrorAction SilentlyContinue
+
+        _Log '[3/3] Descargando App Installer (winget) msixbundle...'
+        $wingetBundlePath = Join-Path $env:TEMP 'Microsoft.DesktopAppInstaller.msixbundle'
+        Invoke-WebRequest -Uri 'https://aka.ms/getwinget' -OutFile $wingetBundlePath -UseBasicParsing -TimeoutSec 180
+
+        _Log '[3/3] Instalando App Installer (winget)...'
+        Add-AppxPackage -Path $wingetBundlePath -ErrorAction Stop
+        Remove-Item -LiteralPath $wingetBundlePath -Force -ErrorAction SilentlyContinue
+
+        _Log '[OK] Instalacion desatendida de winget completada exitosamente.'
+        return $true
+    } catch {
+        _Log ("[X] Error al instalar winget desatendido: {0}" -f $_.Exception.Message)
+        return $false
+    }
+}
+
 
 
 
