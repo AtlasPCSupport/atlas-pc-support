@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-26T18:39:25.4460866-05:00",
+  "generatedAt": "2026-07-27T19:12:31.6956190-05:00",
   "algorithm": "SHA256",
   "files": {
     "Invoke-ActualizarPowerShell.ps1": "094062f8ebf7c9279dc8eeedaf2e635e6fad889630feb1e73ce73ab4bb107304",
@@ -8,7 +8,7 @@
     "Invoke-Deduplicador.ps1": "b48df614411e9ace66f0c774ded389d1146fdc5c9f40867e92c15ad8bf0a5e3b",
     "Invoke-DiagnosticoEventos.ps1": "d8bcd80253e7118747e819618f8814729d615ff2fc359d7740ccad97b9c6cb1b",
     "Invoke-DiagnosticoMaster.ps1": "55b07593b743e653bbe47f887710edb2392c13e2811bdc755e62855f077c79f5",
-    "Invoke-EntregaPC.ps1": "efd068e45dacef5d7460ad5abe3df8394e2e74b219777ca2434dfaa3cf85d80e",
+    "Invoke-EntregaPC.ps1": "d50c58648ae9f737d17eb2712011ddd0e4bee06cfcadb1772d9c22bcf8fa1446",
     "Invoke-ExtraerLicencias.ps1": "03310f849ee3d4c826a984565aa9e6b51a0bca57f9f450d4c302eb8e97500f22",
     "Invoke-Fase0.ps1": "87f903655a9873823f44091b8adf696242556e2332a26183bea67618d07cf41a",
     "Invoke-FastCopy.ps1": "22c76639e7c2208a98d68446f2864ee6171dc7aabbca16de70e18c715b16e0e8",
@@ -20,7 +20,7 @@
     "Invoke-InstalarRuntimes.ps1": "1baad75ad5ccd5ce0459f8fb2e00e7ebca3eecbf0b56bb27483e197f5bcd3c29",
     "Invoke-KeyboardDoctor.ps1": "f4e2e484b3b08ccbc3d829b3893df82719943f6dc226f0e26dc72d0203cd5660",
     "Invoke-MantenimientoPRO.ps1": "475d9f7dd1cc3c7e26ee4afac6b0e698e65644216796a8fbb7a440ff323ce245",
-    "Invoke-MenorPrivilegio.ps1": "1f0c63ad3081d0ad8d10fb8fea68ddc7de49918988032d4f2985a66442de0426",
+    "Invoke-MenorPrivilegio.ps1": "306fdd239dc8cc4dee8b460b35915558e5966ff0f86ffdea47d25b3295be2bfe",
     "Invoke-PartsUpgrade.ps1": "d8703a7ff9a2c6cc8aa42caedc4457451174b0ae0c6fa70d7b8a76038c03d3be",
     "Invoke-Personalizacion.ps1": "0212b1ac489832ac2d87242849dbd7be5e2a96ef80604f272a2f586d05cde5e3",
     "Invoke-PrepararUSB.ps1": "17abb8c974a3c9609a35498553bae7eeabf3d6a1c9630051e85b9b1ebf306413",
