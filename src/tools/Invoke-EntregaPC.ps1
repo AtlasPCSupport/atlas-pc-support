@@ -1,4 +1,4 @@
-﻿# ============================================================
+# ============================================================
 # Invoke-EntregaPC  ->  PC Handover Report
 #
 # i18n: Option A (en default + full es secondary). Function name
@@ -377,7 +377,7 @@ function Crear-NuevoUsuario {
 
     try {
         if ($securePassword.Length -gt 0) {
-            New-LocalUser -Name $newUser -FullName $newDisplayName -Password $securePassword -PasswordNeverExpires $true | Out-Null
+            New-LocalUser -Name $newUser -FullName $newDisplayName -Password $securePassword -PasswordNeverExpires:$true | Out-Null
         } else {
             New-LocalUser -Name $newUser -FullName $newDisplayName -NoPassword | Out-Null
         }

@@ -499,7 +499,7 @@ do {
             Escribir-Centrado $L.T1Processing "Cyan"
 
             try {
-                New-LocalUser -Name $newAdminUser -Password $passSecure -PasswordNeverExpires $true -ErrorAction Stop | Out-Null
+                New-LocalUser -Name $newAdminUser -Password $passSecure -PasswordNeverExpires:$true -ErrorAction Stop | Out-Null
                 Add-LocalGroupMember -SID "S-1-5-32-544" -Member $newAdminUser -ErrorAction Stop
                 Escribir-Centrado ($L.T1Success -f $newAdminUser) "Green"
             } catch {
