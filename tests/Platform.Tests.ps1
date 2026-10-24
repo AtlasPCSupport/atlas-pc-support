@@ -53,4 +53,10 @@ Describe 'WPF local smoke tests' -Tag 'Windows' {
             $card.FindName('BtnRun') | Should -Not -BeNullOrEmpty -Because $entry.id
         }
     }
+    It 'renders an unavailable capability as disabled with an explanation' -Skip:($env:OS -ne 'Windows_NT') {
+        $tool=@{id='fixture';name='Fixture';description='Capability test';category='software';_availability=[pscustomobject]@{Available=$false;Reason='Needs edition & module'}}
+        $card=[Windows.Markup.XamlReader]::Parse((New-AtlasToolCard -Tool $tool -Branding $script:Branding -Palette $script:Palette))
+        $card.FindName('BtnRun').IsEnabled | Should -BeFalse
+        $card.FindName('BtnRun').ToolTip | Should -Be 'Needs edition & module'
+    }
 }

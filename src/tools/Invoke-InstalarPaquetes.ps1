@@ -855,6 +855,16 @@ function Invoke-InstalarPaquetes {
             foreach ($cb in $script:AllCheckBoxes) {
                 if ($cb -and $cb.IsChecked -eq $true -and $cb.Tag) { $selectedPkgs += $cb.Tag }
             }
+            $platform = Get-AtlasPlatformCapabilities
+            try {
+                foreach ($package in $selectedPkgs) {
+                    if ($package.Handler -eq 'Clean-TempFiles') { throw 'Run maintenance separately after reviewing its scope.' }
+                    Assert-AtlasPackageRequest -Package $package -Build $platform.Build
+                }
+            } catch {
+                [Windows.MessageBox]::Show($_.Exception.Message, 'Atlas', 'OK', 'Warning') | Out-Null
+                return
+            }
             if ($selectedPkgs.Count -eq 0) {
                 [System.Windows.MessageBox]::Show($L.NoSelection, $L.ProfilePromptTitle, 'OK', 'Warning') | Out-Null
                 return
@@ -924,148 +934,13 @@ function Invoke-InstalarPaquetes {
         })
     }
 
-    # Event: Unattended Winget Install
+    # App Installer is separate from Store; do not mix a moving bundle with fixed dependencies.
     if ($ui.BtnInstallWingetAuto) {
+        $ui.BtnInstallWingetAuto.Content = 'WinGet: official installation / repair'
         $ui.BtnInstallWingetAuto.add_Click({
-            if (-not $window -or -not $window.Tag) { return }
-            $ctl = $window.Tag
-            if (-not $ctl.BtnInstallWingetAuto) { return }
-
-            $ctl.BtnInstallWingetAuto.IsEnabled = $false
-            $ctl.BtnInstallWingetAuto.Content = $L.InstallingWinget
-            & $LogMessage '[>] Iniciando instalacion desatendida de winget (App Installer)...'
-
-            $logQueue = [System.Collections.Concurrent.ConcurrentQueue[string]]::new()
-            $rs = [System.Management.Automation.Runspaces.RunspaceFactory]::CreateRunspace()
-            $rs.Open()
-            $ps = [System.Management.Automation.PowerShell]::Create()
-            $ps.Runspace = $rs
-
-            $null = $ps.AddScript({
-                param($queue)
-                if (-not (Get-Command Install-AtlasWingetUnattended -ErrorAction SilentlyContinue)) {
-                    function Install-AtlasWingetUnattended {
-                        param($LogQueue)
-                        $ErrorActionPreference = 'Stop'
-                        function _Log { param([string]$Msg) if ($LogQueue) { $LogQueue.Enqueue($Msg) } else { Write-Host $Msg } }
-                        function _InstallAppxPackage {
-                            param([string]$Path, [string]$StepLabel)
-                            try {
-                                Add-AppxPackage -Path $Path -ErrorAction Stop
-                            } catch {
-                                $msg = $_.Exception.Message
-                                if ($msg -match '0x80073D06' -or $msg -match 'higher version' -or $msg -match 'versión superior' -or $msg -match 'already installed' -or $msg -match 'ya está instalada' -or $msg -match 'ya esta instalada') {
-                                    _Log ("{0} Ya hay una version igual o superior instalada." -f $StepLabel)
-                                } else {
-                                    throw $_
-                                }
-                            }
-                        }
-                        try {
-                            _Log '[1/4] Descargando dependencia VCLibs UWP...'
-                            $vclibsPath = Join-Path $env:TEMP 'Microsoft.VCLibs.x64.14.00.Desktop.appx'
-                            Invoke-WebRequest -Uri 'https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx' -OutFile $vclibsPath -UseBasicParsing -TimeoutSec 120
-                            _Log '[1/4] Instalando VCLibs...'
-                            _InstallAppxPackage -Path $vclibsPath -StepLabel '[1/4]'
-                            Remove-Item -LiteralPath $vclibsPath -Force -ErrorAction SilentlyContinue
-
-                            _Log '[2/4] Descargando dependencia UI.Xaml 2.8...'
-                            $uiXamlPath = Join-Path $env:TEMP 'Microsoft.UI.Xaml.2.8.x64.appx'
-                            Invoke-WebRequest -Uri 'https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx' -OutFile $uiXamlPath -UseBasicParsing -TimeoutSec 120
-                            _Log '[2/4] Instalando UI.Xaml...'
-                            _InstallAppxPackage -Path $uiXamlPath -StepLabel '[2/4]'
-                            Remove-Item -LiteralPath $uiXamlPath -Force -ErrorAction SilentlyContinue
-
-                            _Log '[3/4] Descargando dependencia WindowsAppRuntime 1.8...'
-                            $depsZipPath = Join-Path $env:TEMP 'DesktopAppInstaller_Dependencies.zip'
-                            Invoke-WebRequest -Uri 'https://github.com/microsoft/winget-cli/releases/download/v1.29.280/DesktopAppInstaller_Dependencies.zip' -OutFile $depsZipPath -UseBasicParsing -TimeoutSec 180
-
-                            _Log '[3/4] Instalando WindowsAppRuntime 1.8...'
-                            Add-Type -AssemblyName System.IO.Compression.FileSystem
-                            $zip = [System.IO.Compression.ZipFile]::OpenRead($depsZipPath)
-                            $entry = $zip.Entries | Where-Object { $_.FullName -like '*x64*WindowsAppRuntime*.appx' } | Select-Object -First 1
-                            if ($entry) {
-                                $appRuntimePath = Join-Path $env:TEMP $entry.Name
-                                [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $appRuntimePath, $true)
-                                $zip.Dispose()
-                                _InstallAppxPackage -Path $appRuntimePath -StepLabel '[3/4]'
-                                Remove-Item -LiteralPath $appRuntimePath -Force -ErrorAction SilentlyContinue
-                            } else {
-                                $zip.Dispose()
-                                _Log '[3/4] Advertencia: No se encontro WindowsAppRuntime en el paquete de dependencias.'
-                            }
-                            Remove-Item -LiteralPath $depsZipPath -Force -ErrorAction SilentlyContinue
-
-                            _Log '[4/4] Descargando App Installer (winget) msixbundle...'
-                            $wingetBundlePath = Join-Path $env:TEMP 'Microsoft.DesktopAppInstaller.msixbundle'
-                            Invoke-WebRequest -Uri 'https://aka.ms/getwinget' -OutFile $wingetBundlePath -UseBasicParsing -TimeoutSec 180
-                            _Log '[4/4] Instalando App Installer (winget)...'
-                            _InstallAppxPackage -Path $wingetBundlePath -StepLabel '[4/4]'
-                            Remove-Item -LiteralPath $wingetBundlePath -Force -ErrorAction SilentlyContinue
-
-                            _Log '[OK] Instalacion desatendida de winget completada exitosamente.'
-                            return $true
-                        } catch {
-                            _Log ("[X] Error al instalar winget desatendido: {0}" -f $_.Exception.Message)
-                            return $false
-                        }
-                    }
-                }
-                return (Install-AtlasWingetUnattended -LogQueue $queue)
-            }).AddArgument($logQueue)
-
-            $asyncResult = $ps.BeginInvoke()
-            $timer = [System.Windows.Threading.DispatcherTimer]::new()
-            $timer.Interval = [TimeSpan]::FromMilliseconds(150)
-
-            $tickHandler = {
-                $msg = $null
-                if ($logQueue) {
-                    while ($logQueue.TryDequeue([ref]$msg)) {
-                        if ($ctl -and $ctl.TxtConsoleLog) {
-                            $stamp = (Get-Date -Format 'HH:mm:ss')
-                            $ctl.TxtConsoleLog.AppendText("[$stamp] $msg`n")
-                            $ctl.TxtConsoleLog.ScrollToEnd()
-                        }
-                    }
-                }
-
-                if ($asyncResult -and $asyncResult.IsCompleted) {
-                    if ($timer) { $timer.Stop() }
-                    $res = try { $ps.EndInvoke($asyncResult) } catch { $null }
-                    try { $ps.Dispose() } catch {}
-                    try { $rs.Dispose() } catch {}
-
-                    # Re-detect winget path and capabilities
-                    $script:WingetPath = Get-AtlasWingetPath
-                    $script:WingetCaps = Get-AtlasWingetCapabilities -WingetPath $script:WingetPath
-
-                    if ($script:WingetPath -and $script:WingetCaps.Available) {
-                        if ($ctl.TxtWingetVer) {
-                            $ver = if ($script:WingetCaps.Version) { $script:WingetCaps.Version } else { '1.x' }
-                            $ctl.TxtWingetVer.Text = ($ctl.L.WingetVersion -f $ver)
-                            $ctl.TxtWingetVer.Foreground = [System.Windows.Media.Brushes]::LightGreen
-                        }
-                        if ($ctl.BtnInstallWingetAuto) { $ctl.BtnInstallWingetAuto.Visibility = 'Collapsed' }
-                        if ($ctl.BtnInstall) { $ctl.BtnInstall.IsEnabled = $true }
-                        if ($ctl.BtnSearchWinget) { $ctl.BtnSearchWinget.IsEnabled = $true }
-                        if ($script:AllCheckBoxes) {
-                            foreach ($cb in $script:AllCheckBoxes) { if ($cb) { $cb.IsEnabled = $true } }
-                        }
-                    } else {
-                        if ($ctl.BtnInstallWingetAuto) {
-                            $ctl.BtnInstallWingetAuto.IsEnabled = $true
-                            $ctl.BtnInstallWingetAuto.Content = $ctl.L.InstallWingetBtn
-                        }
-                    }
-                }
-            }.GetNewClosure()
-
-            $timer.add_Tick($tickHandler)
-            $timer.Start()
+            Start-Process 'https://learn.microsoft.com/windows/package-manager/winget/#install-winget' -ErrorAction Stop
         })
     }
-
     # Event: Search Winget
     if ($ui.BtnSearchWinget) {
         $ui.BtnSearchWinget.add_Click({
@@ -1274,6 +1149,16 @@ function Invoke-InstalarPaquetes {
                 }
             }
 
+            $platform = Get-AtlasPlatformCapabilities
+            try {
+                foreach ($package in $selectedPkgs) {
+                    if ($package.Handler -eq 'Clean-TempFiles') { throw 'Run maintenance separately after reviewing its scope.' }
+                    Assert-AtlasPackageRequest -Package $package -Build $platform.Build
+                }
+            } catch {
+                [Windows.MessageBox]::Show($_.Exception.Message, 'Atlas', 'OK', 'Warning') | Out-Null
+                return
+            }
             if ($selectedPkgs.Count -eq 0) {
                 [System.Windows.MessageBox]::Show($L.NoSelectionToInst, $L.Title, 'OK', 'Warning') | Out-Null
                 return
@@ -1320,8 +1205,7 @@ function Invoke-InstalarPaquetes {
                     $targets = @(
                         @{ Path = $env:TEMP;                                   Label = 'User TEMP' },
                         @{ Path = (Join-Path $env:LOCALAPPDATA 'Temp');        Label = 'LocalAppData Temp' },
-                        @{ Path = 'C:\Windows\Temp';                           Label = 'Windows TEMP' },
-                        @{ Path = 'C:\Windows\Prefetch';                       Label = 'Prefetch' }
+                        @{ Path = 'C:\Windows\Temp';                           Label = 'Windows TEMP' }
                     )
                     foreach ($t in $targets) {
                         if (-not $t.Path -or -not (Test-Path -LiteralPath $t.Path)) { continue }
@@ -1360,6 +1244,7 @@ function Invoke-InstalarPaquetes {
 
                     try {
                         $pkgToInstall = Resolve-PackageIdInner -Pkg $p -Migrations $ID_MIGRATIONS
+                        if ([string]$pkgToInstall.Id -cnotmatch '^[A-Za-z0-9][A-Za-z0-9._+-]{0,199}$' -or ($pkgToInstall.Source -and $pkgToInstall.Source -cnotin @('winget','msstore'))) { throw 'Invalid package ID/source.' }
                         $wingetArgs = @('install', '--id', $pkgToInstall.Id, '--exact', '--silent',
                                         '--accept-package-agreements', '--accept-source-agreements')
 

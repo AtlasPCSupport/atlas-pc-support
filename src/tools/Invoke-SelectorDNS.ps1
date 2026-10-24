@@ -256,80 +256,6 @@ function Get-DNSStatusLines {
     return $lines
 }
 
-function Register-DoHTemplates {
-    # RAIZ DEL BUG ANTERIOR: PowerShell registry provider interpreta '2606:' como
-    # PSDrive al parsear rutas con IPv6 (ej: \DoHAddresses\2606:4700::1).
-    # Fix: reg.exe llama directamente a la Win32 API — sin ese parsing de rutas,
-    # soporta '::' en nombres de clave de registro sin ningun problema.
-    param([string[]]$Addresses)
-    $base = "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters\DoHAddresses"
-
-    foreach ($ip in $Addresses) {
-        if (-not $dohTemplates.ContainsKey($ip)) { continue }
-        $tmpl = $dohTemplates[$ip]
-        & reg add "$base\$ip" /v DohTemplate       /t REG_SZ    /d $tmpl /f 2>&1 | Out-Null
-        & reg add "$base\$ip" /v AutoUpgrade        /t REG_DWORD /d 1     /f 2>&1 | Out-Null
-        & reg add "$base\$ip" /v AllowFallbackToUdp /t REG_DWORD /d 0     /f 2>&1 | Out-Null
-        $ok = ($LASTEXITCODE -eq 0)
-        Write-Host "    DoH global [$ip] $(if ($ok) { '[OK]' } else { '[FAIL]' })" `
-            -ForegroundColor $(if ($ok) { 'DarkGray' } else { 'Red' })
-    }
-}
-
-function Set-InterfaceDoH {
-    # Per-interface DoH config. Uses reg.exe (Win32 API) so the registry
-    # provider's '::' parsing bug for IPv6 keys doesn't bite.
-    #
-    # Microsoft's documented Win11 layout puts each IP under a Doh\ or
-    # Doh6\ subkey:
-    #   ...\InterfaceSpecificParameters\<GUID>\DohInterfaceSettings\Doh\<IPv4>
-    #   ...\InterfaceSpecificParameters\<GUID>\DohInterfaceSettings\Doh6\<IPv6>
-    # The previous version of this code wrote directly under
-    # DohInterfaceSettings\<IP> (no Doh\ prefix). On builds that follow
-    # the documented layout, those writes were ignored — the global
-    # EnableAutoDoh=2 flag was set, which made our status read-back show
-    # ENABLED, but Windows never picked up the per-interface templates so
-    # actual DNS traffic still went over plaintext UDP. Write to BOTH
-    # paths to cover legacy + current builds.
-    param([string]$AdapterName, [string[]]$Addresses)
-    try {
-        $adapter = Get-NetAdapter -Name $AdapterName -ErrorAction Stop
-        $guid    = $adapter.InterfaceGuid    # {xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}
-        $idx     = $adapter.InterfaceIndex   # numero (ej: 5, 12)
-        $iscBase = "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\InterfaceSpecificParameters"
-
-        foreach ($ip in $Addresses) {
-            if (-not $dohTemplates.ContainsKey($ip)) { continue }
-            $tmpl = $dohTemplates[$ip]
-            # Detect IPv4 vs IPv6 to pick the correct subkey name.
-            $isV6 = $ip -match ':'
-            $bucket = if ($isV6) { 'Doh6' } else { 'Doh' }
-            # Try GUID and Index identifiers (Windows uses one or the
-            # other depending on build) AND both layouts (with/without
-            # Doh\ prefix) for maximum coverage.
-            foreach ($id in @($guid, "$idx")) {
-                foreach ($p in @(
-                    "$iscBase\$id\DohInterfaceSettings\$bucket\$ip",
-                    "$iscBase\$id\DohInterfaceSettings\$ip"
-                )) {
-                    & reg add $p /v DohTemplate       /t REG_SZ    /d $tmpl /f 2>&1 | Out-Null
-                    & reg add $p /v AutoUpgrade       /t REG_DWORD /d 1     /f 2>&1 | Out-Null
-                    & reg add $p /v AllowFallbackToUdp /t REG_DWORD /d 0    /f 2>&1 | Out-Null
-                    # Newer Windows builds also read DohFlags (REG_QWORD).
-                    # Bit 0 = enabled, bit 1 = require encrypted (no UDP
-                    # fallback). Set both → 3.
-                    & reg add $p /v DohFlags          /t REG_QWORD /d 3     /f 2>&1 | Out-Null
-                }
-            }
-            $ok = ($LASTEXITCODE -eq 0)
-            Write-Host "    DoH iface [$AdapterName][$ip] $(if ($ok) { '[OK]' } else { '[FAIL]' })" `
-                -ForegroundColor $(if ($ok) { 'DarkGray' } else { 'Red' })
-        }
-    } catch {
-        Write-Host "    DoH iface [$AdapterName] [FAIL] $_" -ForegroundColor Red
-    }
-}
-
 function Apply-DNS {
     param(
         [string[]]$AdapterNames,
@@ -338,15 +264,6 @@ function Apply-DNS {
     )
     Write-Host ""
     Write-Host "  $($txt.Applying)" -ForegroundColor Cyan
-
-    # PASO 1 — registrar templates DoH globalmente via registro (IPv4 + IPv6)
-    if ($Addresses.Count -gt 0) {
-        Register-DoHTemplates -Addresses $Addresses
-        # Activar DoH automatico: Windows usa los templates para todos los adaptadores
-        $dohReg = "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters"
-        Set-ItemProperty -Path $dohReg -Name "EnableAutoDoh" -Value 2 -Type DWord `
-            -ErrorAction SilentlyContinue
-    }
 
     foreach ($n in $AdapterNames) {
         try {
@@ -362,7 +279,7 @@ function Apply-DNS {
                 Write-Log "SET | $n | $Label | $($Addresses -join ', ')"
 
                 # PASO 3 — escribir config DoH por interfaz via registro (GUID, no nombre)
-                Set-InterfaceDoH -AdapterName $n -Addresses $Addresses
+                # Classic DNS changes do not silently enable DoH.
             }
         } catch {
             Write-Host "  [FAIL] $n -> $_" -ForegroundColor Red
@@ -495,78 +412,13 @@ function Invoke-Restore {
 }
 
 function Invoke-DoHToggle {
-    $regPath = "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters"
-    $current = (Get-ItemProperty -Path $regPath -Name "EnableAutoDoh" -ErrorAction SilentlyContinue).EnableAutoDoh
-    Write-Host ""
-    Write-Host "  $($txt.DoHStatus) " -NoNewline -ForegroundColor White
-    if ($current -eq 2) { Write-Host $txt.DoHOn -ForegroundColor Green }
-    else                 { Write-Host $txt.DoHOff -ForegroundColor Yellow }
-    Write-Host ""
-    Write-Host "  [1] $($txt.DoHOn)" -ForegroundColor Green
-    Write-Host "  [2] $($txt.DoHOff)" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host -NoNewline $txt.DoHChoose -ForegroundColor Yellow
-    $ans = (Read-Host).Trim()
-
-    if ($ans -eq '1') {
-        # — recolectar todas las IPs activas en cada adaptador
-        $adapters   = Get-PhysicalAdapters
-        $adapterDNS = @{}
-        if ($adapters) {
-            foreach ($a in $adapters) {
-                $v4 = (Get-DnsClientServerAddress -InterfaceAlias $a.Name -AddressFamily IPv4 -ErrorAction SilentlyContinue).ServerAddresses
-                $v6 = (Get-DnsClientServerAddress -InterfaceAlias $a.Name -AddressFamily IPv6 -ErrorAction SilentlyContinue).ServerAddresses
-                $all = @()
-                if ($v4) { $all += $v4 }
-                if ($v6) { $all += $v6 }
-                if ($all.Count -gt 0) { $adapterDNS[$a.Name] = $all }
-            }
-        }
-        # — registrar templates globalmente via registro (IPv4 + IPv6)
-        $allIPs = ($adapterDNS.Values | ForEach-Object { $_ } | Select-Object -Unique)
-        if ($allIPs) {
-            Write-Host "  (Registrando templates DoH...)" -ForegroundColor DarkGray
-            Register-DoHTemplates -Addresses $allIPs
-        }
-        # — EnableAutoDoh = 2
-        Set-ItemProperty -Path $regPath -Name "EnableAutoDoh" -Value 2 -Type DWord
-        # — config DoH por interfaz via registro (GUID)
-        foreach ($adName in $adapterDNS.Keys) {
-            Set-InterfaceDoH -AdapterName $adName -Addresses $adapterDNS[$adName]
-        }
-        # Dnscache caches the DoH config in memory at service-start
-        # time. Without restarting it the registry writes don't take
-        # effect until the next reboot, so the read-back shows ENABLED
-        # but actual DNS traffic still goes over plaintext UDP. Try a
-        # restart; if it fails (locked, AV, etc.) fall back to the old
-        # advice of "reboot to apply".
-        try {
-            Restart-Service -Name 'Dnscache' -Force -ErrorAction Stop
-            Write-Host "  (Dnscache service restarted)" -ForegroundColor DarkGray
-        } catch {
-            Write-Host "  (Could not restart Dnscache; reboot to apply: $($_.Exception.Message))" -ForegroundColor DarkYellow
-        }
-        Clear-DnsClientCache -ErrorAction SilentlyContinue
-        Write-Host "  -> $($txt.DoHOn)" -ForegroundColor Green
-        Write-Log "DoH ENABLED"
-
-    } elseif ($ans -eq '2') {
-        Set-ItemProperty -Path $regPath -Name "EnableAutoDoh" -Value 0 -Type DWord
-        try {
-            Restart-Service -Name 'Dnscache' -Force -ErrorAction Stop
-            Write-Host "  (Dnscache service restarted)" -ForegroundColor DarkGray
-        } catch {
-            Write-Host "  (Could not restart Dnscache; reboot to apply: $($_.Exception.Message))" -ForegroundColor DarkYellow
-        }
-        Clear-DnsClientCache -ErrorAction SilentlyContinue
-        Write-Host "  -> $($txt.DoHOff)" -ForegroundColor Yellow
-        Write-Log "DoH DISABLED"
-
-    } else {
-        Write-Host "`n  $($txt.ErrInv)" -ForegroundColor Red
+    $capabilities = Get-AtlasPlatformCapabilities
+    if (-not $capabilities.NativeDoh) {
+        Write-Warning 'Native DNS-over-HTTPS is unavailable on this Windows build. Classic DNS remains usable.'
         return
     }
-    Write-Host "  $($txt.DoHNote)" -ForegroundColor DarkGray
+    Write-Host 'DoH configuration requires a supported provider, Windows policy and verification. Use Windows network settings; Atlas does not infer encryption from registry values.'
+    Start-Process -FilePath 'ms-settings:network' -ErrorAction Stop | Out-Null
 }
 
 function Invoke-StartupTask {
@@ -738,7 +590,7 @@ do {
     Write-Host "$lm$($txt.Opt17)"
     Write-Host "$lm$($txt.Opt18)"
     Write-Host "$lm$($txt.Opt19)"
-    Write-Host "$lm$($txt.Opt20)"
+    if ((Get-AtlasPlatformCapabilities).NativeDoh) { Write-Host "$lm$($txt.Opt20)" }
     Write-Host "$lm$($txt.Opt21)"
     Write-Host "$lm$($txt.Opt22)"
     Write-Host "$lm$($txt.Opt23)"

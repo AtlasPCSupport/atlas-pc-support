@@ -13,6 +13,7 @@ Describe 'Quoted paths for the real launcher invocation' {
         function Initialize-AtlasSecureDirectory { param($Path) throw 'Real ACL change blocked' }
         function Unblock-AtlasFile { param($Path) throw 'Real unblock blocked' }
         function Test-IsAdmin { $false }
+        function Test-AtlasToolAvailability { param($Tool,$Capabilities) [pscustomobject]@{Available=$true;Reason=''} }
         function Get-AtlasToolRuntime { param($Tool) 'powershell.exe' }
         . (Get-TestFunction $script:RepoRoot 'src/lib/Release.ps1' 'Get-AtlasTextHash')
         . (Get-TestFunction $script:RepoRoot 'src/lib/ToolRunner.ps1' 'Get-AtlasToolExpectedHash')
@@ -69,6 +70,7 @@ Describe 'Quoted paths for the real launcher invocation' {
     }
     It 'runs the actual generated wrapper with all helpers and complex paths without modifying a tool' {
         $script:AtlasChildLibrarySource=$script:RealChildSource
+        $script:AtlasChildLibrarySource += "`nfunction Test-AtlasToolAvailability { param(`$Tool,`$Capabilities) [pscustomobject]@{Available=`$true} }`nfunction Get-AtlasPlatformCapabilities { param([switch]`$Refresh) [pscustomobject]@{Baseline=`$true} }`n"
         $script:RunDir=Join-Path $TestDrive ("Jos$([char]0xe9)'s profile with spaces")
         New-Item -ItemType Directory -Path $script:RunDir -Force | Out-Null
         $fixture=@'
