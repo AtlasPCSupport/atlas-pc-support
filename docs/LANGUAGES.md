@@ -3,9 +3,10 @@
 El panel está disponible en varios idiomas. El texto de la interfaz (botones,
 categorías, mensajes de estado, pop-ups) se traduce automáticamente.
 
-> ⚠️ Las herramientas internas (Fase 0, FastCopy, BitLocker, etc.) siguen en
-> español por ahora. Traducirlas requiere refactorizar cada script; se hará
-> gradualmente en fases futuras.
+Las 27 tarjetas tienen nombre y descripción en español/inglés; otros idiomas usan
+fallback inglés para tarjetas. La búsqueda admite ambos idiomas, IDs y categorías,
+sin distinguir acentos o mayúsculas. Cada herramienta tiene cobertura de idioma
+propia; no se declara traducción completa de todos sus menús.
 
 ---
 
@@ -13,9 +14,13 @@ categorías, mensajes de estado, pop-ups) se traduce automáticamente.
 
 | Código | Idioma    | Estado      |
 |:------:|:----------|:------------|
-| `es`   | Español   | ✅ Nativo   |
-| `en`   | English   | ✅ Completo |
-| `ro`   | Română    | ✅ Complet  |
+| `es`   | Español   | Cadenas del panel y tarjetas |
+| `en`   | English   | Cadenas del panel y tarjetas |
+| `ro`   | Română    | Cadenas del panel |
+| `pt`   | Português | Cadenas del panel |
+| `fr`   | Français  | Cadenas del panel |
+| `de`   | Deutsch   | Cadenas del panel |
+| `it`   | Italiano  | Cadenas del panel |
 | `auto` | Detectar del sistema | ✅ Por defecto |
 
 ---
@@ -32,10 +37,11 @@ Edita `branding.json` y pon uno de los códigos arriba en `language`:
 
 Valores válidos:
 
-- `"auto"` (por defecto) — usa el idioma de Windows. Si no es soportado, cae en español.
+- `"auto"` (por defecto) — detecta el idioma de Windows y usa el fallback del panel cuando no está disponible.
 - `"es"` — español
 - `"en"` — inglés
 - `"ro"` — rumano
+- `"pt"`, `"fr"`, `"de"`, `"it"` — portugués, francés, alemán e italiano
 
 Reinicia el launcher para ver el cambio.
 
@@ -43,7 +49,7 @@ Reinicia el launcher para ver el cambio.
 
 ## Añadir un idioma nuevo
 
-Si quieres añadir francés, portugués, italiano, etc.:
+Para añadir un idioma que aún no esté en la tabla:
 
 1. Abre `src/lib/Strings.ps1`.
 2. Duplica el bloque `'es' = @{ ... }` y cámbiale la clave (ej. `'fr'`).

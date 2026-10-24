@@ -1,48 +1,21 @@
-# CI workflow changes (Phase 0) — apply manually
+# CI de Atlas
 
-The automation account that opened this PR **cannot modify files under
-`.github/workflows/`** (GitHub requires the `workflow` OAuth scope, which the
-integration token does not have). The two updated workflow files are staged here
-so they travel with the PR and can be reviewed in diff.
+Las definiciones vigentes son [build](../../.github/workflows/build.yml) y
+[revisión de documentación](../../.github/workflows/auto-merge.yml). Se retiraron
+las copias de YAML para evitar instrucciones divergentes.
 
-## How to apply (≈1 minute, in the GitHub web UI)
+CI exige artefactos reproducibles, inventario generado vigente, regresiones
+PowerShell, carga WPF en Windows y pruebas/auditoría npm del Worker. Los jobs
+`build`, `windows-compat` y `worker` deben pasar en el commit publicado.
 
-For each file below, open the **target** workflow in GitHub, click the pencil
-(Edit), replace its full contents with the staged version, and commit **to this
-same branch** (`ci/phase-0-quality-gates`). The web UI commits with your own
-credentials, which have the `workflow` scope.
+El único merge automático permitido es documentación Markdown del bot previsto,
+con aprobación humana del mismo SHA y los tres jobs correctos. Cualquier otro
+archivo, renombre desde código o diff incompleto requiere merge humano. Una
+etiqueta no autoriza un merge. El job consulta metadatos sin ejecutar código de PR.
+Usa la definición de la rama base (`pull_request_target`) y `workflow_run`, sin
+checkout. Si la aprobación llega después del CI, un cambio de etiqueta vuelve a
+evaluar la elegibilidad; no se ejecuta un workflow privilegiado desde el PR.
 
-| Staged copy (here)            | Copy into (target)                  |
-|-------------------------------|-------------------------------------|
-| `docs/ci/build.yml`           | `.github/workflows/build.yml`       |
-| `docs/ci/auto-merge.yml`      | `.github/workflows/auto-merge.yml`  |
-
-After applying both, you can delete this `docs/ci/` folder (optional).
-
-## What changed
-
-### `build.yml`
-- **New `Lint (PSScriptAnalyzer)` step** — runs repo-wide using
-  `PSScriptAnalyzerSettings.psd1`. Emits every finding as a GitHub annotation,
-  but **only fails the build on `Error` severity** (verified: 0 errors repo-wide
-  today, so it will not break existing CI). Warnings are surfaced to be reduced
-  in later phases.
-- **New `Assert compiled artifacts are fresh` step** — runs
-  `tests/Assert-LauncherFresh.ps1` on the pristine checkout, before the build
-  step, to block PRs that edit `src/` without rebuilding `launcher.ps1` /
-  `config/tool-hashes.json`. Timestamp- and EOL-insensitive (no false positives).
-- **New `Security guards` step** — runs `tests/Test-SecurityGuards.ps1` to
-  fail fast on high-risk regressions (direct `Invoke-Expression/iex` command
-  execution, `-EncodedCommand`, insecure onboarding pattern, and fallback to
-  `%TEMP%\AtlasPC` for privileged runtime wrappers).
-- All previous steps are preserved unchanged.
-
-### `auto-merge.yml`
-- Adds a **`guard` job** that, on every `pull_request` event for Devin-bot PRs,
-  inspects the changed files. If the PR touches security-critical paths
-  (`launcher.ps1`, `get.ps1`, `build.ps1`, `src/lib/**`, `config/**`,
-  `.github/workflows/**`, `onboarding/**`) it **removes** the `auto-merge-ok`
-  label; otherwise it **adds** it.
-- The `automerge` job now requires the `auto-merge-ok` label
-  (`MERGE_LABELS: "auto-merge-ok"`), so security-critical PRs are **never**
-  auto-merged and require human review. Everything else keeps working as before.
+Las acciones oficiales están fijadas por SHA; revisar nuevas versiones y notas
+antes de actualizar. Los runners hospedados ejecutan Node 24 para las acciones;
+Node no se instala como dependencia del cliente Windows.

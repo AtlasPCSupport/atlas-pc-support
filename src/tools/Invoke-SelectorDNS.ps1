@@ -78,7 +78,7 @@ $txt = @{
     Opt18        = if ($es) { "18. Backup DNS actual       (Guardar config actual)" }     else { "18. Backup current DNS      (Save current config)" }
     Opt19        = if ($es) { "19. Restaurar desde Backup  (Revertir cambios)" }          else { "19. Restore from Backup     (Revert changes)" }
     Opt20        = if ($es) { "20. Toggle DNS-over-HTTPS   (DoH On/Off)" }                else { "20. Toggle DNS-over-HTTPS   (DoH On/Off)" }
-    Opt21        = if ($es) { "21. Persistencia al Inicio  (Tarea Programada)" }          else { "21. Startup Persistence     (Scheduled Task)" }
+    Opt21        = if ($es) { "21. Revisar tarea heredada (sin crear nuevas)" }          else { "21. Review legacy task (no new task creation)" }
     Opt22        = if ($es) { "22. Ver Registro            (Ultimas 30 entradas)" }       else { "22. View Activity Log       (Last 30 entries)" }
     Opt23        = if ($es) { "23. Seleccion por Adaptador (Elegir NIC especifica)" }     else { "23. Per-Adapter Selection   (Choose specific NIC)" }
     Opt24        = if ($es) { "24. Test Seguridad DNS      (Cloudflare ESNI browser)" }   else { "24. DNS Security Test       (Cloudflare ESNI browser)" }
@@ -400,35 +400,11 @@ function Invoke-DoHToggle {
 }
 
 function Invoke-StartupTask {
-    $taskName     = "AtlasDNSSelector"
-    $existingTask = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
-    Write-Host ""
-    if ($existingTask) {
-        Write-Host "  " -NoNewline
-        Write-Host -NoNewline $txt.TaskExists -ForegroundColor Yellow
-        $ans = (Read-Host).Trim()
-        if ($ans -match "^[SsYy]$") {
-            Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
-            Write-Host "  $($txt.TaskRemoved)" -ForegroundColor Yellow
-            Write-Log "STARTUP TASK REMOVED"
-        }
-    } else {
-        if ([string]::IsNullOrWhiteSpace($PSCommandPath)) {
-            Write-Host "  [!] Startup task requires running the tool as a standalone .ps1 file." -ForegroundColor Yellow
-            Write-Host "  [i] Launch directly via: pwsh -File Invoke-SelectorDNS.ps1" -ForegroundColor DarkGray
-        } else {
-            $scriptPath = $PSCommandPath
-            $action     = New-ScheduledTaskAction -Execute "powershell.exe" `
-                              -Argument "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$scriptPath`""
-            $trigger    = New-ScheduledTaskTrigger -AtLogOn
-            $settings   = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Minutes 5) -MultipleInstances IgnoreNew
-            $principal  = New-ScheduledTaskPrincipal -RunLevel Highest -LogonType Interactive
-            Register-ScheduledTask -TaskName $taskName `
-                -Action $action -Trigger $trigger -Settings $settings -Principal $principal `
-                -Description "Atlas PC Support - DNS Selector auto-apply on logon" | Out-Null
-            Write-Host "  $($txt.TaskCreated)" -ForegroundColor Green
-            Write-Log "STARTUP TASK CREATED"
-        }
+    Write-Host 'Windows conserva la configuracion DNS sin una tarea de reaplicacion de Atlas.' -ForegroundColor Cyan
+    Write-Host 'No se crearan nuevas tareas. Si existe AtlasDNSSelector de una version anterior, revisa su accion y exportala antes de retirarla en el Programador de tareas.' -ForegroundColor Yellow
+    Write-Host 'La restauracion DNS de Atlas utiliza el snapshot verificado; no depende de esa tarea.'
+    if ((Read-Host 'Abrir Programador de tareas para revision manual? (S/N)') -match '^[SsYy]$') {
+        Start-Process 'taskschd.msc' -ErrorAction Stop
     }
 }
 

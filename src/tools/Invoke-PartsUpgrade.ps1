@@ -668,7 +668,7 @@ function Invoke-PartsUpgrade {
     switch ($opc) {
         '1' {
             $p = Join-Path $desk "$base.txt"
-            [System.IO.File]::WriteAllText($p, $script:ReporteTexto, [System.Text.UTF8Encoding]::new($true))
+            Write-AtlasShareableReport -Path $p -Content $script:ReporteTexto -Tool 'Parts inventory observations'
             Log-Out ''
             Log-Out ($L.TXTSaved -f $p) 'Green'
             try { Start-Process notepad.exe $p } catch {}
@@ -881,7 +881,7 @@ $gpuRows
 <!-- SHA256: $sha -->
 </body></html>
 "@
-            [System.IO.File]::WriteAllText($p, $html, [System.Text.UTF8Encoding]::new($true))
+            Write-AtlasShareableReport -Path $p -Content $html -Tool 'Parts inventory observations'
             Log-Out ''
             Log-Out ($L.HTMLSaved -f $p) 'Green'
             try { Start-Process $p } catch {}

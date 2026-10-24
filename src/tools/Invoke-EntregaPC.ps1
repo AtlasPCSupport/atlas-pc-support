@@ -668,6 +668,34 @@ function _Load-AtlasBrand {
 }
 
 function Generar-ChecklistEntrega {
+    $handoverDir = Get-AtlasReportDir -SubFolder 'Handover'
+    Write-Host 'Checklist manual: ENTER inicia uno nuevo; para continuar indica su ID de 32 caracteres.'
+    $handoverId = (Read-Host 'Handover ID').Trim()
+    if (-not $handoverId) { $handoverId = [guid]::NewGuid().ToString('N') }
+    if ($handoverId -cnotmatch '^[a-f0-9]{32}$') { throw 'Invalid handover ID.' }
+    $checklistPath = Join-Path $handoverDir ($handoverId + '.json')
+    $checklist = Get-AtlasHandoverChecklist -Path $checklistPath -Items $L.ChkItems
+    Save-AtlasHandoverChecklist -Path $checklistPath -Checklist $checklist
+    do {
+        foreach ($row in $checklist.Items) { Write-Host "[$($row.Id)] $($row.State): $($row.Text)" }
+        $selection = Read-Host 'Numero para registrar confirmacion; ENTER genera el informe'
+        if (-not $selection) { break }
+        $number = 0
+        if (-not [int]::TryParse($selection,[ref]$number) -or $number -lt 1 -or $number -gt $checklist.Items.Count) { continue }
+        $row = $checklist.Items[$number-1]
+        $state = Read-Host 'C=confirmacion manual, NA=no aplica, R=pendiente'
+        if ($state -eq 'R') { $row.State='NotVerified'; $row.CheckedUtc=$null; $row.Evidence=$null }
+        elseif ($state -in @('C','NA')) {
+            $note = Read-Host 'Evidencia o motivo (sin claves, contrasenas ni datos personales)'
+            if ([string]::IsNullOrWhiteSpace($note) -or $note.Length -gt 500) { Write-AtlasWarn 'Evidencia requerida, maximo 500 caracteres.'; continue }
+            $row.State = if ($state -eq 'C') { 'ManualConfirmed' } else { 'NotApplicable' }
+            $row.Evidence = Protect-AtlasReportText $note
+            $row.CheckedUtc = [datetime]::UtcNow.ToString('o')
+        } else { continue }
+        Save-AtlasHandoverChecklist -Path $checklistPath -Checklist $checklist
+    } while ($true)
+    $trace = Get-AtlasReportTrace -Tool 'PC Handover'
+    Write-Host "Checklist persistente: $checklistPath"
     Escribir-Centrado $L.BuildingHtml "Cyan"
     Write-Host ""
     Write-Host $L.Gathering -ForegroundColor Yellow
@@ -681,8 +709,8 @@ function Generar-ChecklistEntrega {
 
     $now = Get-Date
     $generated = $now.ToString('yyyy-MM-dd HH:mm:ss')
-    $hostName  = $env:COMPUTERNAME
-    $userName  = $env:USERNAME
+    $hostName  = '[REDACTED]'
+    $userName  = '[REDACTED]'
 
     $equipoRows = @()
     try {
@@ -692,7 +720,7 @@ function Generar-ChecklistEntrega {
         $equipoRows += _Row $L.RowName  $hostName
         $equipoRows += _Row $L.RowMaker ($cs.Manufacturer)
         $equipoRows += _Row $L.RowModel ($cs.Model)
-        $equipoRows += _Row $L.RowBios  ($bios.SerialNumber)
+        $equipoRows += _Row $L.RowBios  '[REDACTED]'
         $equipoRows += _Row $L.RowOs    ($os.Caption)
         $equipoRows += _Row $L.RowVer   ($os.Version)
         $equipoRows += _Row $L.RowBuild ($os.BuildNumber)
@@ -704,8 +732,9 @@ function Generar-ChecklistEntrega {
 
     $activacion = ''
     try {
-        $licInfo = cscript.exe //Nologo "C:\Windows\System32\slmgr.vbs" /xpr 2>&1
-        $activacion = _Esc-Html (($licInfo -join "`n").Trim())
+        $activationProbe = Invoke-AtlasNativeProcess -FilePath (Join-Path $env:SystemRoot 'System32\cscript.exe') -Arguments ('//Nologo "{0}" /xpr' -f (Join-Path $env:SystemRoot 'System32\slmgr.vbs')) -TimeoutSeconds 20
+        if ($activationProbe.State -ne 'Correct') { throw 'Activation query not evaluated.' }
+        $activacion = _Esc-Html ($activationProbe.Stdout.Trim() + "`nLocal report only; entitlement not verified.")
     } catch {
         $activacion = "<span class='err'>$($L.ErrAct)</span>"
     }
@@ -713,17 +742,8 @@ function Generar-ChecklistEntrega {
     $usuariosHtml = ''
     $adminsHtml   = ''
     try {
-        $ul = Get-LocalUser -ErrorAction Stop | Where-Object { $_.Enabled }
-        $usuariosHtml = ($ul | ForEach-Object {
-            "<li><strong>$(_Esc-Html $_.Name)</strong> <span class='muted'>$(_Esc-Html $_.FullName)</span></li>"
-        }) -join ''
-        $adminGroup = Get-LocalGroup | Where-Object SID -eq 'S-1-5-32-544'
-        if ($adminGroup) {
-            $members = Get-LocalGroupMember -Group $adminGroup -ErrorAction SilentlyContinue
-            if ($members) {
-                $adminsHtml = ($members | ForEach-Object { "<li>$(_Esc-Html $_.Name)</li>" }) -join ''
-            }
-        }
+        $usuariosHtml = '<li>[REDACTED: account names omitted]</li>'
+        $adminsHtml = '<li>[REDACTED: administrator names omitted]</li>'
     } catch {
         $usuariosHtml = "<li class='err'>$($L.ErrUsers -f (_Esc-Html $_.Exception.Message))</li>"
     }
@@ -737,11 +757,7 @@ function Generar-ChecklistEntrega {
             $keys = ''
             foreach ($r in $rk) {
                 $maskedKey = "[Recovery protector present; backup not verified by this report]"
-                if ($r.RecoveryPassword -and $r.RecoveryPassword.Length -gt 6) {
-                    $lastChars = $r.RecoveryPassword.Substring($r.RecoveryPassword.Length - 6)
-                    $maskedKey = "••••-••••-••••-••••-••••-••••-••••-$lastChars"
-                }
-                $keys += "<div class='key-block'><div class='muted small'>Key ID: $(_Esc-Html $r.KeyProtectorId)</div><code>$(_Esc-Html $maskedKey)</code></div>"
+                $keys += "<div class='key-block'><code>$(_Esc-Html $maskedKey)</code></div>"
             }
             $bitlockerRows += "<tr><th>$(_Esc-Html $v.MountPoint)</th><td>$status$keys</td></tr>"
         }
@@ -755,7 +771,7 @@ function Generar-ChecklistEntrega {
         Get-PhysicalDisk -ErrorAction Stop | ForEach-Object {
             $health = _Esc-Html "$($_.HealthStatus)"
             $cls = if ($_.HealthStatus -eq 'Healthy') { 'ok' } elseif ($_.HealthStatus -eq 'Warning') { 'warn' } else { 'err' }
-            $discosHtml += "<tr><td>$(_Esc-Html $_.FriendlyName)</td><td><code>$(_Esc-Html $_.SerialNumber)</code></td><td>$("{0:N0} GB" -f ($_.Size/1GB))</td><td class='$cls'>$health</td><td>$(_Esc-Html $_.MediaType)</td></tr>"
+            $discosHtml += "<tr><td>$(_Esc-Html $_.FriendlyName)</td><td>[REDACTED]</td><td>$("{0:N0} GB" -f ($_.Size/1GB))</td><td class='$cls'>$health</td><td>$(_Esc-Html $_.MediaType)</td></tr>"
         }
         $discosHtml += '</tbody></table>'
     } catch {
@@ -768,7 +784,7 @@ function Generar-ChecklistEntrega {
         Get-Volume -ErrorAction Stop | Where-Object { $_.DriveLetter } | Sort-Object DriveLetter | ForEach-Object {
             $pctFree = if ($_.Size -gt 0) { [int](($_.SizeRemaining/$_.Size)*100) } else { 0 }
             $cls = if ($pctFree -lt 10) { 'err' } elseif ($pctFree -lt 20) { 'warn' } else { 'ok' }
-            $volumenesHtml += "<tr><td><strong>$($_.DriveLetter):</strong></td><td>$(_Esc-Html $_.FileSystemLabel)</td><td class='$cls'>$("{0:N1} GB" -f ($_.SizeRemaining/1GB)) ($pctFree%)</td><td>$("{0:N1} GB" -f ($_.Size/1GB))</td><td>$(_Esc-Html $_.FileSystem)</td></tr>"
+            $volumenesHtml += "<tr><td><strong>$($_.DriveLetter):</strong></td><td>[REDACTED]</td><td class='$cls'>$("{0:N1} GB" -f ($_.SizeRemaining/1GB)) ($pctFree%)</td><td>$("{0:N1} GB" -f ($_.Size/1GB))</td><td>$(_Esc-Html $_.FileSystem)</td></tr>"
         }
         $volumenesHtml += '</tbody></table>'
     } catch {
@@ -809,13 +825,12 @@ function Generar-ChecklistEntrega {
         $defenderRows += _Row $L.RowAvSig ([string]$mp.AntivirusSignatureLastUpdated)
     } catch {}
 
-    $checklistItems = $L.ChkItems
-    $checklistHtml = ''
-    $i = 0
-    foreach ($item in $checklistItems) {
-        $i++
-        $checklistHtml += "<label class='check'><input type='checkbox' id='c$i'><span>$(_Esc-Html $item)</span></label>"
+    $checklistHtml = '<p>Manual evidence only. Missing items remain NotVerified. Edit through Atlas and regenerate this report.</p>'
+    foreach ($row in $checklist.Items) {
+        $checked = if ($row.State -eq 'ManualConfirmed') { 'checked' } else { '' }
+        $checklistHtml += "<label class='check'><input type='checkbox' disabled $checked><span>$(_Esc-Html $row.Text): <strong>$(_Esc-Html $row.State)</strong> — $(_Esc-Html $row.Evidence) $(_Esc-Html $row.CheckedUtc)</span></label>"
     }
+    $checklistHtml += '<pre>' + (_Esc-Html ($trace | ConvertTo-Json)) + '</pre>'
 
     $equipoTable    = $equipoRows    -join ''
     $bitlockerTable = $bitlockerRows -join ''
@@ -912,7 +927,6 @@ function Generar-ChecklistEntrega {
 <div class="wrap">
 <div class="toolbar no-print">
   <button class="btn" onclick="window.print()">$($L.BtnPrint)</button>
-  <button class="btn secondary" onclick="toggleAll()">$($L.BtnCheckAll)</button>
 </div>
 <header>
   <h1>$(_Esc-Html $brandName)</h1>
@@ -944,13 +958,6 @@ function Generar-ChecklistEntrega {
 </section>
 <footer>$($L.HtmlFooter)</footer>
 </div>
-<script>
-function toggleAll(){
-  var b=document.querySelectorAll(".check input[type=checkbox]");
-  var all=true; for(var i=0;i<b.length;i++){ if(!b[i].checked){all=false;break;} }
-  for(var j=0;j<b.length;j++){ b[j].checked=!all; }
-}
-</script>
 </body>
 </html>
 "@
@@ -958,8 +965,8 @@ function toggleAll(){
     try {
         $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
         $desktop = [Environment]::GetFolderPath('Desktop')
-        $out = Join-Path $desktop "atlas-handover-$hostName-$stamp.html"
-        Set-Content -Path $out -Value $html -Encoding UTF8
+        $out = Join-Path $handoverDir "handover-$handoverId-$stamp.html"
+        Protect-AtlasReportText $html | Set-Content -LiteralPath $out -Encoding UTF8 -ErrorAction Stop
         Write-Host ""
         Write-Host $L.HtmlSavedOk -ForegroundColor Green
         Write-Host "   $out" -ForegroundColor White

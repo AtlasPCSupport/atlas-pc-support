@@ -71,7 +71,7 @@
     "Version": null,
     "VersionSource": "winget/source-managed",
     "SignaturePolicy": "package-manager",
-    "License": "Vendor terms; redistribution not approved by Atlas"
+    "License": "Vendor personal/non-commercial and Pro/commercial terms differ; workplace/redistribution rights must be reviewed. Not licensed by Atlas."
   },
   "FurMark2": {
     "ExecutableName": "furmark.exe",
@@ -140,7 +140,7 @@
     "Version": "5.11.2",
     "VersionSource": "pinned-direct-fallback; winget source may be newer",
     "SignaturePolicy": "sha256-required",
-    "License": "Vendor terms; review the exact edition before redistribution"
+    "License": "Workplace use requires vendor commercial/Pro licensing; review the exact installed version and redistribution rights. Not licensed by Atlas."
   },
   "winget": {
     "ExecutableName": "winget.exe",

@@ -3,8 +3,8 @@
   "tools": [
     {
       "id": "fase-0",
-      "name": "Disable Legacy IPv6 Tunnels",
-      "description": "Initial hardening: disables Teredo, 6to4 and ISATAP. Includes exportable technical log.",
+      "name": "Legacy IPv6 Tunnel Inspection",
+      "description": "Read-only inspection of legacy IPv6 tunnels. Preset hardening/reset is restricted until exact rollback is qualified.",
       "category": "seguridad",
       "function": "Invoke-Fase0",
       "source": "Invoke-Fase0.ps1",
@@ -19,13 +19,16 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Inspeccionar túneles IPv6",
+      "descriptionEs": "Consulta de túneles heredados. Presets de cambio y restauración restringidos hasta validar reversión exacta."
     },
     {
       "id": "parts-upgrade",
@@ -45,13 +48,16 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Inventario para ampliaciones",
+      "descriptionEs": "Observaciones de RAM, CPU y almacenamiento. Confirmar compatibilidad y posibilidades de ampliación con el fabricante."
     },
     {
       "id": "diagnostico-master",
@@ -78,13 +84,16 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Informe del sistema",
+      "descriptionEs": "Inventario y observaciones de sistema, hardware, eventos y red. Reporte redactado; no certifica salud completa."
     },
     {
       "id": "diagnostico-eventos",
@@ -104,7 +113,8 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
@@ -112,7 +122,9 @@
         "commands": [
           "Get-WinEvent"
         ]
-      }
+      },
+      "nameEs": "Analizar eventos",
+      "descriptionEs": "Correlaciona proveedor e ID y conserva nivel numérico. Acceso denegado se muestra como no evaluado."
     },
     {
       "id": "printer-doctor",
@@ -132,18 +144,21 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Diagnóstico de impresoras",
+      "descriptionEs": "Consulta impresoras, puertos, trabajos y eventos. Vacía una cola elegida y comprueba el resultado."
     },
     {
       "id": "keyboard-doctor",
       "name": "Keyboard Doctor",
-      "description": "Ghost typing and keyboard fault triage: devices, accessibility keys, battery pressure risk, HID events, isolation prompts and report export.",
+      "description": "Device/event observations and a consented focused key-count test. No global keystroke capture or hardware certification.",
       "category": "diagnostico",
       "function": "Invoke-KeyboardDoctor",
       "source": "Invoke-KeyboardDoctor.ps1",
@@ -158,18 +173,21 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Diagnóstico de teclado",
+      "descriptionEs": "Observaciones de dispositivos y eventos. Prueba con foco y consentimiento que cuenta pulsaciones sin guardar texto."
     },
     {
       "id": "ai-readiness",
-      "name": "AI Readiness Assessment",
-      "description": "Self-contained local/cloud AI readiness audit: RAM, CPU, GPU/VRAM, storage, Ollama/cloud connectivity, 0-100 score, suggested models and HTML/JSON report export.",
+      "name": "AI Readiness Inventory",
+      "description": "Heuristic inventory and connectivity observations; missing evidence is not evaluated. No model workload certification.",
       "category": "diagnostico",
       "function": "Invoke-AIReadiness",
       "source": "Invoke-AIReadiness.ps1",
@@ -184,13 +202,16 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Inventario para IA",
+      "descriptionEs": "Inventario y heurísticas orientativas. Datos ausentes quedan sin evaluar; no se certifica un modelo ni servicio."
     },
     {
       "id": "gpu-check",
@@ -214,17 +235,20 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Observaciones de GPU",
+      "descriptionEs": "Inventario, telemetría NVIDIA disponible y eventos. Prueba de carga opcional; resultados con cobertura limitada."
     },
     {
       "id": "mantenimiento-pro",
-      "name": "Deep Clean & Repair",
+      "name": "Inspect and Repair Windows",
       "description": "Inspect Defender and restart status; selected DISM/SFC checks or repair. No automatic cache deletion or network reset.",
       "category": "mantenimiento",
       "function": "Invoke-MantenimientoPRO",
@@ -240,18 +264,21 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Comprobar y reparar Windows",
+      "descriptionEs": "Inspecciona Defender y reinicio pendiente. DISM/SFC elegidos; sin limpieza masiva ni reset de red automático."
     },
     {
       "id": "instalar-paquetes",
-      "name": "Bulk App Installer (winget)",
-      "description": "Install software in bulk via winget. Curated catalog by category, JSON profiles per client, built-in winget search, and a Cleanup section (clear temp files).",
+      "name": "Bulk App Installer (WinGet)",
+      "description": "Validated package IDs and sources with client profiles. Final application support depends on its current vendor manifest.",
       "category": "software",
       "function": "Invoke-InstalarPaquetes",
       "source": "Invoke-InstalarPaquetes.ps1",
@@ -266,13 +293,16 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Instalar aplicaciones con WinGet",
+      "descriptionEs": "Catálogo y perfiles con IDs/fuentes validados. Compatibilidad final sujeta al manifiesto vigente de cada paquete."
     },
     {
       "id": "instalar-ms-store",
@@ -292,7 +322,8 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
@@ -301,12 +332,14 @@
           "Get-AppxPackage",
           "Add-AppxPackage"
         ]
-      }
+      },
+      "nameEs": "Comprobar Store y App Installer",
+      "descriptionEs": "Distingue paquete, registro, usuario y políticas. Solo registra una Store existente; no instala Store genérica en LTSC."
     },
     {
       "id": "instalar-runtimes",
-      "name": "Install Runtime Dependencies",
-      "description": "Installs common Windows runtime packages in bulk: VC++ 2015+ and 2013 (x64/x86), .NET Framework 3.5, DirectX, and optionally XNA and OpenAL for gaming. Two modes: Minimum and Full/Gaming.",
+      "name": "Runtime Dependencies",
+      "description": "Modern VC++ v14 separated from legacy choices. NetFx3 uses Windows with an optional matching source; reports restart and exit status.",
       "category": "software",
       "function": "Invoke-InstalarRuntimes",
       "source": "Invoke-InstalarRuntimes.ps1",
@@ -321,18 +354,21 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Dependencias de ejecución",
+      "descriptionEs": "VC++ v14 separado de legado. NetFx3 mediante Windows con origen opcional; indica código y reinicio requerido."
     },
     {
       "id": "actualizar-powershell",
-      "name": "Install/Update PowerShell 7",
-      "description": "Installs or updates PowerShell 7 (modern runtime). Better encoding, modern enums and fewer bugs than Windows PowerShell 5.1.",
+      "name": "Install PowerShell 7",
+      "description": "Install the pinned x64 release after SHA-256 and Microsoft signature checks. Each tool keeps its declared runtime.",
       "category": "mantenimiento",
       "function": "Invoke-ActualizarPowerShell",
       "source": "Invoke-ActualizarPowerShell.ps1",
@@ -347,18 +383,21 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Instalar PowerShell 7",
+      "descriptionEs": "Instala la versión x64 fijada tras verificar SHA-256 y firma Microsoft. Las herramientas conservan su runtime declarado."
     },
     {
       "id": "mod-personalizacion",
-      "name": "Windows Tweaks",
-      "description": "Wallpaper via Win32 API, dark theme, accent color, taskbar tweaks and watermark.",
+      "name": "Windows Settings",
+      "description": "Open native background, color, taskbar and Start settings. No registry presets, watermark or Explorer restart.",
       "category": "mantenimiento",
       "function": "Invoke-Personalizacion",
       "source": "Invoke-Personalizacion.ps1",
@@ -373,18 +412,21 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Ajustes de Windows",
+      "descriptionEs": "Abre fondo, colores, barra y menú Inicio nativos. Sin presets de registro, marca de agua ni reinicio de Explorer."
     },
     {
       "id": "stop-services",
-      "name": "Service Optimizer",
-      "description": "Inspect a restricted service list; change one with a verified snapshot and restore its previous startup/running state.",
+      "name": "Services with Snapshots",
+      "description": "Inspect a restricted service list; change one with a verified snapshot and restore startup, running and delayed-start state.",
       "category": "mantenimiento",
       "function": "Invoke-StopServices",
       "source": "Invoke-StopServices.ps1",
@@ -399,18 +441,21 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Servicios con respaldo",
+      "descriptionEs": "Inspecciona una lista restringida; cambia uno con snapshot previo y restaura inicio, ejecución y arranque diferido."
     },
     {
       "id": "fastcopy",
       "name": "FastCopy",
-      "description": "Multi-source copy with profiles, comparison, MD5 and exportable summary. Replaces Robocopy with better UX.",
+      "description": "Copy with native verification and clearly labeled SHA-256 sampling; move/sync restricted. Vendor license required.",
       "category": "copia",
       "function": "Invoke-FastCopy",
       "source": "Invoke-FastCopy.ps1",
@@ -427,18 +472,21 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Copiar con FastCopy",
+      "descriptionEs": "Copia con verificación nativa y muestreo SHA-256 identificado. Mover/sincronizar restringido; revisar licencia del proveedor."
     },
     {
       "id": "preparar-usb",
-      "name": "Build Offline USB",
-      "description": "Copies the panel and its dependencies to a USB drive for offline use. Auto-updates launcher when connected to the internet.",
+      "name": "Build Verified Offline USB",
+      "description": "Copy a complete verified release of 27 tools. Explicit atomic update; third-party packages remain optional.",
       "category": "copia",
       "function": "Invoke-PrepararUSB",
       "source": "Invoke-PrepararUSB.ps1",
@@ -453,18 +501,21 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Preparar USB offline",
+      "descriptionEs": "Copia el release íntegro y verificado de 27 herramientas. Actualización atómica explícita; paquetes de terceros opcionales."
     },
     {
       "id": "respaldo-controladores",
-      "name": "Driver Backup (External BAT)",
-      "description": "Runs Respaldo-Controladores.bat from common desktop/USB locations. If missing, asks for a custom .bat/.cmd path and saves it.",
+      "name": "Driver Backup (DISM)",
+      "description": "Export drivers with Windows DISM to a selected destination. Does not run a desktop/USB external BAT.",
       "category": "copia",
       "function": "Invoke-RespaldoControladores",
       "source": "Invoke-RespaldoControladores.ps1",
@@ -479,7 +530,8 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
@@ -487,12 +539,14 @@
         "commands": [
           "Export-WindowsDriver"
         ]
-      }
+      },
+      "nameEs": "Respaldar controladores",
+      "descriptionEs": "Exporta controladores con DISM a un destino elegido. No ejecuta un BAT externo elegido desde el escritorio."
     },
     {
       "id": "robocopy",
-      "name": "Robocopy Mirror",
-      "description": "Optimized robocopy-based copy: mirror mode, retries, centralized logging.",
+      "name": "Robocopy Copy",
+      "description": "Copy with exclusions, checked exit status and explicit partial SHA-256 sampling. No full-content certification from a sample.",
       "category": "copia",
       "function": "Invoke-Robocopy",
       "source": "Invoke-Robocopy.ps1",
@@ -507,7 +561,8 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
@@ -515,12 +570,14 @@
         "commands": [
           "robocopy.exe"
         ]
-      }
+      },
+      "nameEs": "Copiar con Robocopy",
+      "descriptionEs": "Copia con exclusiones y códigos de resultado. La muestra SHA-256 no equivale a verificación integral del contenido."
     },
     {
       "id": "selector-dns",
-      "name": "DNS Switcher",
-      "description": "Switches DNS server between profiles (Cloudflare, Google, OpenDNS, custom) with one click.",
+      "name": "DNS with Restoration",
+      "description": "Classic DNS profiles with IPv4/IPv6 automatic/static snapshots. DoH settings are gated by Windows capabilities.",
       "category": "redes",
       "function": "Invoke-SelectorDNS",
       "source": "Invoke-SelectorDNS.ps1",
@@ -535,7 +592,8 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
@@ -545,7 +603,9 @@
           "Get-DnsClientServerAddress",
           "Set-DnsClientServerAddress"
         ]
-      }
+      },
+      "nameEs": "DNS con restauración",
+      "descriptionEs": "Perfiles DNS clásicos, snapshot IPv4/IPv6 y origen automático/estático. DoH solo si Windows y cmdlets lo permiten."
     },
     {
       "id": "hosts",
@@ -565,18 +625,21 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Editar Hosts",
+      "descriptionEs": "Cambios de alias exactos y reemplazo con respaldo de bytes originales. Importaciones requieren revisión."
     },
     {
       "id": "auditoria-router",
-      "name": "Router Security Audit",
-      "description": "Local network router scan and security audit.",
+      "name": "Router and LAN Observations",
+      "description": "Gateway/LAN observations; legacy scan supports /24 only. LAN reachability does not certify WAN exposure.",
       "category": "redes",
       "function": "Invoke-AuditoriaRouter",
       "source": "Invoke-AuditoriaRouter.ps1",
@@ -591,13 +654,16 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Observaciones de router y LAN",
+      "descriptionEs": "Escaneo heredado solo de /24. La prueba desde LAN no certifica exposición WAN; sin exportación de claves Wi-Fi."
     },
     {
       "id": "gestor-bitlocker",
@@ -617,7 +683,8 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
@@ -626,7 +693,9 @@
           "Get-BitLockerVolume",
           "Enable-BitLocker"
         ]
-      }
+      },
+      "nameEs": "Administrar BitLocker",
+      "descriptionEs": "Activación exige respaldo de recuperación verificado en otro disco. Suspensión delegada a Windows; escrow no se presume."
     },
     {
       "id": "menor-privilegio",
@@ -646,7 +715,8 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
@@ -655,12 +725,14 @@
           "Get-LocalUser",
           "Get-LocalGroupMember"
         ]
-      }
+      },
+      "nameEs": "Cuentas con mínimo privilegio",
+      "descriptionEs": "Audita cuentas locales y protege al último administrador habilitado. Cambios y fallos se comprueban por SID."
     },
     {
       "id": "extraer-licencias",
-      "name": "Extract Product Keys",
-      "description": "Extract Windows and Office product keys (read-only, safe).",
+      "name": "License Inventory",
+      "description": "Windows/Office local license status. Redacted reports; OEM key display and clipboard each require explicit consent.",
       "category": "seguridad",
       "function": "Invoke-ExtraerLicencias",
       "source": "Invoke-ExtraerLicencias.ps1",
@@ -675,18 +747,21 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Inventario de licencias",
+      "descriptionEs": "Estado local Windows/Office y reportes redactados. Revelar clave OEM y copiarla son acciones explícitas separadas."
     },
     {
       "id": "deduplicador",
-      "name": "Deduplicator & Converter",
-      "description": "Visual and exact file deduplicator and media converter (WebP to JPG/PNG, WebM to MP4). Supports GUI and Web modes.",
+      "name": "Deduplicator Unavailable",
+      "description": "Backend is not included. Conversion and deletion remain unavailable until integration and recovery tests pass.",
       "category": "copia",
       "function": "Invoke-Deduplicador",
       "source": "Invoke-Deduplicador.ps1",
@@ -701,19 +776,22 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": [],
         "disabledReason": "Backend is absent from this release. No unverified localhost service or global Python installation will be started."
-      }
+      },
+      "nameEs": "Deduplicador no disponible",
+      "descriptionEs": "Backend no incluido. No se ejecuta conversión ni borrado hasta integrar y probar recuperación."
     },
     {
       "id": "entrega-pc",
       "name": "PC Handover Report",
-      "description": "Closeout protocol: final cleanup, summary, log and client handover preparation.",
+      "description": "Persistent manual checklist and redacted report with release trace. Does not certify activation or recovery-key escrow.",
       "category": "entrega",
       "function": "Invoke-EntregaPC",
       "source": "Invoke-EntregaPC.ps1",
@@ -728,7 +806,8 @@
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
@@ -736,7 +815,9 @@
         "commands": [
           "Get-LocalUser"
         ]
-      }
+      },
+      "nameEs": "Entrega del equipo",
+      "descriptionEs": "Checklist manual persistente, informe redactado y trazabilidad de versión. No certifica activación ni escrow de recuperación."
     }
   ]
 }

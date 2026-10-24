@@ -633,7 +633,7 @@ function Exportar-Informe {
     $Fecha      = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
     $Desktop = [Environment]::GetFolderPath("Desktop")
     $Archivo    = "$Desktop\AtlasRed_${NombreModulo}_${Fecha}.txt"
-    $Contenido | Out-File -FilePath $Archivo -Encoding UTF8
+    Write-AtlasShareableReport -Path $Archivo -Content ($Contenido -join "`n") -Tool 'Router/LAN observations'
     Write-Host "  Informe saved: $Archivo" -ForegroundColor Green
     return $Archivo
 }
@@ -1146,7 +1146,7 @@ function Modulo-PuertosWAN {
             $Alertas += $E.P
         } else {
             Write-Host ("  [NO CONCLUYENTE] Puerto {0,-5} ({1,-10}) sin respuesta desde LAN" -f $E.P, $E.N) -ForegroundColor DarkGreen
-            $Log += "  [OK]        Puerto $($E.P) ($($E.N))"
+            $Log += "  [NO CONCLUYENTE DESDE LAN] Puerto $($E.P) ($($E.N))"
         }
     }
 
@@ -1159,7 +1159,7 @@ function Modulo-PuertosWAN {
         Write-Host "  No exposure conclusion is possible from this LAN test. Verify from an authorized external network." -ForegroundColor Green
     }
 
-    $script:HistorialSesion.Add("[H] WAN $IPP | Expuestos: $(if ($Alertas.Count) { $Alertas -join ',' } else { 'None' })")
+    $script:HistorialSesion.Add("[H] LAN public-IP test $IPP | Reachable from LAN: $(if ($Alertas.Count) { $Alertas -join ',' } else { 'None' })")
 
     if (-not $Silencioso -and -not $script:ModoAuto) {
         $Exp = Read-Host "`n  Exportar informe a TXT? (Y/N)"
@@ -1645,73 +1645,9 @@ function Modulo-PortalCautivo {
 #  MODULO I - HISTORIAL DE SESION
 # ================================================================
 function Modulo-WiFiGuardadas {
-    Clear-Host
-    Write-Host ""
-    Write-Host "  [ K ]  PASSWORDS WIFI GUARDADAS" -ForegroundColor Yellow
-    Write-Host "  $("-" * 60)" -ForegroundColor DarkGray
-    Write-Host ""
-    Write-Host "  [!] WiFi networks saved on this PC will be shown" -ForegroundColor Cyan
-    Write-Host "      along with their passwords (requires admin)." -ForegroundColor Cyan
-    Write-Host "  [!] This is sensitive information. Use only on your own computers" -ForegroundColor Yellow
-    Write-Host "      or with explicit owner authorization." -ForegroundColor Yellow
-    Write-Host ""
-    $ok = Read-Host "  Continuar? [Y/N]"
-    if ($ok -notmatch '^[SsYy]$') { return }
-
-    $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-    if (-not $isAdmin) {
-        Write-Host ""
-        Write-Host "  [X] Esta option requiere run como administrador." -ForegroundColor Red
-        Esperar-Enter
-        return
-    }
-
-    Write-Host ""
-    Write-Host "  Consultando perfiles WLAN..." -ForegroundColor DarkGray
-
-    $raw = netsh wlan show profiles 2>$null
-    $perfiles = @()
-    foreach ($line in $raw) {
-        if ($line -match "Perfil de all users\s*:\s*(.+)$" -or $line -match "All User Profile\s*:\s*(.+)$") {
-            $perfiles += ($matches[1]).Trim()
-        }
-    }
-
-    if ($perfiles.Count -eq 0) {
-        Write-Host "  [!] No se detectaron perfiles WLAN saved." -ForegroundColor Yellow
-        Esperar-Enter
-        return
-    }
-
-    $resultado = @()
-    $resultado += "=== PASSWORDS WIFI GUARDADAS ==="
-    $resultado += "Computer: $env:COMPUTERNAME"
-    $resultado += "Date:  $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
-    $resultado += ""
-    $resultado += "{0,-40} {1,-15} {2}" -f "SSID", "Autenticacion", "Password"
-    $resultado += ("-" * 80)
-
-    foreach ($p in $perfiles) {
-        $det = netsh wlan show profile name="$p" key=clear 2>$null
-        $auth = ""
-        $pass = ""
-        foreach ($l in $det) {
-            if ($l -match "Autenticaci.n\s*:\s*(.+)$" -or $l -match "Authentication\s*:\s*(.+)$") { $auth = ($matches[1]).Trim() }
-            elseif ($l -match "Contenido de la clave\s*:\s*(.+)$" -or $l -match "Key Content\s*:\s*(.+)$") { $pass = ($matches[1]).Trim() }
-        }
-        if (-not $pass) { $pass = "(no password / open)" }
-        if (-not $auth) { $auth = "?" }
-        $linea = "{0,-40} {1,-15} {2}" -f $p, $auth, $pass
-        $resultado += $linea
-        Write-Host "  $linea" -ForegroundColor Green
-    }
-
-    Write-Host ""
-    Write-Host "  Total perfiles: $($perfiles.Count)" -ForegroundColor Cyan
-    Write-Host ""
-    $x = Read-Host "  Export to TXT on Desktop? [Y/N]"
-    if ($x -match '^[SsYy]$') { Exportar-Informe -Contenido $resultado -NombreModulo "WiFiGuardadas" }
-    $script:HistorialSesion.Add("WiFi saved: $($perfiles.Count) perfiles") | Out-Null
+    Write-Host 'Los perfiles WLAN y sus claves son datos privados. Esta herramienta ya no extrae ni exporta contrasenas.' -ForegroundColor Yellow
+    Write-Host 'Usa los ajustes de Windows para consultar una red propia con el consentimiento del cliente.'
+    Start-Process 'ms-settings:network-wifi' -ErrorAction Stop
     Esperar-Enter
 }
 

@@ -7,5 +7,10 @@
 /build.ps1 @mikepchelper-spec
 /config/** @mikepchelper-spec
 /src/lib/** @mikepchelper-spec
+/src/tools/** @mikepchelper-spec
+/src/gui/** @mikepchelper-spec
+/api/** @mikepchelper-spec
+/tests/** @mikepchelper-spec
+/release-manifest.json @mikepchelper-spec
 /.github/workflows/** @mikepchelper-spec
 /onboarding/** @mikepchelper-spec

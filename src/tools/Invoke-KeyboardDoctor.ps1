@@ -635,10 +635,10 @@ footer{padding:14px 26px;background:#f8fafc;color:#64748b;font-size:12px}
         [void]$sb.AppendLine((New-KDTable -Rows $manualRows -Columns @('Test','Result')))
         [void]$sb.AppendLine("<h2>$($L.Events)</h2>")
         [void]$sb.AppendLine((New-KDTable -Rows (@($script:KeyboardDoctorReport.Events | Select-Object -First 30 TimeCreated, ProviderName, Id, LevelDisplayName, @{n='Message';e={ ([string]$_.Message) -replace '\s+', ' ' }})) -Columns @('TimeCreated','ProviderName','Id','LevelDisplayName','Message')))
-        [void]$sb.AppendLine("<h2>Hands-off monitor</h2>")
+        [void]$sb.AppendLine("<h2>Focused-window key count (no text captured)</h2>")
         [void]$sb.AppendLine((New-KDTable -Rows $monitorRows -Columns @('Time','Key','Code')))
         [void]$sb.AppendLine("</div><footer>ATLAS PC SUPPORT - Keyboard Doctor</footer></div></body></html>")
-        [System.IO.File]::WriteAllText($htmlPath, $sb.ToString(), [System.Text.UTF8Encoding]::new($true))
+        Write-AtlasShareableReport -Path $htmlPath -Content $sb.ToString() -Tool 'Keyboard observations'
 
         $txt = [System.Text.StringBuilder]::new()
         [void]$txt.AppendLine($L.ReportTitle)
@@ -653,8 +653,8 @@ footer{padding:14px 26px;background:#f8fafc;color:#64748b;font-size:12px}
         }
         [void]$txt.AppendLine("")
         [void]$txt.AppendLine("Manual: BIOS=$($script:KeyboardDoctorReport.Manual.Bios); External=$($script:KeyboardDoctorReport.Manual.ExternalKeyboard); Touchpad=$($script:KeyboardDoctorReport.Manual.Touchpad)")
-        [void]$txt.AppendLine("Monitor captured keys: $($script:KeyboardDoctorReport.Monitor.Count)")
-        [System.IO.File]::WriteAllText($txtPath, $txt.ToString(), [System.Text.UTF8Encoding]::new($true))
+        [void]$txt.AppendLine("Focused test count: $($script:KeyboardDoctorReport.Monitor.Count)")
+        Write-AtlasShareableReport -Path $txtPath -Content $txt.ToString() -Tool 'Keyboard observations'
 
         Write-Host ($L.ExportSaved -f $htmlPath) -ForegroundColor Green
         Write-Host ($L.ExportSaved -f $txtPath) -ForegroundColor Green

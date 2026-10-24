@@ -592,7 +592,7 @@ table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6p
 
     Write-Host ("[GPU Check] " + $L.CollectEvents) -ForegroundColor Gray
     $events = Get-GpuEvents -Since ($sessionStart.AddSeconds(-30)) -Until ($sessionEnd.AddMinutes(1))
-    $events | Export-Csv -LiteralPath $eventsCsv -NoTypeInformation -Encoding UTF8
+    $events | ForEach-Object { Protect-AtlasReportObject $_ } | Export-Csv -LiteralPath $eventsCsv -NoTypeInformation -Encoding UTF8
 
     Write-Host ("[GPU Check] " + $L.AnalyzeStep) -ForegroundColor Gray
     $notes = New-Object System.Collections.Generic.List[string]
@@ -697,9 +697,9 @@ table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6p
         inventory = $inventory
     }
 
-    $result | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $jsonOut -Encoding UTF8
+    Write-AtlasShareableReport -Path $jsonOut -Content ($result | ConvertTo-Json -Depth 10) -Tool 'GPU observations'
     $html = Build-HtmlReport -Data $result
-    $html | Out-File -LiteralPath $htmlOut -Encoding UTF8
+    Write-AtlasShareableReport -Path $htmlOut -Content $html -Tool 'GPU observations'
 
     Write-Host ''
     Write-Host ("[GPU Check] " + $L.Done) -ForegroundColor Green
