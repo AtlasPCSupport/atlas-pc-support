@@ -1,8 +1,8 @@
 # Auditoría técnica de Atlas PC Support
 
-**Fecha de cierre:** 24 de octubre de 2026, America/Lima.  
-**Código revisado:** `2b3efafc327ac9bd84e9ae316fb24281c95db08b`.  
-**Objetivo:** evaluar las herramientas, detectar prácticas desactualizadas o incorrectas y definir una modernización compatible con Windows 10 donde sea razonable.  
+**Fecha de cierre:** 24 de octubre de 2026, America/Lima.
+**Código revisado:** `2b3efafc327ac9bd84e9ae316fb24281c95db08b`.
+**Objetivo:** evaluar las herramientas, detectar prácticas desactualizadas o incorrectas y definir una modernización compatible con Windows 10 donde sea razonable.
 **Tipo de trabajo:** revisión de código, comprobaciones locales no destructivas y contraste con documentación oficial consultada el 23–24 de octubre. No se aplicaron correcciones funcionales ni se desplegaron cambios.
 
 **Navegación:** [Dictamen](#dictamen) · [Evidencia](#evidencia) · [Hallazgos](#hallazgos) · [Windows 10](#windows10) · [27 herramientas](#herramientas) · [Dependencias y catálogo](#dependencias) · [Arquitectura y entrega](#arquitectura) · [Plan de trabajo](#plan) · [Decisiones](#decisiones).
