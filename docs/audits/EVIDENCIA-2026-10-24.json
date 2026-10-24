@@ -1,0 +1,277 @@
+{
+  "closed_at_local_date": "2026-10-24",
+  "timezone": "America/Lima",
+  "code_commit": "2b3efafc327ac9bd84e9ae316fb24281c95db08b",
+  "scope": "Revisión estática y pruebas aisladas; sin ejecutar operaciones destructivas ni instalaciones del panel.",
+  "inventory": {
+    "tools": 27,
+    "libraries": 8,
+    "powershell_source_lines": 24868,
+    "catalog_applications": 52,
+    "catalog_cleanup_actions": 1
+  },
+  "host": {
+    "build": "26100",
+    "windows_powershell": "5.1.26100.9711",
+    "powershell": "7.6.6",
+    "windows_10_22h2_tested": false
+  },
+  "checks": [
+    {
+      "name": "Test-SecurityGuards.ps1",
+      "runtime": "pwsh",
+      "exit_code": 0,
+      "result": "pass"
+    },
+    {
+      "name": "Test-ToolSources.ps1",
+      "runtime": "pwsh",
+      "exit_code": 0,
+      "result": "pass; 27 tools"
+    },
+    {
+      "name": "Test-ToolSources.ps1",
+      "runtime": "powershell.exe",
+      "exit_code": 0,
+      "result": "pass with explicit paths and process-only ExecutionPolicy Bypass",
+      "initial_issues": [
+        "host execution policy",
+        "default path parameters"
+      ]
+    },
+    {
+      "name": "Lib.Tests.ps1",
+      "runtime": "pwsh",
+      "runner": "Pester 5.8.0",
+      "exit_code": 0,
+      "result": "13 passed; 0 failed",
+      "pester_xml_root_attributes": {
+        "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "nunit_schema_2.5.xsd",
+        "name": "Pester",
+        "total": "13",
+        "errors": "0",
+        "failures": "0",
+        "not-run": "0",
+        "inconclusive": "0",
+        "ignored": "0",
+        "skipped": "0",
+        "invalid": "0",
+        "date": "2026-10-23",
+        "time": "10:31:37"
+      }
+    },
+    {
+      "name": "Assert-LauncherFresh.ps1",
+      "runtime": "pwsh",
+      "exit_code": 0,
+      "result": "pass in isolated temporary repository copy; originals untouched"
+    },
+    {
+      "name": "PSScriptAnalyzer",
+      "version": "1.25.0",
+      "scope": "src",
+      "settings": "repository PSScriptAnalyzerSettings.psd1",
+      "errors": 0,
+      "warnings": 399,
+      "information": 280
+    },
+    {
+      "name": "npm audit --json",
+      "cwd": "api/cloudflare-worker",
+      "exit_code": 1,
+      "packages_affected": 4,
+      "severity": "high",
+      "packages": [
+        "wrangler",
+        "miniflare",
+        "sharp",
+        "undici"
+      ],
+      "exposure": "development dependency chain; production exploitability not demonstrated"
+    },
+    {
+      "name": "Isolated PowerShell reproductions",
+      "exit_code": 0,
+      "expectations": "known problematic behaviors reproduced, not fixed"
+    },
+    {
+      "name": "Worker mocked fetch reproductions",
+      "exit_code": 0,
+      "expectations": "known behaviors reproduced; no private upstream content or real credentials used"
+    }
+  ],
+  "analyzer_rule_counts": {
+    "PSAvoidUsingEmptyCatchBlock": 178,
+    "PSUseShouldProcessForStateChangingFunctions": 19,
+    "PSAvoidAssignmentToAutomaticVariable": 16,
+    "PSReviewUnusedParameter": 9,
+    "PSUseOutputTypeCorrectly": 27,
+    "PSUseApprovedVerbs": 133,
+    "PSAvoidUsingWMICmdlet": 1,
+    "PSAvoidTrailingWhitespace": 206,
+    "PSAvoidUsingPositionalParameters": 47,
+    "PSUseDeclaredVarsMoreThanAssignments": 13,
+    "PSPossibleIncorrectComparisonWithNull": 10,
+    "PSAvoidGlobalVars": 13,
+    "PSAvoidUsingBrokenHashAlgorithms": 4,
+    "PSAvoidOverwritingBuiltInCmdlets": 3
+  },
+  "powershell_probes": {
+    "WheaActualProviderMatches": false,
+    "SetLocalUserHasNoPassword": false,
+    "UnhealthyMatchesHealthyRegex": true,
+    "EmptyCopyIntegrity": {
+      "Checked": 0,
+      "OK": true,
+      "Missing": 0,
+      "Failed": 0,
+      "Passed": 0
+    },
+    "UnquotedPathExit": -196608,
+    "QuotedPathExit": 0,
+    "PowerShell": "5.1.26100.9711",
+    "OSBuild": "10.0.26100.0"
+  },
+  "worker_mock_probes": {
+    "unknownPathStatus": 200,
+    "checksumUpstream": "https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/launcher.ps1.sha256",
+    "missingRefFallback": "main",
+    "privateScriptUnauthenticatedStatus": 200,
+    "privateScriptCache": "public, max-age=30"
+  },
+  "static_reproductions": {
+    "source_requires_tool_digest": true,
+    "compiled_bootstrap_has_same_requirement_assignment": false,
+    "missing_backend": "app_deduplicar.py"
+  },
+  "development_dependencies": {
+    "wrangler_declared": "^4.24.3",
+    "wrangler_locked": "4.107.0",
+    "wrangler_registry_candidate": "4.152.0",
+    "required_node": ">=22.0.0",
+    "latest_workers_types_retrieved": "5.20261024.1",
+    "upgrade_applied": false
+  },
+  "tools_reviewed": [
+    {
+      "id": "fase-0",
+      "source": "Invoke-Fase0.ps1"
+    },
+    {
+      "id": "parts-upgrade",
+      "source": "Invoke-PartsUpgrade.ps1"
+    },
+    {
+      "id": "diagnostico-master",
+      "source": "Invoke-DiagnosticoMaster.ps1"
+    },
+    {
+      "id": "diagnostico-eventos",
+      "source": "Invoke-DiagnosticoEventos.ps1"
+    },
+    {
+      "id": "printer-doctor",
+      "source": "Invoke-PrinterDoctor.ps1"
+    },
+    {
+      "id": "keyboard-doctor",
+      "source": "Invoke-KeyboardDoctor.ps1"
+    },
+    {
+      "id": "ai-readiness",
+      "source": "Invoke-AIReadiness.ps1"
+    },
+    {
+      "id": "gpu-check",
+      "source": "Invoke-GPUCheck.ps1"
+    },
+    {
+      "id": "mantenimiento-pro",
+      "source": "Invoke-MantenimientoPRO.ps1"
+    },
+    {
+      "id": "instalar-paquetes",
+      "source": "Invoke-InstalarPaquetes.ps1"
+    },
+    {
+      "id": "instalar-ms-store",
+      "source": "Invoke-InstalarMicrosoftStore.ps1"
+    },
+    {
+      "id": "instalar-runtimes",
+      "source": "Invoke-InstalarRuntimes.ps1"
+    },
+    {
+      "id": "actualizar-powershell",
+      "source": "Invoke-ActualizarPowerShell.ps1"
+    },
+    {
+      "id": "mod-personalizacion",
+      "source": "Invoke-Personalizacion.ps1"
+    },
+    {
+      "id": "stop-services",
+      "source": "Invoke-StopServices.ps1"
+    },
+    {
+      "id": "fastcopy",
+      "source": "Invoke-FastCopy.ps1"
+    },
+    {
+      "id": "preparar-usb",
+      "source": "Invoke-PrepararUSB.ps1"
+    },
+    {
+      "id": "respaldo-controladores",
+      "source": "Invoke-RespaldoControladores.ps1"
+    },
+    {
+      "id": "robocopy",
+      "source": "Invoke-Robocopy.ps1"
+    },
+    {
+      "id": "selector-dns",
+      "source": "Invoke-SelectorDNS.ps1"
+    },
+    {
+      "id": "hosts",
+      "source": "Invoke-HostsManager.ps1"
+    },
+    {
+      "id": "auditoria-router",
+      "source": "Invoke-AuditoriaRouter.ps1"
+    },
+    {
+      "id": "gestor-bitlocker",
+      "source": "Invoke-GestorBitLocker.ps1"
+    },
+    {
+      "id": "menor-privilegio",
+      "source": "Invoke-MenorPrivilegio.ps1"
+    },
+    {
+      "id": "extraer-licencias",
+      "source": "Invoke-ExtraerLicencias.ps1"
+    },
+    {
+      "id": "deduplicador",
+      "source": "Invoke-Deduplicador.ps1"
+    },
+    {
+      "id": "entrega-pc",
+      "source": "Invoke-EntregaPC.ps1"
+    }
+  ],
+  "limitations": [
+    "No Windows 10 client VM or hardware validation",
+    "No private RustDesk installer content review",
+    "No deduplicator backend available",
+    "No production Cloudflare deployment verification",
+    "No inspection of live GitHub branch protection",
+    "No install/run of all 52 third-party catalog apps"
+  ],
+  "artifacts_changed": [
+    "docs/audits/AUDITORIA-2026-10-24.md",
+    "docs/audits/EVIDENCIA-2026-10-24.json"
+  ]
+}

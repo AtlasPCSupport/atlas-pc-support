@@ -14,13 +14,18 @@
 #>
 [CmdletBinding()]
 param(
-    [string]$LauncherPath = (Join-Path (Split-Path -Parent $PSScriptRoot) 'launcher.ps1'),
-    [string]$ManifestPath = (Join-Path (Split-Path -Parent $PSScriptRoot) 'config\tools.json'),
-    [string]$ToolHashesPath = (Join-Path (Split-Path -Parent $PSScriptRoot) 'config\tool-hashes.json'),
-    [string]$ToolsDir = (Join-Path (Split-Path -Parent $PSScriptRoot) 'src\tools')
+    [string]$LauncherPath,
+    [string]$ManifestPath,
+    [string]$ToolHashesPath,
+    [string]$ToolsDir
 )
 
 $ErrorActionPreference = 'Stop'
+$repoRoot = Split-Path -Parent $PSScriptRoot
+if (-not $LauncherPath) { $LauncherPath = Join-Path $repoRoot 'launcher.ps1' }
+if (-not $ManifestPath) { $ManifestPath = Join-Path $repoRoot 'config/tools.json' }
+if (-not $ToolHashesPath) { $ToolHashesPath = Join-Path $repoRoot 'config/tool-hashes.json' }
+if (-not $ToolsDir) { $ToolsDir = Join-Path $repoRoot 'src/tools' }
 $script:FailCount = 0
 
 function Write-CheckOk {
