@@ -53,6 +53,9 @@ La reputación de SmartScreen y la homologación en VMs Windows 10 se prueban ap
 1. Modificar fuentes/configuración. Cada herramienta declara runtime, versión
    mínima, arquitectura y bibliotecas. La base actual es Windows PowerShell 5.1 x64;
    la selección adicional de PS7 se homologa por herramienta en la fase 3.
+   Las entradas normalizan la precedencia de módulos nativos dentro del proceso
+   Desktop, también cuando se inicia desde PS7; no requieren cambiar el entorno
+   persistente del equipo.
 2. Ejecutar `pwsh -NoProfile -File ./build.ps1` y los checks de
    [tests/README.md](../tests/README.md). El build es reproducible en 5.1 y 7.
 3. Commitear juntos `get.ps1`, `launcher.ps1`, su sidecar, `config/tool-hashes.json`,

@@ -50,9 +50,10 @@ cliente corre sobre `windows-latest`.
 ## Windows PowerShell iniciado desde PowerShell 7
 
 Un proceso 5.1 puede heredar un `PSModulePath` que antepone módulos de PowerShell 7.
-Si faltan comandos nativos como `Get-FileHash`, comprobar primero el módulo cargado
-y ejecutar desde una consola nativa 5.1. No instalar una implementación alternativa
-del comando ni eliminar módulos del equipo para esconder el problema.
+El bootstrap, launcher, wrapper y runner anteponen los módulos nativos de 5.1 antes
+de cargarlos. El cambio es solo del proceso: no se eliminan módulos ni se escribe
+configuración persistente. La regresión de herencia inicia un 5.1 real con rutas
+PS7 delante, valida la entrada offline y bloquea cualquier herramienta real.
 
 ## Distribución y runtime (fase 2)
 

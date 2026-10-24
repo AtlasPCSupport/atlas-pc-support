@@ -174,6 +174,29 @@ Describe 'Complete immutable releases and recovery' {
         $output | Should -Match '27 tools verified'
         Should -Invoke Save-AtlasReleaseFile -Times 0 -Exactly
     }
+    It 'starts 5.1 with inherited PS7 module precedence and validates the real offline bundle' -Skip:($env:OS -ne 'Windows_NT') {
+        $digest=(Get-FileHash (Join-Path $script:RepoRoot 'release-manifest.json') -Algorithm SHA256).Hash.ToLowerInvariant()
+        $descriptor=[pscustomobject]@{schemaVersion=1;commit=('d'*40);manifestSha256=$digest}
+        Install-AtlasRelease -Root $script:Root -Descriptor $descriptor -SourceDirectory $script:RepoRoot -PrepareOfflineEntry | Out-Null
+        $info=[Diagnostics.ProcessStartInfo]::new()
+        $info.FileName=[IO.Path]::Combine($env:SystemRoot,'System32','WindowsPowerShell','v1.0','powershell.exe')
+        $info.Arguments='-NoProfile -ExecutionPolicy RemoteSigned -File "' + (Join-Path $script:Root 'get.ps1') + '" -OfflineRoot "' + $script:Root + '" -NoLaunch'
+        $info.UseShellExecute=$false
+        $info.CreateNoWindow=$true
+        $info.RedirectStandardOutput=$true
+        $info.RedirectStandardError=$true
+        $ps7Modules=[IO.Path]::Combine($env:ProgramFiles,'PowerShell','7','Modules')
+        $info.EnvironmentVariables['PSModulePath']=$ps7Modules + [IO.Path]::PathSeparator + $env:PSModulePath
+        $process=[Diagnostics.Process]::Start($info)
+        try {
+            if (-not $process.WaitForExit(30000)) { $process.Kill(); throw 'Native 5.1 inheritance test timed out.' }
+            $output=$process.StandardOutput.ReadToEnd()
+            $errorText=$process.StandardError.ReadToEnd()
+            $process.ExitCode | Should -Be 0 -Because $errorText
+            $output | Should -Match '27 tools verified'
+        } finally { $process.Dispose() }
+        Should -Invoke Save-AtlasReleaseFile -Times 0 -Exactly
+    }
 }
 
 Describe 'Commit-bound transport fallback' {

@@ -242,6 +242,8 @@ function Invoke-AtlasTool {
     [void]$sb.AppendLine('')
     # All child libraries come from the already verified launcher, without downloads.
     # Missing helpers must stop the tool, not downgrade the validation policy.
+    # The shared source begins with the native runtime header, before JSON autoload.
+    [void]$sb.AppendLine($script:AtlasChildLibrarySource)
     $context = @{
         AtlasVersion = $script:AtlasVersion
         AtlasRoot = $script:AtlasRoot
@@ -253,7 +255,6 @@ function Invoke-AtlasTool {
     [void]$sb.AppendLine("`$atlasContext = '" + $context.Replace("'", "''") + "' | ConvertFrom-Json")
     [void]$sb.AppendLine('foreach ($entry in $atlasContext.PSObject.Properties) { Set-Variable -Name $entry.Name -Value $entry.Value -Scope Script }')
     [void]$sb.AppendLine('$env:ATLAS_OFFLINE_ROOT = $script:AtlasOfflineRoot')
-    [void]$sb.AppendLine($script:AtlasChildLibrarySource)
     [void]$sb.AppendLine($toolSource)
     [void]$sb.AppendLine('')
     [void]$sb.AppendLine('$atlasToolExitCode = 0')

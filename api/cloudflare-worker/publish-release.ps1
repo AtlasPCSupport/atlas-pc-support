@@ -8,6 +8,7 @@
 param([Parameter(Mandatory)][ValidatePattern('^[a-f0-9]{40}$')][string]$Commit, [switch]$DryRun)
 $ErrorActionPreference = 'Stop'
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
+. (Join-Path $repoRoot 'src/bootstrap/Runtime.ps1')
 . (Join-Path $repoRoot 'src/lib/Release.ps1')
 $digest = (Get-FileHash -LiteralPath (Join-Path $repoRoot 'release-manifest.json') -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant()
 Test-AtlasRelease -Directory $repoRoot -ExpectedManifestSha256 $digest | Out-Null

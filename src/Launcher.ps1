@@ -19,6 +19,7 @@ if ($PSScriptRoot) {
 }
 
 # --- Cargar librerías base ---
+. (Join-Path $script:AtlasSrc 'bootstrap/Runtime.ps1')
 $script:AtlasDevelopmentMode = $true
 $script:AtlasVersion = 'dev'
 $dependencyJson = [IO.File]::ReadAllText((Join-Path $script:AtlasRoot 'config/dependencies.json'), [Text.Encoding]::UTF8)
@@ -34,7 +35,8 @@ $script:AtlasDependencyCatalog = $dependencyJson | ConvertFrom-Json -ErrorAction
 . (Join-Path $script:AtlasSrc 'lib\ToolRunner.ps1')
 
 # Fuente del ToolKit para que ToolRunner la inyecte en tools aisladas (modo dev).
-$script:AtlasChildLibrarySource = '$script:AtlasDependencyCatalog = ' + "'" + $dependencyJson.Replace("'", "''") + "' | ConvertFrom-Json`n"
+$script:AtlasChildLibrarySource = [IO.File]::ReadAllText((Join-Path $script:AtlasSrc 'bootstrap/Runtime.ps1'), [Text.Encoding]::UTF8) + "`n"
+$script:AtlasChildLibrarySource += '$script:AtlasDependencyCatalog = ' + "'" + $dependencyJson.Replace("'", "''") + "' | ConvertFrom-Json`n"
 foreach ($name in @('Branding','Strings','Admin','Logging','ToolKit','Dependencies','PS7','Release')) {
     $script:AtlasChildLibrarySource += [IO.File]::ReadAllText((Join-Path $script:AtlasSrc "lib/$name.ps1"), [Text.Encoding]::UTF8) + "`n"
 }

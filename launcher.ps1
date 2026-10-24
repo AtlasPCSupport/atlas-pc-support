@@ -10,6 +10,16 @@ $script:AtlasDevelopmentMode = $false
 if ($AtlasOfflineRoot) { $env:ATLAS_OFFLINE_ROOT = $AtlasOfflineRoot }
 elseif ($AtlasReleaseCommit) { $env:ATLAS_OFFLINE_ROOT = $null }
 
+# A 5.1 child of pwsh can inherit PS7 module precedence. Keep native modules first,
+# in this process only, before JSON, hashing or other module autoloading occurs.
+if ($PSVersionTable.PSEdition -eq 'Desktop') {
+    $atlasNativeModules = [IO.Path]::Combine($PSHOME, 'Modules') + [IO.Path]::PathSeparator
+    if (-not ([string]$env:PSModulePath).StartsWith($atlasNativeModules, [StringComparison]::OrdinalIgnoreCase)) {
+        $env:PSModulePath = $atlasNativeModules + $env:PSModulePath
+    }
+}
+
+
 $script:AtlasVersion = '1.1.0'
 $script:AtlasBuildDate = '2026-10-24'
 $script:AtlasToolsManifest = '{
@@ -1453,7 +1463,16 @@ $script:AtlasDependencyCatalog = '{
   }
 }
 ' | ConvertFrom-Json
-$script:AtlasChildLibrarySource = '$script:AtlasDependencyCatalog = ''{
+$script:AtlasChildLibrarySource = '# A 5.1 child of pwsh can inherit PS7 module precedence. Keep native modules first,
+# in this process only, before JSON, hashing or other module autoloading occurs.
+if ($PSVersionTable.PSEdition -eq ''Desktop'') {
+    $atlasNativeModules = [IO.Path]::Combine($PSHOME, ''Modules'') + [IO.Path]::PathSeparator
+    if (-not ([string]$env:PSModulePath).StartsWith($atlasNativeModules, [StringComparison]::OrdinalIgnoreCase)) {
+        $env:PSModulePath = $atlasNativeModules + $env:PSModulePath
+    }
+}
+
+$script:AtlasDependencyCatalog = ''{
   "CrystalDiskMark": {
     "ExecutableName": "DiskMark64.exe",
     "DisplayName": "CrystalDiskMark",
@@ -5729,6 +5748,8 @@ function Invoke-AtlasTool {
     [void]$sb.AppendLine('')
     # All child libraries come from the already verified launcher, without downloads.
     # Missing helpers must stop the tool, not downgrade the validation policy.
+    # The shared source begins with the native runtime header, before JSON autoload.
+    [void]$sb.AppendLine($script:AtlasChildLibrarySource)
     $context = @{
         AtlasVersion = $script:AtlasVersion
         AtlasRoot = $script:AtlasRoot
@@ -5740,7 +5761,6 @@ function Invoke-AtlasTool {
     [void]$sb.AppendLine("`$atlasContext = '" + $context.Replace("'", "''") + "' | ConvertFrom-Json")
     [void]$sb.AppendLine('foreach ($entry in $atlasContext.PSObject.Properties) { Set-Variable -Name $entry.Name -Value $entry.Value -Scope Script }')
     [void]$sb.AppendLine('$env:ATLAS_OFFLINE_ROOT = $script:AtlasOfflineRoot')
-    [void]$sb.AppendLine($script:AtlasChildLibrarySource)
     [void]$sb.AppendLine($toolSource)
     [void]$sb.AppendLine('')
     [void]$sb.AppendLine('$atlasToolExitCode = 0')

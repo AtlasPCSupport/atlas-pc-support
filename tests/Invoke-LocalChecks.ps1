@@ -12,6 +12,7 @@ param([switch]$IncludeKnownIssues)
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
+. (Join-Path $repoRoot 'src/bootstrap/Runtime.ps1')
 $engine = (Get-Process -Id $PID).Path
 if ($env:OS -eq 'Windows_NT' -and [Threading.Thread]::CurrentThread.GetApartmentState() -ne 'STA') {
     throw 'Run this script with -STA for the WPF smoke tests.'

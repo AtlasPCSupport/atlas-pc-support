@@ -20,6 +20,7 @@ $version = '1.1.0'
 $buildDate = '2026-10-24' # Release metadata, deliberately reproducible across hosts.
 $manifest = Get-EmbeddedContent (Join-Path $PSScriptRoot 'config/tools.json')
 $dependencies = Get-EmbeddedContent (Join-Path $PSScriptRoot 'config/dependencies.json')
+$runtimeHeader = Get-EmbeddedContent (Join-Path $PSScriptRoot 'src/bootstrap/Runtime.ps1')
 $xaml = Get-EmbeddedContent (Join-Path $PSScriptRoot 'src/gui/MainWindow.xaml')
 $toolHashes = [ordered]@{}
 $tools = @((ConvertFrom-Json $manifest -ErrorAction Stop).tools)
@@ -42,10 +43,10 @@ $toolHashesJson = ([ordered]@{ generatedAt=$buildDate; algorithm='SHA256'; files
 $sharedLibraries = @('Branding','Strings','Admin','Logging','ToolKit','Dependencies','PS7','Release')
 $catalogAssignment = '$script:AtlasDependencyCatalog = ' + (ConvertTo-PowerShellLiteral $dependencies) + ' | ConvertFrom-Json'
 $libraryText = @($sharedLibraries | ForEach-Object { "# ---- lib/$_ ----`n" + (Get-EmbeddedContent (Join-Path $PSScriptRoot "src/lib/$_.ps1")) }) -join "`n`n"
-$childSource = $catalogAssignment + "`n" + $libraryText
+$childSource = $runtimeHeader + "`n" + $catalogAssignment + "`n" + $libraryText
 $runner = Get-EmbeddedContent (Join-Path $PSScriptRoot 'src/lib/ToolRunner.ps1')
 $gui = Get-EmbeddedContent (Join-Path $PSScriptRoot 'src/gui/MainWindow.ps1')
-$bootstrap = @('#Requires -Version 5.1', '[CmdletBinding()]', 'param([string]$OfflineRoot, [string]$InstallRoot, [switch]$Rollback, [switch]$NoLaunch)', '', (Get-EmbeddedContent (Join-Path $PSScriptRoot 'src/lib/Release.ps1')), (Get-EmbeddedContent (Join-Path $PSScriptRoot 'src/bootstrap/Entry.ps1'))) -join "`n"
+$bootstrap = @('#Requires -Version 5.1', '[CmdletBinding()]', 'param([string]$OfflineRoot, [string]$InstallRoot, [switch]$Rollback, [switch]$NoLaunch)', '', $runtimeHeader, (Get-EmbeddedContent (Join-Path $PSScriptRoot 'src/lib/Release.ps1')), (Get-EmbeddedContent (Join-Path $PSScriptRoot 'src/bootstrap/Entry.ps1'))) -join "`n"
 [IO.File]::WriteAllText((Join-Path $PSScriptRoot 'get.ps1'), $bootstrap, $utf8)
 $header = @'
 #Requires -Version 5.1
@@ -92,7 +93,7 @@ Write-AtlasLog "Atlas $script:AtlasVersion, commit $script:AtlasReleaseCommit, l
 $tools = @((ConvertFrom-AtlasJson $script:AtlasToolsManifest).tools)
 Show-AtlasWindow -Branding $branding -Tools $tools -XamlTemplate $script:AtlasXamlTemplate
 '@
-$output = (@($header, ($data -join "`n"), $libraryText, $runner, $gui, $epilog) -join "`n`n").Replace("`r`n", "`n")
+$output = (@($header, $runtimeHeader, ($data -join "`n"), $libraryText, $runner, $gui, $epilog) -join "`n`n").Replace("`r`n", "`n")
 # The bootstrap is plain UTF-8 for irm|iex; the file-only launcher has a BOM for PS 5.1.
 [IO.File]::WriteAllText($OutFile, $output, [Text.UTF8Encoding]::new($true))
 $launcherHash = (Get-FileHash -LiteralPath $OutFile -Algorithm SHA256).Hash.ToLowerInvariant()
