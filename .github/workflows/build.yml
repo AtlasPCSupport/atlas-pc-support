@@ -10,6 +10,9 @@ on:
       - 'get.ps1'
       - 'launcher.ps1'
       - 'launcher.ps1.sha256'
+      - 'release-manifest.json'
+      - 'onboarding/**'
+      - 'api/cloudflare-worker/**'
       - 'tests/**'
       - 'PSScriptAnalyzerSettings.psd1'
       - '.github/workflows/**'
@@ -101,14 +104,23 @@ jobs:
           Install-Module Pester -Scope CurrentUser -Force -RequiredVersion 5.8.0 -ErrorAction Stop
           Remove-Module Pester -Force -ErrorAction SilentlyContinue
           Import-Module Pester -RequiredVersion 5.8.0 -Force
-          Invoke-Pester -Path ./tests/Lib.Tests.ps1,./tests/Platform.Tests.ps1,./tests/Accounts.Tests.ps1,./tests/Installers.Tests.ps1,./tests/BitLocker.Tests.ps1,./tests/Execution.Tests.ps1 -Output Detailed -CI
+          Invoke-Pester -Path ./tests/Lib.Tests.ps1,./tests/Platform.Tests.ps1,./tests/Accounts.Tests.ps1,./tests/Installers.Tests.ps1,./tests/BitLocker.Tests.ps1,./tests/Execution.Tests.ps1,./tests/Release.Tests.ps1 -Output Detailed -CI
 
-      - name: Upload built launcher
+      - name: Upload complete verified release
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
-          name: launcher
-          path: launcher.ps1
+          name: atlas-release
+          path: |
+            get.ps1
+            launcher.ps1
+            launcher.ps1.sha256
+            release-manifest.json
+            config/tools.json
+            config/dependencies.json
+            config/tool-hashes.json
+            src/tools/Invoke-*.ps1
+            onboarding/install.bat
 
   windows-compat:
     runs-on: windows-latest
@@ -126,3 +138,22 @@ jobs:
         shell: powershell
         run: |
           .\tests\Invoke-LocalChecks.ps1
+
+  worker:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api/cloudflare-worker
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: api/cloudflare-worker/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm audit --audit-level=moderate
+      - run: npx wrangler deploy --dry-run --outdir .wrangler/dry-run

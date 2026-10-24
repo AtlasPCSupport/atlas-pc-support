@@ -10,6 +10,8 @@
 *.yaml text eol=lf
 *.md   text eol=lf
 *.sha256 text eol=lf
+*.js text eol=lf
+*.toml text eol=lf
 
 # Keep launcher blob byte-stable (hash validation is byte-exact at runtime).
 launcher.ps1 -text

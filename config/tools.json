@@ -10,7 +10,18 @@
       "source": "Invoke-Fase0.ps1",
       "requiresAdmin": true,
       "runsInNewWindow": true,
-      "dependencies": []
+      "dependencies": [],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     },
     {
       "id": "parts-upgrade",
@@ -21,7 +32,18 @@
       "source": "Invoke-PartsUpgrade.ps1",
       "requiresAdmin": false,
       "runsInNewWindow": true,
-      "dependencies": []
+      "dependencies": [],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     },
     {
       "id": "diagnostico-master",
@@ -32,7 +54,25 @@
       "source": "Invoke-DiagnosticoMaster.ps1",
       "requiresAdmin": true,
       "runsInNewWindow": true,
-      "dependencies": ["CPUZ", "BlueScreenView", "BatteryInfoView", "CrystalDiskInfo", "CrystalDiskMark", "HWiNFO"]
+      "dependencies": [
+        "CPUZ",
+        "BlueScreenView",
+        "BatteryInfoView",
+        "CrystalDiskInfo",
+        "CrystalDiskMark",
+        "HWiNFO"
+      ],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     },
     {
       "id": "diagnostico-eventos",
@@ -43,7 +83,18 @@
       "source": "Invoke-DiagnosticoEventos.ps1",
       "requiresAdmin": false,
       "runsInNewWindow": true,
-      "dependencies": []
+      "dependencies": [],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     },
     {
       "id": "printer-doctor",
@@ -54,7 +105,18 @@
       "source": "Invoke-PrinterDoctor.ps1",
       "requiresAdmin": false,
       "runsInNewWindow": true,
-      "dependencies": []
+      "dependencies": [],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     },
     {
       "id": "keyboard-doctor",
@@ -65,7 +127,18 @@
       "source": "Invoke-KeyboardDoctor.ps1",
       "requiresAdmin": false,
       "runsInNewWindow": true,
-      "dependencies": []
+      "dependencies": [],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     },
     {
       "id": "ai-readiness",
@@ -76,7 +149,18 @@
       "source": "Invoke-AIReadiness.ps1",
       "requiresAdmin": false,
       "runsInNewWindow": true,
-      "dependencies": []
+      "dependencies": [],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     },
     {
       "id": "gpu-check",
@@ -87,7 +171,22 @@
       "source": "Invoke-GPUCheck.ps1",
       "requiresAdmin": true,
       "runsInNewWindow": true,
-      "dependencies": ["GPUZ", "FurMark2", "HWiNFO"]
+      "dependencies": [
+        "GPUZ",
+        "FurMark2",
+        "HWiNFO"
+      ],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     },
     {
       "id": "mantenimiento-pro",
@@ -98,7 +197,18 @@
       "source": "Invoke-MantenimientoPRO.ps1",
       "requiresAdmin": true,
       "runsInNewWindow": true,
-      "dependencies": []
+      "dependencies": [],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     },
     {
       "id": "instalar-paquetes",
@@ -109,7 +219,18 @@
       "source": "Invoke-InstalarPaquetes.ps1",
       "requiresAdmin": true,
       "runsInNewWindow": true,
-      "dependencies": []
+      "dependencies": [],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     },
     {
       "id": "instalar-ms-store",
@@ -120,7 +241,18 @@
       "source": "Invoke-InstalarMicrosoftStore.ps1",
       "requiresAdmin": true,
       "runsInNewWindow": true,
-      "dependencies": []
+      "dependencies": [],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     },
     {
       "id": "instalar-runtimes",
@@ -131,7 +263,18 @@
       "source": "Invoke-InstalarRuntimes.ps1",
       "requiresAdmin": true,
       "runsInNewWindow": true,
-      "dependencies": []
+      "dependencies": [],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     },
     {
       "id": "actualizar-powershell",
@@ -142,7 +285,18 @@
       "source": "Invoke-ActualizarPowerShell.ps1",
       "requiresAdmin": true,
       "runsInNewWindow": true,
-      "dependencies": []
+      "dependencies": [],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     },
     {
       "id": "mod-personalizacion",
@@ -153,7 +307,18 @@
       "source": "Invoke-Personalizacion.ps1",
       "requiresAdmin": false,
       "runsInNewWindow": true,
-      "dependencies": []
+      "dependencies": [],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     },
     {
       "id": "stop-services",
@@ -164,7 +329,18 @@
       "source": "Invoke-StopServices.ps1",
       "requiresAdmin": true,
       "runsInNewWindow": true,
-      "dependencies": []
+      "dependencies": [],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     },
     {
       "id": "fastcopy",
@@ -177,7 +353,18 @@
       "runsInNewWindow": true,
       "dependencies": [
         "FastCopy"
-      ]
+      ],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     },
     {
       "id": "preparar-usb",
@@ -188,7 +375,18 @@
       "source": "Invoke-PrepararUSB.ps1",
       "requiresAdmin": false,
       "runsInNewWindow": true,
-      "dependencies": []
+      "dependencies": [],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     },
     {
       "id": "respaldo-controladores",
@@ -199,7 +397,18 @@
       "source": "Invoke-RespaldoControladores.ps1",
       "requiresAdmin": true,
       "runsInNewWindow": true,
-      "dependencies": []
+      "dependencies": [],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     },
     {
       "id": "robocopy",
@@ -210,7 +419,18 @@
       "source": "Invoke-Robocopy.ps1",
       "requiresAdmin": false,
       "runsInNewWindow": true,
-      "dependencies": []
+      "dependencies": [],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     },
     {
       "id": "selector-dns",
@@ -221,7 +441,18 @@
       "source": "Invoke-SelectorDNS.ps1",
       "requiresAdmin": true,
       "runsInNewWindow": true,
-      "dependencies": []
+      "dependencies": [],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     },
     {
       "id": "hosts",
@@ -232,7 +463,18 @@
       "source": "Invoke-HostsManager.ps1",
       "requiresAdmin": true,
       "runsInNewWindow": true,
-      "dependencies": []
+      "dependencies": [],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     },
     {
       "id": "auditoria-router",
@@ -243,7 +485,18 @@
       "source": "Invoke-AuditoriaRouter.ps1",
       "requiresAdmin": true,
       "runsInNewWindow": true,
-      "dependencies": []
+      "dependencies": [],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     },
     {
       "id": "gestor-bitlocker",
@@ -254,7 +507,18 @@
       "source": "Invoke-GestorBitLocker.ps1",
       "requiresAdmin": true,
       "runsInNewWindow": true,
-      "dependencies": []
+      "dependencies": [],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     },
     {
       "id": "menor-privilegio",
@@ -265,7 +529,18 @@
       "source": "Invoke-MenorPrivilegio.ps1",
       "requiresAdmin": true,
       "runsInNewWindow": true,
-      "dependencies": []
+      "dependencies": [],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     },
     {
       "id": "extraer-licencias",
@@ -276,7 +551,18 @@
       "source": "Invoke-ExtraerLicencias.ps1",
       "requiresAdmin": true,
       "runsInNewWindow": true,
-      "dependencies": []
+      "dependencies": [],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     },
     {
       "id": "deduplicador",
@@ -287,7 +573,18 @@
       "source": "Invoke-Deduplicador.ps1",
       "requiresAdmin": false,
       "runsInNewWindow": true,
-      "dependencies": []
+      "dependencies": [],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     },
     {
       "id": "entrega-pc",
@@ -298,7 +595,18 @@
       "source": "Invoke-EntregaPC.ps1",
       "requiresAdmin": true,
       "runsInNewWindow": true,
-      "dependencies": []
+      "dependencies": [],
+      "runtime": {
+        "engine": "windows-powershell",
+        "minimumVersion": "5.1",
+        "architecture": "x64",
+        "libraries": [
+          "ToolKit",
+          "Dependencies",
+          "PS7",
+          "Release"
+        ]
+      }
     }
   ]
 }

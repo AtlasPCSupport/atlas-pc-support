@@ -1,296 +1,112 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  Compila el launcher distribuible `launcher.ps1` (raíz del repo) a partir
-  de los módulos en src/. Embebe: lib, gui, manifiesto y XAML.
-  Las tools (Invoke-*.ps1) NO se embeben — se descargan bajo demanda.
-
-.DESCRIPTION
-  Ejecuta este script con:
-      pwsh -File build.ps1
+    Reproducibly builds the complete Atlas distribution. Commit all outputs together.
 #>
 [CmdletBinding()]
-param(
-    [string]$OutFile = (Join-Path $PSScriptRoot 'launcher.ps1')
-)
-
+param([string]$OutFile = (Join-Path $PSScriptRoot 'launcher.ps1'))
 $ErrorActionPreference = 'Stop'
-
-$src = Join-Path $PSScriptRoot 'src'
-if (-not (Test-Path $src)) { throw "No existe $src" }
-$utf8NoBom = [System.Text.UTF8Encoding]::new($false)
-
+. (Join-Path $PSScriptRoot 'src/lib/Release.ps1')
+$utf8 = [Text.UTF8Encoding]::new($false)
 function Get-EmbeddedContent {
     param([string]$Path)
-    $content = [System.IO.File]::ReadAllText($Path, [System.Text.Encoding]::UTF8)
-    # Normaliza saltos de línea
-    return $content -replace "`r`n", "`n"
+    return [IO.File]::ReadAllText($Path, [Text.Encoding]::UTF8).Replace("`r`n", "`n").Replace("`r", "`n")
 }
-
-function Get-AtlasNormalizedTextSha256 {
-    [CmdletBinding()]
-    param([Parameter(Mandatory)][string]$Path)
-
-    # Canonical UTF-8 + LF hash to avoid CRLF/LF drift across environments.
-    $text = [System.IO.File]::ReadAllText($Path, [System.Text.Encoding]::UTF8)
-    $normalized = ($text -replace "`r`n", "`n") -replace "`r", "`n"
-    $bytes = [System.Text.UTF8Encoding]::new($false).GetBytes($normalized)
-    $sha = [System.Security.Cryptography.SHA256]::Create()
-    try {
-        $hashBytes = $sha.ComputeHash($bytes)
-        return ([System.BitConverter]::ToString($hashBytes) -replace '-', '').ToLowerInvariant()
-    } finally {
-        $sha.Dispose()
-    }
+function ConvertTo-PowerShellLiteral {
+    param([string]$Text)
+    return "'" + $Text.Replace("'", "''") + "'"
 }
-
-$version      = '1.0.0'
-$buildDate    = (Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
-$manifest     = Get-EmbeddedContent (Join-Path $PSScriptRoot 'config\tools.json')
-$xamlTemplate = Get-EmbeddedContent (Join-Path $src 'gui\MainWindow.xaml')
-$toolkitSource = Get-EmbeddedContent (Join-Path $src 'lib\ToolKit.ps1')
-$toolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/src/tools'
-
-# Mapa de hashes SHA-256 de herramientas (integridad en ToolRunner).
-$toolHashMap = [ordered]@{}
-Get-ChildItem -Path (Join-Path $src 'tools') -Filter 'Invoke-*.ps1' -File |
-    Sort-Object -Property { $_.Name.ToLowerInvariant() } |
-    ForEach-Object {
-        $toolHashMap[$_.Name] = Get-AtlasNormalizedTextSha256 -Path $_.FullName
-    }
-
-# Validaciones de coherencia: manifest <-> source files <-> hash map.
-try {
-    $manifestBuildObj = $manifest | ConvertFrom-Json -ErrorAction Stop
-} catch {
-    throw "config/tools.json invalido: $($_.Exception.Message)"
+$version = '1.1.0'
+$buildDate = '2026-10-24' # Release metadata, deliberately reproducible across hosts.
+$manifest = Get-EmbeddedContent (Join-Path $PSScriptRoot 'config/tools.json')
+$dependencies = Get-EmbeddedContent (Join-Path $PSScriptRoot 'config/dependencies.json')
+$runtimeHeader = Get-EmbeddedContent (Join-Path $PSScriptRoot 'src/bootstrap/Runtime.ps1')
+$xaml = Get-EmbeddedContent (Join-Path $PSScriptRoot 'src/gui/MainWindow.xaml')
+$toolHashes = [ordered]@{}
+$tools = @((ConvertFrom-Json $manifest -ErrorAction Stop).tools)
+$seen = @{}
+foreach ($tool in $tools) {
+    if (-not $tool.id -or [string]$tool.source -cnotmatch '^Invoke-[A-Za-z0-9-]+\.ps1$' -or $tool.function -cne [IO.Path]::GetFileNameWithoutExtension($tool.source) -or $seen.ContainsKey($tool.source)) { throw 'Invalid or duplicated tool manifest entry.' }
+    if ($tool.runtime.engine -notin @('windows-powershell', 'pwsh') -or $tool.runtime.architecture -ne 'x64' -or -not $tool.runtime.minimumVersion) { throw "Missing execution contract: $($tool.id)" }
+    $seen[$tool.source] = $true
 }
-$manifestTools = @($manifestBuildObj.tools)
-if ($manifestTools.Count -eq 0) {
-    throw "config/tools.json no contiene tools."
+$sources = @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'src/tools') -Filter 'Invoke-*.ps1' -File)
+if ($sources.Count -ne $tools.Count) { throw 'Tool manifest and source counts differ.' }
+$sourceNames = [string[]]@($sources.Name)
+[Array]::Sort($sourceNames, [StringComparer]::Ordinal)
+foreach ($name in $sourceNames) {
+    if (-not $seen.ContainsKey($name)) { throw "Unlisted tool source: $name" }
+    $toolHashes[$name] = Get-AtlasTextHash (Get-EmbeddedContent (Join-Path $PSScriptRoot "src/tools/$name"))
 }
-
-$manifestSourceMap = @{}
-foreach ($tool in $manifestTools) {
-    $toolId = [string]$tool.id
-    $toolSource = [string]$tool.source
-    $toolFunction = [string]$tool.function
-    if (-not $toolId) { throw "Tool sin 'id' en config/tools.json." }
-    if (-not $toolSource) { throw "Tool '$toolId' sin 'source' en config/tools.json." }
-    if (-not $toolFunction) { throw "Tool '$toolId' sin 'function' en config/tools.json." }
-    if ($manifestSourceMap.ContainsKey($toolSource)) {
-        throw "Source duplicado en manifest: $toolSource"
-    }
-    $manifestSourceMap[$toolSource] = $toolId
-
-    $expectedFunction = [System.IO.Path]::GetFileNameWithoutExtension($toolSource)
-    if ($toolFunction -ne $expectedFunction) {
-        throw "Tool '$toolId': function '$toolFunction' debe coincidir con '$expectedFunction'."
-    }
-
-    $toolSourcePath = Join-Path $src "tools\$toolSource"
-    if (-not (Test-Path -LiteralPath $toolSourcePath)) {
-        throw "Tool '$toolId' apunta a source inexistente: $toolSource"
-    }
-}
-
-foreach ($toolSource in $manifestSourceMap.Keys) {
-    if (-not $toolHashMap.Contains($toolSource)) {
-        throw "Falta hash para tool en manifest: $toolSource"
-    }
-}
-foreach ($toolFileName in $toolHashMap.Keys) {
-    if (-not $manifestSourceMap.ContainsKey([string]$toolFileName)) {
-        Write-Warning "Tool source sin entrada en manifest: $toolFileName"
-    }
-}
-
-$toolHashEnvelope = [ordered]@{
-    generatedAt = (Get-Date).ToString('o')
-    algorithm   = 'SHA256'
-    files       = $toolHashMap
-}
-$toolHashesJson = ($toolHashEnvelope | ConvertTo-Json -Depth 6)
-
-$libFiles = @(
-    'lib\Branding.ps1'
-    'lib\Strings.ps1'
-    'lib\Admin.ps1'
-    'lib\Logging.ps1'
-    'lib\ToolKit.ps1'
-    'lib\Dependencies.ps1'
-    'lib\PS7.ps1'
-    'lib\ToolRunner.ps1'
-)
-$libContent = foreach ($f in $libFiles) {
-    $path = Join-Path $src $f
-    "# ---- $f ----`n" + (Get-EmbeddedContent $path)
-}
-$libContent = $libContent -join "`n`n"
-
-$guiContent = Get-EmbeddedContent (Join-Path $src 'gui\MainWindow.ps1')
-
-
-$banner = (@"
-# ============================================================
-#  Atlas PC Support - launcher.ps1 (compilado)
-#  Version: $version
-#  Build:   $buildDate
-#  Repo:    https://github.com/mikepchelper-spec/atlas-pc-support
-#
-#  Uso:
-#      Save get.ps1 locally and run: pwsh -ExecutionPolicy Bypass -File get.ps1
-#
-#  Este archivo es AUTOGENERADO por build.ps1. NO lo edites a mano.
-#  Las fuentes estan en src/.
-# ============================================================
-"@) -replace "`r`n", "`n"
-
-$epilog = @'
-
-# ============================================================
-#  BOOTSTRAP
-# ============================================================
-
+$toolHashesJson = ([ordered]@{ generatedAt=$buildDate; algorithm='SHA256'; files=$toolHashes } | ConvertTo-Json -Depth 8 -Compress).Replace("`r`n", "`n")
+[IO.File]::WriteAllText((Join-Path $PSScriptRoot 'config/tool-hashes.json'), $toolHashesJson, $utf8)
+$sharedLibraries = @('Branding','Strings','Admin','Logging','ToolKit','Dependencies','PS7','Release')
+$catalogAssignment = '$script:AtlasDependencyCatalog = ' + (ConvertTo-PowerShellLiteral $dependencies) + ' | ConvertFrom-Json'
+$libraryText = @($sharedLibraries | ForEach-Object { "# ---- lib/$_ ----`n" + (Get-EmbeddedContent (Join-Path $PSScriptRoot "src/lib/$_.ps1")) }) -join "`n`n"
+$childSource = $runtimeHeader + "`n" + $catalogAssignment + "`n" + $libraryText
+$runner = Get-EmbeddedContent (Join-Path $PSScriptRoot 'src/lib/ToolRunner.ps1')
+$gui = Get-EmbeddedContent (Join-Path $PSScriptRoot 'src/gui/MainWindow.ps1')
+$bootstrap = @('#Requires -Version 5.1', '[CmdletBinding()]', 'param([string]$OfflineRoot, [string]$InstallRoot, [switch]$Rollback, [switch]$NoLaunch)', '', $runtimeHeader, (Get-EmbeddedContent (Join-Path $PSScriptRoot 'src/lib/Release.ps1')), (Get-EmbeddedContent (Join-Path $PSScriptRoot 'src/bootstrap/Entry.ps1'))) -join "`n"
+[IO.File]::WriteAllText((Join-Path $PSScriptRoot 'get.ps1'), $bootstrap, $utf8)
+$header = @'
+#Requires -Version 5.1
+# Atlas PC Support. Generated by build.ps1; use the published get.ps1 entry.
+[CmdletBinding()]
+param([string]$AtlasReleaseCommit, [string]$AtlasManifestSha256, [string]$AtlasOfflineRoot)
 $ErrorActionPreference = 'Stop'
-
+$script:AtlasRoot = $PSScriptRoot
+$script:AtlasReleaseCommit = $AtlasReleaseCommit
+$script:AtlasManifestSha256 = $AtlasManifestSha256
+$script:AtlasDevelopmentMode = $false
+if ($AtlasOfflineRoot) { $env:ATLAS_OFFLINE_ROOT = $AtlasOfflineRoot }
+elseif ($AtlasReleaseCommit) { $env:ATLAS_OFFLINE_ROOT = $null }
+'@
+$data = @(
+    ('$script:AtlasVersion = ' + (ConvertTo-PowerShellLiteral $version))
+    ('$script:AtlasBuildDate = ' + (ConvertTo-PowerShellLiteral $buildDate))
+    ('$script:AtlasToolsManifest = ' + (ConvertTo-PowerShellLiteral $manifest))
+    ('$script:AtlasToolHashesJson = ' + (ConvertTo-PowerShellLiteral $toolHashesJson))
+    ('$script:AtlasXamlTemplate = ' + (ConvertTo-PowerShellLiteral $xaml))
+    $catalogAssignment
+    ('$script:AtlasChildLibrarySource = ' + (ConvertTo-PowerShellLiteral $childSource))
+)
+$epilog = @'
+# Legacy get.ps1 invokes launcher.ps1 without release parameters. Acquire the
+# approved complete bundle instead of running an unbound launcher or mixing tools.
+if (-not $script:AtlasReleaseCommit -and -not $script:AtlasManifestSha256) {
+    $descriptor = Get-AtlasPublishedRelease
+    $release = Install-AtlasRelease -Root (Join-Path $env:LOCALAPPDATA 'AtlasPC') -Descriptor $descriptor
+    Start-AtlasRelease -Release $release -OfflineAssetsRoot $env:ATLAS_OFFLINE_ROOT
+    return
+}
+Assert-AtlasReleaseDescriptor ([pscustomobject]@{ schemaVersion=1; commit=$script:AtlasReleaseCommit; manifestSha256=$script:AtlasManifestSha256 })
+Test-AtlasRelease -Directory $script:AtlasRoot -ExpectedManifestSha256 $script:AtlasManifestSha256 | Out-Null
+$script:AtlasToolHashes = (ConvertFrom-AtlasJson $script:AtlasToolHashesJson).files
+if ($script:AtlasToolHashes.Count -eq 0) { throw 'Release tool hashes are unavailable.' }
 $branding = Get-AtlasBranding
-# Preferencia guardada por el usuario (selector de idioma) manda sobre branding / auto-detect.
 $savedLang = Get-AtlasLanguagePref
-if ($savedLang) {
-    $currentLang = Set-AtlasLanguage $savedLang
-} else {
-    $currentLang = Set-AtlasLanguage $branding.language
-}
+if ($savedLang) { $currentLang = Set-AtlasLanguage $savedLang }
+else { $currentLang = Set-AtlasLanguage $branding.language }
 Initialize-AtlasLog | Out-Null
-Write-AtlasLog "Atlas PC Support iniciado (launcher compilado v$script:AtlasVersion, lang=$currentLang, savedPref=$savedLang)"
-
-# Detectar PS 7 y cachear la ruta (ToolRunner lo usa para lanzar tools en pwsh).
-$ps7 = Initialize-AtlasPS7
-if ($ps7) {
-    Write-AtlasLog "PowerShell 7 disponible: $ps7"
-} else {
-    Write-AtlasLog "PowerShell 7 NO instalado; tools correran en Windows PowerShell 5.1. Usar la tool 'Actualizar PowerShell'."
-}
-
-try {
-    $toolHashesObj = ConvertFrom-AtlasJson $script:AtlasToolHashesJson
-    if ($toolHashesObj.files -is [hashtable]) {
-        $script:AtlasToolHashes = $toolHashesObj.files
-        Write-AtlasLog "Hashes embebidos cargados: $($script:AtlasToolHashes.Count)" -Tool 'Launcher'
-    } else {
-        $script:AtlasToolHashes = @{}
-        Write-AtlasLog "Hash map embebido invalido; continuando sin validacion fuerte." -Level WARN -Tool 'Launcher'
-    }
-} catch {
-    $script:AtlasToolHashes = @{}
-    Write-AtlasLog "No se pudo parsear hash map embebido: $_" -Level WARN -Tool 'Launcher'
-}
-
-try {
-    $manifestObj = ConvertFrom-AtlasJson $script:AtlasToolsManifest
-    $tools = @($manifestObj.tools)
-} catch {
-    throw "No se pudo parsear el manifiesto embebido: $_"
-}
-
+Initialize-AtlasPS7 | Out-Null
+Write-AtlasLog "Atlas $script:AtlasVersion, commit $script:AtlasReleaseCommit, language $currentLang"
+$tools = @((ConvertFrom-AtlasJson $script:AtlasToolsManifest).tools)
 Show-AtlasWindow -Branding $branding -Tools $tools -XamlTemplate $script:AtlasXamlTemplate
 '@
-$epilog = $epilog -replace "`r`n", "`n"
-
-$manifestEscaped = $manifest.Replace("'", "''")
-$xamlEscaped     = $xamlTemplate.Replace("'", "''")
-$toolHashesEscaped = $toolHashesJson.Replace("'", "''")
-$toolkitEscaped  = $toolkitSource
-
-$embeddedData = (@"
-
-# ============================================================
-#  DATOS EMBEBIDOS
-# ============================================================
-
-`$script:AtlasVersion = '$version'
-`$script:AtlasBuildDate = '$buildDate'
-`$script:AtlasToolsBaseUrl = '$toolsBaseUrl'
-
-`$script:AtlasToolsManifest = @'
-$manifestEscaped
-'@
-
-`$script:AtlasToolHashesJson = @'
-$toolHashesEscaped
-'@
-
-`$script:AtlasXamlTemplate = @'
-$xamlEscaped
-'@
-
-`$script:AtlasToolKitSource = @'
-$toolkitEscaped
-'@
-"@) -replace "`r`n", "`n"
-
-$output = @(
-    $banner
-    ""
-    "#Requires -Version 5.1"
-    ""
-    $embeddedData
-    ""
-    "# ============================================================"
-    "#  LIBRERIAS (lib/)"
-    "# ============================================================"
-    ""
-    $libContent
-    ""
-    "# ============================================================"
-    "#  GUI"
-    "# ============================================================"
-    ""
-    $guiContent
-    ""
-    $epilog
-) -join "`n"
-
-# Write UTF-8 WITHOUT BOM.
-#
-# Two competing requirements:
-#   (a) Windows PowerShell 5.1 reads BOM-less .ps1 files as ANSI/CP1252,
-#       which mojibakes accents/emojis if the launcher is loaded by file
-#       path (e.g. via run.bat → run-launcher.ps1 → launcher.ps1).
-#   (b) PS 5.1's `irm <url> | iex` keeps the UTF-8 BOM as a literal U+FEFF
-#       at the start of the string, which the PS 5.1 parser then chokes on
-#       with: "The term '﻿#' is not recognized as a name of a cmdlet ...".
-#
-# We chose path (b) wins: file in the repo / on raw.githubusercontent.com
-# stays BOM-less so `irm | iex` works for everyone. The offline USB path
-# already has self-healing BOM repair in bootstrap.ps1 (PR #53), so when
-# BOM-less variant on both Windows and Linux pwsh.
-[System.IO.File]::WriteAllText($OutFile, $output, $utf8NoBom)
-
-# Persistir hash map de tools para launcher DEV / tests.
-$toolHashesPath = Join-Path $PSScriptRoot 'config\tool-hashes.json'
-[System.IO.File]::WriteAllText($toolHashesPath, $toolHashesJson, $utf8NoBom)
-
-# Sidecar de integridad del launcher distribuible (consumido por get.ps1).
+$output = (@($header, $runtimeHeader, ($data -join "`n"), $libraryText, $runner, $gui, $epilog) -join "`n`n").Replace("`r`n", "`n")
+# The bootstrap is plain UTF-8 for irm|iex; the file-only launcher has a BOM for PS 5.1.
+[IO.File]::WriteAllText($OutFile, $output, [Text.UTF8Encoding]::new($true))
 $launcherHash = (Get-FileHash -LiteralPath $OutFile -Algorithm SHA256).Hash.ToLowerInvariant()
-$toolHashesFileSha = (Get-FileHash -LiteralPath $toolHashesPath -Algorithm SHA256).Hash.ToLowerInvariant()
-$launcherName = Split-Path -Leaf $OutFile
-$launcherShaPath = "$OutFile.sha256"
-[System.IO.File]::WriteAllText(
-    $launcherShaPath,
-    ("{0}  {1}{2}" -f $launcherHash, $launcherName, [Environment]::NewLine),
-    $utf8NoBom
-)
-
-Write-Host ""
-Write-Host "  Atlas PC Support - build completado" -ForegroundColor Green
-Write-Host "  Archivo: $OutFile" -ForegroundColor Gray
-$fi = Get-Item $OutFile
-Write-Host ("  Tamano:  {0} KB ({1} MB)" -f [math]::Round($fi.Length / 1KB, 1), [math]::Round($fi.Length / 1MB, 2)) -ForegroundColor Gray
-Write-Host "  Build:   $buildDate" -ForegroundColor Gray
-Write-Host "  Hash:    $launcherHash" -ForegroundColor Gray
-Write-Host "  Hashes:  $toolHashesFileSha  (config/tool-hashes.json)" -ForegroundColor Gray
-Write-Host "  SHA256:  $launcherShaPath" -ForegroundColor Gray
-Write-Host "  Tools:   $toolHashesPath" -ForegroundColor Gray
-Write-Host ""
+[IO.File]::WriteAllText("$OutFile.sha256", "$launcherHash  launcher.ps1`n", $utf8)
+$files = [ordered]@{}
+foreach ($name in @('get.ps1','launcher.ps1','config/tools.json','config/dependencies.json','config/tool-hashes.json','onboarding/install.bat')) {
+    $path = if ($name -eq 'launcher.ps1') { $OutFile } else { Join-Path $PSScriptRoot $name }
+    $files[$name] = Get-AtlasTextHash (Get-EmbeddedContent $path)
+}
+foreach ($name in $toolHashes.Keys) { $files["src/tools/$name"] = $toolHashes[$name] }
+$releaseManifest = ([ordered]@{ schemaVersion=1; version=$version; algorithm='SHA256-UTF8-LF'; files=$files } | ConvertTo-Json -Depth 8 -Compress).Replace("`r`n", "`n") + "`n"
+$releasePath = Join-Path $PSScriptRoot 'release-manifest.json'
+[IO.File]::WriteAllText($releasePath, $releaseManifest, $utf8)
+$digest = (Get-FileHash -LiteralPath $releasePath -Algorithm SHA256).Hash.ToLowerInvariant()
+Test-AtlasRelease -Directory $PSScriptRoot -ExpectedManifestSha256 $digest | Out-Null
+Write-Host "Atlas $version built reproducibly; $($tools.Count) tools; manifest SHA256 $digest" -ForegroundColor Green

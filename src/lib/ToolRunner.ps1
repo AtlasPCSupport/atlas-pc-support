@@ -2,30 +2,11 @@
 # Atlas PC Support - Tool runner
 # Ejecuta una herramienta en una nueva ventana de PowerShell.
 #
-# Orden de origen:
-#   0. Source local (dev checkout): src\tools\ si existe junto al repo
-#   1. USB offline: deps\tools\ junto al launcher
-#   2. Cache local: %LOCALAPPDATA%\AtlasPC\tools\
-#   3. Descarga remota: $script:AtlasToolsBaseUrl
-#
-# Seguridad:
-#   - Valida SHA-256 de cada tool contra $script:AtlasToolHashes.
-#   - Fail-closed para usb/cache/download cuando no hay hash esperado.
-#   - Fail-open solo para local-src (modo desarrollo).
-#   - Descargas se escriben primero a .download y luego se mueven atomicamente.
-#   - Nunca usa EncodedCommand (reduce heuristicas AV).
-#
-# Estabilidad:
-#   - Limpia wrappers temporales antiguos en %LOCALAPPDATA%\AtlasPC\secure-run.
-#   - Cache con refresco por antiguedad para evitar "version congelada".
-# ============================================================
+# Distribution uses only the verified release directory. No mutable cache or
+# hot hash refresh. Explicit development mode permits a source checkout.
+# Child wrappers include the declared runtime context and all shared libraries.
 
-if (-not $script:AtlasToolCacheMaxAgeHours) {
-    $script:AtlasToolCacheMaxAgeHours = 6
-}
-if (-not $script:AtlasToolHashes) {
-    $script:AtlasToolHashes = @{}
-}
+if (-not $script:AtlasToolHashes) { $script:AtlasToolHashes = @{} }
 
 function Get-AtlasSecureRunDir {
     [CmdletBinding()]
@@ -44,16 +25,6 @@ function Get-AtlasSecureRunDir {
     }
     $script:AtlasSecureRunDir = $dir
     return $script:AtlasSecureRunDir
-}
-
-function Unblock-AtlasFile {
-    [CmdletBinding()]
-    param([Parameter(Mandatory)][string]$Path)
-    try {
-        if (Test-Path -LiteralPath $Path) {
-            Unblock-File -LiteralPath $Path -ErrorAction SilentlyContinue
-        }
-    } catch {}
 }
 
 function Get-AtlasSHA256 {
@@ -96,133 +67,6 @@ function Get-AtlasToolExpectedHash {
     } catch {}
 
     return $null
-}
-
-function Get-AtlasToolHashesRemoteUrl {
-    [CmdletBinding()]
-    param()
-
-    if (-not $script:AtlasToolsBaseUrl) { return $null }
-    $base = [string]$script:AtlasToolsBaseUrl
-    if ([string]::IsNullOrWhiteSpace($base)) { return $null }
-
-    $normalized = $base.TrimEnd('/')
-    if ($normalized -match '/src/tools$') {
-        return ($normalized -replace '/src/tools$', '/config/tool-hashes.json')
-    }
-    return $null
-}
-
-function Get-AtlasToolHashesDigestUrl {
-    [CmdletBinding()]
-    param()
-
-    if ($script:AtlasToolHashesDigestUrl) {
-        $url = [string]$script:AtlasToolHashesDigestUrl
-        if (-not [string]::IsNullOrWhiteSpace($url)) { return $url.Trim() }
-    }
-    return $null
-}
-
-function Get-AtlasExpectedDigestFromRemote {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory)][string]$DigestUrl,
-        [string]$Label = 'digest'
-    )
-
-    try {
-        $ProgressPreference = 'SilentlyContinue'
-        $raw = (Invoke-WebRequest -Uri ($DigestUrl + '?v=' + [guid]::NewGuid().ToString('N').Substring(0,8)) `
-            -UseBasicParsing -TimeoutSec 20 -ErrorAction Stop).Content
-        $expected = (($raw -split '\s+') | Where-Object { $_ } | Select-Object -First 1).ToLowerInvariant()
-        if ($expected -match '^[a-f0-9]{64}$') {
-            return $expected
-        }
-        Write-AtlasLog "Digest remoto invalido para $Label en $DigestUrl" -Level WARN -Tool 'Runner'
-        return $null
-    } catch {
-        Write-AtlasLog "No se pudo obtener digest remoto ($Label): $_" -Level WARN -Tool 'Runner'
-        return $null
-    }
-}
-
-function Refresh-AtlasToolHashesFromRemote {
-    [CmdletBinding()]
-    param([string]$FileName)
-
-    $hashUrl = Get-AtlasToolHashesRemoteUrl
-    if (-not $hashUrl) { return $false }
-
-    $tmpPath = Join-Path (Get-AtlasSecureRunDir) ("atlas-tool-hashes-" + [guid]::NewGuid().ToString('N') + '.json')
-    try {
-        $ProgressPreference = 'SilentlyContinue'
-        Invoke-WebRequest -Uri ($hashUrl + '?v=' + [guid]::NewGuid().ToString('N').Substring(0,8)) `
-            -OutFile $tmpPath -UseBasicParsing -TimeoutSec 30 -ErrorAction Stop
-
-        $digestRequired = $false
-        if ($null -ne $script:AtlasToolHashesDigestRequired) {
-            $digestRequired = [bool]$script:AtlasToolHashesDigestRequired
-        }
-        $digestUrl = Get-AtlasToolHashesDigestUrl
-        if ($digestUrl) {
-            $expectedDigest = Get-AtlasExpectedDigestFromRemote -DigestUrl $digestUrl -Label 'tool-hashes.json'
-            if (-not $expectedDigest) {
-                if ($digestRequired) {
-                    Write-AtlasLog "Digest remoto requerido para tool-hashes pero no disponible." -Level ERROR -Tool 'Runner'
-                    return $false
-                }
-            } else {
-                $actualDigest = (Get-FileHash -LiteralPath $tmpPath -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant()
-                if ($actualDigest -ne $expectedDigest) {
-                    Write-AtlasLog "tool-hashes.json rechazado por digest out-of-band. Esperado=$expectedDigest Actual=$actualDigest" -Level ERROR -Tool 'Runner'
-                    return $false
-                }
-                Write-AtlasLog "Digest out-of-band validado para tool-hashes.json." -Level INFO -Tool 'Runner'
-            }
-        } elseif ($digestRequired) {
-            Write-AtlasLog "Digest out-of-band requerido para tool-hashes pero no configurado." -Level ERROR -Tool 'Runner'
-            return $false
-        }
-
-        $raw = Get-Content -Raw -LiteralPath $tmpPath -Encoding UTF8 -ErrorAction Stop
-        $obj = ConvertFrom-AtlasJson $raw
-        if (-not $obj -or -not $obj.files) {
-            Write-AtlasLog "Refresh hashes: respuesta invalida desde $hashUrl" -Level WARN -Tool 'Runner'
-            return $false
-        }
-
-        $map = @{}
-        if ($obj.files -is [hashtable]) {
-            $map = $obj.files
-        } else {
-            foreach ($p in $obj.files.PSObject.Properties) {
-                $map[$p.Name] = [string]$p.Value
-            }
-        }
-        if ($map.Count -le 0) {
-            Write-AtlasLog "Refresh hashes: mapa vacio desde $hashUrl" -Level WARN -Tool 'Runner'
-            return $false
-        }
-
-        $script:AtlasToolHashes = $map
-        if ($FileName) {
-            $newExpected = Get-AtlasToolExpectedHash -FileName $FileName
-            if ($newExpected) {
-                Write-AtlasLog "Hashes refrescados en caliente para '$FileName'." -Level INFO -Tool 'Runner'
-                return $true
-            }
-            Write-AtlasLog "Hashes refrescados, pero '$FileName' no existe en el manifiesto remoto." -Level WARN -Tool 'Runner'
-            return $false
-        }
-        Write-AtlasLog "Hashes refrescados en caliente ($($map.Count) entries)." -Level INFO -Tool 'Runner'
-        return $true
-    } catch {
-        Write-AtlasLog "No se pudo refrescar tool-hashes remotos: $_" -Level WARN -Tool 'Runner'
-        return $false
-    } finally {
-        Remove-Item -LiteralPath $tmpPath -Force -ErrorAction SilentlyContinue
-    }
 }
 
 function Test-AtlasToolFileIntegrity {
@@ -294,157 +138,47 @@ function Invoke-AtlasRunnerTempCleanup {
 function Get-AtlasToolScript {
     [CmdletBinding()]
     param([Parameter(Mandatory)][string]$FunctionName)
-
-    $fileName  = "$FunctionName.ps1"
-    $cacheDir  = Join-Path $env:LOCALAPPDATA 'AtlasPC\tools'
-    $cachePath = Join-Path $cacheDir $fileName
-    $fallbackCachePath = $null
-
-    # 0) Source local (dev checkout) + 1) USB offline: deps\tools\ junto al launcher
-    $launcherDir = $null
-    if ($script:AtlasRoot -and (Test-Path -LiteralPath $script:AtlasRoot)) {
-        $launcherDir = $script:AtlasRoot
-    } else {
-        $candidates = @($PSCommandPath, $MyInvocation.PSCommandPath, $MyInvocation.ScriptName)
-        foreach ($candidate in $candidates) {
-            if ($candidate -and (Test-Path -LiteralPath $candidate)) {
-                $launcherDir = Split-Path -Parent $candidate
-                if ($launcherDir) { break }
-            }
-        }
+    if ($FunctionName -cnotmatch '^Invoke-[A-Za-z0-9-]+$') { throw 'Invalid tool function name.' }
+    if (-not $script:AtlasRoot) { throw 'Atlas release directory is not configured.' }
+    $fileName = "$FunctionName.ps1"
+    $path = Join-Path $script:AtlasRoot "src/tools/$fileName"
+    $label = if ($script:AtlasDevelopmentMode) { 'local-src' } else { 'release' }
+    if (-not $script:AtlasDevelopmentMode -and (-not $script:AtlasReleaseCommit -or -not $script:AtlasManifestSha256)) {
+        throw 'An approved release context is required. Reopen Atlas from the published link.'
     }
+    if (Test-AtlasToolFileIntegrity -Path $path -FileName $fileName -SourceLabel $label) { return $path }
+    throw "Tool $fileName is absent or corrupt in this release. Restore the previous release or reinstall the complete bundle."
+}
 
-    if ($launcherDir) {
-        # 0) Source local (dev checkout) - evita mismatch de hash cuando el launcher
-        # local apunta a un branch que aun no esta en main remoto.
-        $localCandidates = @()
-        if ($script:AtlasSrc) {
-            $localCandidates += (Join-Path $script:AtlasSrc "tools\$fileName")
-        }
-        $localCandidates += (Join-Path $launcherDir "src\tools\$fileName")
-
-        $seen = @{}
-        foreach ($localPath in $localCandidates) {
-            if (-not $localPath) { continue }
-            $key = $localPath.ToLowerInvariant()
-            if ($seen.ContainsKey($key)) { continue }
-            $seen[$key] = $true
-
-            if (Test-Path -LiteralPath $localPath) {
-                if (Test-AtlasToolFileIntegrity -Path $localPath -FileName $fileName -SourceLabel 'local-src') {
-                    Unblock-AtlasFile -Path $localPath
-                    Write-AtlasLog "Tool desde source local: $localPath" -Tool 'Runner'
-                    return $localPath
-                }
-                Write-AtlasLog "Tool local-src descartada por integridad: $localPath" -Level WARN -Tool 'Runner'
-            }
-        }
-
-        $usbPath = Join-Path $launcherDir "deps\tools\$fileName"
-        if (Test-Path -LiteralPath $usbPath) {
-            if (Test-AtlasToolFileIntegrity -Path $usbPath -FileName $fileName -SourceLabel 'usb') {
-                Unblock-AtlasFile -Path $usbPath
-                Write-AtlasLog "Tool desde USB: $usbPath" -Tool 'Runner'
-                return $usbPath
-            }
-            Write-AtlasLog "Tool USB descartada por integridad: $usbPath" -Level WARN -Tool 'Runner'
-        }
+function Get-AtlasToolRuntime {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][hashtable]$Tool)
+    if (-not $Tool.runtime -or $Tool.runtime.architecture -ne 'x64' -or -not $Tool.runtime.minimumVersion -or @($Tool.runtime.libraries).Count -eq 0) { throw 'A supported x64 runtime contract is required.' }
+    foreach ($library in @($Tool.runtime.libraries)) {
+        if ($library -notin @('ToolKit','Dependencies','PS7','Release')) { throw "Unknown child library: $library" }
     }
-
-    # 2) Cache local
-    $invalidCachePath = $null
-    if (Test-Path -LiteralPath $cachePath) {
-        if (Test-AtlasToolFileIntegrity -Path $cachePath -FileName $fileName -SourceLabel 'cache') {
-            Unblock-AtlasFile -Path $cachePath
-            $ageHours = [math]::Round(((Get-Date) - (Get-Item -LiteralPath $cachePath).LastWriteTime).TotalHours, 2)
-            if ($ageHours -lt [double]$script:AtlasToolCacheMaxAgeHours) {
-                Write-AtlasLog "Tool desde cache fresca ($ageHours h): $cachePath" -Tool 'Runner'
-                return $cachePath
-            }
-            $fallbackCachePath = $cachePath
-            Write-AtlasLog "Tool cache valida pero expirada ($ageHours h); intentare refrescar." -Level INFO -Tool 'Runner'
-        } else {
-            $invalidCachePath = $cachePath
-            Write-AtlasLog "Cache invalida para '$fileName'; se intentara refrescar hashes antes de descartar." -Level WARN -Tool 'Runner'
-            if (Refresh-AtlasToolHashesFromRemote -FileName $fileName) {
-                if (Test-AtlasToolFileIntegrity -Path $cachePath -FileName $fileName -SourceLabel 'cache-refreshed') {
-                    Unblock-AtlasFile -Path $cachePath
-                    Write-AtlasLog "Cache recuperada tras refresh de hashes: $cachePath" -Level INFO -Tool 'Runner'
-                    return $cachePath
-                }
-            }
-            Write-AtlasLog "Cache sigue invalida para '$fileName'; se forzara descarga." -Level WARN -Tool 'Runner'
-            Remove-Item -LiteralPath $cachePath -Force -ErrorAction SilentlyContinue
-        }
+    if ($Tool.runtime.engine -eq 'windows-powershell') {
+        if ([version]$Tool.runtime.minimumVersion -gt [version]'5.1') { throw 'This contract requires a newer Windows PowerShell.' }
+        $relative = if ([Environment]::Is64BitOperatingSystem -and -not [Environment]::Is64BitProcess) { 'Sysnative' } else { 'System32' }
+        $path = Join-Path $env:SystemRoot "$relative/WindowsPowerShell/v1.0/powershell.exe"
+        if (-not [Environment]::Is64BitOperatingSystem -or -not (Test-Path -LiteralPath $path)) { throw 'Windows PowerShell 5.1 x64 is unavailable.' }
+        return $path
     }
-
-    # 3) Descarga remota (si hay URL base)
-    if (-not $script:AtlasToolsBaseUrl) {
-        if ($fallbackCachePath) {
-            Write-AtlasLog "Sin AtlasToolsBaseUrl; usando cache expirada como fallback: $fallbackCachePath" -Level WARN -Tool 'Runner'
-            return $fallbackCachePath
-        }
-        Write-AtlasLog "No hay AtlasToolsBaseUrl configurada para '$FunctionName'." -Level ERROR -Tool 'Runner'
-        return $null
+    if ($Tool.runtime.engine -eq 'pwsh') {
+        $path = $script:AtlasPS7CachedPath
+        if (-not $path -or -not (Test-Path -LiteralPath $path)) { throw 'The declared PowerShell 7 runtime is unavailable.' }
+        $info = [Diagnostics.FileVersionInfo]::GetVersionInfo($path)
+        if ($info.ProductVersion -notmatch '^(\d+\.\d+\.\d+)' -or [version]$Matches[1] -lt [version]$Tool.runtime.minimumVersion) { throw 'The detected PowerShell 7 version does not satisfy this tool.' }
+        $stream = [IO.File]::OpenRead($path)
+        $reader = [IO.BinaryReader]::new($stream)
+        try {
+            $stream.Position = 0x3c
+            $stream.Position = $reader.ReadInt32() + 4
+            if ($reader.ReadUInt16() -ne 0x8664) { throw 'The declared runtime requires an x64 executable.' }
+        } finally { $reader.Dispose() }
+        return $path
     }
-
-    $toolsBaseUri = $null
-    try { $toolsBaseUri = [Uri]$script:AtlasToolsBaseUrl } catch {}
-    if (-not $toolsBaseUri -or -not $toolsBaseUri.IsAbsoluteUri -or $toolsBaseUri.Scheme -ne 'https') {
-        Write-AtlasLog "AtlasToolsBaseUrl invalida o insegura (solo HTTPS): '$script:AtlasToolsBaseUrl'." -Level ERROR -Tool 'Runner'
-        if ($fallbackCachePath) {
-            Write-AtlasLog "Usando cache expirada por URL insegura: $fallbackCachePath" -Level WARN -Tool 'Runner'
-            return $fallbackCachePath
-        }
-        return $null
-    }
-
-    Write-AtlasLog "Descargando tool: $FunctionName" -Tool 'Runner'
-    try {
-        if (-not (Test-Path -LiteralPath $cacheDir)) {
-            New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null
-        }
-
-        $baseUrl = $script:AtlasToolsBaseUrl.TrimEnd('/')
-        $url = "$baseUrl/$fileName"
-        $tempDownload = Join-Path $cacheDir ($fileName + '.download')
-        $ProgressPreference = 'SilentlyContinue'
-        Invoke-WebRequest -Uri ($url + '?v=' + [guid]::NewGuid().ToString('N').Substring(0,8)) `
-            -OutFile $tempDownload -UseBasicParsing -TimeoutSec 60 -ErrorAction Stop
-
-        if (-not (Test-AtlasToolFileIntegrity -Path $tempDownload -FileName $fileName -SourceLabel 'download')) {
-            # Si el launcher quedo atrasado respecto a hashes remotos, intentar
-            # refrescar hashes en caliente y volver a validar sin perder disponibilidad.
-            $validatedAfterRefresh = $false
-            if (Refresh-AtlasToolHashesFromRemote -FileName $fileName) {
-                if (Test-AtlasToolFileIntegrity -Path $tempDownload -FileName $fileName -SourceLabel 'download-refreshed') {
-                    $validatedAfterRefresh = $true
-                    Write-AtlasLog "Descarga validada tras refresh de hashes: $fileName" -Level INFO -Tool 'Runner'
-                }
-            }
-
-            if (-not $validatedAfterRefresh) {
-                Remove-Item -LiteralPath $tempDownload -Force -ErrorAction SilentlyContinue
-                if ($invalidCachePath -and (Test-Path -LiteralPath $invalidCachePath)) {
-                    Write-AtlasLog "Usando cache previa como ultimo fallback para '$fileName'." -Level WARN -Tool 'Runner'
-                    return $invalidCachePath
-                }
-                throw "Descarga rechazada por validacion de integridad."
-            }
-        }
-
-        Move-Item -LiteralPath $tempDownload -Destination $cachePath -Force
-        Unblock-AtlasFile -Path $cachePath
-        Write-AtlasLog "Tool descargada y validada: $cachePath" -Tool 'Runner'
-        return $cachePath
-    } catch {
-        Write-AtlasLog "Fallo descarga de '$FunctionName': $_" -Level ERROR -Tool 'Runner'
-        if ($fallbackCachePath) {
-            Write-AtlasLog "Usando cache expirada como fallback: $fallbackCachePath" -Level WARN -Tool 'Runner'
-            return $fallbackCachePath
-        }
-        return $null
-    }
+    throw 'Unknown runtime engine; no silent fallback is permitted.'
 }
 
 function Invoke-AtlasTool {
@@ -491,19 +225,11 @@ function Invoke-AtlasTool {
         return
     }
 
-    # ----------- Asegurar BOM para PS 5.1 -----------
-    try {
-        $bytes = [System.IO.File]::ReadAllBytes($toolScriptPath)
-        if ($bytes.Length -lt 3 -or $bytes[0] -ne 0xEF -or $bytes[1] -ne 0xBB -or $bytes[2] -ne 0xBF) {
-            $bom = [byte[]](0xEF, 0xBB, 0xBF)
-            $withBom = New-Object byte[] ($bom.Length + $bytes.Length)
-            [System.Buffer]::BlockCopy($bom, 0, $withBom, 0, $bom.Length)
-            [System.Buffer]::BlockCopy($bytes, 0, $withBom, $bom.Length, $bytes.Length)
-            [System.IO.File]::WriteAllBytes($toolScriptPath, $withBom)
-        }
-    } catch {
-        Write-AtlasLog "BOM check fallo para '$function': $_" -Level WARN -Tool 'Runner'
-    }
+    $toolSource = [IO.File]::ReadAllText($toolScriptPath, [Text.Encoding]::UTF8)
+    $expected = Get-AtlasToolExpectedHash -FileName "$function.ps1"
+    if (-not $script:AtlasDevelopmentMode -and (Get-AtlasTextHash $toolSource) -cne $expected) { throw 'Tool changed before wrapper creation.' }
+    $psExe = Get-AtlasToolRuntime -Tool $Tool
+    if (-not $script:AtlasChildLibrarySource) { throw 'Required child libraries are unavailable. Reopen the complete Atlas release.' }
 
     $brandName = if ($Branding -and $Branding.brand -and $Branding.brand.shortName) { $Branding.brand.shortName } else { 'Atlas PC Support' }
     $title = "$brandName - $($Tool.name)"
@@ -511,29 +237,31 @@ function Invoke-AtlasTool {
     # ----------- Script temporal que llama a la tool -----------
     $sb = [System.Text.StringBuilder]::new()
     [void]$sb.AppendLine('# Atlas PC Support - runner temp script')
-    [void]$sb.AppendLine('$ErrorActionPreference = ''Continue''')
+    [void]$sb.AppendLine('$ErrorActionPreference = ''Stop''')
     [void]$sb.AppendLine('try { $Host.UI.RawUI.WindowTitle = ' + ("'{0}'" -f ($title -replace "'","''")) + ' } catch {}')
     [void]$sb.AppendLine('')
-    # ---- Inyectar el ToolKit compartido (helpers de UI / reportes) ----
-    # Embebido en el launcher (cubierto por launcher.ps1.sha256), por lo que no
-    # anade superficie de descarga. Va dentro de try/catch para que un fallo del
-    # toolkit NUNCA impida ejecutar la tool. Se define ANTES del tool para que la
-    # propia tool pueda sobre-escribir cualquier helper si lo necesita.
-    if ($script:AtlasToolKitSource) {
-        [void]$sb.AppendLine('# ---- Atlas ToolKit (inyectado por ToolRunner) ----')
-        [void]$sb.AppendLine('try {')
-        [void]$sb.AppendLine($script:AtlasToolKitSource)
-        [void]$sb.AppendLine('} catch { Write-Host ("[Atlas] ToolKit no disponible: " + $_.Exception.Message) -ForegroundColor DarkYellow }')
-        [void]$sb.AppendLine('')
-    }
-
-    # Dot-source del archivo de la tool (define la funcion)
-    $escapedPath = $toolScriptPath -replace "'", "''"
-    [void]$sb.AppendLine(". '$escapedPath'")
+    # All child libraries come from the already verified launcher, without downloads.
+    # Missing helpers must stop the tool, not downgrade the validation policy.
+    # The shared source begins with the native runtime header, before JSON autoload.
+    [void]$sb.AppendLine($script:AtlasChildLibrarySource)
+    $context = @{
+        AtlasVersion = $script:AtlasVersion
+        AtlasRoot = $script:AtlasRoot
+        AtlasReleaseCommit = $script:AtlasReleaseCommit
+        AtlasManifestSha256 = $script:AtlasManifestSha256
+        AtlasDevelopmentMode = [bool]$script:AtlasDevelopmentMode
+        AtlasOfflineRoot = $env:ATLAS_OFFLINE_ROOT
+    } | ConvertTo-Json -Compress
+    [void]$sb.AppendLine("`$atlasContext = '" + $context.Replace("'", "''") + "' | ConvertFrom-Json")
+    [void]$sb.AppendLine('foreach ($entry in $atlasContext.PSObject.Properties) { Set-Variable -Name $entry.Name -Value $entry.Value -Scope Script }')
+    [void]$sb.AppendLine('$env:ATLAS_OFFLINE_ROOT = $script:AtlasOfflineRoot')
+    [void]$sb.AppendLine($toolSource)
     [void]$sb.AppendLine('')
+    [void]$sb.AppendLine('$atlasToolExitCode = 0')
     [void]$sb.AppendLine('try {')
     [void]$sb.AppendLine("    $function")
     [void]$sb.AppendLine('} catch {')
+    [void]$sb.AppendLine('    $atlasToolExitCode = 1')
     [void]$sb.AppendLine('    Write-Host ""')
     [void]$sb.AppendLine("    Write-Host ('[!] Error en $function : ' + `$_.Exception.Message) -ForegroundColor Red")
     [void]$sb.AppendLine('    Write-Host ""')
@@ -547,6 +275,7 @@ function Invoke-AtlasTool {
     [void]$sb.AppendLine('    [void](Read-Host)')
     [void]$sb.AppendLine('    try { Remove-Item -LiteralPath $PSCommandPath -Force -ErrorAction SilentlyContinue } catch {}')
     [void]$sb.AppendLine('}')
+    [void]$sb.AppendLine('exit $atlasToolExitCode')
 
     $tempDir = Get-AtlasSecureRunDir
     if (-not (Test-Path -LiteralPath $tempDir)) {
@@ -557,7 +286,6 @@ function Invoke-AtlasTool {
 
     $utf8WithBom = [System.Text.UTF8Encoding]::new($true)
     [System.IO.File]::WriteAllText($tempScript, $sb.ToString(), $utf8WithBom)
-    Unblock-AtlasFile -Path $tempScript
 
     # Validate wrapper parse before launch to avoid "nothing happens" failures.
     try {
@@ -576,10 +304,6 @@ function Invoke-AtlasTool {
         Write-AtlasLog "No se pudo validar parser del wrapper temporal: $_" -Level WARN -Tool 'Runner'
     }
 
-    $psExe = 'powershell.exe'
-    if ($script:AtlasPS7CachedPath -and (Test-Path -LiteralPath $script:AtlasPS7CachedPath)) {
-        $psExe = $script:AtlasPS7CachedPath
-    }
     $psArgs = @(
         '-NoLogo',
         '-NoProfile',

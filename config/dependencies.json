@@ -1,0 +1,185 @@
+{
+  "CrystalDiskMark": {
+    "ExecutableName": "DiskMark64.exe",
+    "DisplayName": "CrystalDiskMark",
+    "WingetId": "CrystalDewWorld.CrystalDiskMark",
+    "SearchPaths": [
+      "C:\\Program Files\\CrystalDiskMark8\\DiskMark64.exe",
+      "C:\\Program Files\\CrystalDiskMark9\\DiskMark64.exe",
+      "C:\\Program Files\\CrystalDiskMark\\DiskMark64.exe",
+      "C:\\Program Files (x86)\\CrystalDiskMark8\\DiskMark64.exe",
+      "C:\\Program Files (x86)\\CrystalDiskMark9\\DiskMark64.exe",
+      "C:\\Program Files (x86)\\CrystalDiskMark\\DiskMark64.exe",
+      "%LOCALAPPDATA%\\Microsoft\\WinGet\\Links\\diskmark.exe",
+      "%LOCALAPPDATA%\\AtlasPC\\bin\\DiagnosticoMaster\\tools\\CrystalDiskMark\\DiskMark64.exe",
+      "%LOCALAPPDATA%\\AtlasPC\\bin\\DiagnosticoMaster\\tools\\DiskMark64.exe"
+    ],
+    "Architecture": "x64",
+    "Version": null,
+    "VersionSource": "winget/source-managed",
+    "SignaturePolicy": "package-manager",
+    "License": "Vendor terms; redistribution not approved by Atlas"
+  },
+  "CPUZ": {
+    "ExecutableName": "cpuz.exe",
+    "DisplayName": "CPUID CPU-Z",
+    "WingetId": "CPUID.CPU-Z",
+    "SearchPaths": [
+      "C:\\Program Files\\CPUID\\CPU-Z\\cpuz_x64.exe",
+      "C:\\Program Files\\CPUID\\CPU-Z\\cpuz_x32.exe",
+      "C:\\Program Files\\CPUID\\CPU-Z\\cpuz.exe",
+      "C:\\Program Files (x86)\\CPUID\\CPU-Z\\cpuz_x64.exe",
+      "C:\\Program Files (x86)\\CPUID\\CPU-Z\\cpuz_x32.exe",
+      "C:\\Program Files (x86)\\CPUID\\CPU-Z\\cpuz.exe",
+      "%LOCALAPPDATA%\\Microsoft\\WinGet\\Links\\cpuz.exe",
+      "%LOCALAPPDATA%\\AtlasPC\\bin\\DiagnosticoMaster\\tools\\cpuz_x64.exe",
+      "%LOCALAPPDATA%\\AtlasPC\\bin\\DiagnosticoMaster\\tools\\cpuz_x32.exe",
+      "%LOCALAPPDATA%\\AtlasPC\\bin\\DiagnosticoMaster\\tools\\cpuz.exe"
+    ],
+    "Architecture": "x64",
+    "Version": null,
+    "VersionSource": "winget/source-managed",
+    "SignaturePolicy": "package-manager",
+    "License": "Vendor terms; redistribution not approved by Atlas"
+  },
+  "BlueScreenView": {
+    "ExecutableName": "BlueScreenView.exe",
+    "DisplayName": "NirSoft BlueScreenView",
+    "WingetId": "NirSoft.BlueScreenView",
+    "SearchPaths": [
+      "C:\\Program Files\\NirSoft\\BlueScreenView\\BlueScreenView.exe",
+      "C:\\Program Files (x86)\\NirSoft\\BlueScreenView\\BlueScreenView.exe",
+      "%LOCALAPPDATA%\\Microsoft\\WinGet\\Links\\bluescreenview.exe",
+      "%LOCALAPPDATA%\\AtlasPC\\bin\\DiagnosticoMaster\\tools\\BlueScreenView.exe"
+    ],
+    "Architecture": "x64",
+    "Version": null,
+    "VersionSource": "winget/source-managed",
+    "SignaturePolicy": "package-manager",
+    "License": "Vendor terms; redistribution not approved by Atlas"
+  },
+  "HWiNFO": {
+    "ExecutableName": "HWiNFO64.exe",
+    "DisplayName": "HWiNFO64",
+    "WingetId": "REALiX.HWiNFO",
+    "SearchPaths": [
+      "C:\\Program Files\\HWiNFO64\\HWiNFO64.exe",
+      "C:\\Program Files (x86)\\HWiNFO64\\HWiNFO64.exe",
+      "%LOCALAPPDATA%\\AtlasPC\\bin\\GPUCheck\\tools\\HWiNFO64.exe"
+    ],
+    "Architecture": "x64",
+    "Version": null,
+    "VersionSource": "winget/source-managed",
+    "SignaturePolicy": "package-manager",
+    "License": "Vendor terms; redistribution not approved by Atlas"
+  },
+  "FurMark2": {
+    "ExecutableName": "furmark.exe",
+    "DisplayName": "Geeks3D FurMark 2",
+    "WingetId": "Geeks3D.FurMark.2",
+    "SearchPaths": [
+      "C:\\Program Files\\Geeks3D\\FurMark2_x64\\furmark.exe",
+      "C:\\Program Files (x86)\\Geeks3D\\FurMark2_x64\\furmark.exe",
+      "%LOCALAPPDATA%\\AtlasPC\\bin\\GPUCheck\\tools\\FurMark2_x64\\furmark.exe"
+    ],
+    "Architecture": "x64",
+    "Version": null,
+    "VersionSource": "winget/source-managed",
+    "SignaturePolicy": "package-manager",
+    "License": "Vendor terms; redistribution not approved by Atlas"
+  },
+  "GPUZ": {
+    "ExecutableName": "GPU-Z.exe",
+    "DisplayName": "TechPowerUp GPU-Z",
+    "WingetId": "TechPowerUp.GPU-Z",
+    "SearchPaths": [
+      "C:\\Program Files (x86)\\GPU-Z\\GPU-Z.exe",
+      "C:\\Program Files\\GPU-Z\\GPU-Z.exe",
+      "%LOCALAPPDATA%\\AtlasPC\\bin\\GPUCheck\\tools\\GPU-Z.exe"
+    ],
+    "Architecture": "x64",
+    "Version": null,
+    "VersionSource": "winget/source-managed",
+    "SignaturePolicy": "package-manager",
+    "License": "Vendor terms; redistribution not approved by Atlas"
+  },
+  "CrystalDiskInfo": {
+    "ExecutableName": "DiskInfo64.exe",
+    "DisplayName": "CrystalDiskInfo",
+    "WingetId": "CrystalDewWorld.CrystalDiskInfo",
+    "SearchPaths": [
+      "C:\\Program Files\\CrystalDiskInfo\\DiskInfo64.exe",
+      "C:\\Program Files (x86)\\CrystalDiskInfo\\DiskInfo64.exe",
+      "C:\\Program Files\\CrystalDiskInfo\\DiskInfo32.exe",
+      "C:\\Program Files (x86)\\CrystalDiskInfo\\DiskInfo32.exe",
+      "%LOCALAPPDATA%\\Microsoft\\WinGet\\Links\\diskinfo.exe",
+      "%LOCALAPPDATA%\\AtlasPC\\bin\\DiagnosticoMaster\\tools\\CrystalDiskInfo\\DiskInfo64.exe",
+      "%LOCALAPPDATA%\\AtlasPC\\bin\\DiagnosticoMaster\\tools\\CrystalDiskInfo\\DiskInfo32.exe",
+      "%LOCALAPPDATA%\\AtlasPC\\bin\\DiagnosticoMaster\\tools\\DiskInfo64.exe",
+      "%LOCALAPPDATA%\\AtlasPC\\bin\\DiagnosticoMaster\\tools\\DiskInfo32.exe"
+    ],
+    "Architecture": "x64",
+    "Version": null,
+    "VersionSource": "winget/source-managed",
+    "SignaturePolicy": "package-manager",
+    "License": "Vendor terms; redistribution not approved by Atlas"
+  },
+  "FastCopy": {
+    "SearchPaths": [
+      "C:\\Program Files\\FastCopy\\FastCopy.exe",
+      "C:\\Program Files (x86)\\FastCopy\\FastCopy.exe",
+      "%LOCALAPPDATA%\\FastCopy\\FastCopy.exe",
+      "%LOCALAPPDATA%\\AtlasPC\\bin\\FastCopy\\FastCopy.exe"
+    ],
+    "WingetId": "FastCopy.FastCopy",
+    "ExecutableName": "FastCopy.exe",
+    "DownloadSha256": "70b273dd08c15d40fac59a217b93be195bacfa47acabd031463a6df800d29fea",
+    "DisplayName": "FastCopy",
+    "DownloadUrl": "https://fastcopy.jp/archive/FastCopy5.11.2_installer.exe",
+    "Architecture": "x64",
+    "Version": "5.11.2",
+    "VersionSource": "pinned-direct-fallback; winget source may be newer",
+    "SignaturePolicy": "sha256-required",
+    "License": "Vendor terms; review the exact edition before redistribution"
+  },
+  "winget": {
+    "ExecutableName": "winget.exe",
+    "DisplayName": "Windows Package Manager",
+    "SearchPaths": [
+      "%LOCALAPPDATA%\\Microsoft\\WindowsApps\\winget.exe"
+    ],
+    "Architecture": "x64",
+    "Version": null,
+    "VersionSource": "winget/source-managed",
+    "SignaturePolicy": "package-manager",
+    "License": "Vendor terms; redistribution not approved by Atlas"
+  },
+  "BatteryInfoView": {
+    "ExecutableName": "BatteryInfoView.exe",
+    "DisplayName": "NirSoft BatteryInfoView",
+    "WingetId": "NirSoft.BatteryInfoView",
+    "SearchPaths": [
+      "C:\\Program Files\\NirSoft\\BatteryInfoView\\BatteryInfoView.exe",
+      "C:\\Program Files (x86)\\NirSoft\\BatteryInfoView\\BatteryInfoView.exe",
+      "%LOCALAPPDATA%\\Microsoft\\WinGet\\Links\\batteryinfoview.exe",
+      "%LOCALAPPDATA%\\AtlasPC\\bin\\DiagnosticoMaster\\tools\\BatteryInfoView.exe"
+    ],
+    "Architecture": "x64",
+    "Version": null,
+    "VersionSource": "winget/source-managed",
+    "SignaturePolicy": "package-manager",
+    "License": "Vendor terms; redistribution not approved by Atlas"
+  },
+  "PowerShell7": {
+    "DisplayName": "PowerShell 7 LTS",
+    "Version": "7.6.6",
+    "Architecture": "x64",
+    "InstallerType": "msi",
+    "MsiName": "PowerShell-7.6.6-win-x64.msi",
+    "DownloadUrl": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.6/PowerShell-7.6.6-win-x64.msi",
+    "HashesUrl": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.6/hashes.sha256",
+    "SignaturePolicy": "sha256-and-microsoft-authenticode",
+    "License": "MIT; third-party notices apply",
+    "VersionSource": "pinned"
+  }
+}

@@ -19,6 +19,11 @@ if ($PSScriptRoot) {
 }
 
 # --- Cargar librerías base ---
+. (Join-Path $script:AtlasSrc 'bootstrap/Runtime.ps1')
+$script:AtlasDevelopmentMode = $true
+$script:AtlasVersion = 'dev'
+$dependencyJson = [IO.File]::ReadAllText((Join-Path $script:AtlasRoot 'config/dependencies.json'), [Text.Encoding]::UTF8)
+$script:AtlasDependencyCatalog = $dependencyJson | ConvertFrom-Json -ErrorAction Stop
 . (Join-Path $script:AtlasSrc 'lib\Branding.ps1')
 . (Join-Path $script:AtlasSrc 'lib\Strings.ps1')
 . (Join-Path $script:AtlasSrc 'lib\Admin.ps1')
@@ -26,10 +31,15 @@ if ($PSScriptRoot) {
 . (Join-Path $script:AtlasSrc 'lib\ToolKit.ps1')
 . (Join-Path $script:AtlasSrc 'lib\Dependencies.ps1')
 . (Join-Path $script:AtlasSrc 'lib\PS7.ps1')
+. (Join-Path $script:AtlasSrc 'lib\Release.ps1')
 . (Join-Path $script:AtlasSrc 'lib\ToolRunner.ps1')
 
 # Fuente del ToolKit para que ToolRunner la inyecte en tools aisladas (modo dev).
-$script:AtlasToolKitSource = Get-Content -Raw (Join-Path $script:AtlasSrc 'lib\ToolKit.ps1')
+$script:AtlasChildLibrarySource = [IO.File]::ReadAllText((Join-Path $script:AtlasSrc 'bootstrap/Runtime.ps1'), [Text.Encoding]::UTF8) + "`n"
+$script:AtlasChildLibrarySource += '$script:AtlasDependencyCatalog = ' + "'" + $dependencyJson.Replace("'", "''") + "' | ConvertFrom-Json`n"
+foreach ($name in @('Branding','Strings','Admin','Logging','ToolKit','Dependencies','PS7','Release')) {
+    $script:AtlasChildLibrarySource += [IO.File]::ReadAllText((Join-Path $script:AtlasSrc "lib/$name.ps1"), [Text.Encoding]::UTF8) + "`n"
+}
 
 # --- Cargar todas las tools ---
 $toolsDir = Join-Path $script:AtlasSrc 'tools'
@@ -54,15 +64,6 @@ if ($ps7) {
 } else {
     Write-AtlasLog "PowerShell 7 NO instalado; tools correran en Windows PowerShell 5.1. Recomendado: usar tool 'Actualizar PowerShell'."
 }
-
-# Fuente remota para scripts de herramientas (fallback cuando no hay USB/cache).
-$script:AtlasToolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/src/tools'
-
-# Optional out-of-band digest channel for config/tool-hashes.json.
-# Use a separate control plane (e.g. Cloudflare Worker secret route) and set
-# DigestRequired=$true once the route is deployed and maintained on each release.
-$script:AtlasToolHashesDigestUrl = 'https://toolspanel.atlaspcsupport.com/tool-hashes.sha256'
-$script:AtlasToolHashesDigestRequired = $true
 
 # Tabla de hashes esperados para validar integridad de tools descargadas.
 $script:AtlasToolHashes = @{}

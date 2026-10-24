@@ -18,13 +18,12 @@ Atlas PC Support es un launcher WPF (tema Fluent / Windows 11) que agrupa herram
 Abre **PowerShell como Administrador** y pega:
 
 ```powershell
-irm https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/get.ps1 | iex
+irm https://toolspanel.atlaspcsupport.com | iex
 ```
 
-Eso es todo - no hay que instalar nada mas. `get.ps1` descarga el launcher a un archivo temporal, valida su integridad SHA-256 (`launcher.ps1.sha256`) y lo lanza con `-File`, evitando el patron `irm | iex` que Windows Defender AMSI bloquea en muchos equipos.
+El bootstrap HTTPS descarga y verifica un release completo aprobado antes de iniciar el launcher con `-File`. Cloudflare fija su commit inmutable y el digest del manifiesto. Defender/AMSI permanecen activos; no se añaden exclusiones ni cambios permanentes de política.
 
-> 💡 **Actualizaciones automáticas**: cada vez que ejecutas ese comando, se baja la versión más reciente desde GitHub. No hay que "instalar updates".
-
+Reabrir el comando selecciona la última **publicación aprobada**. Una sesión abierta conserva sus herramientas verificadas. Consulta [publicación, uso offline y rollback](docs/RELEASES.md).
 
 ---
 
@@ -65,7 +64,7 @@ El panel viene con **26 herramientas** organizadas en 7 categorías. Cada herram
 | Herramienta | Descripción |
 |---|---|
 | **FastCopy** | Copia multi-origen con perfiles, comparación, MD5 y resumen exportable. Mejor UX que Robocopy. |
-| **Build Offline USB** | Copia el panel y sus dependencias a un USB para uso offline. Auto-actualiza el launcher cuando hay conexión. |
+| **Build Offline USB** | Copia el release completo verificado a USB. El inicio comprueba todos los scripts sin actualizar componentes sueltos; los paquetes de terceros son opcionales. |
 | **Robocopy Mirror** | Copia optimizada vía robocopy: modo espejo, reintentos y logging centralizado. |
 
 ### 🌐 Redes
@@ -168,14 +167,14 @@ pwsh -NoProfile -ExecutionPolicy RemoteSigned -File src\Launcher.ps1
 # O compilar el launcher distribuible:
 pwsh -NoProfile -File build.ps1
 # Esto regenera launcher.ps1 (raíz del repo) con todo embebido,
-# además de launcher.ps1.sha256 y config/tool-hashes.json.
+# además de get.ps1, launcher.ps1.sha256, config/tool-hashes.json y release-manifest.json.
 ```
 
 ### Estructura del repo
 
 ```
 atlas-pc-support/
-├── launcher.ps1              ← Compilado. Es lo que descarga `irm | iex`.
+├── launcher.ps1              ← Entrada compilada, adquirida dentro del release verificado.
 ├── launcher.ps1.sha256       ← Sidecar SHA-256 usado por get.ps1.
 ├── build.ps1                 ← Regenera launcher.ps1 desde src/.
 ├── branding.example.json     ← Plantilla de branding personalizado.
@@ -214,11 +213,12 @@ atlas-pc-support/
       "source": "Invoke-MiTool.ps1",
       "requiresAdmin": false,
      "runsInNewWindow": true,
+     "runtime": {"engine":"windows-powershell","minimumVersion":"5.1","architecture":"x64","libraries":["ToolKit","Dependencies","PS7","Release"]},
      "dependencies": []
    }
    ```
 3. Ejecuta `pwsh -File build.ps1`.
-4. Commit y push — CI regenera `launcher.ps1` automáticamente.
+4. Commitear todos los generados y hacer push. CI rechaza releases desactualizados o incompletos. Tras pasar los checks, promover el commit probado con [el procedimiento de publicación](docs/RELEASES.md).
 
 Ver [docs/ADDING-TOOLS.md](docs/ADDING-TOOLS.md) para la referencia completa.
 
@@ -228,7 +228,7 @@ Ver [docs/ADDING-TOOLS.md](docs/ADDING-TOOLS.md) para la referencia completa.
 
 - **Logs**: `%LOCALAPPDATA%\AtlasPC\logs\atlas-YYYY-MM-DD.log`.
 - **Binarios externos** (FastCopy.exe, etc.): se descargan bajo demanda a `%LOCALAPPDATA%\AtlasPC\bin\`.
-- **Cache de scripts de tools**: `%LOCALAPPDATA%\AtlasPC\tools\` (validada con `config/tool-hashes.json`).
+- **Releases versionados**: `%LOCALAPPDATA%\AtlasPC\releases\<commit>\`; `current.json` y `previous.json` seleccionan conjuntos verificados.
 - **Datos de clientes / reportes**: se guardan en `%USERPROFILE%\Documents\AtlasPC\` y NUNCA se suben al repo.
 
 ---

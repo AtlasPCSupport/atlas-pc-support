@@ -1,0 +1,108 @@
+{
+  "date": "2026-10-24",
+  "phase": 2,
+  "baseCommit": "1e9a5cfe2da05eb9fef5d5c96fb9b4adbcc7395e",
+  "version": "1.1.0",
+  "localRuns": [
+    {
+      "Runtime": "7.6.6",
+      "OSVersion": "10.0.26100.0",
+      "Windows10Validated": false,
+      "IncludeKnownIssues": false,
+      "Passed": 125,
+      "Failed": 0,
+      "Skipped": 0,
+      "AnalyzerErrors": 0,
+      "DistributionArtifactsUnchanged": true,
+      "AnalyzerWarnings": 398,
+      "TestCasesBySource": {
+        "Lib.Tests.ps1": 13,
+        "Platform.Tests.ps1": 2,
+        "Accounts.Tests.ps1": 37,
+        "Installers.Tests.ps1": 18,
+        "BitLocker.Tests.ps1": 14,
+        "Execution.Tests.ps1": 19,
+        "Release.Tests.ps1": 22
+      }
+    },
+    {
+      "Runtime": "5.1.26100.9711",
+      "OSVersion": "10.0.26100.0",
+      "Windows10Validated": false,
+      "IncludeKnownIssues": false,
+      "Passed": 125,
+      "Failed": 0,
+      "Skipped": 0,
+      "AnalyzerErrors": 0,
+      "DistributionArtifactsUnchanged": true,
+      "AnalyzerWarnings": 383,
+      "TestCasesBySource": {
+        "Lib.Tests.ps1": 13,
+        "Platform.Tests.ps1": 2,
+        "Accounts.Tests.ps1": 37,
+        "Installers.Tests.ps1": 18,
+        "BitLocker.Tests.ps1": 14,
+        "Execution.Tests.ps1": 19,
+        "Release.Tests.ps1": 22
+      }
+    }
+  ],
+  "pesterVersion": "5.8.0",
+  "psScriptAnalyzerVersion": "1.25.0",
+  "distribution": {
+    "manifestSha256": "f72ecd4bd5e8af6c5082344136ca4e59651487019e98024c39dabec099d09b4b",
+    "launcherRawSha256": "b899a1f316e29a0e31185c396f20945ae2afbf7c5e7486aa431031eba0cd6b85",
+    "launcherBytes": 308999,
+    "payloadMembersVerified": 33,
+    "toolScriptsVerified": 27,
+    "reproducibleArtifacts": 5,
+    "runtimeBaseline": "Windows PowerShell 5.1 x64",
+    "immutableIdentity": "Full Git commit plus deployment-approved manifest SHA-256"
+  },
+  "worker": {
+    "testsPassed": 21,
+    "testsFailed": 0,
+    "testRunner": "node:test with mocked fetch",
+    "wranglerVersion": "4.152.0",
+    "undiciOverride": "7.30.1",
+    "npmAudit": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "dryRunPassed": true,
+    "publicationGate": [
+      "build",
+      "windows-compat",
+      "worker"
+    ],
+    "domain": "https://toolspanel.atlaspcsupport.com",
+    "deploymentAndLiveVerification": "Required after commit CI; results reported in the delivery message."
+  },
+  "testSafety": {
+    "realAccountChanges": false,
+    "realEncryption": false,
+    "realInstallerExecutions": false,
+    "realStressExecutions": false,
+    "realToolExecutions": false,
+    "fixtureWrapperExecuted": true,
+    "offlineEntryNoLaunchExecuted": true,
+    "defenderBaseline": {
+      "AMServiceEnabled": true,
+      "AntivirusEnabled": true,
+      "RealTimeProtectionEnabled": true
+    },
+    "defenderSettingsChanged": false
+  },
+  "pendingQualification": [
+    "Windows 10 Home/Pro 22H2 and LTSC 2021 x64 VMs",
+    "Per-tool PS7 and Windows capabilities matrix",
+    "Physical NTFS/FAT/exFAT media and power-loss behavior",
+    "Real proxy and physical network disconnection",
+    "Vendor redistribution licenses and optional application catalogs",
+    "Managed code signing and private installer/enrollment review"
+  ]
+}

@@ -14,7 +14,7 @@ Si la política del equipo impide el script, conservar el error y resolver la
 política autorizada del entorno; no añadir una excepción antivirus.
 
 El runner verifica fuentes, manifiesto, hashes, guardas y pruebas. La reconstrucción
-se realiza en una copia temporal con espacios en la ruta; comprueba que los tres
+se realiza en una copia temporal con espacios en la ruta; comprueba que los cinco
 artefactos de distribución originales conservaron su SHA-256. Guarda `summary.json`,
 `analyzer.json` y `pester.xml` en la carpeta temporal que imprime.
 
@@ -50,6 +50,25 @@ cliente corre sobre `windows-latest`.
 ## Windows PowerShell iniciado desde PowerShell 7
 
 Un proceso 5.1 puede heredar un `PSModulePath` que antepone módulos de PowerShell 7.
-Si faltan comandos nativos como `Get-FileHash`, comprobar primero el módulo cargado
-y ejecutar desde una consola nativa 5.1. No instalar una implementación alternativa
-del comando ni eliminar módulos del equipo para esconder el problema.
+El bootstrap, launcher, wrapper y runner anteponen los módulos nativos de 5.1 antes
+de cargarlos. El cambio es solo del proceso: no se eliminan módulos ni se escribe
+configuración persistente. La regresión de herencia inicia un 5.1 real con rutas
+PS7 delante, valida la entrada offline y bloquea cualquier herramienta real.
+
+## Distribución y runtime (fase 2)
+
+`Release.Tests.ps1` comprueba staging, manifiesto aprobado, corrupción, conjunto
+incompleto, rutas inválidas, fallo de activación atómica, bloqueo concurrente y
+rollback verificado sin red. Copia el bundle real a TestDrive y ejecuta su entrada
+offline con `-NoLaunch`: no abre el panel ni instala/cifra/modifica cuentas.
+
+`Execution.Tests.ps1` ejecuta también un wrapper real con una función ficticia,
+comprueba helpers/catálogo y rutas con espacios, tildes y apóstrofos. Las acciones
+de las herramientas reales continúan bloqueadas. El build aislado compara los
+cinco artefactos byte a byte entre PowerShell 5.1 y 7, sin normalizar diferencias.
+
+El Worker usa `node --test` con fetch simulado: pins, refs, errores, límites de
+respuesta, métodos, caché y compatibilidad del onboarding. CI añade `npm audit` y
+una compilación Wrangler sin despliegue. La verificación pública posterior a la
+promoción es de lectura; el ensayo online/offline usa `-NoLaunch` y carpetas
+temporales. No equivale a una homologación de Windows 10 o medios FAT/exFAT reales.
