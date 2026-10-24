@@ -246,7 +246,9 @@ function Invoke-HostsManager {
                 if ($ip -and $name) {
                     try {
                         $line = "{0}`t{1}`t# {2} {3}" -f $ip, $name, $L.CommentTag, (Get-Date -Format 'yyyy-MM-dd')
-                        Add-Content -Path $hostsPath -Value "`r`n$line" -Encoding UTF8
+                        $parsed = $null
+                        if (-not [Net.IPAddress]::TryParse($ip, [ref]$parsed) -or $name -notmatch '^[A-Za-z0-9][A-Za-z0-9.-]{0,252}$') { throw 'Invalid hosts address/name.' }
+                        Set-AtlasHostsText -Path $hostsPath -Text ([IO.File]::ReadAllText($hostsPath, [Text.Encoding]::UTF8) + "`r`n$line") | Out-Null
                         Write-Host ('  ' + ($L.Added -f $ip, $name)) -ForegroundColor Green
                     } catch {
                         Write-Host ('  ' + ($L.ErrAdmin -f $_.Exception.Message)) -ForegroundColor Red
@@ -260,11 +262,11 @@ function Invoke-HostsManager {
                 $name = Read-Host ('  ' + $L.DelPrompt)
                 if ($name) {
                     try {
-                        $pattern = [regex]::Escape($name)
-                        $content = Get-Content $hostsPath
-                        $kept    = $content | Where-Object { $_ -notmatch $pattern }
-                        $deleted = $content.Count - $kept.Count
-                        Set-Content -Path $hostsPath -Value $kept -Encoding UTF8
+                        $content = [IO.File]::ReadAllText($hostsPath, [Text.Encoding]::UTF8)
+                        $kept = Remove-AtlasHostsAlias -Text $content -Hostname $name
+                        $backup = Set-AtlasHostsText -Path $hostsPath -Text $kept
+                        $deleted = if ($content -cne $kept) { 1 } else { 0 }
+                        Write-Host "Exact alias change; backup: $backup"
                         Write-Host ('  ' + ($L.Removed -f $deleted, $name)) -ForegroundColor Green
                     } catch {
                         Write-Host ('  ' + ($L.ErrAdmin -f $_.Exception.Message)) -ForegroundColor Red
@@ -287,8 +289,8 @@ function Invoke-HostsManager {
                     try {
                         $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
                         $before = Join-Path (Split-Path $hostsPath) "hosts.before-reset.$stamp"
-                        Copy-Item $hostsPath $before -Force
-                        Set-Content -Path $hostsPath -Value $L.HostsDefault -Encoding UTF8
+                        Copy-Item $hostsPath $before -Force -ErrorAction Stop
+                        Set-AtlasHostsText -Path $hostsPath -Text $L.HostsDefault | Out-Null
                         Write-Host ('  ' + ($L.Restored -f $before)) -ForegroundColor Green
                     } catch {
                         Write-Host ('  ' + ($L.ErrAdmin2 -f $_.Exception.Message)) -ForegroundColor Red
@@ -321,8 +323,8 @@ function Invoke-HostsManager {
                     try {
                         $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
                         $before = Join-Path (Split-Path $hostsPath) "hosts.before-import.$stamp"
-                        Copy-Item $hostsPath $before -Force
-                        Copy-Item $src $hostsPath -Force
+                        Copy-Item $hostsPath $before -Force -ErrorAction Stop
+                        Set-AtlasHostsText -Path $hostsPath -Text ([IO.File]::ReadAllText($src, [Text.Encoding]::UTF8)) | Out-Null
                         Write-Host ('  ' + ($L.Imported -f $before)) -ForegroundColor Green
                     } catch {
                         Write-Host ('  ' + ($L.ErrAdmin2 -f $_.Exception.Message)) -ForegroundColor Red
@@ -361,14 +363,14 @@ function Invoke-HostsManager {
                 try {
                     $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
                     $before = Join-Path (Split-Path $hostsPath) "hosts.atlas-pre-stevenblack.$stamp"
-                    Copy-Item $hostsPath $before -Force
+                    Copy-Item $hostsPath $before -Force -ErrorAction Stop
                     $ptrFile = Join-Path $env:LOCALAPPDATA 'AtlasPC\hosts-last-stevenblack-backup.txt'
                     if (-not (Test-Path (Split-Path $ptrFile))) { New-Item -ItemType Directory -Path (Split-Path $ptrFile) -Force | Out-Null }
                     Set-Content -Path $ptrFile -Value $before -Encoding UTF8
                     Write-Host ('  ' + ($L.SBBackupOK -f $before)) -ForegroundColor Green
                     Write-Host ('  ' + $L.SBDownloading) -ForegroundColor Cyan
                     $tmp = Join-Path $env:TEMP "atlas-stevenblack-$stamp.txt"
-                    Invoke-WebRequest -Uri $url -OutFile $tmp -UseBasicParsing -TimeoutSec 60
+                    Invoke-WebRequest -Uri $url -OutFile $tmp -UseBasicParsing -TimeoutSec 60 -ErrorAction Stop
                     if (-not (Test-Path $tmp) -or (Get-Item $tmp).Length -lt 1000) {
                         throw $L.SBEmpty
                     }
@@ -379,7 +381,7 @@ function Invoke-HostsManager {
                     $new += ""
                     $new += $marker
                     $new += (Get-Content $tmp)
-                    Set-Content -Path $hostsPath -Value $new -Encoding UTF8
+                    Set-AtlasHostsText -Path $hostsPath -Text ($new -join "`r`n") | Out-Null
                     Remove-Item $tmp -Force -ErrorAction SilentlyContinue
                     try { ipconfig /flushdns | Out-Null } catch {}
                     Write-Host ('  ' + $L.SBApplied) -ForegroundColor Green
@@ -409,8 +411,8 @@ function Invoke-HostsManager {
                     try {
                         $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
                         $bumpBefore = Join-Path (Split-Path $hostsPath) "hosts.before-revert-stevenblack.$stamp"
-                        Copy-Item $hostsPath $bumpBefore -Force
-                        Copy-Item $backupPath $hostsPath -Force
+                        Copy-Item $hostsPath $bumpBefore -Force -ErrorAction Stop
+                        Set-AtlasHostsText -Path $hostsPath -Text ([IO.File]::ReadAllText($backupPath, [Text.Encoding]::UTF8)) | Out-Null
                         try { ipconfig /flushdns | Out-Null } catch {}
                         Write-Host ('  ' + $L.SBRestored) -ForegroundColor Green
                         Write-Host ('  ' + ($L.SBPostBackup -f $bumpBefore)) -ForegroundColor DarkGray

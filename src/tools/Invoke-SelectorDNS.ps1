@@ -265,6 +265,11 @@ function Apply-DNS {
     Write-Host ""
     Write-Host "  $($txt.Applying)" -ForegroundColor Cyan
 
+    $snapshotPath = Join-Path (Get-AtlasReportDir -SubFolder DnsSnapshots) ('dns-' + [guid]::NewGuid().ToString('N') + '.json')
+    Save-AtlasDnsSnapshot -AdapterNames $AdapterNames -Path $snapshotPath | Out-Null
+    Copy-Item -LiteralPath $snapshotPath -Destination $backupFile -Force -ErrorAction Stop
+    Write-Host "Recovery snapshot: $snapshotPath"
+    $failures = 0
     foreach ($n in $AdapterNames) {
         try {
             if ($Addresses.Count -eq 0) {
@@ -275,6 +280,8 @@ function Apply-DNS {
                 # PASO 2 — asignar IPs (-AddressFamily no existe en WinPS 5.1)
                 Set-DnsClientServerAddress -InterfaceAlias $n -ServerAddresses $Addresses `
                     -ErrorAction Stop
+                $observed = @(Get-DnsClientServerAddress -InterfaceAlias $n -ErrorAction Stop | ForEach-Object { $_.ServerAddresses })
+                foreach ($address in $Addresses) { if ($observed -notcontains $address) { throw "DNS address $address not present in readback." } }
                 Write-Host "  [OK] $($n.PadRight(22)) $($txt.OkDNS) $Label" -ForegroundColor Green
                 Write-Log "SET | $n | $Label | $($Addresses -join ', ')"
 
@@ -282,6 +289,7 @@ function Apply-DNS {
                 # Classic DNS changes do not silently enable DoH.
             }
         } catch {
+            $failures++
             Write-Host "  [FAIL] $n -> $_" -ForegroundColor Red
             Write-Log "FAIL | $n | $Label | $_"
         }
@@ -290,7 +298,8 @@ function Apply-DNS {
     Write-Host ""
     Write-Host "  $($txt.FlushDNS)" -ForegroundColor DarkGray
     Clear-DnsClientCache
-    Write-Host "  $($txt.Done)" -ForegroundColor Green
+    if ($failures) { throw "DNS change incomplete on $failures adapter(s); restore snapshot $snapshotPath if required." }
+    Write-Host "DNS request applied. Verify resolution on each network; snapshot retained." -ForegroundColor Cyan
 }
 
 function Select-AdapterNames {
@@ -367,48 +376,17 @@ function Invoke-LatencyTest {
 }
 
 function Invoke-Backup {
-    $adapters = Get-PhysicalAdapters
-    if (-not $adapters) { Write-Host "`n  $($txt.ErrNoAdap)" -ForegroundColor Red; return }
-    $backup = @{}
-    foreach ($a in $adapters) {
-        $v4 = (Get-DnsClientServerAddress -InterfaceAlias $a.Name -AddressFamily IPv4 -ErrorAction SilentlyContinue).ServerAddresses
-        $v6 = (Get-DnsClientServerAddress -InterfaceAlias $a.Name -AddressFamily IPv6 -ErrorAction SilentlyContinue).ServerAddresses
-        $backup[$a.Name] = @{ IPv4 = $v4; IPv6 = $v6 }
-    }
-    $backup | ConvertTo-Json -Depth 5 | Out-File -FilePath $backupFile -Encoding UTF8
-    Write-Host ""
-    Write-Host "  $($txt.BackupOk)" -ForegroundColor Green
-    Write-Host "  $backupFile"       -ForegroundColor Cyan
-    Write-Log "BACKUP SAVED | $backupFile"
+    $names=@(Get-PhysicalAdapters | Select-Object -ExpandProperty Name)
+    if(-not $names){throw 'No adapters available for a verified snapshot.'}
+    Save-AtlasDnsSnapshot -AdapterNames $names -Path $backupFile | Out-Null
+    Write-Host "Verified DNS snapshot (IPv4/IPv6, automatic/static): $backupFile"
 }
 
 function Invoke-Restore {
-    if (-not (Test-Path $backupFile)) {
-        Write-Host ""
-        Write-Host "  $($txt.BackupNone)" -ForegroundColor Red
-        Write-Host "  $backupFile"         -ForegroundColor DarkGray
-        return
-    }
-    $backup = Get-Content $backupFile -Raw | ConvertFrom-Json
-    Write-Host ""
-    Write-Host "  $($txt.Applying)" -ForegroundColor Cyan
-    foreach ($adapterName in $backup.PSObject.Properties.Name) {
-        $v4 = $backup.$adapterName.IPv4
-        try {
-            if ($v4) {
-                Set-DnsClientServerAddress -InterfaceAlias $adapterName -ServerAddresses $v4 -ErrorAction Stop
-            } else {
-                Set-DnsClientServerAddress -InterfaceAlias $adapterName -ResetServerAddresses -ErrorAction Stop
-            }
-            Write-Host "  [OK] $adapterName" -ForegroundColor Green
-            Write-Log "RESTORE | $adapterName | IPv4: $($v4 -join ', ')"
-        } catch {
-            Write-Host "  [FAIL] $adapterName -> $_" -ForegroundColor Red
-        }
-    }
-    Clear-DnsClientCache
-    Write-Host ""
-    Write-Host "  $($txt.RestoreOk)" -ForegroundColor Green
+    if((Read-Host 'Restoring DNS can interrupt remote support. Type RESTORE to continue') -cne 'RESTORE'){return}
+    Restore-AtlasDnsSnapshot -Path $backupFile
+    Clear-DnsClientCache -ErrorAction Stop
+    Write-Host 'DNS restore verified for IPv4/IPv6 and configuration origin.'
 }
 
 function Invoke-DoHToggle {

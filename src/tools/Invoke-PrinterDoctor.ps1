@@ -412,7 +412,7 @@ function Invoke-PrinterDoctor {
         foreach ($p in $printers | Where-Object { $_.WorkOffline -or $_.PrinterStatus -in 7, 9 }) {
             Add-Finding ($L.FindingOffline -f $p.Name) $L.RecOffline
         }
-        if ($jobs.Count -gt 0) { Add-Finding ($L.FindingJobs -f $jobs.Count) $L.RecJobs }
+        if ($jobs.Count -gt 0) { Add-Finding ("Queued jobs observed: $($jobs.Count); presence alone does not establish a stuck queue.") 'Inspect job age and state before clearing a selected queue.' }
         if ($events.Count -gt 0) { Add-Finding ($L.FindingEvents -f $events.Count) $L.RecEvents }
         if ($script:PrinterDoctorReport.Findings.Count -eq 0) { Add-Finding $L.FindingOk $L.RecOk }
 
@@ -494,12 +494,10 @@ function Invoke-PrinterDoctor {
                     $confirm = Read-Host $L.Confirm
                     if ($confirm -ne 'YES' -and $confirm -ne 'SI') { Write-Host $L.Cancelled; Pause-PrinterDoctor; break }
                     try {
-                        Stop-Service -Name Spooler -Force -ErrorAction Stop
-                        $spool = Join-Path $env:SystemRoot 'System32\spool\PRINTERS'
-                        if (Test-Path -LiteralPath $spool) {
-                            Get-ChildItem -LiteralPath $spool -Force -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
-                        }
-                        Start-Service -Name Spooler -ErrorAction Stop
+                        $name = Read-Host 'Exact printer queue name (only this queue is affected)'
+                        if ([string]::IsNullOrWhiteSpace($name)) { throw 'No queue selected.' }
+                        $count = Clear-AtlasPrintQueue -PrinterName $name
+                        Write-Host "Removed selected queue jobs: $count"
                         Write-Host $L.QueuesCleared -ForegroundColor Green
                     } catch { Write-Host "$($L.NeedAdmin) $($_.Exception.Message)" -ForegroundColor Red }
                     Pause-PrinterDoctor
@@ -513,7 +511,7 @@ function Invoke-PrinterDoctor {
                     if ([string]::IsNullOrWhiteSpace($name)) { Write-Host $L.Cancelled; Pause-PrinterDoctor; break }
                     try {
                         $printer = Get-CimInstance Win32_Printer -Filter ("Name='{0}'" -f ($name.Replace("'","''"))) -ErrorAction Stop
-                        if ($printer) { Invoke-CimMethod -InputObject $printer -MethodName PrintTestPage -ErrorAction Stop | Out-Null; Write-Host $L.TestPageSent -ForegroundColor Green }
+                        if ($printer) { $result = Invoke-CimMethod -InputObject $printer -MethodName PrintTestPage -ErrorAction Stop; if ($result.ReturnValue -ne 0) { throw "Test page failed: $($result.ReturnValue)" }; Write-Host $L.TestPageSent -ForegroundColor Green }
                     } catch { Write-Host $_.Exception.Message -ForegroundColor Red }
                     Pause-PrinterDoctor
                 }

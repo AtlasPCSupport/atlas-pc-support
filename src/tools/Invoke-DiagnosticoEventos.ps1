@@ -161,7 +161,7 @@ function Invoke-DiagnosticoEventos {
         '*|*|1026' = @{ Level='WARN'; Title='.NET Runtime: unhandled exception'; Cause='.NET app crashed with an unhandled exception (StackOverflow, OOM, InvalidOperationException, etc.).'; Action='Check the stacktrace in the message. StackOverflow: infinite recursion in third-party code.' }
         '*|*|219' = @{ Level='WARN'; Title='Driver failed to load'; Cause='A signed driver failed to initialize. The message names the driver.'; Action='Open Device Manager, find the device. Reinstall a fresh driver from the vendor (NOT Windows Update if needed).' }
         '*|*|7026' = @{ Level='WARN'; Title='Boot-start driver failed'; Cause='One or more essential boot drivers did not load.'; Action='Critical if the driver is for storage (AHCI, NVMe). Check the message: antivirus/VPN/virtualization is usually harmless.' }
-        '*|*|7001' = @{ Level='WARN'; Title='Service dependency failed'; Cause='A service did not start because a service it depended on failed.'; Action='Open services.msc and try a manual start. Sometimes indicates broken WMI (repair with winmgmt /resetrepository).' }
+        '*|*|7001' = @{ Level='WARN'; Title='Service dependency failed'; Cause='A service did not start because a service it depended on failed.'; Action='Open services.msc and try a manual start. Sometimes indicates broken WMI (repair with Do not reset the WMI repository based on a single event).' }
         '*|*|7031' = @{ Level='WARN'; Title='Service crashed'; Cause='A Windows service terminated unexpectedly.'; Action='If recurring: re-enable from services.msc or uninstall associated app. If Explorer/Shell: sfc /scannow + dism.' }
         '*|*|7034' = @{ Level='WARN'; Title='Service ended without notice'; Cause='Similar to 7031 - service died without a clean shutdown.'; Action='Same as 7031.' }
         '*|*|7' = @{ Level='CRITICAL'; Title='Bad block on disk (Disk error)'; Cause='The physical disk has corrupt sectors. Typical message: "The device, \\Device\\HarddiskX, has a bad block".'; Action='URGENT. Run SMART check (CrystalDiskInfo). If health <100%, plan backup + replacement NOW. Parts Upgrade tool gives you the model.' }
@@ -169,11 +169,11 @@ function Invoke-DiagnosticoEventos {
         '*|*|52' = @{ Level='WARN'; Title='Disk capacity low'; Cause='Free space below the critical threshold.'; Action='Deep Clean & Repair tool -> free up space.' }
         '*|*|55' = @{ Level='WARN'; Title='File system corrupt'; Cause='NTFS/ReFS detected structural corruption.'; Action='chkdsk C: /f (requires reboot). If recurring: disk is failing physically.' }
         '*|*|153' = @{ Level='WARN'; Title='IO operation retried'; Cause='IO operation to disk had to be retried. Early symptom of a dying drive.'; Action='SMART check is a priority. Plan replacement.' }
-        '*|WHEA-Logger|1' = @{ Level='CRITICAL'; Title='Hardware error: CPU/Bus'; Cause='WHEA (Windows Hardware Error Architecture) detected an unrecoverable hardware fault. Typically CPU overheat, corrupt RAM, or unstable PCIe.'; Action='Test RAM with MemTest86 4+ passes. Check temperatures. BIOS to latest firmware.' }
-        '*|WHEA-Logger|17' = @{ Level='WARN'; Title='Hardware error corrected'; Cause='Hardware error the system was able to correct (e.g. PCIe AER). Does not crash but indicates degradation.'; Action='If frequent: motherboard or expansion card issue. Reseat PCIe (GPU/SSD). BIOS update.' }
-        '*|WHEA-Logger|18' = @{ Level='CRITICAL'; Title='Fatal hardware error (Machine Check)'; Cause='Machine Check Exception (MCE). CPU reports a fatal error. Hardware instability is highly likely.'; Action='Check CPU temp (HWiNFO). Remove OC. Test RAM. If recurring: CPU or board may be defective.' }
-        '*|WHEA-Logger|19' = @{ Level='WARN'; Title='Hardware error corrected (PCIe)'; Cause='PCIe bus error corrected via AER.'; Action='GPU/SSD PCIe poorly seated or faulty cable. Reseat + BIOS update.' }
-        '*|WHEA-Logger|46' = @{ Level='INFO'; Title='CPU thermal throttling'; Cause='CPU lowered frequency due to overheating.'; Action='Parts Upgrade tool -> see temps. Repaste + clean fans. Old laptop: nearly certain.' }
+        '*|Microsoft-Windows-WHEA-Logger|1' = @{ Level='CRITICAL'; Title='Hardware error: CPU/Bus'; Cause='WHEA (Windows Hardware Error Architecture) detected an unrecoverable hardware fault. Typically CPU overheat, corrupt RAM, or unstable PCIe.'; Action='Test RAM with MemTest86 4+ passes. Check temperatures. BIOS to latest firmware.' }
+        '*|Microsoft-Windows-WHEA-Logger|17' = @{ Level='WARN'; Title='Hardware error corrected'; Cause='Hardware error the system was able to correct (e.g. PCIe AER). Does not crash but indicates degradation.'; Action='If frequent: motherboard or expansion card issue. Reseat PCIe (GPU/SSD). BIOS update.' }
+        '*|Microsoft-Windows-WHEA-Logger|18' = @{ Level='CRITICAL'; Title='Fatal hardware error (Machine Check)'; Cause='Machine Check Exception (MCE). CPU reports a fatal error. Hardware instability is highly likely.'; Action='Check CPU temp (HWiNFO). Remove OC. Test RAM. If recurring: CPU or board may be defective.' }
+        '*|Microsoft-Windows-WHEA-Logger|19' = @{ Level='WARN'; Title='Hardware error corrected (PCIe)'; Cause='PCIe bus error corrected via AER.'; Action='GPU/SSD PCIe poorly seated or faulty cable. Reseat + BIOS update.' }
+        '*|Microsoft-Windows-WHEA-Logger|46' = @{ Level='INFO'; Title='CPU thermal throttling'; Cause='CPU lowered frequency due to overheating.'; Action='Parts Upgrade tool -> see temps. Repaste + clean fans. Old laptop: nearly certain.' }
         '*|*|10016' = @{ Level='INFO'; Title='DCOM permissions error'; Cause='An app tried to call a COM component without permission. Almost always harmless.'; Action='Ignorable. Microsoft acknowledges it as noise. Do not touch DCOM permissions unless you have a concrete symptom.' }
         '*|Microsoft-Windows-Kernel-Boot|134' = @{ Level='INFO'; Title='Boot time recorded'; Cause='Windows recorded how long boot took. Informational.'; Action='If very high (>60s with SSD): startup defrag, sfc, review startup programs.' }
         '*|*|4625' = @{ Level='WARN'; Title='Logon failure'; Cause='Someone tried to log in with wrong credentials. Message contains source IP + attempted username.'; Action='If many and from external IPs: brute-force attack. Disable public RDP, use a VPN.' }
@@ -195,7 +195,7 @@ function Invoke-DiagnosticoEventos {
         '*|*|1026' = @{ Level='WARN'; Title='.NET Runtime: excepcion no controlada'; Cause='App .NET crasheo con excepcion sin manejar (StackOverflow, OOM, InvalidOperationException, etc.).'; Action='Mira el stacktrace en el mensaje. Si es StackOverflow: recursion infinita en codigo de terceros.' }
         '*|*|219' = @{ Level='WARN'; Title='Driver fallo al cargar'; Cause='Un driver firmado fallo su inicializacion. Mensaje indica nombre del driver.'; Action='Abre Device Manager, busca el dispositivo con el driver problemarico. Reinstala driver fresh (fabricante, NO Windows Update si hace falta).' }
         '*|*|7026' = @{ Level='WARN'; Title='Boot-start driver fallo'; Cause='Uno o varios drivers esenciales no cargaron en arranque.'; Action='Critico si el driver es de disco (AHCI, NVMe). Revisa mensaje: si es antivirus/VPN/virtualizacion, probablemente inofensivo.' }
-        '*|*|7001' = @{ Level='WARN'; Title='Servicio dependencia fallo'; Cause='Un servicio no arranco porque otro del que dependia fallo.'; Action='Mira services.msc, intenta start manual. A veces indica WMI roto (reparar con winmgmt /resetrepository).' }
+        '*|*|7001' = @{ Level='WARN'; Title='Servicio dependencia fallo'; Cause='Un servicio no arranco porque otro del que dependia fallo.'; Action='Mira services.msc, intenta start manual. A veces indica WMI roto (reparar con Do not reset the WMI repository based on a single event).' }
         '*|*|7031' = @{ Level='WARN'; Title='Servicio crasheo'; Cause='Un servicio Windows terminio inesperadamente.'; Action='Si repite: rehabilitar via services.msc o desinstalar app asociada. Si es Explorer/Shell: sfc /scannow + dism.' }
         '*|*|7034' = @{ Level='WARN'; Title='Servicio termino sin previo aviso'; Cause='Similar a 7031 — servicio murio sin shutdown limpio.'; Action='Igual que 7031.' }
         '*|*|7' = @{ Level='CRITICAL'; Title='Bad block en disco (Disk error)'; Cause='El disco fisico tiene sectores corruptos. Mensaje tipico: "The device, \\Device\\HarddiskX, has a bad block".'; Action='URGENTE. Ejecuta SMART check (CrystalDiskInfo). Si salud no es 100%, plan backup + reemplazo de disco YA. Tool Parts Upgrade te da el modelo.' }
@@ -203,11 +203,11 @@ function Invoke-DiagnosticoEventos {
         '*|*|52' = @{ Level='WARN'; Title='Disk capacidad baja'; Cause='Espacio libre menor al umbral critico.'; Action='Tool Mantenimiento PRO -> liberar espacio.' }
         '*|*|55' = @{ Level='WARN'; Title='File system corrupt'; Cause='NTFS/ReFS detecto corrupcion estructural.'; Action='chkdsk C: /f (requiere reboot). Si repite: disco fallando fisicamente.' }
         '*|*|153' = @{ Level='WARN'; Title='IO operation retried'; Cause='Operacion IO al disco tuvo que reintentarse. Sintoma temprano de disco moribundo.'; Action='SMART check prioritario. Plan de reemplazo.' }
-        '*|WHEA-Logger|1' = @{ Level='CRITICAL'; Title='Hardware error: CPU/Bus'; Cause='WHEA (Windows Hardware Error Architecture) detecto fallo hardware no recuperable. Tipicamente CPU overheat, RAM corrupta, o PCIe inestable.'; Action='Test RAM con MemTest86 4+ pases. Check temperaturas. BIOS al ultimo firmware.' }
-        '*|WHEA-Logger|17' = @{ Level='WARN'; Title='Hardware error corregido'; Cause='Error hardware que el sistema pudo corregir (ej. PCIe AER). No causa crash, pero indica degradacion.'; Action='Si es frecuente: problema de placa/tarjeta expansion. Re-asiente PCIe (GPU/SSD). BIOS update.' }
-        '*|WHEA-Logger|18' = @{ Level='CRITICAL'; Title='Fatal hardware error (Machine Check)'; Cause='Machine Check Exception (MCE). CPU reporta error fatal. Muy probable inestabilidad hardware.'; Action='Check CPU temp (HWiNFO). Remove OC. Test RAM. Si repite: CPU o placa posiblemente defectuosa.' }
-        '*|WHEA-Logger|19' = @{ Level='WARN'; Title='Hardware error corregido (PCIe)'; Cause='Error en bus PCIe corregido via AER.'; Action='GPU/SSD PCIe mal asentada o cable defectuoso. Reseat + BIOS update.' }
-        '*|WHEA-Logger|46' = @{ Level='INFO'; Title='Throttling CPU por temperatura'; Cause='CPU redujo frecuencia por sobrecalentamiento.'; Action='Tool Parts Upgrade -> ver temps. Limpieza de pasta termica + ventilador. Notebook viejo: casi seguro.' }
+        '*|Microsoft-Windows-WHEA-Logger|1' = @{ Level='CRITICAL'; Title='Hardware error: CPU/Bus'; Cause='WHEA (Windows Hardware Error Architecture) detecto fallo hardware no recuperable. Tipicamente CPU overheat, RAM corrupta, o PCIe inestable.'; Action='Test RAM con MemTest86 4+ pases. Check temperaturas. BIOS al ultimo firmware.' }
+        '*|Microsoft-Windows-WHEA-Logger|17' = @{ Level='WARN'; Title='Hardware error corregido'; Cause='Error hardware que el sistema pudo corregir (ej. PCIe AER). No causa crash, pero indica degradacion.'; Action='Si es frecuente: problema de placa/tarjeta expansion. Re-asiente PCIe (GPU/SSD). BIOS update.' }
+        '*|Microsoft-Windows-WHEA-Logger|18' = @{ Level='CRITICAL'; Title='Fatal hardware error (Machine Check)'; Cause='Machine Check Exception (MCE). CPU reporta error fatal. Muy probable inestabilidad hardware.'; Action='Check CPU temp (HWiNFO). Remove OC. Test RAM. Si repite: CPU o placa posiblemente defectuosa.' }
+        '*|Microsoft-Windows-WHEA-Logger|19' = @{ Level='WARN'; Title='Hardware error corregido (PCIe)'; Cause='Error en bus PCIe corregido via AER.'; Action='GPU/SSD PCIe mal asentada o cable defectuoso. Reseat + BIOS update.' }
+        '*|Microsoft-Windows-WHEA-Logger|46' = @{ Level='INFO'; Title='Throttling CPU por temperatura'; Cause='CPU redujo frecuencia por sobrecalentamiento.'; Action='Tool Parts Upgrade -> ver temps. Limpieza de pasta termica + ventilador. Notebook viejo: casi seguro.' }
         '*|*|10016' = @{ Level='INFO'; Title='DCOM error de permisos'; Cause='App intento llamar a un componente COM sin permisos. Casi siempre inofensivo.'; Action='Ignorable. Microsoft lo reconoce como ruido. No toques DCOM permissions salvo que tengas sintoma concreto.' }
         '*|Microsoft-Windows-Kernel-Boot|134' = @{ Level='INFO'; Title='Tiempo de arranque registrado'; Cause='Windows registro el tiempo que tardo el boot. Informativo.'; Action='Si ves tiempo muy alto (>60s con SSD): defrag autostart, sfc, revisar programas de inicio.' }
         '*|*|4625' = @{ Level='WARN'; Title='Logon fallido'; Cause='Alguien intento login con credenciales incorrectas. Mensaje contiene IP origen + usuario intentado.'; Action='Si son muchos y de IPs externas: ataque por fuerza bruta. Desactiva RDP publico, usa VPN.' }
@@ -226,8 +226,7 @@ function Invoke-DiagnosticoEventos {
         if ($null -eq $script:AtlasEventsKB) { return $null }
         $keys = @(
             "$LogName|$Provider|$EventId",
-            "*|$Provider|$EventId",
-            "*|*|$EventId"
+            "*|$Provider|$EventId"
         )
         foreach ($k in $keys) {
             if ($script:AtlasEventsKB.ContainsKey($k)) { return $script:AtlasEventsKB[$k] }
@@ -273,7 +272,8 @@ function Invoke-DiagnosticoEventos {
         try {
             return @(Get-WinEvent -FilterHashtable $filter -MaxEvents $MaxEvents -ErrorAction Stop)
         } catch {
-            return @()
+            if ($_.FullyQualifiedErrorId -like 'NoMatchingEventsFound*') { return @() }
+            throw "Event log $LogName was not evaluated: $($_.Exception.Message)"
         }
     }
 
@@ -289,7 +289,7 @@ function Invoke-DiagnosticoEventos {
         foreach ($g in $groups) {
             $first = $g.Group[0]
             $kb = _Kb-Lookup $first.LogName $first.ProviderName ([int]$first.Id)
-            $level = if ($kb) { $kb.Level } else { 'INFO' }
+            $level = if ($first.Level -in @(1,2)) { 'CRITICAL' } elseif ($first.Level -eq 3) { 'WARN' } elseif ($first.Level -eq 4) { 'INFO' } else { 'UNKNOWN' }
             $icon  = _Level-Icon $level
             $color = _Level-Color $level
             $title = if ($kb) { $kb.Title } else { "$($first.ProviderName) #$($first.Id)" }
@@ -297,7 +297,7 @@ function Invoke-DiagnosticoEventos {
             Write-Host ("  $icon $title  [x$($g.Count)]") -ForegroundColor $color
             Write-Host ("     $($L.FieldProvider): $($first.ProviderName) - $($L.FieldEventId): $($first.Id) - $($L.FieldLast): $($first.TimeCreated.ToString('yyyy-MM-dd HH:mm'))") -ForegroundColor DarkGray
             if ($kb) {
-                Write-Host ("     $($L.FieldCause) : $($kb.Cause)") -ForegroundColor Gray
+                Write-Host ("     $($L.FieldCause) (hypothesis, correlate original event): $($kb.Cause)") -ForegroundColor Gray
                 Write-Host ("     $($L.FieldAction): $($kb.Action)") -ForegroundColor White
             } else {
                 $msg = ($first.Message -replace "`r?`n", ' ').Trim()
@@ -339,7 +339,7 @@ function Invoke-DiagnosticoEventos {
             foreach ($g in $groups) {
                 $first = $g.Group[0]
                 $kb = _Kb-Lookup $first.LogName $first.ProviderName ([int]$first.Id)
-                $level = if ($kb) { $kb.Level } else { 'INFO' }
+                $level = if ($first.Level -in @(1,2)) { 'CRITICAL' } elseif ($first.Level -eq 3) { 'WARN' } elseif ($first.Level -eq 4) { 'INFO' } else { 'UNKNOWN' }
                 $cls = $level.ToLower()
                 $evTitle = if ($kb) { $kb.Title } else { "$($first.ProviderName) #$($first.Id)" }
                 $cause  = if ($kb) { [System.Net.WebUtility]::HtmlEncode($kb.Cause)  } else { '' }

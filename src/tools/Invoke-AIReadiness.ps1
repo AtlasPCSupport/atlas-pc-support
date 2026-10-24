@@ -453,7 +453,7 @@ function Invoke-AIReadiness {
         $logical = if ($cpu -and $cpu.NumberOfLogicalProcessors) { [int]$cpu.NumberOfLogicalProcessors } else { 0 }
         $cores = if ($cpu -and $cpu.NumberOfCores) { [int]$cpu.NumberOfCores } else { 0 }
         $cpuName = if ($cpu) { [string]$cpu.Name } else { '' }
-        $cpuBench = Invoke-AIRCpuBenchmark
+        $cpuBench = 0 # No CPU microbenchmark is run by inventory.
         $maxVram = 0
         foreach ($g in $gpuRows) {
             if ([double]$g.VRAMGB -gt $maxVram) { $maxVram = [double]$g.VRAMGB }
@@ -478,7 +478,7 @@ function Invoke-AIReadiness {
         if ($cpuBench -ge 4 -and $cpuScore -lt 20) { $cpuScore += 1 }
         $gpuScore = if ($maxVram -ge 16) { 25 } elseif ($maxVram -ge 12) { 22 } elseif ($maxVram -ge 8) { 19 } elseif ($maxVram -ge 6) { 15 } elseif ($maxVram -ge 4) { 11 } elseif ($maxVram -ge 2) { 6 } elseif ($maxVram -gt 0) { 3 } else { 0 }
         if ($hasBasicGpu -and $gpuScore -gt 2) { $gpuScore = 2 }
-        $diskScore = if ($hasSsd) { 15 } elseif ($diskRows.Count -gt 0) { 4 } else { 8 }
+        $diskScore = if ($hasSsd) { 15 } elseif ($diskRows.Count -gt 0) { 4 } else { 0 }
         if ($badDisk -and $diskScore -gt 5) { $diskScore = 5 }
         $stackScore = 0
         if ($ollama.Installed) { $stackScore += 5 }
@@ -486,7 +486,8 @@ function Invoke-AIReadiness {
         if ($stackScore -gt 15) { $stackScore = 15 }
         $score = [math]::Min(100, [int]($ramScore + $cpuScore + $gpuScore + $diskScore + $stackScore))
 
-        $verdict = if ($score -ge 75) { $L.Ready } elseif ($score -ge 50) { $L.Limited } else { $L.NotReady }
+        $verdict = if (-not $cpu -or -not $cs -or $diskRows.Count -eq 0) { 'Not evaluated: incomplete inventory' } elseif ($score -ge 75) { $L.Ready } elseif ($score -ge 50) { $L.Limited } else { $L.NotReady }
+        $verdict = [string]$verdict + ' (inventory heuristic; backend/model not tested; HTTP reachability is not API authorization)'
         $mode = if ($maxVram -ge 8 -and $score -ge 65) { $L.ModeGpu } elseif ($ramGb -ge 16 -and $hasSsd) { $L.ModeCpu } elseif ($reachableCount -ge 2) { $L.ModeCloud } else { $L.ModeNone }
 
         $findings = @()

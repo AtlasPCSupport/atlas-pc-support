@@ -1,4 +1,4 @@
-﻿# ============================================================
+# ============================================================
 # Invoke-FastCopy
 # Migrado de: FastCopy.ps1
 # Atlas PC Support — v1.0
@@ -352,6 +352,7 @@ function Compare-BeforeCopy {
     $totalNew = 0; $totalModified = 0; $totalEqual = 0; $totalSizeNew = 0; $totalSizeMod = 0
     
     foreach ($origen in $Origins) {
+        Assert-AtlasCopyDestination -Source $origen -Destination $Destino
         $srcName = Split-Path $origen -Leaf
         $isFile = -not (Test-Path $origen -PathType Container)
         
@@ -547,58 +548,11 @@ function Export-CopyReport {
 # ==================== VERIFICACIÓN MD5 ====================
 
 function Test-CopyIntegrity {
-    param([string]$Origen, [string]$Destino, [int]$SampleSize = 15)
-    Write-Host ""
-    _Write-AtlasStepCompat -Message "VERIFYING MD5 INTEGRITY..." -FallbackColor Yellow
-    Write-Host ""
-
-    $srcStats = Get-FolderStats $Origen
-    $dstStats = Get-FolderStats $Destino
-    Write-Host "    Files    - Source: $($srcStats.Files) | Target: $($dstStats.Files)" -ForegroundColor Gray
-    Write-Host "    Size     - Source: $(Format-Size $srcStats.Size) | Target: $(Format-Size $dstStats.Size)" -ForegroundColor Gray
-
-    $countMatch = ($srcStats.Files -eq $dstStats.Files)
-    Write-Host "    Count:   $(if ($countMatch) { 'MATCH' } else { 'DIFFERENT (may be normal)' })" -ForegroundColor $(if ($countMatch) { "Green" } else { "Yellow" })
-
-    $srcFiles = Get-ChildItem -Path $Origen -Recurse -File -ErrorAction SilentlyContinue
-    if (-not $srcFiles -or $srcFiles.Count -eq 0) {
-        Write-Host "    Sin archivos." -ForegroundColor Gray
-        return @{ OK = $true; Checked = 0; Passed = 0; Failed = 0; Missing = 0 }
-    }
-
-    Write-Host ""; Write-Host "    Hash MD5 (muestra de ${SampleSize})..." -ForegroundColor DarkGray
-
-    $bySize = $srcFiles | Sort-Object Length -Descending | Select-Object -First 5
-    $byDate = $srcFiles | Sort-Object LastWriteTime -Descending | Select-Object -First 5
-    $randomCount = [math]::Min([math]::Max(1, $SampleSize - 10), $srcFiles.Count)
-    $random = $srcFiles | Get-Random -Count $randomCount
-    $sample = @($bySize) + @($byDate) + @($random) | Sort-Object FullName -Unique | Select-Object -First $SampleSize
-
-    $checked = 0; $passed = 0; $failed = 0; $missing = 0; $failedFiles = @()
-
-    foreach ($sf in $sample) {
-        $checked++
-        $relPath = $sf.FullName.Substring($Origen.Length).TrimStart('\')
-        $dstFile = Join-Path $Destino $relPath
-        $pct = [math]::Round(($checked / $sample.Count) * 100, 0)
-        Write-Host "`r    [${pct}%] ${checked}/$($sample.Count)..." -NoNewline -ForegroundColor DarkGray
-
-        if (-not (Test-Path $dstFile)) { $missing++; $failedFiles += "FALTA: ${relPath}"; continue }
-        try {
-            $h1 = (Get-FileHash $sf.FullName -Algorithm MD5 -ErrorAction Stop).Hash
-            $h2 = (Get-FileHash $dstFile -Algorithm MD5 -ErrorAction Stop).Hash
-            if ($h1 -eq $h2) { $passed++ } else { $failed++; $failedFiles += "CORRUPTO: ${relPath}" }
-        } catch { $failed++; $failedFiles += "ERROR: ${relPath}" }
-    }
-
-    Write-Host ""; Write-Host ""
-    if ($failed -eq 0 -and $missing -eq 0) {
-        Write-Host "    [OK] INTEGRIDAD: ${passed}/${checked} verificados" -ForegroundColor Green
-    } else {
-        Write-Host "    [!!] OK=${passed} | FALLOS=${failed} | FALTANTES=${missing}" -ForegroundColor Red
-        foreach ($f in $failedFiles) { Write-Host "         $f" -ForegroundColor Red }
-    }
-    return @{ OK = ($failed -eq 0 -and $missing -eq 0); Checked = $checked; Passed = $passed; Failed = $failed; Missing = $missing }
+    param([string]$Origen,[string]$Destino,[int]$SampleSize=15,[string[]]$ExcludeFiles=@(),[string[]]$ExcludeDirs=@())
+    $result=Test-AtlasCopySample -Source $Origen -Destination $Destino -SampleSize $SampleSize -ExcludeFiles $ExcludeFiles -ExcludeDirs $ExcludeDirs
+    Write-Host $result.Coverage
+    Write-Host "Checked=$($result.Checked); passed=$($result.Passed); failed=$($result.Failed); missing=$($result.Missing)"
+    return $result
 }
 
 # ==================== EJECUTAR FASTCOPY ====================
@@ -614,6 +568,7 @@ function Start-FastCopy {
     _Write-AtlasStepCompat -Message "EJECUTANDO FASTCOPY (${DiskType} | ${Mode} | speed=${SpeedMode})" -FallbackColor Yellow
     Write-Host ""
 
+    if ($Mode -in @('MOVER','SINCRONIZAR')) { throw 'Destructive move/sync requires a separately verified backup and preview; use copy-only in this release.' }
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
     $allResults = @()
     $totalBytesCopied = 0
@@ -635,6 +590,7 @@ function Start-FastCopy {
 
         $fcArgs += "/speed=${SpeedMode}"
         $fcArgs += "/estimate"
+        $fcArgs += "/verify"
         $fcArgs += "/auto_close"
         $fcArgs += "/error_stop=FALSE"
         $fcArgs += "/log"
@@ -645,8 +601,11 @@ function Start-FastCopy {
         }
 
         # Exclusiones
-        if ($ExcludeFiles -and $ExcludeFiles.Count -gt 0) {
-            $exclStr = ($ExcludeFiles -join ";")
+        if ($ExcludeFiles.Count -gt 0 -or $ExcludeDirs.Count -gt 0) {
+            $directoryFilters = @($ExcludeDirs | ForEach-Object { ([string]$_).TrimEnd([char]92) + [char]92 })
+            $filters = @($ExcludeFiles) + $directoryFilters
+            if (@($filters | Where-Object { $_ -match '[";\r\n]' }).Count) { throw 'Invalid copy exclusion filter.' }
+            $exclStr = ($filters -join ";")
             $fcArgs += "/exclude=`"${exclStr}`""
         }
 
@@ -685,7 +644,7 @@ function Start-FastCopy {
     Write-Host ""
     Write-Host "    ========================================================" -ForegroundColor White
     $resultColor = if ($allOK) { "Green" } else { "Red" }
-    $resultMsg = if ($allOK) { "COMPLETADO EXITOSAMENTE" } else { "COMPLETADO CON ERRORES - revisa el log" }
+    $resultMsg = if ($allOK) { "PROCESO FINALIZADO SIN ERROR NATIVO; revisar log y cobertura de verificacion" } else { "COMPLETADO CON ERRORES - revisa el log" }
     Write-Host "    RESULTADO: ${resultMsg}" -ForegroundColor $resultColor
     Write-Host "    ========================================================" -ForegroundColor White
     Write-Host ""
@@ -1014,7 +973,7 @@ do {
         $verSel = Read-Host "    >"
         if ($verSel -match '^[SsYy]$') {
             # Verificar el primer origen (el más importante)
-            $integrity = Test-CopyIntegrity -Origen $origenes[0] -Destino $rutaFinal
+            $integrity = Test-CopyIntegrity -Origen $origenes[0] -Destino $rutaFinal -ExcludeFiles $exclusions.Files -ExcludeDirs $exclusions.Dirs
         }
     }
 
@@ -1065,7 +1024,7 @@ do {
                     if ($r2.OK -and $modo -ne "MOVER") {
                         Write-Host "    Verificar MD5? [Y/N]" -ForegroundColor DarkGray
                         $v2 = Read-Host "    >"
-                        if ($v2 -match '^[SsYy]$') { Test-CopyIntegrity -Origen $origenes[0] -Destino $newRutaFinal | Out-Null }
+                        if ($v2 -match '^[SsYy]$') { Test-CopyIntegrity -Origen $origenes[0] -Destino $newRutaFinal -ExcludeFiles $exclusions.Files -ExcludeDirs $exclusions.Dirs | Out-Null }
                     }
                 }
             }

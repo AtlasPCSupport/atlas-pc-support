@@ -225,7 +225,7 @@
     {
       "id": "mantenimiento-pro",
       "name": "Deep Clean & Repair",
-      "description": "Full maintenance suite: Defender, cleanup, DISM/SFC, system repair, final report.",
+      "description": "Inspect Defender and restart status; selected DISM/SFC checks or repair. No automatic cache deletion or network reset.",
       "category": "mantenimiento",
       "function": "Invoke-MantenimientoPRO",
       "source": "Invoke-MantenimientoPRO.ps1",
@@ -384,7 +384,7 @@
     {
       "id": "stop-services",
       "name": "Service Optimizer",
-      "description": "Stops and sets to Manual non-essential services: telemetry, Xbox, sensors, fax, etc.",
+      "description": "Inspect a restricted service list; change one with a verified snapshot and restore its previous startup/running state.",
       "category": "mantenimiento",
       "function": "Invoke-StopServices",
       "source": "Invoke-StopServices.ps1",
@@ -706,7 +706,8 @@
       },
       "availability": {
         "minimumBuild": 19044,
-        "commands": []
+        "commands": [],
+        "disabledReason": "Backend is absent from this release. No unverified localhost service or global Python installation will be started."
       }
     },
     {

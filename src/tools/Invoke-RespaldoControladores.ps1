@@ -1,4 +1,4 @@
-﻿# ============================================================
+# ============================================================
 # Invoke-RespaldoControladores
 # Atlas PC Support
 # Native Windows Driver Backup via DISM / Export-WindowsDriver.
@@ -80,7 +80,7 @@ function Invoke-RespaldoControladores {
     # Fallback method: DISM.exe CLI
     if (-not $exportSuccess) {
         try {
-            $dismArgs = @('/Online', '/Export-Driver', "/Destination:$DestinationPath")
+            $dismArgs = @('/Online', '/Export-Driver', ('/Destination:"{0}"' -f $DestinationPath))
             $proc = Start-Process -FilePath 'dism.exe' -ArgumentList $dismArgs -Wait -PassThru -NoNewWindow
             if ($proc.ExitCode -eq 0) {
                 $exportSuccess = $true

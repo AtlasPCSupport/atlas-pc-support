@@ -406,69 +406,11 @@ function Get-PathFromUser {
 }
 
 function Test-CopyIntegrity {
-    param([string]$Origen, [string]$Destino, [int]$SampleSize = 15)
-
-    Write-Host ""
-    _Write-AtlasStepCompat -Message $L.Verifying -FallbackColor Yellow
-    Write-Host ""
-
-    $srcStats = Get-FolderStats $Origen
-    $dstStats = Get-FolderStats $Destino
-
-    Write-Host ($L.FilesLine -f $srcStats.Files, $dstStats.Files) -ForegroundColor Gray
-    Write-Host ($L.SizeLine  -f (Format-Size $srcStats.Size), (Format-Size $dstStats.Size)) -ForegroundColor Gray
-
-    $countMatch = ($srcStats.Files -eq $dstStats.Files)
-    $countColor = if ($countMatch) { "Green" } else { "Yellow" }
-    $countText  = if ($countMatch) { $L.CountMatch } else { $L.CountDiff }
-    Write-Host ($L.CountLine -f $countText) -ForegroundColor $countColor
-
-    Write-Host ""
-    Write-Host ($L.MD5Line -f $SampleSize) -ForegroundColor DarkGray
-
-    $srcFiles = Get-ChildItem -Path $Origen -Recurse -File -ErrorAction SilentlyContinue
-    if (-not $srcFiles -or $srcFiles.Count -eq 0) {
-        Write-Host $L.NoFilesVerif -ForegroundColor Gray
-        return @{ OK = $true; Checked = 0; Passed = 0; Failed = 0; Missing = 0 }
-    }
-
-    $bySize = $srcFiles | Sort-Object Length -Descending | Select-Object -First 5
-    $byDate = $srcFiles | Sort-Object LastWriteTime -Descending | Select-Object -First 5
-    $randomCount = [math]::Min([math]::Max(1, $SampleSize - 10), $srcFiles.Count)
-    $random = $srcFiles | Get-Random -Count $randomCount
-    $sample = @($bySize) + @($byDate) + @($random) | Sort-Object FullName -Unique | Select-Object -First $SampleSize
-
-    $checked = 0; $passed = 0; $failed = 0; $missing = 0; $failedFiles = @()
-
-    foreach ($srcFile in $sample) {
-        $checked++
-        $relPath = $srcFile.FullName.Substring($Origen.Length).TrimStart('\')
-        $dstFile = Join-Path $Destino $relPath
-
-        $pct = [math]::Round(($checked / $sample.Count) * 100, 0)
-        Write-Host ($L.CheckProg -f $pct, $checked, $sample.Count) -NoNewline -ForegroundColor DarkGray
-
-        if (-not (Test-Path $dstFile)) {
-            $missing++; $failedFiles += ($L.MissingTag -f $relPath); continue
-        }
-        try {
-            $hashSrc = (Get-FileHash -Path $srcFile.FullName -Algorithm MD5 -ErrorAction Stop).Hash
-            $hashDst = (Get-FileHash -Path $dstFile -Algorithm MD5 -ErrorAction Stop).Hash
-            if ($hashSrc -eq $hashDst) { $passed++ }
-            else { $failed++; $failedFiles += ($L.CorruptTag -f $relPath) }
-        } catch { $failed++; $failedFiles += ($L.ErrorTag -f $relPath) }
-    }
-
-    Write-Host ""; Write-Host ""
-
-    if ($failed -eq 0 -and $missing -eq 0) {
-        Write-Host ($L.IntegrityOK -f $passed, $checked) -ForegroundColor Green
-    } else {
-        Write-Host ($L.IntegrityKO -f $passed, $failed, $missing) -ForegroundColor Red
-        foreach ($f in $failedFiles) { Write-Host "         $f" -ForegroundColor Red }
-    }
-
-    return @{ OK = ($failed -eq 0 -and $missing -eq 0); Checked = $checked; Passed = $passed; Failed = $failed; Missing = $missing }
+    param([string]$Origen,[string]$Destino,[int]$SampleSize=15,[string[]]$ExcludeFiles=@(),[string[]]$ExcludeDirs=@())
+    $result=Test-AtlasCopySample -Source $Origen -Destination $Destino -SampleSize $SampleSize -ExcludeFiles $ExcludeFiles -ExcludeDirs $ExcludeDirs
+    Write-Host $result.Coverage
+    Write-Host "Checked=$($result.Checked); passed=$($result.Passed); failed=$($result.Failed); missing=$($result.Missing)"
+    return $result
 }
 
 function Start-SmartCopy {
@@ -477,6 +419,8 @@ function Start-SmartCopy {
         [int]$MT, [string]$DiskType, [string]$Mode,
         [array]$ExcludeDirs, [array]$ExcludeFiles
     )
+
+    Assert-AtlasCopyDestination -Source $Origen -Destination $Destino
 
     Write-Host ""
     _Write-AtlasStepCompat -Message ($L.CopyingHdr -f $DiskType, $MT, $Mode) -FallbackColor Yellow
@@ -552,7 +496,7 @@ function Start-SmartCopy {
         5 { $L.ResCopyMis }
         default { if ($exitCode -le 7) { $L.ResDone -f $exitCode } else { $L.ResError -f $exitCode } }
     }
-    $resultColor = if ($exitCode -le 3) { "Green" } elseif ($exitCode -le 7) { "Yellow" } else { "Red" }
+    $resultColor = if ($exitCode -ge 0 -and $exitCode -le 3) { "Green" } elseif ($exitCode -le 7) { "Yellow" } else { "Red" }
 
     Write-Host ($L.ResultLine -f $resultMsg) -ForegroundColor $resultColor
     Write-Host "    ========================================================" -ForegroundColor White
@@ -563,7 +507,7 @@ function Start-SmartCopy {
     Write-Host ($L.LogLine     -f (Split-Path $logFile -Leaf)) -ForegroundColor DarkGray
 
     return @{
-        ExitCode = $exitCode; OK = ($exitCode -le 7); Elapsed = $elapsed
+        ExitCode = $exitCode; OK = ($exitCode -ge 0 -and $exitCode -le 3); Elapsed = $elapsed
         BytesCopied = $bytesCopied; SpeedMBps = $speedMBps; LogFile = $logFile
     }
 }
@@ -775,7 +719,7 @@ do {
         Write-Host $L.VerifyAsk -ForegroundColor DarkGray
         $verSel = Read-Host "    >"
         if ($verSel -match '^[SsYy]$') {
-            $integrity = Test-CopyIntegrity -Origen $origen -Destino $rutaFinal
+            $integrity = Test-CopyIntegrity -Origen $origen -Destino $rutaFinal -ExcludeFiles (@("Pagefile.sys","Hiberfil.sys","swapfile.sys","Thumbs.db") + $extraXF) -ExcludeDirs (@("System Volume Information",'$RECYCLE.BIN',"Recovery") + $extraXD)
         }
     }
 
@@ -828,7 +772,7 @@ do {
                     if ($result2.OK -and -not $isFile) {
                         Write-Host ""; Write-Host $L.VerifyMD5Q -ForegroundColor DarkGray
                         $v2 = Read-Host "    >"
-                        if ($v2 -match '^[SsYy]$') { Test-CopyIntegrity -Origen $origen -Destino $newRutaFinal | Out-Null }
+                        if ($v2 -match '^[SsYy]$') { Test-CopyIntegrity -Origen $origen -Destino $newRutaFinal -ExcludeFiles (@("Pagefile.sys","Hiberfil.sys","swapfile.sys","Thumbs.db") + $extraXF) -ExcludeDirs (@("System Volume Information",'$RECYCLE.BIN',"Recovery") + $extraXD) | Out-Null }
                     }
                 }
             }

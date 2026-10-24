@@ -587,11 +587,11 @@ function Obtener-SubredBase {
     param([string]$Gateway, [int]$InterfaceIndex)
     $C = Get-NetIPAddress -InterfaceIndex $InterfaceIndex -AddressFamily IPv4 `
          -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($C -and $C.PrefixLength -ge 24) {
+    if ($C -and $C.PrefixLength -eq 24) {
         $O = $C.IPAddress.Split('.')
         return "$($O[0]).$($O[1]).$($O[2])"
     }
-    return $Gateway.Substring(0, $Gateway.LastIndexOf('.'))
+    throw 'This legacy scan supports /24 only. No broader or narrower subnet is inferred; use the interface CIDR in a qualified network scanner.'
 }
 
 function Test-Puerto {
@@ -816,7 +816,7 @@ function Modulo-Escaneo {
                 $Conflicto = ""
                 if ($MAC -ne "Desconocida") {
                     if ($MACVisto.ContainsKey($MAC)) {
-                        $Conflicto = "  [!!! CONFLICTO: misma MAC que $($MACVisto[$MAC])]"
+                        $Conflicto = "  [!!! MISMA MAC OBSERVADA; no demuestra conflicto IP; otra IP: $($MACVisto[$MAC])]"
                     } else {
                         $MACVisto[$MAC] = $IP
                     }
@@ -1122,7 +1122,7 @@ function Modulo-PuertosWAN {
     if (-not $IPP) { Write-Host "  No se pudo obtener la IP publica." -ForegroundColor Red; Esperar-Enter -Silencioso:$Silencioso; return @() }
 
     Write-Host "  IP Publica: $IPP" -ForegroundColor White
-    Write-Host "`n  Scanning puertos criticos desde Internet...`n" -ForegroundColor DarkGray
+    Write-Host "`n  Testing public-IP reachability FROM THIS LAN; NAT loopback is not an external exposure test...`n" -ForegroundColor DarkGray
 
     $Puertos = @(
         @{ P = 21;   N = "FTP";      R = "CRITICO" }
@@ -1141,11 +1141,11 @@ function Modulo-PuertosWAN {
         $Ok = Test-Puerto -Destino $IPP -Puerto $E.P -TimeoutMs 2000
         if ($Ok) {
             $C = switch ($E.R) { "CRITICO" { "Red" } "ALTO" { "Yellow" } default { "DarkYellow" } }
-            Write-Host ("  [EXPUESTO]  Puerto {0,-5} ({1,-10}) RIESGO {2}" -f $E.P, $E.N, $E.R) -ForegroundColor $C
-            $Log += "  [EXPUESTO]  Puerto $($E.P) ($($E.N)) [$($E.R)]"
+            Write-Host ("  [ALCANZABLE DESDE LAN]  Puerto {0,-5} ({1,-10}) RIESGO {2}" -f $E.P, $E.N, $E.R) -ForegroundColor $C
+            $Log += "  [ALCANZABLE DESDE LAN]  Puerto $($E.P) ($($E.N)) [$($E.R)]"
             $Alertas += $E.P
         } else {
-            Write-Host ("  [OK]        Puerto {0,-5} ({1,-10}) cerrado/filtrado" -f $E.P, $E.N) -ForegroundColor DarkGreen
+            Write-Host ("  [NO CONCLUYENTE] Puerto {0,-5} ({1,-10}) sin respuesta desde LAN" -f $E.P, $E.N) -ForegroundColor DarkGreen
             $Log += "  [OK]        Puerto $($E.P) ($($E.N))"
         }
     }
@@ -1156,7 +1156,7 @@ function Modulo-PuertosWAN {
         Write-Host "    Router panel (module C) -> Remote administration -> disable." -ForegroundColor Yellow
         Write-Host "    Or in Port Forwarding: remove rules for the marked ports." -ForegroundColor Yellow
     } else {
-        Write-Host "  Sin puertos criticos expuestos. Router bien configurado." -ForegroundColor Green
+        Write-Host "  No exposure conclusion is possible from this LAN test. Verify from an authorized external network." -ForegroundColor Green
     }
 
     $script:HistorialSesion.Add("[H] WAN $IPP | Expuestos: $(if ($Alertas.Count) { $Alertas -join ',' } else { 'None' })")

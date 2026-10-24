@@ -486,8 +486,8 @@ function Invoke-PartsUpgrade {
         } elseif ($bgaSignals -ge 1) {
             Log-Out $L.CPUMaybeSold 'Yellow'
         } else {
-            Log-Out ($L.CPUInSocket -f $socketName) 'Green'
-            Log-Out $L.CPUSocketNote
+            Log-Out ('Socket/upgradeability not verified: ' + $socketName) 'Yellow'
+            Log-Out 'Check the exact OEM board, BIOS and CPU support list before recommending a replacement.'
         }
         if ($bgaReasons.Count -gt 0) { Log-Out ($L.SignalsLine -f ($bgaReasons -join ' | ')) 'DarkGray' }
 
@@ -551,10 +551,7 @@ function Invoke-PartsUpgrade {
                 # Explicitly 0 RPM on a SATA bus → SATA SSD.
                 $kind = $L.KindSSDSATA; $sataSsdCount++
             }
-            elseif ($bus -match 'SATA|ATA') {
-                if ($sizeGB -lt 300) { $kind = $L.KindSSDSATAi; $sataSsdCount++ }
-                else { $kind = $L.KindHDDi; $hddCount++ }
-            }
+            else { $kind = 'Unknown media; verify OEM/model' }
 
             Log-Out ($L.DiskLine -f $kind, $name, $bus, $media, $sizeGB, $health)
         }
@@ -619,7 +616,7 @@ function Invoke-PartsUpgrade {
 
     $gpus = @(Get-CimInstance Win32_VideoController -ErrorAction SilentlyContinue | Where-Object { $_.Name -notmatch 'Microsoft Basic|Remote' })
     if ($gpus.Count -gt 0) {
-        Log-Out $L.GPUHdr 'Yellow'
+        Log-Out ($L.GPUHdr + ' - CIM VRAM is a legacy reported value, not validated GPU memory') 'Yellow'
         foreach ($g in $gpus) {
             $vram = if ($g.AdapterRAM -gt 0) { [math]::Round($g.AdapterRAM / 1MB, 0) } else { 0 }
             Log-Out ($L.GPULine -f $g.Name, $vram)
@@ -709,7 +706,7 @@ function Invoke-PartsUpgrade {
             }
 
             # ---------- CPU replaceability badge ----------
-            $repClass = 'badge-ok'; $repText = 'Reemplazable (socket)'
+            $repClass = 'badge-warn'; $repText = 'Reemplazabilidad no verificada; consultar OEM'
             if ($null -ne $bgaSignals) {
                 if ($bgaSignals -ge 3)     { $repClass = 'badge-error'; $repText = 'Soldada (BGA)' }
                 elseif ($bgaSignals -ge 1) { $repClass = 'badge-warn';  $repText = 'Probablemente soldada' }
