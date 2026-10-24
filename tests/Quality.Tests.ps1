@@ -58,6 +58,8 @@ Describe 'Service restoration and dependent protection' {
         function Set-Service {[CmdletBinding()]param($Name,$StartupType)throw 'Real service blocked'}
         function Start-Service {[CmdletBinding()]param($Name)throw 'Real service blocked'}
         function Stop-Service {[CmdletBinding()]param($Name)throw 'Real service blocked'}
+        # Registry -Type is a Windows provider dynamic parameter; model it explicitly on Linux.
+        function Set-ItemProperty {[CmdletBinding()]param($LiteralPath,$Name,$Value,$Type)throw 'Real registry blocked'}
     }
     BeforeEach {
         $script:Status='Running';$script:Mode='Auto';$script:Delayed=$null
@@ -160,6 +162,7 @@ Describe 'Scoped print queue cleanup' {
         function Get-Printer {[CmdletBinding()]param($Name)throw 'Printer blocked'}
         function Get-PrintJob {[CmdletBinding()]param($PrinterName)throw 'Printer blocked'}
         function Remove-PrintJob {[CmdletBinding()]param($PrinterName,$ID)throw 'Printer blocked'}
+        function Stop-Service {[CmdletBinding()]param($Name)throw 'Real service blocked'}
     }
     It 'does not stop Spooler or delete the shared spool directory' {
         Mock Get-Printer {[pscustomobject]@{Name='Selected'}}
