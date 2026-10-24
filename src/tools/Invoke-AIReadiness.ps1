@@ -578,7 +578,7 @@ function Invoke-AIReadiness {
         }
         $Report.Delta = $delta
 
-        $Report | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $jsonPath -Encoding UTF8
+        Write-AtlasShareableReport -Path $jsonPath -Content ($Report | ConvertTo-Json -Depth 8) -Tool 'AI Readiness Inventory'
 
         $componentRows = @(
             [pscustomobject]@{ Component=$L.Ram; Value=("{0} GB" -f $Report.RAM.TotalGB); Score=$Report.Scores.RAM },
@@ -644,8 +644,8 @@ tr:nth-child(even){background:#f8fafc}
 </div></div></body></html>
 "@
 
-        $html | Set-Content -LiteralPath $htmlPath -Encoding UTF8
-        $html | Set-Content -LiteralPath $htmlCopyPath -Encoding UTF8
+        Write-AtlasShareableReport -Path $htmlPath -Content $html -Tool 'AI Readiness Inventory'
+        Write-AtlasShareableReport -Path $htmlCopyPath -Content $html -Tool 'AI Readiness Inventory'
         return [pscustomobject]@{ Html=$htmlPath; Json=$jsonPath; HtmlCopy=$htmlCopyPath }
     }
 

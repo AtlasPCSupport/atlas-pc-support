@@ -54,6 +54,8 @@ $findings | Select-Object ScriptName, Line, Severity, RuleName, Message |
 Write-Host "PSScriptAnalyzer: $($errors.Count) errors; $(@($findings | Where-Object Severity -eq 'Warning').Count) warnings."
 if ($errors.Count) { $errors | Format-Table -AutoSize | Out-Host; throw 'Script analyzer errors found.' }
 
+Invoke-CheckScript -Path (Join-Path $PSScriptRoot 'Update-ToolDocumentation.ps1') -ScriptArguments @('-RepoRoot', $repoRoot, '-Check')
+
 $testPaths = @(
     (Join-Path $PSScriptRoot 'Lib.Tests.ps1'),
     (Join-Path $PSScriptRoot 'Platform.Tests.ps1'),
@@ -63,7 +65,8 @@ $testPaths = @(
     (Join-Path $PSScriptRoot 'Execution.Tests.ps1'),
     (Join-Path $PSScriptRoot 'Release.Tests.ps1'),
     (Join-Path $PSScriptRoot 'Compatibility.Tests.ps1'),
-    (Join-Path $PSScriptRoot 'Quality.Tests.ps1')
+    (Join-Path $PSScriptRoot 'Quality.Tests.ps1'),
+    (Join-Path $PSScriptRoot 'Reports.Tests.ps1')
 )
 $knownIssuesPath = Join-Path $PSScriptRoot 'KnownIssues.Tests.ps1'
 if ($IncludeKnownIssues -and (Test-Path -LiteralPath $knownIssuesPath)) { $testPaths += $knownIssuesPath }

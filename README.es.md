@@ -15,7 +15,7 @@ Atlas PC Support es un launcher WPF (tema Fluent / Windows 11) que agrupa herram
 
 ## 🚀 Instalación rápida (una sola línea)
 
-Abre **PowerShell como Administrador** y pega:
+Abre **Windows PowerShell 5.1** y pega. Eleva permisos cuando la operación lo requiera:
 
 ```powershell
 irm https://toolspanel.atlaspcsupport.com | iex
@@ -35,76 +35,23 @@ Sobre la rejilla de herramientas hay un dashboard en vivo (CPU / RAM / Disco + a
 
 ---
 
-## 📦 Herramientas incluidas (v1.0)
+## 📦 Inventario vigente
 
-El panel viene con **26 herramientas** organizadas en 7 categorías. Cada herramienta se ejecuta en su propia ventana de PowerShell para mantener la UX original.
+El manifiesto conserva **27 entradas**. El deduplicador está marcado como no disponible; algunas acciones de reparación quedan restringidas con un motivo visible.
 
-### 🔍 Diagnóstico
+Consulta el [inventario generado por herramienta y dependencia](docs/INVENTARIO.md), la [matriz y restricciones](docs/SUPPORT-MATRIX.md) y el [cierre del plan con QA pendiente](docs/audits/CIERRE-PLAN-2026-10-24.md). CI comprueba que el inventario coincida con el manifiesto.
 
-| Herramienta | Descripción |
-|---|---|
-| **Parts Upgrade Advisor** | Analiza RAM, CPU (socket / BGA) y almacenamiento (NVMe / SATA / M.2). Recomendaciones de compra y avisos. |
-| **Full System Report** | Reporte HTML integral: sistema, hardware, CPU, RAM, almacenamiento, red, batería, BSOD, triaje de lentitud por GPU y Upgrade Advisor. |
-| **Event Log Analyzer** | Lee el Visor de eventos e interpreta errores: reinicios, hardware (WHEA / disco), crashes, drivers, seguridad. Exporta HTML. |
-| **Printer Doctor** | Diagnóstico de impresoras: impresoras instaladas, puertos/IPs, drivers, Print Spooler, colas trabadas, ping de red, eventos de impresión, reparaciones opcionales y reporte HTML/TXT. |
-| **Keyboard Doctor** | Triaje de ghost typing y fallos de teclado: dispositivos teclado/HID, teclas de accesibilidad, riesgo por batería, eventos de driver, pruebas de aislamiento y reporte HTML/TXT. |
-| **AI Readiness Assessment** | Auditoría autocontenida de aptitud IA local/nube: RAM, CPU, GPU/VRAM, almacenamiento, conectividad Ollama/nube, puntuación 0-100, modelos sugeridos y reporte HTML/JSON. |
-
-### 🛠 Mantenimiento
-
-| Herramienta | Descripción |
-|---|---|
-| **Deep Clean & Repair** | Suite de mantenimiento completa: Defender, limpieza, DISM / SFC, reparación del sistema y reporte final. |
-| **Install/Update PowerShell 7** | Instala o actualiza PowerShell 7 (runtime moderno). Mejor encoding, enums modernos y menos bugs que Windows PowerShell 5.1. |
-| **Windows Tweaks** | Wallpaper vía API Win32, modo oscuro, color de acento, ajustes de barra de tareas y marca de agua. |
-| **Service Optimizer** | Detiene y pasa a Manual servicios no esenciales: telemetría, Xbox, sensores, fax, etc. |
-
-### 📁 Backup & Sync
-
-| Herramienta | Descripción |
-|---|---|
-| **FastCopy** | Copia multi-origen con perfiles, comparación, MD5 y resumen exportable. Mejor UX que Robocopy. |
-| **Build Offline USB** | Copia el release completo verificado a USB. El inicio comprueba todos los scripts sin actualizar componentes sueltos; los paquetes de terceros son opcionales. |
-| **Robocopy Mirror** | Copia optimizada vía robocopy: modo espejo, reintentos y logging centralizado. |
-
-### 🌐 Redes
-
-| Herramienta | Descripción |
-|---|---|
-| **DNS Switcher** | Cambia el DNS entre perfiles (Cloudflare, Google, OpenDNS, custom) con un click. Incluye test de latencia y toggle DoH. |
-| **Hosts File Editor** | Editor del archivo HOSTS de Windows con respaldo automático, importación de la lista Steven Black y revert. |
-| **Router Security Audit** | Escaneo y auditoría del router local (port scan al gateway, ARP, contraseñas Wi-Fi). |
-
-### 🔒 Seguridad
-
-| Herramienta | Descripción |
-|---|---|
-| **Disable Legacy IPv6 Tunnels** | Hardening inicial: desactiva Teredo, 6to4 e ISATAP. Bitácora técnica exportable. |
-| **BitLocker Manager** | Estado de BitLocker, activación, suspensión y exportación de claves de recuperación. |
-| **Local Account Hardening** | Audita y aplica el principio de mínimo privilegio a las cuentas locales. |
-| **Extract Product Keys** | Extrae las claves de Windows y Office (sólo lectura, seguro). |
-
-### 📦 Software
-
-| Herramienta | Descripción |
-|---|---|
-| **Bulk App Installer (winget)** | Instalación masiva de software vía winget. Catálogo curado por categoría, perfiles JSON por cliente, búsqueda integrada en winget y sección de Cleanup (limpieza de temporales). |
-
-### ✅ Entrega
-
-| Herramienta | Descripción |
-|---|---|
-| **PC Handover Report** | Protocolo de cierre: renombrar PC, limpieza final, reporte HTML con branding (resumen del sistema + checklist de entrega + impresión a PDF). |
+El monitor y la información del sistema se consultan bajo demanda en un proceso de PowerShell en segundo plano dentro de la aplicación. Los informes compartidos aplican redacción de datos sensibles reconocibles y trazabilidad. Revisa el texto libre antes de compartirlo; los respaldos explícitos de recuperación BitLocker contienen secretos y deben guardarse aparte.
 
 ---
 
 ## 🌍 Idiomas
 
-El panel detecta tu idioma del sistema automáticamente y trae traducciones completas para:
+La interfaz del panel incluye cadenas para estos idiomas; las herramientas tienen cobertura variable. Las tarjetas están en español e inglés y la búsqueda admite ambos idiomas sin distinguir acentos:
 
 **Inglés (default), Español, Portugués, Francés, Alemán, Italiano, Rumano.**
 
-Puedes cambiar el idioma en caliente desde el dropdown del header. Para forzar uno específico, edita `branding.json`:
+Puedes elegir el idioma desde el desplegable y reiniciar el panel para aplicarlo. Para forzar uno específico, edita `branding.json`:
 
 ```json
 { "language": "es" }
@@ -158,7 +105,7 @@ Si tienes tu propio dominio, puedes servir el launcher como `tools.tudominio.com
 ## 🧑‍💻 Desarrollo local
 
 ```powershell
-git clone https://github.com/mikepchelper-spec/atlas-pc-support
+git clone https://github.com/AtlasPCSupport/atlas-pc-support
 cd atlas-pc-support
 
 # Modo desarrollo (usa src/, sin compilar):
@@ -217,7 +164,7 @@ atlas-pc-support/
      "dependencies": []
    }
    ```
-3. Ejecuta `pwsh -File build.ps1`.
+3. Ejecuta `pwsh -File build.ps1` y `pwsh -File tests/Update-ToolDocumentation.ps1`.
 4. Commitear todos los generados y hacer push. CI rechaza releases desactualizados o incompletos. Tras pasar los checks, promover el commit probado con [el procedimiento de publicación](docs/RELEASES.md).
 
 Ver [docs/ADDING-TOOLS.md](docs/ADDING-TOOLS.md) para la referencia completa.
@@ -235,15 +182,15 @@ Ver [docs/ADDING-TOOLS.md](docs/ADDING-TOOLS.md) para la referencia completa.
 
 ## 🛡 Requisitos
 
-- Windows 10 / 11 (x64).
-- PowerShell 5.1 (incluido en Windows) o PowerShell 7.
-- Ejecutar **como Administrador** para aprovechar todas las herramientas.
+- Cliente Windows x64 build 19044+; objetivos Windows 10 22H2 Home/Pro y LTSC 2021. QA de esas VMs sigue pendiente.
+- Windows PowerShell 5.1 es el runtime predeterminado por herramienta. PowerShell 7 no implica homologación universal.
+- Administrador solo para operaciones que lo requieren. Store y App Installer dependen del usuario y las políticas.
 
 ---
 
 ## 📄 Licencia
 
-[MIT](LICENSE). Puedes usarlo, modificarlo y redistribuirlo libremente, incluso comercialmente. Solo mantén el aviso de copyright.
+[MIT](LICENSE). Puedes usarlo, modificarlo y redistribuirlo libremente, incluso comercialmente. Solo mantén el aviso de copyright. Esta licencia no cubre binarios de terceros; revisa derechos laborales y de redistribución de FastCopy, HWiNFO y cada proveedor.
 
 ---
 

@@ -1,4 +1,4 @@
-﻿# ============================================================
+# ============================================================
 # Atlas PC Support — MainWindow.ps1
 # Construye la ventana WPF, aplica branding, renderiza herramientas.
 # ============================================================
@@ -180,6 +180,26 @@ function Expand-AtlasXaml {
     return $Xaml
 }
 
+function Get-AtlasToolDisplay {
+    param([Parameter(Mandatory)]$Tool, [string]$Language = $script:AtlasCurrentLang)
+    if ($Language -eq 'es' -and $Tool.nameEs -and $Tool.descriptionEs) {
+        return [pscustomobject]@{Name=$Tool.nameEs;Description=$Tool.descriptionEs}
+    }
+    return [pscustomobject]@{Name=$Tool.name;Description=$Tool.description}
+}
+
+function Test-AtlasToolQuery {
+    param([Parameter(Mandatory)]$Tool, [AllowEmptyString()][string]$Query)
+    function ConvertTo-SearchText([string]$Value) {
+        return [regex]::Replace($Value.Normalize([Text.NormalizationForm]::FormD),'\p{Mn}','').ToLowerInvariant()
+    }
+    $haystack = ConvertTo-SearchText (@($Tool.id,$Tool.category,$Tool.name,$Tool.description,$Tool.nameEs,$Tool.descriptionEs) -join ' ')
+    foreach ($term in @((ConvertTo-SearchText $Query).Split(' ') | Where-Object { $_ })) {
+        if (-not $haystack.Contains($term)) { return $false }
+    }
+    return $true
+}
+
 function New-AtlasToolCard {
     param(
         [hashtable]$Tool,
@@ -244,9 +264,10 @@ function New-AtlasToolCard {
         $btnRunText = if ($script:AtlasCurrentLang -eq 'es') { 'No disponible' } else { 'Unavailable' }
     }
 
+    $display = Get-AtlasToolDisplay -Tool $Tool
     $xaml = $xaml.Replace('{{ICON}}', $icon).
-                  Replace('{{NAME}}', [System.Security.SecurityElement]::Escape($Tool.name)).
-                  Replace('{{DESCRIPTION}}', [System.Security.SecurityElement]::Escape($Tool.description)).
+                  Replace('{{NAME}}', [System.Security.SecurityElement]::Escape($display.Name)).
+                  Replace('{{DESCRIPTION}}', [System.Security.SecurityElement]::Escape($display.Description)).
                   Replace('{{ID}}', $Tool.id).
                   Replace('{{BTN_RUN}}', [System.Security.SecurityElement]::Escape($btnRunText)).
                   Replace('{{ADMIN_BADGE}}', $adminBadge)
@@ -280,7 +301,7 @@ function Get-AtlasStaticSystemInfo {
         SysDriveTotalGB = 0
     }
     try {
-        $os = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction Stop
+        $os = Get-CimInstance -ClassName Win32_OperatingSystem -OperationTimeoutSec 5 -ErrorAction Stop
         $info.OSCaption = ($os.Caption -replace '^Microsoft\s*', '').Trim()
         $info.OSVersion = $os.Version
         $info.OSBuild   = $os.BuildNumber
@@ -291,13 +312,13 @@ function Get-AtlasStaticSystemInfo {
     } catch { Write-AtlasLog "Get-AtlasStaticSystemInfo: OS query failed: $_" -Level WARN -Tool 'UI' }
 
     try {
-        $cpu = Get-CimInstance -ClassName Win32_Processor -ErrorAction Stop | Select-Object -First 1
+        $cpu = Get-CimInstance -ClassName Win32_Processor -OperationTimeoutSec 5 -ErrorAction Stop | Select-Object -First 1
         if ($cpu) { $info.CpuName = ($cpu.Name -replace '\s+', ' ').Trim() }
     } catch { Write-AtlasLog "Get-AtlasStaticSystemInfo: CPU query failed: $_" -Level WARN -Tool 'UI' }
 
     try {
         if ($info.SysDriveLetter) {
-            $disk = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DeviceID='$($info.SysDriveLetter):'" -ErrorAction Stop
+            $disk = Get-CimInstance -ClassName Win32_LogicalDisk -OperationTimeoutSec 5 -Filter "DeviceID='$($info.SysDriveLetter):'" -ErrorAction Stop
             if ($disk -and $disk.Size) {
                 $info.SysDriveTotalGB = [math]::Round($disk.Size / 1GB, 0)
             }
@@ -338,13 +359,13 @@ function Get-AtlasLiveSystemSnapshot {
     $static = Get-AtlasStaticSystemInfo
 
     try {
-        $cpuPerf = Get-CimInstance -ClassName Win32_PerfFormattedData_PerfOS_Processor `
+        $cpuPerf = Get-CimInstance -ClassName Win32_PerfFormattedData_PerfOS_Processor -OperationTimeoutSec 5 `
             -Filter "Name='_Total'" -ErrorAction Stop
         if ($cpuPerf) { $snap.CpuPercent = [int]$cpuPerf.PercentProcessorTime }
     } catch { }
 
     try {
-        $os = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction Stop
+        $os = Get-CimInstance -ClassName Win32_OperatingSystem -OperationTimeoutSec 5 -ErrorAction Stop
         if ($os) {
             $totalKb = [double]$os.TotalVisibleMemorySize
             $freeKb  = [double]$os.FreePhysicalMemory
@@ -362,7 +383,7 @@ function Get-AtlasLiveSystemSnapshot {
 
     try {
         if ($static.SysDriveLetter) {
-            $disk = Get-CimInstance -ClassName Win32_LogicalDisk `
+            $disk = Get-CimInstance -ClassName Win32_LogicalDisk -OperationTimeoutSec 5 `
                 -Filter "DeviceID='$($static.SysDriveLetter):'" -ErrorAction Stop
             if ($disk -and $disk.Size -gt 0) {
                 $snap.DiskTotalGB = [math]::Round($disk.Size / 1GB, 0)
@@ -382,7 +403,7 @@ function Get-AtlasLiveSystemSnapshot {
     } catch { }
 
     try {
-        $bat = Get-CimInstance -ClassName Win32_Battery -ErrorAction Stop |
+        $bat = Get-CimInstance -ClassName Win32_Battery -OperationTimeoutSec 5 -ErrorAction Stop |
             Select-Object -First 1
         if ($bat -and $null -ne $bat.EstimatedChargeRemaining) {
             $snap.BatteryPct = [int]$bat.EstimatedChargeRemaining
@@ -438,283 +459,111 @@ function Get-AtlasDashboardAlerts {
 # and the dashboard fills in over the next ~1 s instead of blocking the
 # Show-AtlasWindow ShowDialog call for several CIM round trips on startup.
 function Initialize-AtlasDashboard {
-    param([Parameter(Mandatory)] $Window)
-
-    # ---- Phase 1: instant fill (no CIM) -----------------------------
-    $sideHost     = $Window.FindName('SideHost')
-    $sideUser     = $Window.FindName('SideUser')
-    $sideOS       = $Window.FindName('SideOS')
-    $sideCpu      = $Window.FindName('SideCpu')
-    $sideRam      = $Window.FindName('SideRam')
-    $sideUptime   = $Window.FindName('SideUptime')
-    $sideIp       = $Window.FindName('SideIp')
-    $sideLastSync = $Window.FindName('SideLastSync')
-
-    if ($sideHost) { $sideHost.Text = $env:COMPUTERNAME }
-    if ($sideUser) {
-        $sideUser.Text = if ($env:USERDOMAIN) { "$env:USERDOMAIN\$env:USERNAME" } else { $env:USERNAME }
+    param([Parameter(Mandatory)]$Window)
+    $controls = @{}
+    foreach ($name in @('SideHost','SideUser','SideOS','SideCpu','SideRam','SideUptime','SideIp','SideLastSync','DashCpuValue','DashCpuBar','DashRamValue','DashRamBar','DashDiskValue','DashDiskBar','DashAlertsText','BtnDashRefresh','BtnDashMonitorToggle','BtnLoadSysInfo')) {
+        $controls[$name] = $Window.FindName($name)
     }
-    $onDemandTxt = Get-AtlasString 'sidebar.onDemand'
-    if (-not $onDemandTxt) { $onDemandTxt = '[Bajo Demanda]' }
-    if ($sideOS)     { $sideOS.Text     = $onDemandTxt }
-    if ($sideCpu)    { $sideCpu.Text    = $onDemandTxt }
-    if ($sideRam)    { $sideRam.Text    = $onDemandTxt }
-    if ($sideUptime) { $sideUptime.Text = $onDemandTxt }
-    if ($sideIp)     { $sideIp.Text     = $onDemandTxt }
-
-    $dashCpuVal   = $Window.FindName('DashCpuValue')
-    $dashCpuBar   = $Window.FindName('DashCpuBar')
-    $dashRamVal   = $Window.FindName('DashRamValue')
-    $dashRamBar   = $Window.FindName('DashRamBar')
-    $dashDiskVal  = $Window.FindName('DashDiskValue')
-    $dashDiskBar  = $Window.FindName('DashDiskBar')
-    $dashAlerts   = $Window.FindName('DashAlertsText')
-    $btnDashRefresh = $Window.FindName('BtnDashRefresh')
-    $btnDashMonitorToggle = $Window.FindName('BtnDashMonitorToggle')
-    $btnLoadSysInfo = $Window.FindName('BtnLoadSysInfo')
-
-    $monitorOffText = Get-AtlasString 'dash.monitor.off'
-    $monitorOnText = Get-AtlasString 'dash.monitor.on'
-    $monitorPausedText = Get-AtlasString 'dash.monitor.paused'
-
-    if ($dashAlerts) {
-        $dashAlerts.Text = $monitorPausedText
-        $dashAlerts.Foreground = [System.Windows.Media.Brushes]::Gray
+    if ($controls.SideHost) { $controls.SideHost.Text = $env:COMPUTERNAME }
+    if ($controls.SideUser) { $controls.SideUser.Text = $env:USERNAME }
+    foreach ($name in @('SideOS','SideCpu','SideRam','SideUptime','SideIp','DashCpuValue','DashRamValue','DashDiskValue')) {
+        if ($controls[$name]) { $controls[$name].Text = '--' }
     }
-
-    # ---- Phase 2: deferred CIM/WMI work -----------------------------
-    #
-    # In Windows PowerShell 5.1, GetNewClosure() snapshots local variables
-    # but breaks access to script-scope FUNCTIONS (verified by user log:
-    # "The term 'Write-AtlasLog' is not recognized" thrown from inside
-    # the closed scriptblock). Workaround: capture every function we need
-    # as a scriptblock value into local variables, then invoke them with
-    # `&` inside the closure. The closure picks up the local refs by value
-    # so everything resolves bullet-proof at tick time.
-    $logFn        = ${function:Write-AtlasLog}
-    $strFn        = ${function:Get-AtlasString}
-    $liveFn       = ${function:Get-AtlasLiveSystemSnapshot}
-    $staticFn     = ${function:Get-AtlasStaticSystemInfo}
-    $alertsFn     = ${function:Get-AtlasDashboardAlerts}
-
-    # --- Sidebar system info loader (one-shot, independent of monitor) ---
-    $loadSysInfoAction = {
-        try {
-            $static2 = & $staticFn
-            if ($sideOS -and $static2.OSCaption) {
-                $os = if ($static2.OSBuild) { "$($static2.OSCaption) (build $($static2.OSBuild))" } else { $static2.OSCaption }
-                $sideOS.Text = $os
-            }
-            if ($sideCpu -and $static2.CpuName) {
-                $sideCpu.Text = $static2.CpuName
-            }
-            if ($sideRam -and $static2.TotalRamGB -gt 0) {
-                $sideRam.Text = "$($static2.TotalRamGB) GB"
-            }
-
-            $snap2 = & $liveFn
-            if ($sideIp -and $snap2.IpAddress) { $sideIp.Text = $snap2.IpAddress }
-            if ($sideUptime -and $snap2.Uptime -and $static2.LastBoot) {
-                $upFmt = & $strFn 'sidebar.uptimeFmt' `
-                    ([int]$snap2.Uptime.TotalDays) `
-                    ($snap2.Uptime.Hours) `
-                    ($snap2.Uptime.Minutes)
-                $sideUptime.Text = "$($static2.LastBoot.ToString('yyyy-MM-dd HH:mm'))  ($upFmt)"
-            }
-            if ($sideLastSync) {
-                $sideLastSync.Text = (Get-Date).ToString('HH:mm:ss')
-            }
-        } catch {
-            try { & $logFn "Load system info failed: $_" -Level WARN -Tool 'UI' } catch { }
+    $state = @{ Worker=$null; Pending=$null; StopPending=$null; Started=[datetime]::MinValue; Last=[datetime]::MinValue; Monitor=$false; WantSidebar=$false; Closed=$false }
+    $strFn = ${function:Get-AtlasString}
+    $logFn = ${function:Write-AtlasLog}
+    # Only collectors execute in the background runspace. WPF objects remain on the dispatcher.
+    $collector = "function Get-AtlasStaticSystemInfo {`n${function:Get-AtlasStaticSystemInfo}`n}`nfunction Get-AtlasLiveSystemSnapshot {`n${function:Get-AtlasLiveSystemSnapshot}`n}`nfunction Write-AtlasLog { param(`$Message,`$Level,`$Tool) Write-Verbose `$Message }`n"
+    $collector += '[pscustomobject]@{ Static=(Get-AtlasStaticSystemInfo); Snapshot=(Get-AtlasLiveSystemSnapshot -ForceRefresh) }'
+    $startRead = {
+        if ($state.Closed -or $state.Worker) { return }
+        $state.Worker = [powershell]::Create()
+        [void]$state.Worker.AddScript($collector)
+        $state.Started = [datetime]::UtcNow
+        $state.Pending = $state.Worker.BeginInvoke()
+        if ($controls.DashAlertsText) { $controls.DashAlertsText.Text = & $strFn 'status.loading' }
+    }.GetNewClosure()
+    $poll = {
+        if ($state.Closed) { return }
+        if ($state.StopPending) {
+            if (-not $state.StopPending.IsCompleted) { return }
+            try { $state.Worker.EndStop($state.StopPending) } catch { & $logFn "Dashboard cancellation: $_" -Level WARN -Tool UI }
+            $state.Worker.Dispose(); $state.Worker=$null; $state.Pending=$null; $state.StopPending=$null
+            $state.Last=[datetime]::UtcNow
+            return
         }
-    }
-
-    # --- Resource monitor tick (CPU/RAM/Disk bars + alerts only) ---
-    $tickAction = {
-        try {
-            $snap = & $liveFn
-
-            if ($null -ne $snap.CpuPercent) {
-                $dashCpuVal.Text = "{0}%" -f $snap.CpuPercent
-                $dashCpuBar.Value = $snap.CpuPercent
+        if ($state.Worker -and -not $state.Pending.IsCompleted) {
+            if (([datetime]::UtcNow - $state.Started).TotalSeconds -gt 30) {
+                $state.StopPending = $state.Worker.BeginStop($null,$null)
+                $state.Monitor = $false
+                if ($controls.BtnDashMonitorToggle) { $controls.BtnDashMonitorToggle.Content = & $strFn 'dash.monitor.off' }
+                if ($controls.DashAlertsText) { $controls.DashAlertsText.Text = 'Not evaluated: inventory query timed out.' }
             }
-            if ($null -ne $snap.RamPercent) {
-                $dashRamVal.Text = "{0}% ({1}/{2} GB)" -f $snap.RamPercent, $snap.RamUsedGB, $snap.RamTotalGB
-                $dashRamBar.Value = $snap.RamPercent
-            }
-            if ($null -ne $snap.DiskPercent) {
-                $dashDiskVal.Text = & $strFn 'dash.disk.detail' $snap.DiskPercent $snap.DiskFreeGB
-                $dashDiskBar.Value = $snap.DiskPercent
-            }
-
-            $alerts = & $alertsFn -Snap $snap
-            if ($alerts.Count -eq 0) {
-                $dashAlerts.Text = & $strFn 'dash.alerts.none'
-                $dashAlerts.Foreground = [System.Windows.Media.Brushes]::ForestGreen
-            } else {
-                $dashAlerts.Text = '⚠  ' + ($alerts -join '   •   ')
-                $dashAlerts.Foreground = [System.Windows.Media.Brushes]::OrangeRed
-            }
-
-            if ($sideLastSync) {
-                $sideLastSync.Text = (Get-Date).ToString('HH:mm:ss')
-            }
-        } catch {
-            try { & $logFn "Dashboard tick failed: $_" -Level WARN -Tool 'UI' } catch { }
+            return
         }
-    }
-
-    # CRITICAL: scriptblocks captured by .NET event handlers (DispatcherTimer,
-    # Window.ContentRendered, Button.Click) lose access to local variables
-    # by the time they fire. GetNewClosure() snapshots the current scope so
-    # $dashCpuVal/$sideHost/$logFn/etc. are all resolvable when the tick runs.
-    $tickClosed = $tickAction.GetNewClosure()
-    $script:AtlasDashboardTick = $tickClosed
-    $loadSysInfoClosed = $loadSysInfoAction.GetNewClosure()
-    $script:AtlasLoadSysInfo = $loadSysInfoClosed
-    try {
-        & $logFn ("Dashboard tick handler initialized: {0}" -f ($script:AtlasDashboardTick.GetType().FullName)) -Level DEBUG -Tool 'UI'
-    } catch { }
-
-    $startMonitorAction = {
-        try {
-            $tickToRun = if ($script:AtlasDashboardTick -is [scriptblock]) { $script:AtlasDashboardTick } else { $tickClosed }
-            if (-not ($tickToRun -is [scriptblock])) {
-                throw "Dashboard tick handler no disponible."
-            }
-            if (-not $script:AtlasDashboardTimer) {
-                $timer = New-Object System.Windows.Threading.DispatcherTimer
-                $timer.Interval = [TimeSpan]::FromSeconds(2)
-                $timer.Add_Tick($tickToRun)
-                $script:AtlasDashboardTimer = $timer
-            }
-            & $tickToRun
-            $script:AtlasDashboardTimer.Start()
-            $script:AtlasDashboardMonitorEnabled = $true
-            if ($btnDashMonitorToggle) { $btnDashMonitorToggle.Content = $monitorOnText }
-            try { & $logFn "Dashboard monitor started." -Level DEBUG -Tool 'UI' } catch { }
-        } catch {
-            try { & $logFn "Dashboard monitor start failed: $_" -Level WARN -Tool 'UI' } catch { }
-        }
-    }
-
-    $stopMonitorAction = {
-        try {
-            if ($script:AtlasDashboardTimer) {
-                $script:AtlasDashboardTimer.Stop()
-            }
-            $script:AtlasDashboardMonitorEnabled = $false
-            if ($btnDashMonitorToggle) { $btnDashMonitorToggle.Content = $monitorOffText }
-            if ($dashCpuVal)  { $dashCpuVal.Text  = '--%' }
-            if ($dashCpuBar)  { $dashCpuBar.Value = 0 }
-            if ($dashRamVal)  { $dashRamVal.Text  = '--' }
-            if ($dashRamBar)  { $dashRamBar.Value = 0 }
-            if ($dashDiskVal) { $dashDiskVal.Text = '--' }
-            if ($dashDiskBar) { $dashDiskBar.Value = 0 }
-            if ($dashAlerts) {
-                $dashAlerts.Text = $monitorPausedText
-                $dashAlerts.Foreground = [System.Windows.Media.Brushes]::Gray
-            }
-            try { & $logFn "Dashboard monitor stopped." -Level DEBUG -Tool 'UI' } catch { }
-        } catch {
-            try { & $logFn "Dashboard monitor stop failed: $_" -Level WARN -Tool 'UI' } catch { }
-        }
-    }
-
-    $startClosed = $startMonitorAction.GetNewClosure()
-    $stopClosed = $stopMonitorAction.GetNewClosure()
-    $script:AtlasDashboardStartMonitor = $startClosed
-    $script:AtlasDashboardStopMonitor = $stopClosed
-
-    # Wire the manual refresh button (↻ next to the alerts panel).
-    if ($btnDashRefresh) {
-        $btnDashRefresh.Add_Click({
+        if ($state.Worker) {
             try {
-                $script:AtlasLiveSnapshotAt = [datetime]::MinValue
-                $tickToRun = if ($script:AtlasDashboardTick -is [scriptblock]) { $script:AtlasDashboardTick } else { $tickClosed }
-                if ($tickToRun -is [scriptblock]) {
-                    & $tickToRun
-                } else {
-                    throw "Dashboard tick handler no disponible para refresh."
+                $result = @($state.Worker.EndInvoke($state.Pending)) | Select-Object -Last 1
+                if (-not $result -or -not $result.Snapshot) { throw 'No inventory result.' }
+                $static = $result.Static; $snap = $result.Snapshot
+                if ($state.WantSidebar) {
+                    if ($controls.SideOS) { $controls.SideOS.Text = "$($static.OSCaption) (build $($static.OSBuild))" }
+                    if ($controls.SideCpu) { $controls.SideCpu.Text = [string]$static.CpuName }
+                    if ($controls.SideRam) { $controls.SideRam.Text = "$($static.TotalRamGB) GB" }
+                    if ($controls.SideIp) { $controls.SideIp.Text = [string]$snap.IpAddress }
+                    if ($controls.SideUptime -and $snap.Uptime) { $controls.SideUptime.Text = [string]$snap.Uptime }
+                    $state.WantSidebar = $false
                 }
-            } catch {
-                try { & $logFn "Dashboard manual refresh failed: $_" -Level WARN -Tool 'UI' } catch { }
-            }
-        })
-    }
-
-    if ($btnDashMonitorToggle) {
-        $btnDashMonitorToggle.Add_Click({
-            try {
-                $startToRun = if ($script:AtlasDashboardStartMonitor -is [scriptblock]) { $script:AtlasDashboardStartMonitor } else { $startClosed }
-                $stopToRun  = if ($script:AtlasDashboardStopMonitor -is [scriptblock]) { $script:AtlasDashboardStopMonitor } else { $stopClosed }
-                if ($script:AtlasDashboardMonitorEnabled) {
-                    if ($stopToRun -is [scriptblock]) {
-                        & $stopToRun
-                    } else {
-                        throw "Dashboard stop handler no disponible."
-                    }
-                } else {
-                    if ($startToRun -is [scriptblock]) {
-                        & $startToRun
-                    } else {
-                        throw "Dashboard start handler no disponible."
-                    }
+                foreach ($metric in @('Cpu','Ram','Disk')) {
+                    $value = $snap[($metric + 'Percent')]
+                    if ($controls[('Dash' + $metric + 'Value')]) { $controls[('Dash' + $metric + 'Value')].Text = if ($null -eq $value) { '-- (not evaluated)' } else { "$value%" } }
+                    if ($controls[('Dash' + $metric + 'Bar')]) { $controls[('Dash' + $metric + 'Bar')].Value = if ($null -eq $value) { 0 } else { $value } }
                 }
-            } catch {
-                try { & $logFn "Dashboard monitor toggle click failed: $_" -Level WARN -Tool 'UI' } catch { }
-            }
-        })
-    }
-
-    # Wire the sidebar "Load Info" button (one-shot system info, independent of monitor).
-    if ($btnLoadSysInfo) {
-        $btnLoadSysInfo.Add_Click({
-            try {
-                $infoToRun = if ($script:AtlasLoadSysInfo -is [scriptblock]) { $script:AtlasLoadSysInfo } else { $loadSysInfoClosed }
-                if ($infoToRun -is [scriptblock]) {
-                    & $infoToRun
-                } else {
-                    throw "LoadSysInfo handler no disponible."
+                $alerts = @()
+                foreach ($metric in @('Cpu','Ram','Disk')) {
+                    if ($null -ne $snap[($metric+'Percent')] -and $snap[($metric+'Percent')] -ge 90) { $alerts += "$metric >= 90%" }
                 }
+                if ($snap.PendingReboot) { $alerts += & $strFn 'dash.alert.pendingReboot' }
+                if ($snap.UptimeDays -ge 7) { $alerts += & $strFn 'dash.alert.uptime' $snap.UptimeDays }
+                if ($controls.DashAlertsText) {
+                    $controls.DashAlertsText.Text = if ($null -eq $snap.CpuPercent -or $null -eq $snap.RamPercent -or $null -eq $snap.DiskPercent) {
+                        'Partial inventory: one or more metrics were not evaluated.'
+                    } elseif ($alerts.Count) { $alerts -join ' | ' } else { & $strFn 'dash.alerts.none' }
+                }
+                if ($controls.SideLastSync) { $controls.SideLastSync.Text = (Get-Date).ToString('HH:mm:ss') }
             } catch {
-                try { & $logFn "Sidebar load sys info click failed: $_" -Level WARN -Tool 'UI' } catch { }
+                if ($controls.DashAlertsText) { $controls.DashAlertsText.Text = 'Not evaluated: inventory query failed.' }
+                & $logFn "Dashboard query failed: $_" -Level WARN -Tool UI
+            } finally {
+                $state.Worker.Dispose(); $state.Worker=$null; $state.Pending=$null; $state.Last=[datetime]::UtcNow
             }
-        })
-    }
-
-    # Keep startup instant. System info reading & live monitor stay off until requested on demand.
-    $bootstrapAction = {
-        try {
-            if ($script:AtlasDashboardBooted) { return }
-            $script:AtlasDashboardBooted = $true
-
-            $stopToRun = if ($script:AtlasDashboardStopMonitor -is [scriptblock]) { $script:AtlasDashboardStopMonitor } else { $stopClosed }
-            if ($stopToRun -is [scriptblock]) { & $stopToRun }
-        } catch {
-            try { & $logFn "Dashboard bootstrap failed: $_" -Level WARN -Tool 'UI' } catch { }
         }
+        if ($state.Monitor -and ([datetime]::UtcNow - $state.Last).TotalSeconds -ge 5) { & $startRead }
+    }.GetNewClosure()
+    $timer = New-Object System.Windows.Threading.DispatcherTimer
+    $timer.Interval = [timespan]::FromMilliseconds(200)
+    $timer.Add_Tick($poll)
+    $timer.Start()
+    if ($controls.DashAlertsText) { $controls.DashAlertsText.Text = & $strFn 'dash.monitor.paused' }
+    if ($controls.BtnDashMonitorToggle) {
+        $controls.BtnDashMonitorToggle.Content = & $strFn 'dash.monitor.off'
+        $controls.BtnDashMonitorToggle.Add_Click({
+            $state.Monitor = -not $state.Monitor
+            $controls.BtnDashMonitorToggle.Content = if ($state.Monitor) { & $strFn 'dash.monitor.on' } else { & $strFn 'dash.monitor.off' }
+            if ($state.Monitor) { & $startRead }
+        }.GetNewClosure())
     }
-    $bootstrapClosed = $bootstrapAction.GetNewClosure()
-    $Window.Add_ContentRendered($bootstrapClosed)
-
-    # Stop the timer cleanly when the window closes.
+    if ($controls.BtnDashRefresh) { $controls.BtnDashRefresh.Add_Click({ & $startRead }.GetNewClosure()) }
+    if ($controls.BtnLoadSysInfo) { $controls.BtnLoadSysInfo.Add_Click({ $state.WantSidebar=$true; & $startRead }.GetNewClosure()) }
     $Window.Add_Closed({
-        try {
-            if ($script:AtlasDashboardTimer) {
-                $script:AtlasDashboardTimer.Stop()
-                $script:AtlasDashboardTimer = $null
-            }
-            $script:AtlasDashboardBooted = $false
-            $script:AtlasDashboardMonitorEnabled = $false
-            $script:AtlasDashboardTick = $null
-            $script:AtlasDashboardStartMonitor = $null
-            $script:AtlasDashboardStopMonitor = $null
-            $script:AtlasLoadSysInfo = $null
-            $script:AtlasLiveSnapshotCache = $null
-            $script:AtlasLiveSnapshotAt = [datetime]::MinValue
-        } catch { }
-    })
+        $state.Closed=$true; $timer.Stop()
+        if ($state.Worker) {
+            if ($state.Pending.IsCompleted) { $state.Worker.Dispose() }
+            elseif (-not $state.StopPending) { $state.StopPending=$state.Worker.BeginStop($null,$null) }
+        }
+    }.GetNewClosure())
+    # Exposed for isolated WPF lifecycle tests; no read starts until the user requests it.
+    $Window.Tag = [pscustomobject]@{ DashboardState=$state; DashboardTimer=$timer; DashboardPoll=$poll; DashboardStart=$startRead }
 }
 
 function Show-AtlasWindow {
@@ -838,7 +687,7 @@ function Show-AtlasWindow {
         foreach ($entry in $script:AllCards) {
             $t = $entry.Tool
             $matchesCat = ($selectedCat -eq '__all__') -or ($t.category -eq $selectedCat)
-            $matchesQuery = (-not $query) -or ($t.name.ToLower().Contains($query)) -or ($t.description.ToLower().Contains($query))
+            $matchesQuery = Test-AtlasToolQuery -Tool $t -Query $query
             if ($matchesCat -and $matchesQuery) {
                 [void]$toolsGrid.Items.Add($entry.Card)
             }

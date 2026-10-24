@@ -428,7 +428,7 @@ $htmlSections
 </div></body></html>
 "@
 
-        Set-Content -LiteralPath $OutPath -Value $html -Encoding UTF8
+        Write-AtlasShareableReport -Path $OutPath -Content $html -Tool 'Event log observations'
         return $OutPath
     }
 

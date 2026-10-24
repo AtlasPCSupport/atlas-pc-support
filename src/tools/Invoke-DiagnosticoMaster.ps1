@@ -1645,7 +1645,7 @@ do {
                 if ($cpuzOk -and (Test-Path $reportFile)) {
                     try { $lines = Get-Content $reportFile -ErrorAction Stop } catch { $lines = Get-Content $reportFile -Encoding Default }
                     $cleanText=""; $currentSection=""; $startLog=$false; $isStorageSection=$false; $isGraphicsSection=$false
-                    $keywords = @("Number of cores","Number of threads","Manufacturer","Name","Codename","Specification","Package","CPUID","Extended CPUID","Technology","Core Speed","Multiplier x Bus Speed","Temperature","Northbridge","Southbridge","Bus Specification","Graphic Interface","PCI-E Link Width","PCI-E Link Speed","Memory Type","Memory Size","Module Size","Size","Channels","Memory Frequency","DIMM #","SMBus address","Module format","Max bandwidth","Part number","Serial number","Manufacturing date","Nominal Voltage","Revision","Capacity","Type","Bus Type","Rotation speed","Features","Controller","Link Speed","Volume","Display adapter","Board Manufacturer","Cores","ROP Units","Memory size","Current Link Width","Current Link Speed")
+                    $keywords = @("Number of cores","Number of threads","Manufacturer","Name","Codename","Specification","Package","CPUID","Extended CPUID","Technology","Core Speed","Multiplier x Bus Speed","Temperature","Northbridge","Southbridge","Bus Specification","Graphic Interface","PCI-E Link Width","PCI-E Link Speed","Memory Type","Memory Size","Module Size","Size","Channels","Memory Frequency","DIMM #","SMBus address","Module format","Max bandwidth","Part number","Manufacturing date","Nominal Voltage","Revision","Capacity","Type","Bus Type","Rotation speed","Features","Controller","Link Speed","Volume","Display adapter","Board Manufacturer","Cores","ROP Units","Memory size","Current Link Width","Current Link Speed")
                     foreach ($line in $lines) {
                         if ($line -match "^Processors Information") { $startLog=$true; $isStorageSection=$false; $isGraphicsSection=$false; $currentSection="`n<span class='categoria-resaltada'>$($L.CatProc)</span>`n-------------------------------------------------------------------------"; $cleanText+=$currentSection+"`n"; continue }
                         if (-not $startLog) { continue }
@@ -1844,7 +1844,7 @@ do {
         </div>
     </div></body></html>
 "@
-        $html | Out-File -FilePath $htmlFile -Encoding UTF8
+        Write-AtlasShareableReport -Path $htmlFile -Content $html -Tool 'System diagnostic observations' -SensitiveValues @($bios.SerialNumber, $bb.SerialNumber, $aliasPC)
         Write-Host "`n"; Escribir-Centrado ($L.ReadyAt -f $htmlFile) "Green"
         Invoke-Item $dir
 

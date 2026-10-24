@@ -34,12 +34,13 @@ $script:AtlasDependencyCatalog = $dependencyJson | ConvertFrom-Json -ErrorAction
 . (Join-Path $script:AtlasSrc 'lib\Release.ps1')
 . (Join-Path $script:AtlasSrc 'lib\Capabilities.ps1')
 . (Join-Path $script:AtlasSrc 'lib\Operations.ps1')
+. (Join-Path $script:AtlasSrc 'lib\Reports.ps1')
 . (Join-Path $script:AtlasSrc 'lib\ToolRunner.ps1')
 
 # Fuente del ToolKit para que ToolRunner la inyecte en tools aisladas (modo dev).
 $script:AtlasChildLibrarySource = [IO.File]::ReadAllText((Join-Path $script:AtlasSrc 'bootstrap/Runtime.ps1'), [Text.Encoding]::UTF8) + "`n"
 $script:AtlasChildLibrarySource += '$script:AtlasDependencyCatalog = ' + "'" + $dependencyJson.Replace("'", "''") + "' | ConvertFrom-Json`n"
-foreach ($name in @('Branding','Strings','Admin','Logging','ToolKit','Dependencies','PS7','Release','Capabilities','Operations')) {
+foreach ($name in @('Branding','Strings','Admin','Logging','ToolKit','Dependencies','PS7','Release','Capabilities','Operations','Reports')) {
     $script:AtlasChildLibrarySource += [IO.File]::ReadAllText((Join-Path $script:AtlasSrc "lib/$name.ps1"), [Text.Encoding]::UTF8) + "`n"
 }
 

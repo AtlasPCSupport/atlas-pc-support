@@ -43,6 +43,27 @@ Describe 'WPF local smoke tests' -Tag 'Windows' {
         }
     }
 
+    It 'keeps a slow inventory read outside the WPF dispatcher and closes its timer' -Skip:($env:OS -ne 'Windows_NT') {
+        function Write-AtlasLog { param($Message,$Level,$Tool) }
+        function Get-AtlasStaticSystemInfo { Start-Sleep -Milliseconds 700; @{OSCaption='Fixture';OSBuild=19045;CpuName='Fixture';TotalRamGB=8} }
+        function Get-AtlasLiveSystemSnapshot { param([switch]$ForceRefresh); @{CpuPercent=1;RamPercent=2;DiskPercent=3;UptimeDays=0;PendingReboot=$false} }
+        $window=[Windows.Window]::new()
+        try {
+            Initialize-AtlasDashboard -Window $window
+            $tag=$window.Tag
+            $tag.DashboardState.Worker|Should -BeNullOrEmpty
+            $watch=[Diagnostics.Stopwatch]::StartNew(); & $tag.DashboardStart; $watch.Stop()
+            $watch.ElapsedMilliseconds|Should -BeLessThan 500
+            $tag.DashboardState.Pending.IsCompleted|Should -BeFalse
+            $limit=[datetime]::UtcNow.AddSeconds(10)
+            while(-not $tag.DashboardState.Pending.IsCompleted -and [datetime]::UtcNow -lt $limit){Start-Sleep -Milliseconds 50}
+            & $tag.DashboardPoll
+            $tag.DashboardState.Worker|Should -BeNullOrEmpty
+            $window.Close()
+            $tag.DashboardState.Closed|Should -BeTrue;$tag.DashboardTimer.IsEnabled|Should -BeFalse
+        } finally { $window.Close() }
+    }
+
     It 'loads every manifest card without attaching click handlers' -Skip:($env:OS -ne 'Windows_NT') {
         $manifest = Get-Content -LiteralPath (Join-Path $script:RepoRoot 'config/tools.json') -Raw -Encoding UTF8 | ConvertFrom-Json
         foreach ($entry in $manifest.tools) {

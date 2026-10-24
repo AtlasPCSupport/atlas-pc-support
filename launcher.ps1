@@ -20,15 +20,15 @@ if ($PSVersionTable.PSEdition -eq 'Desktop') {
 }
 
 
-$script:AtlasVersion = '1.3.0'
+$script:AtlasVersion = '1.4.0'
 $script:AtlasBuildDate = '2026-10-24'
 $script:AtlasToolsManifest = '{
   "$comment": "Tool manifest. Each entry describes one tool. The launcher uses this to render the panel''s tool tiles.",
   "tools": [
     {
       "id": "fase-0",
-      "name": "Disable Legacy IPv6 Tunnels",
-      "description": "Initial hardening: disables Teredo, 6to4 and ISATAP. Includes exportable technical log.",
+      "name": "Legacy IPv6 Tunnel Inspection",
+      "description": "Read-only inspection of legacy IPv6 tunnels. Preset hardening/reset is restricted until exact rollback is qualified.",
       "category": "seguridad",
       "function": "Invoke-Fase0",
       "source": "Invoke-Fase0.ps1",
@@ -43,13 +43,16 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Inspeccionar túneles IPv6",
+      "descriptionEs": "Consulta de túneles heredados. Presets de cambio y restauración restringidos hasta validar reversión exacta."
     },
     {
       "id": "parts-upgrade",
@@ -69,13 +72,16 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Inventario para ampliaciones",
+      "descriptionEs": "Observaciones de RAM, CPU y almacenamiento. Confirmar compatibilidad y posibilidades de ampliación con el fabricante."
     },
     {
       "id": "diagnostico-master",
@@ -102,13 +108,16 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Informe del sistema",
+      "descriptionEs": "Inventario y observaciones de sistema, hardware, eventos y red. Reporte redactado; no certifica salud completa."
     },
     {
       "id": "diagnostico-eventos",
@@ -128,7 +137,8 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
@@ -136,7 +146,9 @@ $script:AtlasToolsManifest = '{
         "commands": [
           "Get-WinEvent"
         ]
-      }
+      },
+      "nameEs": "Analizar eventos",
+      "descriptionEs": "Correlaciona proveedor e ID y conserva nivel numérico. Acceso denegado se muestra como no evaluado."
     },
     {
       "id": "printer-doctor",
@@ -156,18 +168,21 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Diagnóstico de impresoras",
+      "descriptionEs": "Consulta impresoras, puertos, trabajos y eventos. Vacía una cola elegida y comprueba el resultado."
     },
     {
       "id": "keyboard-doctor",
       "name": "Keyboard Doctor",
-      "description": "Ghost typing and keyboard fault triage: devices, accessibility keys, battery pressure risk, HID events, isolation prompts and report export.",
+      "description": "Device/event observations and a consented focused key-count test. No global keystroke capture or hardware certification.",
       "category": "diagnostico",
       "function": "Invoke-KeyboardDoctor",
       "source": "Invoke-KeyboardDoctor.ps1",
@@ -182,18 +197,21 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Diagnóstico de teclado",
+      "descriptionEs": "Observaciones de dispositivos y eventos. Prueba con foco y consentimiento que cuenta pulsaciones sin guardar texto."
     },
     {
       "id": "ai-readiness",
-      "name": "AI Readiness Assessment",
-      "description": "Self-contained local/cloud AI readiness audit: RAM, CPU, GPU/VRAM, storage, Ollama/cloud connectivity, 0-100 score, suggested models and HTML/JSON report export.",
+      "name": "AI Readiness Inventory",
+      "description": "Heuristic inventory and connectivity observations; missing evidence is not evaluated. No model workload certification.",
       "category": "diagnostico",
       "function": "Invoke-AIReadiness",
       "source": "Invoke-AIReadiness.ps1",
@@ -208,13 +226,16 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Inventario para IA",
+      "descriptionEs": "Inventario y heurísticas orientativas. Datos ausentes quedan sin evaluar; no se certifica un modelo ni servicio."
     },
     {
       "id": "gpu-check",
@@ -238,17 +259,20 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Observaciones de GPU",
+      "descriptionEs": "Inventario, telemetría NVIDIA disponible y eventos. Prueba de carga opcional; resultados con cobertura limitada."
     },
     {
       "id": "mantenimiento-pro",
-      "name": "Deep Clean & Repair",
+      "name": "Inspect and Repair Windows",
       "description": "Inspect Defender and restart status; selected DISM/SFC checks or repair. No automatic cache deletion or network reset.",
       "category": "mantenimiento",
       "function": "Invoke-MantenimientoPRO",
@@ -264,18 +288,21 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Comprobar y reparar Windows",
+      "descriptionEs": "Inspecciona Defender y reinicio pendiente. DISM/SFC elegidos; sin limpieza masiva ni reset de red automático."
     },
     {
       "id": "instalar-paquetes",
-      "name": "Bulk App Installer (winget)",
-      "description": "Install software in bulk via winget. Curated catalog by category, JSON profiles per client, built-in winget search, and a Cleanup section (clear temp files).",
+      "name": "Bulk App Installer (WinGet)",
+      "description": "Validated package IDs and sources with client profiles. Final application support depends on its current vendor manifest.",
       "category": "software",
       "function": "Invoke-InstalarPaquetes",
       "source": "Invoke-InstalarPaquetes.ps1",
@@ -290,13 +317,16 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Instalar aplicaciones con WinGet",
+      "descriptionEs": "Catálogo y perfiles con IDs/fuentes validados. Compatibilidad final sujeta al manifiesto vigente de cada paquete."
     },
     {
       "id": "instalar-ms-store",
@@ -316,7 +346,8 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
@@ -325,12 +356,14 @@ $script:AtlasToolsManifest = '{
           "Get-AppxPackage",
           "Add-AppxPackage"
         ]
-      }
+      },
+      "nameEs": "Comprobar Store y App Installer",
+      "descriptionEs": "Distingue paquete, registro, usuario y políticas. Solo registra una Store existente; no instala Store genérica en LTSC."
     },
     {
       "id": "instalar-runtimes",
-      "name": "Install Runtime Dependencies",
-      "description": "Installs common Windows runtime packages in bulk: VC++ 2015+ and 2013 (x64/x86), .NET Framework 3.5, DirectX, and optionally XNA and OpenAL for gaming. Two modes: Minimum and Full/Gaming.",
+      "name": "Runtime Dependencies",
+      "description": "Modern VC++ v14 separated from legacy choices. NetFx3 uses Windows with an optional matching source; reports restart and exit status.",
       "category": "software",
       "function": "Invoke-InstalarRuntimes",
       "source": "Invoke-InstalarRuntimes.ps1",
@@ -345,18 +378,21 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Dependencias de ejecución",
+      "descriptionEs": "VC++ v14 separado de legado. NetFx3 mediante Windows con origen opcional; indica código y reinicio requerido."
     },
     {
       "id": "actualizar-powershell",
-      "name": "Install/Update PowerShell 7",
-      "description": "Installs or updates PowerShell 7 (modern runtime). Better encoding, modern enums and fewer bugs than Windows PowerShell 5.1.",
+      "name": "Install PowerShell 7",
+      "description": "Install the pinned x64 release after SHA-256 and Microsoft signature checks. Each tool keeps its declared runtime.",
       "category": "mantenimiento",
       "function": "Invoke-ActualizarPowerShell",
       "source": "Invoke-ActualizarPowerShell.ps1",
@@ -371,18 +407,21 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Instalar PowerShell 7",
+      "descriptionEs": "Instala la versión x64 fijada tras verificar SHA-256 y firma Microsoft. Las herramientas conservan su runtime declarado."
     },
     {
       "id": "mod-personalizacion",
-      "name": "Windows Tweaks",
-      "description": "Wallpaper via Win32 API, dark theme, accent color, taskbar tweaks and watermark.",
+      "name": "Windows Settings",
+      "description": "Open native background, color, taskbar and Start settings. No registry presets, watermark or Explorer restart.",
       "category": "mantenimiento",
       "function": "Invoke-Personalizacion",
       "source": "Invoke-Personalizacion.ps1",
@@ -397,18 +436,21 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Ajustes de Windows",
+      "descriptionEs": "Abre fondo, colores, barra y menú Inicio nativos. Sin presets de registro, marca de agua ni reinicio de Explorer."
     },
     {
       "id": "stop-services",
-      "name": "Service Optimizer",
-      "description": "Inspect a restricted service list; change one with a verified snapshot and restore its previous startup/running state.",
+      "name": "Services with Snapshots",
+      "description": "Inspect a restricted service list; change one with a verified snapshot and restore startup, running and delayed-start state.",
       "category": "mantenimiento",
       "function": "Invoke-StopServices",
       "source": "Invoke-StopServices.ps1",
@@ -423,18 +465,21 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Servicios con respaldo",
+      "descriptionEs": "Inspecciona una lista restringida; cambia uno con snapshot previo y restaura inicio, ejecución y arranque diferido."
     },
     {
       "id": "fastcopy",
       "name": "FastCopy",
-      "description": "Multi-source copy with profiles, comparison, MD5 and exportable summary. Replaces Robocopy with better UX.",
+      "description": "Copy with native verification and clearly labeled SHA-256 sampling; move/sync restricted. Vendor license required.",
       "category": "copia",
       "function": "Invoke-FastCopy",
       "source": "Invoke-FastCopy.ps1",
@@ -451,18 +496,21 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Copiar con FastCopy",
+      "descriptionEs": "Copia con verificación nativa y muestreo SHA-256 identificado. Mover/sincronizar restringido; revisar licencia del proveedor."
     },
     {
       "id": "preparar-usb",
-      "name": "Build Offline USB",
-      "description": "Copies the panel and its dependencies to a USB drive for offline use. Auto-updates launcher when connected to the internet.",
+      "name": "Build Verified Offline USB",
+      "description": "Copy a complete verified release of 27 tools. Explicit atomic update; third-party packages remain optional.",
       "category": "copia",
       "function": "Invoke-PrepararUSB",
       "source": "Invoke-PrepararUSB.ps1",
@@ -477,18 +525,21 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Preparar USB offline",
+      "descriptionEs": "Copia el release íntegro y verificado de 27 herramientas. Actualización atómica explícita; paquetes de terceros opcionales."
     },
     {
       "id": "respaldo-controladores",
-      "name": "Driver Backup (External BAT)",
-      "description": "Runs Respaldo-Controladores.bat from common desktop/USB locations. If missing, asks for a custom .bat/.cmd path and saves it.",
+      "name": "Driver Backup (DISM)",
+      "description": "Export drivers with Windows DISM to a selected destination. Does not run a desktop/USB external BAT.",
       "category": "copia",
       "function": "Invoke-RespaldoControladores",
       "source": "Invoke-RespaldoControladores.ps1",
@@ -503,7 +554,8 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
@@ -511,12 +563,14 @@ $script:AtlasToolsManifest = '{
         "commands": [
           "Export-WindowsDriver"
         ]
-      }
+      },
+      "nameEs": "Respaldar controladores",
+      "descriptionEs": "Exporta controladores con DISM a un destino elegido. No ejecuta un BAT externo elegido desde el escritorio."
     },
     {
       "id": "robocopy",
-      "name": "Robocopy Mirror",
-      "description": "Optimized robocopy-based copy: mirror mode, retries, centralized logging.",
+      "name": "Robocopy Copy",
+      "description": "Copy with exclusions, checked exit status and explicit partial SHA-256 sampling. No full-content certification from a sample.",
       "category": "copia",
       "function": "Invoke-Robocopy",
       "source": "Invoke-Robocopy.ps1",
@@ -531,7 +585,8 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
@@ -539,12 +594,14 @@ $script:AtlasToolsManifest = '{
         "commands": [
           "robocopy.exe"
         ]
-      }
+      },
+      "nameEs": "Copiar con Robocopy",
+      "descriptionEs": "Copia con exclusiones y códigos de resultado. La muestra SHA-256 no equivale a verificación integral del contenido."
     },
     {
       "id": "selector-dns",
-      "name": "DNS Switcher",
-      "description": "Switches DNS server between profiles (Cloudflare, Google, OpenDNS, custom) with one click.",
+      "name": "DNS with Restoration",
+      "description": "Classic DNS profiles with IPv4/IPv6 automatic/static snapshots. DoH settings are gated by Windows capabilities.",
       "category": "redes",
       "function": "Invoke-SelectorDNS",
       "source": "Invoke-SelectorDNS.ps1",
@@ -559,7 +616,8 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
@@ -569,7 +627,9 @@ $script:AtlasToolsManifest = '{
           "Get-DnsClientServerAddress",
           "Set-DnsClientServerAddress"
         ]
-      }
+      },
+      "nameEs": "DNS con restauración",
+      "descriptionEs": "Perfiles DNS clásicos, snapshot IPv4/IPv6 y origen automático/estático. DoH solo si Windows y cmdlets lo permiten."
     },
     {
       "id": "hosts",
@@ -589,18 +649,21 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Editar Hosts",
+      "descriptionEs": "Cambios de alias exactos y reemplazo con respaldo de bytes originales. Importaciones requieren revisión."
     },
     {
       "id": "auditoria-router",
-      "name": "Router Security Audit",
-      "description": "Local network router scan and security audit.",
+      "name": "Router and LAN Observations",
+      "description": "Gateway/LAN observations; legacy scan supports /24 only. LAN reachability does not certify WAN exposure.",
       "category": "redes",
       "function": "Invoke-AuditoriaRouter",
       "source": "Invoke-AuditoriaRouter.ps1",
@@ -615,13 +678,16 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Observaciones de router y LAN",
+      "descriptionEs": "Escaneo heredado solo de /24. La prueba desde LAN no certifica exposición WAN; sin exportación de claves Wi-Fi."
     },
     {
       "id": "gestor-bitlocker",
@@ -641,7 +707,8 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
@@ -650,7 +717,9 @@ $script:AtlasToolsManifest = '{
           "Get-BitLockerVolume",
           "Enable-BitLocker"
         ]
-      }
+      },
+      "nameEs": "Administrar BitLocker",
+      "descriptionEs": "Activación exige respaldo de recuperación verificado en otro disco. Suspensión delegada a Windows; escrow no se presume."
     },
     {
       "id": "menor-privilegio",
@@ -670,7 +739,8 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
@@ -679,12 +749,14 @@ $script:AtlasToolsManifest = '{
           "Get-LocalUser",
           "Get-LocalGroupMember"
         ]
-      }
+      },
+      "nameEs": "Cuentas con mínimo privilegio",
+      "descriptionEs": "Audita cuentas locales y protege al último administrador habilitado. Cambios y fallos se comprueban por SID."
     },
     {
       "id": "extraer-licencias",
-      "name": "Extract Product Keys",
-      "description": "Extract Windows and Office product keys (read-only, safe).",
+      "name": "License Inventory",
+      "description": "Windows/Office local license status. Redacted reports; OEM key display and clipboard each require explicit consent.",
       "category": "seguridad",
       "function": "Invoke-ExtraerLicencias",
       "source": "Invoke-ExtraerLicencias.ps1",
@@ -699,18 +771,21 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": []
-      }
+      },
+      "nameEs": "Inventario de licencias",
+      "descriptionEs": "Estado local Windows/Office y reportes redactados. Revelar clave OEM y copiarla son acciones explícitas separadas."
     },
     {
       "id": "deduplicador",
-      "name": "Deduplicator & Converter",
-      "description": "Visual and exact file deduplicator and media converter (WebP to JPG/PNG, WebM to MP4). Supports GUI and Web modes.",
+      "name": "Deduplicator Unavailable",
+      "description": "Backend is not included. Conversion and deletion remain unavailable until integration and recovery tests pass.",
       "category": "copia",
       "function": "Invoke-Deduplicador",
       "source": "Invoke-Deduplicador.ps1",
@@ -725,19 +800,22 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
         "minimumBuild": 19044,
         "commands": [],
         "disabledReason": "Backend is absent from this release. No unverified localhost service or global Python installation will be started."
-      }
+      },
+      "nameEs": "Deduplicador no disponible",
+      "descriptionEs": "Backend no incluido. No se ejecuta conversión ni borrado hasta integrar y probar recuperación."
     },
     {
       "id": "entrega-pc",
       "name": "PC Handover Report",
-      "description": "Closeout protocol: final cleanup, summary, log and client handover preparation.",
+      "description": "Persistent manual checklist and redacted report with release trace. Does not certify activation or recovery-key escrow.",
       "category": "entrega",
       "function": "Invoke-EntregaPC",
       "source": "Invoke-EntregaPC.ps1",
@@ -752,7 +830,8 @@ $script:AtlasToolsManifest = '{
           "ToolKit",
           "Dependencies",
           "PS7",
-          "Release"
+          "Release",
+          "Reports"
         ]
       },
       "availability": {
@@ -760,12 +839,14 @@ $script:AtlasToolsManifest = '{
         "commands": [
           "Get-LocalUser"
         ]
-      }
+      },
+      "nameEs": "Entrega del equipo",
+      "descriptionEs": "Checklist manual persistente, informe redactado y trazabilidad de versión. No certifica activación ni escrow de recuperación."
     }
   ]
 }
 '
-$script:AtlasToolHashesJson = '{"generatedAt":"2026-10-24","algorithm":"SHA256","files":{"Invoke-AIReadiness.ps1":"3cd5e80b6c0de8b41483412eaa09643bd70d8764049b4359187da09a8131a9e3","Invoke-ActualizarPowerShell.ps1":"58d41edc086c4d35db882f508a9f9efaaccb06cc2dfa7f207cc9fc7520f85b7d","Invoke-AuditoriaRouter.ps1":"b024aabb113cb5f23b1013f973744ec56a4325b3aeef88e214abb88e6443e31e","Invoke-Deduplicador.ps1":"2147b9d475f36f93c2908bb3c1701b35c5e4a144eb1b5356653e90af322c1a01","Invoke-DiagnosticoEventos.ps1":"5ff8ae3c04ce8725a37d455300334f27cd451b9cbaa99da5223828d210076837","Invoke-DiagnosticoMaster.ps1":"853eea16efe3748bf97467b2335bf163b1f0ad39650e9d8fc050a362409f477b","Invoke-EntregaPC.ps1":"862a6547eff9d9de6c7f941ea9baa7ca44ddd18414bfbbc187a2d8999dcf713a","Invoke-ExtraerLicencias.ps1":"03310f849ee3d4c826a984565aa9e6b51a0bca57f9f450d4c302eb8e97500f22","Invoke-Fase0.ps1":"14e7d9f9498853c4dc98d392cb022e21681064208cb208a88baff5f15d1e1966","Invoke-FastCopy.ps1":"60a183afe4c3d0992ccadfbcd6044e72a5fe42d61b61bdc72d214b6d41e37bc7","Invoke-GPUCheck.ps1":"86b89c3e8d543e8ff6d6597d430fcfd142e21a72da0a1275bbb57580c0739db0","Invoke-GestorBitLocker.ps1":"93969ccbf4b2810c7e8f480c58de5af4e0d96d6c979eda8a1ac44bf14bd453a9","Invoke-HostsManager.ps1":"21bb6ec2607f7b35f4651c0fb061b6ac0f45db8c1d4683bd4ca96cf85f2d8dc2","Invoke-InstalarMicrosoftStore.ps1":"d2d73a1a359585c13e09cf2eafe89fe588d5cdb9a89872730ab7a4e9de5a09de","Invoke-InstalarPaquetes.ps1":"0bca7d0507716cd2f2928b9cd0d7bde6b5234c2737deb8dc932e893f6db1b5a5","Invoke-InstalarRuntimes.ps1":"b21d419e5cfb2b60b2aded4f2332b9e72d216b307f6349a2e758dca58de66ad8","Invoke-KeyboardDoctor.ps1":"c2f9f0f0838a32ba02d4bb3999c69b4d2df302a49075682e857c80b58ce7c6b6","Invoke-MantenimientoPRO.ps1":"226545d07cf4f201e958670f8c49168785b838320ddbc8959d2fc65751582931","Invoke-MenorPrivilegio.ps1":"93d6d30992dc2abb8cc9b044c2c9f457feff87011431238a9d47ecf683da435c","Invoke-PartsUpgrade.ps1":"ebd71ff139c86202d6efe43a1e4f584e7af9c200a29e3a2c213a17659a32483b","Invoke-Personalizacion.ps1":"57f979ffe953aaed57632b004b687d5651cb41b21e0313ea3d23c423a6dcf1c4","Invoke-PrepararUSB.ps1":"a8bd74fb81de958dac0a3525919731dddfcb2006a43cad61b9561eaf42a06507","Invoke-PrinterDoctor.ps1":"7594de21ce2c4df18ed2a81c7184acb0a86d6e468c861f22697e54d1da163d3f","Invoke-RespaldoControladores.ps1":"f0854415a9a2cf8415b207c18df178e68904761d62f29e2f848ef5f159d15169","Invoke-Robocopy.ps1":"b1f35e5afe88948f0697171464c689645247ece47ba724782808cf0e924a80d0","Invoke-SelectorDNS.ps1":"b49f00b4cf33f5c87c5f35e57d2e3336d361430a4d757d88557b6f56cae52a77","Invoke-StopServices.ps1":"9cb88839b1e350bcee6ce63b5809ccc7c4ff4d11ee773ca3715b2d5386f1212b"}}'
+$script:AtlasToolHashesJson = '{"generatedAt":"2026-10-24","algorithm":"SHA256","files":{"Invoke-AIReadiness.ps1":"62d6388cf643f1d5ca6bc8217929a2299cb6accae2c574f1f694ff9ceff5e248","Invoke-ActualizarPowerShell.ps1":"58d41edc086c4d35db882f508a9f9efaaccb06cc2dfa7f207cc9fc7520f85b7d","Invoke-AuditoriaRouter.ps1":"c60b60203f6a7627d91a13d64bc592e36ea2fd5d552d0a83b4f6a9394d1119bb","Invoke-Deduplicador.ps1":"2147b9d475f36f93c2908bb3c1701b35c5e4a144eb1b5356653e90af322c1a01","Invoke-DiagnosticoEventos.ps1":"6e3b3763abcfe0e8f975c23f69d2bcdc716f6cd478e03b372f4602123552ccf3","Invoke-DiagnosticoMaster.ps1":"a32e590a631ecc57480508c2fd1f02a640b792e385181be207510c4c33642131","Invoke-EntregaPC.ps1":"b6a7326be8dc1d7edf9c556e5ebaaaae5d43efb2c9936d111ac803f72a5c9ac8","Invoke-ExtraerLicencias.ps1":"bd8436451e725c872ac155aa948a1af5e3fb0734a9f479fac220b3ba52f43871","Invoke-Fase0.ps1":"14e7d9f9498853c4dc98d392cb022e21681064208cb208a88baff5f15d1e1966","Invoke-FastCopy.ps1":"60a183afe4c3d0992ccadfbcd6044e72a5fe42d61b61bdc72d214b6d41e37bc7","Invoke-GPUCheck.ps1":"a54fb65b9f9d894cbb44cf9ee3d05cb391b2e91580540f7bab52737314b95c0b","Invoke-GestorBitLocker.ps1":"93969ccbf4b2810c7e8f480c58de5af4e0d96d6c979eda8a1ac44bf14bd453a9","Invoke-HostsManager.ps1":"21bb6ec2607f7b35f4651c0fb061b6ac0f45db8c1d4683bd4ca96cf85f2d8dc2","Invoke-InstalarMicrosoftStore.ps1":"d2d73a1a359585c13e09cf2eafe89fe588d5cdb9a89872730ab7a4e9de5a09de","Invoke-InstalarPaquetes.ps1":"0bca7d0507716cd2f2928b9cd0d7bde6b5234c2737deb8dc932e893f6db1b5a5","Invoke-InstalarRuntimes.ps1":"b21d419e5cfb2b60b2aded4f2332b9e72d216b307f6349a2e758dca58de66ad8","Invoke-KeyboardDoctor.ps1":"ee6b0d31e41874aa98e427e6d3adadc89490f1c900bb41568a023689e3b6d28b","Invoke-MantenimientoPRO.ps1":"226545d07cf4f201e958670f8c49168785b838320ddbc8959d2fc65751582931","Invoke-MenorPrivilegio.ps1":"93d6d30992dc2abb8cc9b044c2c9f457feff87011431238a9d47ecf683da435c","Invoke-PartsUpgrade.ps1":"ac447e5450c8cdee9c00f6bdcd739d0f720422da24fd6ca847d9ec75845fff90","Invoke-Personalizacion.ps1":"57f979ffe953aaed57632b004b687d5651cb41b21e0313ea3d23c423a6dcf1c4","Invoke-PrepararUSB.ps1":"a8bd74fb81de958dac0a3525919731dddfcb2006a43cad61b9561eaf42a06507","Invoke-PrinterDoctor.ps1":"f27fbed8ff8725a0a460a6a78964b4c5f6ccd374f59486596ef18abb5f5841a4","Invoke-RespaldoControladores.ps1":"f0854415a9a2cf8415b207c18df178e68904761d62f29e2f848ef5f159d15169","Invoke-Robocopy.ps1":"b1f35e5afe88948f0697171464c689645247ece47ba724782808cf0e924a80d0","Invoke-SelectorDNS.ps1":"1dee53c8a288e5b76eacd96241771052ee05478c840795deebdd9907c3a89cae","Invoke-StopServices.ps1":"9cb88839b1e350bcee6ce63b5809ccc7c4ff4d11ee773ca3715b2d5386f1212b"}}'
 $script:AtlasXamlTemplate = '<Window
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -1480,7 +1561,7 @@ $script:AtlasDependencyCatalog = '{
     "Version": null,
     "VersionSource": "winget/source-managed",
     "SignaturePolicy": "package-manager",
-    "License": "Vendor terms; redistribution not approved by Atlas"
+    "License": "Vendor personal/non-commercial and Pro/commercial terms differ; workplace/redistribution rights must be reviewed. Not licensed by Atlas."
   },
   "FurMark2": {
     "ExecutableName": "furmark.exe",
@@ -1549,7 +1630,7 @@ $script:AtlasDependencyCatalog = '{
     "Version": "5.11.2",
     "VersionSource": "pinned-direct-fallback; winget source may be newer",
     "SignaturePolicy": "sha256-required",
-    "License": "Vendor terms; review the exact edition before redistribution"
+    "License": "Workplace use requires vendor commercial/Pro licensing; review the exact installed version and redistribution rights. Not licensed by Atlas."
   },
   "winget": {
     "ExecutableName": "winget.exe",
@@ -1675,7 +1756,7 @@ $script:AtlasDependencyCatalog = ''{
     "Version": null,
     "VersionSource": "winget/source-managed",
     "SignaturePolicy": "package-manager",
-    "License": "Vendor terms; redistribution not approved by Atlas"
+    "License": "Vendor personal/non-commercial and Pro/commercial terms differ; workplace/redistribution rights must be reviewed. Not licensed by Atlas."
   },
   "FurMark2": {
     "ExecutableName": "furmark.exe",
@@ -1744,7 +1825,7 @@ $script:AtlasDependencyCatalog = ''{
     "Version": "5.11.2",
     "VersionSource": "pinned-direct-fallback; winget source may be newer",
     "SignaturePolicy": "sha256-required",
-    "License": "Vendor terms; review the exact edition before redistribution"
+    "License": "Workplace use requires vendor commercial/Pro licensing; review the exact installed version and redistribution rights. Not licensed by Atlas."
   },
   "winget": {
     "ExecutableName": "winget.exe",
@@ -3026,83 +3107,6 @@ function Get-AtlasWingetCapabilities {
     return $caps
 }
 
-function Install-AtlasWingetUnattended {
-    [CmdletBinding()]
-    param(
-        [System.Collections.Concurrent.ConcurrentQueue[string]]$LogQueue
-    )
-
-    $ErrorActionPreference = ''Stop''
-
-    function _InstallAppxPackage {
-        param(
-            [string]$Path,
-            [string]$StepLabel
-        )
-        try {
-            Add-AppxPackage -Path $Path -ErrorAction Stop
-        } catch {
-            $msg = $_.Exception.Message
-            if ($msg -match ''0x80073D06'' -or $msg -match ''higher version'' -or $msg -match ''versión superior'' -or $msg -match ''already installed'' -or $msg -match ''ya está instalada'' -or $msg -match ''ya esta instalada'') {
-                _Log ("{0} Ya hay una version igual o superior instalada." -f $StepLabel)
-            } else {
-                throw $_
-            }
-        }
-    }
-
-    try {
-        _Log ''[1/4] Descargando dependencia VCLibs UWP...''
-        $vclibsPath = Join-Path $env:TEMP ''Microsoft.VCLibs.x64.14.00.Desktop.appx''
-        Invoke-WebRequest -Uri ''https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx'' -OutFile $vclibsPath -UseBasicParsing -TimeoutSec 120
-        _Log ''[1/4] Instalando VCLibs...''
-        _InstallAppxPackage -Path $vclibsPath -StepLabel ''[1/4]''
-        Remove-Item -LiteralPath $vclibsPath -Force -ErrorAction SilentlyContinue
-
-        _Log ''[2/4] Descargando dependencia UI.Xaml 2.8...''
-        $uiXamlPath = Join-Path $env:TEMP ''Microsoft.UI.Xaml.2.8.x64.appx''
-        Invoke-WebRequest -Uri ''https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx'' -OutFile $uiXamlPath -UseBasicParsing -TimeoutSec 120
-        _Log ''[2/4] Instalando UI.Xaml...''
-        _InstallAppxPackage -Path $uiXamlPath -StepLabel ''[2/4]''
-        Remove-Item -LiteralPath $uiXamlPath -Force -ErrorAction SilentlyContinue
-
-        _Log ''[3/4] Descargando dependencia WindowsAppRuntime 1.8...''
-        $depsZipPath = Join-Path $env:TEMP ''DesktopAppInstaller_Dependencies.zip''
-        Invoke-WebRequest -Uri ''https://github.com/microsoft/winget-cli/releases/download/v1.29.280/DesktopAppInstaller_Dependencies.zip'' -OutFile $depsZipPath -UseBasicParsing -TimeoutSec 180
-
-        _Log ''[3/4] Instalando WindowsAppRuntime 1.8...''
-        Add-Type -AssemblyName System.IO.Compression.FileSystem
-        $zip = [System.IO.Compression.ZipFile]::OpenRead($depsZipPath)
-        $entry = $zip.Entries | Where-Object { $_.FullName -like ''*x64*WindowsAppRuntime*.appx'' } | Select-Object -First 1
-        if ($entry) {
-            $appRuntimePath = Join-Path $env:TEMP $entry.Name
-            [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $appRuntimePath, $true)
-            $zip.Dispose()
-            _InstallAppxPackage -Path $appRuntimePath -StepLabel ''[3/4]''
-            Remove-Item -LiteralPath $appRuntimePath -Force -ErrorAction SilentlyContinue
-        } else {
-            $zip.Dispose()
-            _Log ''[3/4] Advertencia: No se encontro WindowsAppRuntime en el paquete de dependencias.''
-        }
-        Remove-Item -LiteralPath $depsZipPath -Force -ErrorAction SilentlyContinue
-
-        _Log ''[4/4] Descargando App Installer (winget) msixbundle...''
-        $wingetBundlePath = Join-Path $env:TEMP ''Microsoft.DesktopAppInstaller.msixbundle''
-        Invoke-WebRequest -Uri ''https://aka.ms/getwinget'' -OutFile $wingetBundlePath -UseBasicParsing -TimeoutSec 180
-        _Log ''[4/4] Instalando App Installer (winget)...''
-        _InstallAppxPackage -Path $wingetBundlePath -StepLabel ''[4/4]''
-        Remove-Item -LiteralPath $wingetBundlePath -Force -ErrorAction SilentlyContinue
-
-        _Log ''[OK] Instalacion desatendida de winget completada exitosamente.''
-        return $true
-    } catch {
-        _Log ("[X] Error al instalar winget desatendido: {0}" -f $_.Exception.Message)
-        return $false
-    }
-}
-
-
-
 
 # ---- lib/Dependencies ----
 # ============================================================
@@ -3568,7 +3572,7 @@ function Test-AtlasRelease {
         if ($tool.function -cne [IO.Path]::GetFileNameWithoutExtension($name) -or
             $tool.runtime.engine -notin @(''windows-powershell'',''pwsh'') -or $tool.runtime.architecture -ne ''x64'' -or
             [string]$tool.runtime.minimumVersion -notmatch ''^\d+\.\d+(?:\.\d+){0,2}$'' -or @($tool.runtime.libraries).Count -eq 0) { throw "Missing tool execution contract: $name" }
-        foreach ($library in @($tool.runtime.libraries)) { if ($library -notin @(''ToolKit'',''Dependencies'',''PS7'',''Release'')) { throw "Unknown tool library: $library" } }
+        foreach ($library in @($tool.runtime.libraries)) { if ($library -notin @(''ToolKit'',''Dependencies'',''PS7'',''Release'',''Reports'')) { throw "Unknown tool library: $library" } }
         $toolNames[$name] = $true
     }
     if ($tools.Count -eq 0 -or $names.Count -ne ($required.Count + $tools.Count)) { throw ''Release members and tool manifest do not match.'' }
@@ -3995,6 +3999,144 @@ function Restore-AtlasServiceSnapshot {
     $properties=Get-ItemProperty -LiteralPath $key -ErrorAction Stop
     $delayed=$properties.PSObject.Properties[''DelayedAutostart'']
     if(($null -ne $delayed) -ne $Snapshot.DelayedPresent -or ($Snapshot.DelayedPresent -and [int]$delayed.Value -ne $Snapshot.DelayedValue)){throw ''Delayed service startup restoration could not be verified.''}
+}
+
+
+# ---- lib/Reports ----
+# Shared report privacy and persistent manual handover. No collection at load time.
+function Assert-AtlasPlainFile {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Path)
+    $file = Get-Item -LiteralPath $Path -Force -ErrorAction Stop
+    if ($file.PSIsContainer -or ($file.Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw ''Report/checklist must be a plain file.'' }
+    Assert-AtlasPlainDirectory $file.DirectoryName
+}
+
+function Protect-AtlasReportText {
+    [CmdletBinding()]
+    param([AllowEmptyString()][string]$Text, [string[]]$SensitiveValues = @())
+    $result = $Text
+    # Recovery secrets, product keys, user paths, SIDs, emails and network identifiers.
+    foreach ($pattern in @(
+        ''(?i)\b(?:[A-Z0-9]{5}-){4}[A-Z0-9]{5}\b'',
+        ''\b(?:\d{6}-){7}\d{6}\b'',
+        ''(?i)\b[A-Z]:\\Users\\[^\\\s<>"'''']+'',
+        ''(?i)\bS-1-5-21-(?:\d+-){2,3}\d+\b'',
+        ''(?i)\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b'',
+        ''(?i)\b(?:[A-F0-9]{2}[:-]){5}[A-F0-9]{2}\b'',
+        ''\b(?:\d{1,3}\.){3}\d{1,3}\b''
+    )) { $result = [regex]::Replace($result, $pattern, ''[REDACTED]'') }
+    $result = [regex]::Replace($result, ''(?i)(?<![a-z0-9:])(?:[a-f0-9]{0,4}:){2,}[a-f0-9]{0,4}(?:%[\w.-]+)?(?![a-z0-9:])'', {
+        param($match)
+        $address = $null
+        if ([Net.IPAddress]::TryParse($match.Value, [ref]$address) -and $address.AddressFamily -eq [Net.Sockets.AddressFamily]::InterNetworkV6) { return ''[REDACTED]'' }
+        return $match.Value
+    })
+    $values = @($SensitiveValues) + @($env:COMPUTERNAME, $env:USERNAME, $env:USERPROFILE)
+    foreach ($value in @($values | Where-Object { $_ -and $_.Length -ge 3 } | Select-Object -Unique | Sort-Object Length -Descending)) {
+        foreach ($encoded in @($value, [Net.WebUtility]::HtmlEncode($value))) {
+            $result = [regex]::Replace($result, [regex]::Escape($encoded), ''[REDACTED]'', [Text.RegularExpressions.RegexOptions]::IgnoreCase)
+        }
+    }
+    return $result
+}
+
+function Protect-AtlasReportObject {
+    [CmdletBinding()]
+    param([AllowNull()][object]$InputObject)
+    if ($null -eq $InputObject) { return $null }
+    if ($InputObject -is [string]) { return (Protect-AtlasReportText $InputObject) }
+    if ($InputObject -is [ValueType]) { return $InputObject }
+    if ($InputObject -is [Collections.IDictionary] -or $InputObject -is [pscustomobject]) {
+        $result = [ordered]@{}
+        $names = if ($InputObject -is [Collections.IDictionary]) { @($InputObject.Keys) } else { @($InputObject.PSObject.Properties.Name) }
+        foreach ($name in $names) {
+            if ($name -match ''^(?i:Serial(?:Number)?|UUID|ProcessorId|MachineGuid|MacAddress|IpAddress(?:es)?|UserName|ComputerName|Computer|HostName|Owner|Document|SSID|BSSID|RecoveryPassword|ProductKey|KeyProtectorId|FullName|FileSystemLabel|PNPDeviceId|DeviceId|InstanceId|DeviceInstanceId)$'') {
+                $result[$name] = ''[REDACTED]''
+            } else { $result[$name] = Protect-AtlasReportObject $InputObject.$name }
+        }
+        return [pscustomobject]$result
+    }
+    if ($InputObject -is [Collections.IEnumerable]) {
+        $items = @($InputObject | ForEach-Object { Protect-AtlasReportObject $_ })
+        return ,$items
+    }
+    return (Protect-AtlasReportText ([string]$InputObject))
+}
+
+function Write-AtlasShareableReport {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][AllowEmptyString()][string]$Content,
+        [Parameter(Mandatory)][string]$Tool, [string[]]$SensitiveValues = @())
+    Assert-AtlasPlainDirectory (Split-Path -Parent ([IO.Path]::GetFullPath($Path)))
+    if (Test-Path -LiteralPath $Path) { Assert-AtlasPlainFile $Path }
+    $trace = Get-AtlasReportTrace -Tool $Tool
+    if ([IO.Path]::GetExtension($Path) -eq ''.json'') {
+        $report = Protect-AtlasReportObject ($Content | ConvertFrom-Json -ErrorAction Stop)
+        $report | Add-Member -NotePropertyName Trace -NotePropertyValue $trace -Force
+        $contentToSave = $report | ConvertTo-Json -Depth 20
+    } else {
+        $traceText = $trace | ConvertTo-Json -Compress
+        $suffix = if ([IO.Path]::GetExtension($Path) -eq ''.html'') { "`n<!-- " + [Net.WebUtility]::HtmlEncode($traceText) + " -->" } else { "`n`n$traceText" }
+        $contentToSave = $Content + $suffix
+    }
+    $contentToSave = Protect-AtlasReportText -Text $contentToSave -SensitiveValues $SensitiveValues
+    [IO.File]::WriteAllText($Path, $contentToSave, [Text.UTF8Encoding]::new($false))
+}
+
+function Get-AtlasReportTrace {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Tool)
+    $version = Get-Variable AtlasVersion -Scope Script -ValueOnly -ErrorAction SilentlyContinue
+    $commit = Get-Variable AtlasReleaseCommit -Scope Script -ValueOnly -ErrorAction SilentlyContinue
+    return [pscustomobject][ordered]@{
+        SchemaVersion = 1; Tool = $Tool
+        Version = if ($version) { [string]$version } else { ''development'' }
+        Commit = if ($commit) { [string]$commit } else { ''unpublished'' }
+        GeneratedUtc = [datetime]::UtcNow.ToString(''o'')
+        Privacy = ''Redacted by default; review free text before sharing.''
+        Coverage = ''Observations and manual confirmations; not a health, activation or recovery-escrow certificate.''
+    }
+}
+
+function Get-AtlasHandoverChecklist {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][string[]]$Items)
+    if (-not $Items.Count) { throw ''Checklist items are required.'' }
+    if (Test-Path -LiteralPath $Path) {
+        Assert-AtlasPlainFile $Path
+        $state = Get-Content -LiteralPath $Path -Raw -Encoding UTF8 -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+        if ($state.SchemaVersion -ne 1 -or $state.HandoverId -cnotmatch ''^[a-f0-9]{32}$'' -or -not $state.Trace -or @($state.Items).Count -ne $Items.Count) { throw ''Unsupported checklist schema or changed item count; start a new handover.'' }
+        for ($index = 0; $index -lt $Items.Count; $index++) {
+            $row = $state.Items[$index]
+            if ($row.Id -ne ($index + 1) -or $row.Text -cne $Items[$index] -or
+                $row.State -notin @(''NotVerified'',''ManualConfirmed'',''NotApplicable'') -or
+                ($row.State -ne ''NotVerified'' -and (-not $row.CheckedUtc -or -not $row.Evidence))) { throw ''Invalid checklist entry. Existing evidence was not changed.'' }
+        }
+        return $state
+    }
+    $index = 0
+    return [pscustomobject][ordered]@{
+        SchemaVersion = 1; HandoverId = [guid]::NewGuid().ToString(''N'')
+        Trace = Get-AtlasReportTrace -Tool ''PC Handover''
+        Items = @($Items | ForEach-Object { $index++; [pscustomobject]@{ Id=$index; Text=$_; State=''NotVerified''; CheckedUtc=$null; Evidence=$null } })
+    }
+}
+
+function Save-AtlasHandoverChecklist {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][object]$Checklist)
+    $directory = Split-Path -Parent ([IO.Path]::GetFullPath($Path))
+    Assert-AtlasPlainDirectory $directory
+    if (Test-Path -LiteralPath $Path) { Assert-AtlasPlainFile $Path }
+    $temporary = Join-Path $directory (''checklist-'' + [guid]::NewGuid().ToString(''N'') + ''.tmp'')
+    try {
+        $json = $Checklist | ConvertTo-Json -Depth 8
+        [IO.File]::WriteAllText($temporary, $json, [Text.UTF8Encoding]::new($false))
+        Get-AtlasHandoverChecklist -Path $temporary -Items @($Checklist.Items | ForEach-Object Text) | Out-Null
+        if ([IO.File]::Exists($Path)) { [IO.File]::Replace($temporary, $Path, ($Path + ''.previous''), $true) }
+        else { [IO.File]::Move($temporary, $Path) }
+    } finally { if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Force } }
 }
 '
 
@@ -5236,83 +5378,6 @@ function Get-AtlasWingetCapabilities {
     return $caps
 }
 
-function Install-AtlasWingetUnattended {
-    [CmdletBinding()]
-    param(
-        [System.Collections.Concurrent.ConcurrentQueue[string]]$LogQueue
-    )
-
-    $ErrorActionPreference = 'Stop'
-
-    function _InstallAppxPackage {
-        param(
-            [string]$Path,
-            [string]$StepLabel
-        )
-        try {
-            Add-AppxPackage -Path $Path -ErrorAction Stop
-        } catch {
-            $msg = $_.Exception.Message
-            if ($msg -match '0x80073D06' -or $msg -match 'higher version' -or $msg -match 'versión superior' -or $msg -match 'already installed' -or $msg -match 'ya está instalada' -or $msg -match 'ya esta instalada') {
-                _Log ("{0} Ya hay una version igual o superior instalada." -f $StepLabel)
-            } else {
-                throw $_
-            }
-        }
-    }
-
-    try {
-        _Log '[1/4] Descargando dependencia VCLibs UWP...'
-        $vclibsPath = Join-Path $env:TEMP 'Microsoft.VCLibs.x64.14.00.Desktop.appx'
-        Invoke-WebRequest -Uri 'https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx' -OutFile $vclibsPath -UseBasicParsing -TimeoutSec 120
-        _Log '[1/4] Instalando VCLibs...'
-        _InstallAppxPackage -Path $vclibsPath -StepLabel '[1/4]'
-        Remove-Item -LiteralPath $vclibsPath -Force -ErrorAction SilentlyContinue
-
-        _Log '[2/4] Descargando dependencia UI.Xaml 2.8...'
-        $uiXamlPath = Join-Path $env:TEMP 'Microsoft.UI.Xaml.2.8.x64.appx'
-        Invoke-WebRequest -Uri 'https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx' -OutFile $uiXamlPath -UseBasicParsing -TimeoutSec 120
-        _Log '[2/4] Instalando UI.Xaml...'
-        _InstallAppxPackage -Path $uiXamlPath -StepLabel '[2/4]'
-        Remove-Item -LiteralPath $uiXamlPath -Force -ErrorAction SilentlyContinue
-
-        _Log '[3/4] Descargando dependencia WindowsAppRuntime 1.8...'
-        $depsZipPath = Join-Path $env:TEMP 'DesktopAppInstaller_Dependencies.zip'
-        Invoke-WebRequest -Uri 'https://github.com/microsoft/winget-cli/releases/download/v1.29.280/DesktopAppInstaller_Dependencies.zip' -OutFile $depsZipPath -UseBasicParsing -TimeoutSec 180
-
-        _Log '[3/4] Instalando WindowsAppRuntime 1.8...'
-        Add-Type -AssemblyName System.IO.Compression.FileSystem
-        $zip = [System.IO.Compression.ZipFile]::OpenRead($depsZipPath)
-        $entry = $zip.Entries | Where-Object { $_.FullName -like '*x64*WindowsAppRuntime*.appx' } | Select-Object -First 1
-        if ($entry) {
-            $appRuntimePath = Join-Path $env:TEMP $entry.Name
-            [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $appRuntimePath, $true)
-            $zip.Dispose()
-            _InstallAppxPackage -Path $appRuntimePath -StepLabel '[3/4]'
-            Remove-Item -LiteralPath $appRuntimePath -Force -ErrorAction SilentlyContinue
-        } else {
-            $zip.Dispose()
-            _Log '[3/4] Advertencia: No se encontro WindowsAppRuntime en el paquete de dependencias.'
-        }
-        Remove-Item -LiteralPath $depsZipPath -Force -ErrorAction SilentlyContinue
-
-        _Log '[4/4] Descargando App Installer (winget) msixbundle...'
-        $wingetBundlePath = Join-Path $env:TEMP 'Microsoft.DesktopAppInstaller.msixbundle'
-        Invoke-WebRequest -Uri 'https://aka.ms/getwinget' -OutFile $wingetBundlePath -UseBasicParsing -TimeoutSec 180
-        _Log '[4/4] Instalando App Installer (winget)...'
-        _InstallAppxPackage -Path $wingetBundlePath -StepLabel '[4/4]'
-        Remove-Item -LiteralPath $wingetBundlePath -Force -ErrorAction SilentlyContinue
-
-        _Log '[OK] Instalacion desatendida de winget completada exitosamente.'
-        return $true
-    } catch {
-        _Log ("[X] Error al instalar winget desatendido: {0}" -f $_.Exception.Message)
-        return $false
-    }
-}
-
-
-
 
 # ---- lib/Dependencies ----
 # ============================================================
@@ -5778,7 +5843,7 @@ function Test-AtlasRelease {
         if ($tool.function -cne [IO.Path]::GetFileNameWithoutExtension($name) -or
             $tool.runtime.engine -notin @('windows-powershell','pwsh') -or $tool.runtime.architecture -ne 'x64' -or
             [string]$tool.runtime.minimumVersion -notmatch '^\d+\.\d+(?:\.\d+){0,2}$' -or @($tool.runtime.libraries).Count -eq 0) { throw "Missing tool execution contract: $name" }
-        foreach ($library in @($tool.runtime.libraries)) { if ($library -notin @('ToolKit','Dependencies','PS7','Release')) { throw "Unknown tool library: $library" } }
+        foreach ($library in @($tool.runtime.libraries)) { if ($library -notin @('ToolKit','Dependencies','PS7','Release','Reports')) { throw "Unknown tool library: $library" } }
         $toolNames[$name] = $true
     }
     if ($tools.Count -eq 0 -or $names.Count -ne ($required.Count + $tools.Count)) { throw 'Release members and tool manifest do not match.' }
@@ -6205,6 +6270,144 @@ function Restore-AtlasServiceSnapshot {
     $properties=Get-ItemProperty -LiteralPath $key -ErrorAction Stop
     $delayed=$properties.PSObject.Properties['DelayedAutostart']
     if(($null -ne $delayed) -ne $Snapshot.DelayedPresent -or ($Snapshot.DelayedPresent -and [int]$delayed.Value -ne $Snapshot.DelayedValue)){throw 'Delayed service startup restoration could not be verified.'}
+}
+
+
+# ---- lib/Reports ----
+# Shared report privacy and persistent manual handover. No collection at load time.
+function Assert-AtlasPlainFile {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Path)
+    $file = Get-Item -LiteralPath $Path -Force -ErrorAction Stop
+    if ($file.PSIsContainer -or ($file.Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'Report/checklist must be a plain file.' }
+    Assert-AtlasPlainDirectory $file.DirectoryName
+}
+
+function Protect-AtlasReportText {
+    [CmdletBinding()]
+    param([AllowEmptyString()][string]$Text, [string[]]$SensitiveValues = @())
+    $result = $Text
+    # Recovery secrets, product keys, user paths, SIDs, emails and network identifiers.
+    foreach ($pattern in @(
+        '(?i)\b(?:[A-Z0-9]{5}-){4}[A-Z0-9]{5}\b',
+        '\b(?:\d{6}-){7}\d{6}\b',
+        '(?i)\b[A-Z]:\\Users\\[^\\\s<>"'']+',
+        '(?i)\bS-1-5-21-(?:\d+-){2,3}\d+\b',
+        '(?i)\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b',
+        '(?i)\b(?:[A-F0-9]{2}[:-]){5}[A-F0-9]{2}\b',
+        '\b(?:\d{1,3}\.){3}\d{1,3}\b'
+    )) { $result = [regex]::Replace($result, $pattern, '[REDACTED]') }
+    $result = [regex]::Replace($result, '(?i)(?<![a-z0-9:])(?:[a-f0-9]{0,4}:){2,}[a-f0-9]{0,4}(?:%[\w.-]+)?(?![a-z0-9:])', {
+        param($match)
+        $address = $null
+        if ([Net.IPAddress]::TryParse($match.Value, [ref]$address) -and $address.AddressFamily -eq [Net.Sockets.AddressFamily]::InterNetworkV6) { return '[REDACTED]' }
+        return $match.Value
+    })
+    $values = @($SensitiveValues) + @($env:COMPUTERNAME, $env:USERNAME, $env:USERPROFILE)
+    foreach ($value in @($values | Where-Object { $_ -and $_.Length -ge 3 } | Select-Object -Unique | Sort-Object Length -Descending)) {
+        foreach ($encoded in @($value, [Net.WebUtility]::HtmlEncode($value))) {
+            $result = [regex]::Replace($result, [regex]::Escape($encoded), '[REDACTED]', [Text.RegularExpressions.RegexOptions]::IgnoreCase)
+        }
+    }
+    return $result
+}
+
+function Protect-AtlasReportObject {
+    [CmdletBinding()]
+    param([AllowNull()][object]$InputObject)
+    if ($null -eq $InputObject) { return $null }
+    if ($InputObject -is [string]) { return (Protect-AtlasReportText $InputObject) }
+    if ($InputObject -is [ValueType]) { return $InputObject }
+    if ($InputObject -is [Collections.IDictionary] -or $InputObject -is [pscustomobject]) {
+        $result = [ordered]@{}
+        $names = if ($InputObject -is [Collections.IDictionary]) { @($InputObject.Keys) } else { @($InputObject.PSObject.Properties.Name) }
+        foreach ($name in $names) {
+            if ($name -match '^(?i:Serial(?:Number)?|UUID|ProcessorId|MachineGuid|MacAddress|IpAddress(?:es)?|UserName|ComputerName|Computer|HostName|Owner|Document|SSID|BSSID|RecoveryPassword|ProductKey|KeyProtectorId|FullName|FileSystemLabel|PNPDeviceId|DeviceId|InstanceId|DeviceInstanceId)$') {
+                $result[$name] = '[REDACTED]'
+            } else { $result[$name] = Protect-AtlasReportObject $InputObject.$name }
+        }
+        return [pscustomobject]$result
+    }
+    if ($InputObject -is [Collections.IEnumerable]) {
+        $items = @($InputObject | ForEach-Object { Protect-AtlasReportObject $_ })
+        return ,$items
+    }
+    return (Protect-AtlasReportText ([string]$InputObject))
+}
+
+function Write-AtlasShareableReport {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][AllowEmptyString()][string]$Content,
+        [Parameter(Mandatory)][string]$Tool, [string[]]$SensitiveValues = @())
+    Assert-AtlasPlainDirectory (Split-Path -Parent ([IO.Path]::GetFullPath($Path)))
+    if (Test-Path -LiteralPath $Path) { Assert-AtlasPlainFile $Path }
+    $trace = Get-AtlasReportTrace -Tool $Tool
+    if ([IO.Path]::GetExtension($Path) -eq '.json') {
+        $report = Protect-AtlasReportObject ($Content | ConvertFrom-Json -ErrorAction Stop)
+        $report | Add-Member -NotePropertyName Trace -NotePropertyValue $trace -Force
+        $contentToSave = $report | ConvertTo-Json -Depth 20
+    } else {
+        $traceText = $trace | ConvertTo-Json -Compress
+        $suffix = if ([IO.Path]::GetExtension($Path) -eq '.html') { "`n<!-- " + [Net.WebUtility]::HtmlEncode($traceText) + " -->" } else { "`n`n$traceText" }
+        $contentToSave = $Content + $suffix
+    }
+    $contentToSave = Protect-AtlasReportText -Text $contentToSave -SensitiveValues $SensitiveValues
+    [IO.File]::WriteAllText($Path, $contentToSave, [Text.UTF8Encoding]::new($false))
+}
+
+function Get-AtlasReportTrace {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Tool)
+    $version = Get-Variable AtlasVersion -Scope Script -ValueOnly -ErrorAction SilentlyContinue
+    $commit = Get-Variable AtlasReleaseCommit -Scope Script -ValueOnly -ErrorAction SilentlyContinue
+    return [pscustomobject][ordered]@{
+        SchemaVersion = 1; Tool = $Tool
+        Version = if ($version) { [string]$version } else { 'development' }
+        Commit = if ($commit) { [string]$commit } else { 'unpublished' }
+        GeneratedUtc = [datetime]::UtcNow.ToString('o')
+        Privacy = 'Redacted by default; review free text before sharing.'
+        Coverage = 'Observations and manual confirmations; not a health, activation or recovery-escrow certificate.'
+    }
+}
+
+function Get-AtlasHandoverChecklist {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][string[]]$Items)
+    if (-not $Items.Count) { throw 'Checklist items are required.' }
+    if (Test-Path -LiteralPath $Path) {
+        Assert-AtlasPlainFile $Path
+        $state = Get-Content -LiteralPath $Path -Raw -Encoding UTF8 -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+        if ($state.SchemaVersion -ne 1 -or $state.HandoverId -cnotmatch '^[a-f0-9]{32}$' -or -not $state.Trace -or @($state.Items).Count -ne $Items.Count) { throw 'Unsupported checklist schema or changed item count; start a new handover.' }
+        for ($index = 0; $index -lt $Items.Count; $index++) {
+            $row = $state.Items[$index]
+            if ($row.Id -ne ($index + 1) -or $row.Text -cne $Items[$index] -or
+                $row.State -notin @('NotVerified','ManualConfirmed','NotApplicable') -or
+                ($row.State -ne 'NotVerified' -and (-not $row.CheckedUtc -or -not $row.Evidence))) { throw 'Invalid checklist entry. Existing evidence was not changed.' }
+        }
+        return $state
+    }
+    $index = 0
+    return [pscustomobject][ordered]@{
+        SchemaVersion = 1; HandoverId = [guid]::NewGuid().ToString('N')
+        Trace = Get-AtlasReportTrace -Tool 'PC Handover'
+        Items = @($Items | ForEach-Object { $index++; [pscustomobject]@{ Id=$index; Text=$_; State='NotVerified'; CheckedUtc=$null; Evidence=$null } })
+    }
+}
+
+function Save-AtlasHandoverChecklist {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][object]$Checklist)
+    $directory = Split-Path -Parent ([IO.Path]::GetFullPath($Path))
+    Assert-AtlasPlainDirectory $directory
+    if (Test-Path -LiteralPath $Path) { Assert-AtlasPlainFile $Path }
+    $temporary = Join-Path $directory ('checklist-' + [guid]::NewGuid().ToString('N') + '.tmp')
+    try {
+        $json = $Checklist | ConvertTo-Json -Depth 8
+        [IO.File]::WriteAllText($temporary, $json, [Text.UTF8Encoding]::new($false))
+        Get-AtlasHandoverChecklist -Path $temporary -Items @($Checklist.Items | ForEach-Object Text) | Out-Null
+        if ([IO.File]::Exists($Path)) { [IO.File]::Replace($temporary, $Path, ($Path + '.previous'), $true) }
+        else { [IO.File]::Move($temporary, $Path) }
+    } finally { if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Force } }
 }
 
 
@@ -6730,6 +6933,26 @@ function Expand-AtlasXaml {
     return $Xaml
 }
 
+function Get-AtlasToolDisplay {
+    param([Parameter(Mandatory)]$Tool, [string]$Language = $script:AtlasCurrentLang)
+    if ($Language -eq 'es' -and $Tool.nameEs -and $Tool.descriptionEs) {
+        return [pscustomobject]@{Name=$Tool.nameEs;Description=$Tool.descriptionEs}
+    }
+    return [pscustomobject]@{Name=$Tool.name;Description=$Tool.description}
+}
+
+function Test-AtlasToolQuery {
+    param([Parameter(Mandatory)]$Tool, [AllowEmptyString()][string]$Query)
+    function ConvertTo-SearchText([string]$Value) {
+        return [regex]::Replace($Value.Normalize([Text.NormalizationForm]::FormD),'\p{Mn}','').ToLowerInvariant()
+    }
+    $haystack = ConvertTo-SearchText (@($Tool.id,$Tool.category,$Tool.name,$Tool.description,$Tool.nameEs,$Tool.descriptionEs) -join ' ')
+    foreach ($term in @((ConvertTo-SearchText $Query).Split(' ') | Where-Object { $_ })) {
+        if (-not $haystack.Contains($term)) { return $false }
+    }
+    return $true
+}
+
 function New-AtlasToolCard {
     param(
         [hashtable]$Tool,
@@ -6794,9 +7017,10 @@ function New-AtlasToolCard {
         $btnRunText = if ($script:AtlasCurrentLang -eq 'es') { 'No disponible' } else { 'Unavailable' }
     }
 
+    $display = Get-AtlasToolDisplay -Tool $Tool
     $xaml = $xaml.Replace('{{ICON}}', $icon).
-                  Replace('{{NAME}}', [System.Security.SecurityElement]::Escape($Tool.name)).
-                  Replace('{{DESCRIPTION}}', [System.Security.SecurityElement]::Escape($Tool.description)).
+                  Replace('{{NAME}}', [System.Security.SecurityElement]::Escape($display.Name)).
+                  Replace('{{DESCRIPTION}}', [System.Security.SecurityElement]::Escape($display.Description)).
                   Replace('{{ID}}', $Tool.id).
                   Replace('{{BTN_RUN}}', [System.Security.SecurityElement]::Escape($btnRunText)).
                   Replace('{{ADMIN_BADGE}}', $adminBadge)
@@ -6830,7 +7054,7 @@ function Get-AtlasStaticSystemInfo {
         SysDriveTotalGB = 0
     }
     try {
-        $os = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction Stop
+        $os = Get-CimInstance -ClassName Win32_OperatingSystem -OperationTimeoutSec 5 -ErrorAction Stop
         $info.OSCaption = ($os.Caption -replace '^Microsoft\s*', '').Trim()
         $info.OSVersion = $os.Version
         $info.OSBuild   = $os.BuildNumber
@@ -6841,13 +7065,13 @@ function Get-AtlasStaticSystemInfo {
     } catch { Write-AtlasLog "Get-AtlasStaticSystemInfo: OS query failed: $_" -Level WARN -Tool 'UI' }
 
     try {
-        $cpu = Get-CimInstance -ClassName Win32_Processor -ErrorAction Stop | Select-Object -First 1
+        $cpu = Get-CimInstance -ClassName Win32_Processor -OperationTimeoutSec 5 -ErrorAction Stop | Select-Object -First 1
         if ($cpu) { $info.CpuName = ($cpu.Name -replace '\s+', ' ').Trim() }
     } catch { Write-AtlasLog "Get-AtlasStaticSystemInfo: CPU query failed: $_" -Level WARN -Tool 'UI' }
 
     try {
         if ($info.SysDriveLetter) {
-            $disk = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DeviceID='$($info.SysDriveLetter):'" -ErrorAction Stop
+            $disk = Get-CimInstance -ClassName Win32_LogicalDisk -OperationTimeoutSec 5 -Filter "DeviceID='$($info.SysDriveLetter):'" -ErrorAction Stop
             if ($disk -and $disk.Size) {
                 $info.SysDriveTotalGB = [math]::Round($disk.Size / 1GB, 0)
             }
@@ -6888,13 +7112,13 @@ function Get-AtlasLiveSystemSnapshot {
     $static = Get-AtlasStaticSystemInfo
 
     try {
-        $cpuPerf = Get-CimInstance -ClassName Win32_PerfFormattedData_PerfOS_Processor `
+        $cpuPerf = Get-CimInstance -ClassName Win32_PerfFormattedData_PerfOS_Processor -OperationTimeoutSec 5 `
             -Filter "Name='_Total'" -ErrorAction Stop
         if ($cpuPerf) { $snap.CpuPercent = [int]$cpuPerf.PercentProcessorTime }
     } catch { }
 
     try {
-        $os = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction Stop
+        $os = Get-CimInstance -ClassName Win32_OperatingSystem -OperationTimeoutSec 5 -ErrorAction Stop
         if ($os) {
             $totalKb = [double]$os.TotalVisibleMemorySize
             $freeKb  = [double]$os.FreePhysicalMemory
@@ -6912,7 +7136,7 @@ function Get-AtlasLiveSystemSnapshot {
 
     try {
         if ($static.SysDriveLetter) {
-            $disk = Get-CimInstance -ClassName Win32_LogicalDisk `
+            $disk = Get-CimInstance -ClassName Win32_LogicalDisk -OperationTimeoutSec 5 `
                 -Filter "DeviceID='$($static.SysDriveLetter):'" -ErrorAction Stop
             if ($disk -and $disk.Size -gt 0) {
                 $snap.DiskTotalGB = [math]::Round($disk.Size / 1GB, 0)
@@ -6932,7 +7156,7 @@ function Get-AtlasLiveSystemSnapshot {
     } catch { }
 
     try {
-        $bat = Get-CimInstance -ClassName Win32_Battery -ErrorAction Stop |
+        $bat = Get-CimInstance -ClassName Win32_Battery -OperationTimeoutSec 5 -ErrorAction Stop |
             Select-Object -First 1
         if ($bat -and $null -ne $bat.EstimatedChargeRemaining) {
             $snap.BatteryPct = [int]$bat.EstimatedChargeRemaining
@@ -6988,283 +7212,111 @@ function Get-AtlasDashboardAlerts {
 # and the dashboard fills in over the next ~1 s instead of blocking the
 # Show-AtlasWindow ShowDialog call for several CIM round trips on startup.
 function Initialize-AtlasDashboard {
-    param([Parameter(Mandatory)] $Window)
-
-    # ---- Phase 1: instant fill (no CIM) -----------------------------
-    $sideHost     = $Window.FindName('SideHost')
-    $sideUser     = $Window.FindName('SideUser')
-    $sideOS       = $Window.FindName('SideOS')
-    $sideCpu      = $Window.FindName('SideCpu')
-    $sideRam      = $Window.FindName('SideRam')
-    $sideUptime   = $Window.FindName('SideUptime')
-    $sideIp       = $Window.FindName('SideIp')
-    $sideLastSync = $Window.FindName('SideLastSync')
-
-    if ($sideHost) { $sideHost.Text = $env:COMPUTERNAME }
-    if ($sideUser) {
-        $sideUser.Text = if ($env:USERDOMAIN) { "$env:USERDOMAIN\$env:USERNAME" } else { $env:USERNAME }
+    param([Parameter(Mandatory)]$Window)
+    $controls = @{}
+    foreach ($name in @('SideHost','SideUser','SideOS','SideCpu','SideRam','SideUptime','SideIp','SideLastSync','DashCpuValue','DashCpuBar','DashRamValue','DashRamBar','DashDiskValue','DashDiskBar','DashAlertsText','BtnDashRefresh','BtnDashMonitorToggle','BtnLoadSysInfo')) {
+        $controls[$name] = $Window.FindName($name)
     }
-    $onDemandTxt = Get-AtlasString 'sidebar.onDemand'
-    if (-not $onDemandTxt) { $onDemandTxt = '[Bajo Demanda]' }
-    if ($sideOS)     { $sideOS.Text     = $onDemandTxt }
-    if ($sideCpu)    { $sideCpu.Text    = $onDemandTxt }
-    if ($sideRam)    { $sideRam.Text    = $onDemandTxt }
-    if ($sideUptime) { $sideUptime.Text = $onDemandTxt }
-    if ($sideIp)     { $sideIp.Text     = $onDemandTxt }
-
-    $dashCpuVal   = $Window.FindName('DashCpuValue')
-    $dashCpuBar   = $Window.FindName('DashCpuBar')
-    $dashRamVal   = $Window.FindName('DashRamValue')
-    $dashRamBar   = $Window.FindName('DashRamBar')
-    $dashDiskVal  = $Window.FindName('DashDiskValue')
-    $dashDiskBar  = $Window.FindName('DashDiskBar')
-    $dashAlerts   = $Window.FindName('DashAlertsText')
-    $btnDashRefresh = $Window.FindName('BtnDashRefresh')
-    $btnDashMonitorToggle = $Window.FindName('BtnDashMonitorToggle')
-    $btnLoadSysInfo = $Window.FindName('BtnLoadSysInfo')
-
-    $monitorOffText = Get-AtlasString 'dash.monitor.off'
-    $monitorOnText = Get-AtlasString 'dash.monitor.on'
-    $monitorPausedText = Get-AtlasString 'dash.monitor.paused'
-
-    if ($dashAlerts) {
-        $dashAlerts.Text = $monitorPausedText
-        $dashAlerts.Foreground = [System.Windows.Media.Brushes]::Gray
+    if ($controls.SideHost) { $controls.SideHost.Text = $env:COMPUTERNAME }
+    if ($controls.SideUser) { $controls.SideUser.Text = $env:USERNAME }
+    foreach ($name in @('SideOS','SideCpu','SideRam','SideUptime','SideIp','DashCpuValue','DashRamValue','DashDiskValue')) {
+        if ($controls[$name]) { $controls[$name].Text = '--' }
     }
-
-    # ---- Phase 2: deferred CIM/WMI work -----------------------------
-    #
-    # In Windows PowerShell 5.1, GetNewClosure() snapshots local variables
-    # but breaks access to script-scope FUNCTIONS (verified by user log:
-    # "The term 'Write-AtlasLog' is not recognized" thrown from inside
-    # the closed scriptblock). Workaround: capture every function we need
-    # as a scriptblock value into local variables, then invoke them with
-    # `&` inside the closure. The closure picks up the local refs by value
-    # so everything resolves bullet-proof at tick time.
-    $logFn        = ${function:Write-AtlasLog}
-    $strFn        = ${function:Get-AtlasString}
-    $liveFn       = ${function:Get-AtlasLiveSystemSnapshot}
-    $staticFn     = ${function:Get-AtlasStaticSystemInfo}
-    $alertsFn     = ${function:Get-AtlasDashboardAlerts}
-
-    # --- Sidebar system info loader (one-shot, independent of monitor) ---
-    $loadSysInfoAction = {
-        try {
-            $static2 = & $staticFn
-            if ($sideOS -and $static2.OSCaption) {
-                $os = if ($static2.OSBuild) { "$($static2.OSCaption) (build $($static2.OSBuild))" } else { $static2.OSCaption }
-                $sideOS.Text = $os
-            }
-            if ($sideCpu -and $static2.CpuName) {
-                $sideCpu.Text = $static2.CpuName
-            }
-            if ($sideRam -and $static2.TotalRamGB -gt 0) {
-                $sideRam.Text = "$($static2.TotalRamGB) GB"
-            }
-
-            $snap2 = & $liveFn
-            if ($sideIp -and $snap2.IpAddress) { $sideIp.Text = $snap2.IpAddress }
-            if ($sideUptime -and $snap2.Uptime -and $static2.LastBoot) {
-                $upFmt = & $strFn 'sidebar.uptimeFmt' `
-                    ([int]$snap2.Uptime.TotalDays) `
-                    ($snap2.Uptime.Hours) `
-                    ($snap2.Uptime.Minutes)
-                $sideUptime.Text = "$($static2.LastBoot.ToString('yyyy-MM-dd HH:mm'))  ($upFmt)"
-            }
-            if ($sideLastSync) {
-                $sideLastSync.Text = (Get-Date).ToString('HH:mm:ss')
-            }
-        } catch {
-            try { & $logFn "Load system info failed: $_" -Level WARN -Tool 'UI' } catch { }
+    $state = @{ Worker=$null; Pending=$null; StopPending=$null; Started=[datetime]::MinValue; Last=[datetime]::MinValue; Monitor=$false; WantSidebar=$false; Closed=$false }
+    $strFn = ${function:Get-AtlasString}
+    $logFn = ${function:Write-AtlasLog}
+    # Only collectors execute in the background runspace. WPF objects remain on the dispatcher.
+    $collector = "function Get-AtlasStaticSystemInfo {`n${function:Get-AtlasStaticSystemInfo}`n}`nfunction Get-AtlasLiveSystemSnapshot {`n${function:Get-AtlasLiveSystemSnapshot}`n}`nfunction Write-AtlasLog { param(`$Message,`$Level,`$Tool) Write-Verbose `$Message }`n"
+    $collector += '[pscustomobject]@{ Static=(Get-AtlasStaticSystemInfo); Snapshot=(Get-AtlasLiveSystemSnapshot -ForceRefresh) }'
+    $startRead = {
+        if ($state.Closed -or $state.Worker) { return }
+        $state.Worker = [powershell]::Create()
+        [void]$state.Worker.AddScript($collector)
+        $state.Started = [datetime]::UtcNow
+        $state.Pending = $state.Worker.BeginInvoke()
+        if ($controls.DashAlertsText) { $controls.DashAlertsText.Text = & $strFn 'status.loading' }
+    }.GetNewClosure()
+    $poll = {
+        if ($state.Closed) { return }
+        if ($state.StopPending) {
+            if (-not $state.StopPending.IsCompleted) { return }
+            try { $state.Worker.EndStop($state.StopPending) } catch { & $logFn "Dashboard cancellation: $_" -Level WARN -Tool UI }
+            $state.Worker.Dispose(); $state.Worker=$null; $state.Pending=$null; $state.StopPending=$null
+            $state.Last=[datetime]::UtcNow
+            return
         }
-    }
-
-    # --- Resource monitor tick (CPU/RAM/Disk bars + alerts only) ---
-    $tickAction = {
-        try {
-            $snap = & $liveFn
-
-            if ($null -ne $snap.CpuPercent) {
-                $dashCpuVal.Text = "{0}%" -f $snap.CpuPercent
-                $dashCpuBar.Value = $snap.CpuPercent
+        if ($state.Worker -and -not $state.Pending.IsCompleted) {
+            if (([datetime]::UtcNow - $state.Started).TotalSeconds -gt 30) {
+                $state.StopPending = $state.Worker.BeginStop($null,$null)
+                $state.Monitor = $false
+                if ($controls.BtnDashMonitorToggle) { $controls.BtnDashMonitorToggle.Content = & $strFn 'dash.monitor.off' }
+                if ($controls.DashAlertsText) { $controls.DashAlertsText.Text = 'Not evaluated: inventory query timed out.' }
             }
-            if ($null -ne $snap.RamPercent) {
-                $dashRamVal.Text = "{0}% ({1}/{2} GB)" -f $snap.RamPercent, $snap.RamUsedGB, $snap.RamTotalGB
-                $dashRamBar.Value = $snap.RamPercent
-            }
-            if ($null -ne $snap.DiskPercent) {
-                $dashDiskVal.Text = & $strFn 'dash.disk.detail' $snap.DiskPercent $snap.DiskFreeGB
-                $dashDiskBar.Value = $snap.DiskPercent
-            }
-
-            $alerts = & $alertsFn -Snap $snap
-            if ($alerts.Count -eq 0) {
-                $dashAlerts.Text = & $strFn 'dash.alerts.none'
-                $dashAlerts.Foreground = [System.Windows.Media.Brushes]::ForestGreen
-            } else {
-                $dashAlerts.Text = '⚠  ' + ($alerts -join '   •   ')
-                $dashAlerts.Foreground = [System.Windows.Media.Brushes]::OrangeRed
-            }
-
-            if ($sideLastSync) {
-                $sideLastSync.Text = (Get-Date).ToString('HH:mm:ss')
-            }
-        } catch {
-            try { & $logFn "Dashboard tick failed: $_" -Level WARN -Tool 'UI' } catch { }
+            return
         }
-    }
-
-    # CRITICAL: scriptblocks captured by .NET event handlers (DispatcherTimer,
-    # Window.ContentRendered, Button.Click) lose access to local variables
-    # by the time they fire. GetNewClosure() snapshots the current scope so
-    # $dashCpuVal/$sideHost/$logFn/etc. are all resolvable when the tick runs.
-    $tickClosed = $tickAction.GetNewClosure()
-    $script:AtlasDashboardTick = $tickClosed
-    $loadSysInfoClosed = $loadSysInfoAction.GetNewClosure()
-    $script:AtlasLoadSysInfo = $loadSysInfoClosed
-    try {
-        & $logFn ("Dashboard tick handler initialized: {0}" -f ($script:AtlasDashboardTick.GetType().FullName)) -Level DEBUG -Tool 'UI'
-    } catch { }
-
-    $startMonitorAction = {
-        try {
-            $tickToRun = if ($script:AtlasDashboardTick -is [scriptblock]) { $script:AtlasDashboardTick } else { $tickClosed }
-            if (-not ($tickToRun -is [scriptblock])) {
-                throw "Dashboard tick handler no disponible."
-            }
-            if (-not $script:AtlasDashboardTimer) {
-                $timer = New-Object System.Windows.Threading.DispatcherTimer
-                $timer.Interval = [TimeSpan]::FromSeconds(2)
-                $timer.Add_Tick($tickToRun)
-                $script:AtlasDashboardTimer = $timer
-            }
-            & $tickToRun
-            $script:AtlasDashboardTimer.Start()
-            $script:AtlasDashboardMonitorEnabled = $true
-            if ($btnDashMonitorToggle) { $btnDashMonitorToggle.Content = $monitorOnText }
-            try { & $logFn "Dashboard monitor started." -Level DEBUG -Tool 'UI' } catch { }
-        } catch {
-            try { & $logFn "Dashboard monitor start failed: $_" -Level WARN -Tool 'UI' } catch { }
-        }
-    }
-
-    $stopMonitorAction = {
-        try {
-            if ($script:AtlasDashboardTimer) {
-                $script:AtlasDashboardTimer.Stop()
-            }
-            $script:AtlasDashboardMonitorEnabled = $false
-            if ($btnDashMonitorToggle) { $btnDashMonitorToggle.Content = $monitorOffText }
-            if ($dashCpuVal)  { $dashCpuVal.Text  = '--%' }
-            if ($dashCpuBar)  { $dashCpuBar.Value = 0 }
-            if ($dashRamVal)  { $dashRamVal.Text  = '--' }
-            if ($dashRamBar)  { $dashRamBar.Value = 0 }
-            if ($dashDiskVal) { $dashDiskVal.Text = '--' }
-            if ($dashDiskBar) { $dashDiskBar.Value = 0 }
-            if ($dashAlerts) {
-                $dashAlerts.Text = $monitorPausedText
-                $dashAlerts.Foreground = [System.Windows.Media.Brushes]::Gray
-            }
-            try { & $logFn "Dashboard monitor stopped." -Level DEBUG -Tool 'UI' } catch { }
-        } catch {
-            try { & $logFn "Dashboard monitor stop failed: $_" -Level WARN -Tool 'UI' } catch { }
-        }
-    }
-
-    $startClosed = $startMonitorAction.GetNewClosure()
-    $stopClosed = $stopMonitorAction.GetNewClosure()
-    $script:AtlasDashboardStartMonitor = $startClosed
-    $script:AtlasDashboardStopMonitor = $stopClosed
-
-    # Wire the manual refresh button (↻ next to the alerts panel).
-    if ($btnDashRefresh) {
-        $btnDashRefresh.Add_Click({
+        if ($state.Worker) {
             try {
-                $script:AtlasLiveSnapshotAt = [datetime]::MinValue
-                $tickToRun = if ($script:AtlasDashboardTick -is [scriptblock]) { $script:AtlasDashboardTick } else { $tickClosed }
-                if ($tickToRun -is [scriptblock]) {
-                    & $tickToRun
-                } else {
-                    throw "Dashboard tick handler no disponible para refresh."
+                $result = @($state.Worker.EndInvoke($state.Pending)) | Select-Object -Last 1
+                if (-not $result -or -not $result.Snapshot) { throw 'No inventory result.' }
+                $static = $result.Static; $snap = $result.Snapshot
+                if ($state.WantSidebar) {
+                    if ($controls.SideOS) { $controls.SideOS.Text = "$($static.OSCaption) (build $($static.OSBuild))" }
+                    if ($controls.SideCpu) { $controls.SideCpu.Text = [string]$static.CpuName }
+                    if ($controls.SideRam) { $controls.SideRam.Text = "$($static.TotalRamGB) GB" }
+                    if ($controls.SideIp) { $controls.SideIp.Text = [string]$snap.IpAddress }
+                    if ($controls.SideUptime -and $snap.Uptime) { $controls.SideUptime.Text = [string]$snap.Uptime }
+                    $state.WantSidebar = $false
                 }
-            } catch {
-                try { & $logFn "Dashboard manual refresh failed: $_" -Level WARN -Tool 'UI' } catch { }
-            }
-        })
-    }
-
-    if ($btnDashMonitorToggle) {
-        $btnDashMonitorToggle.Add_Click({
-            try {
-                $startToRun = if ($script:AtlasDashboardStartMonitor -is [scriptblock]) { $script:AtlasDashboardStartMonitor } else { $startClosed }
-                $stopToRun  = if ($script:AtlasDashboardStopMonitor -is [scriptblock]) { $script:AtlasDashboardStopMonitor } else { $stopClosed }
-                if ($script:AtlasDashboardMonitorEnabled) {
-                    if ($stopToRun -is [scriptblock]) {
-                        & $stopToRun
-                    } else {
-                        throw "Dashboard stop handler no disponible."
-                    }
-                } else {
-                    if ($startToRun -is [scriptblock]) {
-                        & $startToRun
-                    } else {
-                        throw "Dashboard start handler no disponible."
-                    }
+                foreach ($metric in @('Cpu','Ram','Disk')) {
+                    $value = $snap[($metric + 'Percent')]
+                    if ($controls[('Dash' + $metric + 'Value')]) { $controls[('Dash' + $metric + 'Value')].Text = if ($null -eq $value) { '-- (not evaluated)' } else { "$value%" } }
+                    if ($controls[('Dash' + $metric + 'Bar')]) { $controls[('Dash' + $metric + 'Bar')].Value = if ($null -eq $value) { 0 } else { $value } }
                 }
-            } catch {
-                try { & $logFn "Dashboard monitor toggle click failed: $_" -Level WARN -Tool 'UI' } catch { }
-            }
-        })
-    }
-
-    # Wire the sidebar "Load Info" button (one-shot system info, independent of monitor).
-    if ($btnLoadSysInfo) {
-        $btnLoadSysInfo.Add_Click({
-            try {
-                $infoToRun = if ($script:AtlasLoadSysInfo -is [scriptblock]) { $script:AtlasLoadSysInfo } else { $loadSysInfoClosed }
-                if ($infoToRun -is [scriptblock]) {
-                    & $infoToRun
-                } else {
-                    throw "LoadSysInfo handler no disponible."
+                $alerts = @()
+                foreach ($metric in @('Cpu','Ram','Disk')) {
+                    if ($null -ne $snap[($metric+'Percent')] -and $snap[($metric+'Percent')] -ge 90) { $alerts += "$metric >= 90%" }
                 }
+                if ($snap.PendingReboot) { $alerts += & $strFn 'dash.alert.pendingReboot' }
+                if ($snap.UptimeDays -ge 7) { $alerts += & $strFn 'dash.alert.uptime' $snap.UptimeDays }
+                if ($controls.DashAlertsText) {
+                    $controls.DashAlertsText.Text = if ($null -eq $snap.CpuPercent -or $null -eq $snap.RamPercent -or $null -eq $snap.DiskPercent) {
+                        'Partial inventory: one or more metrics were not evaluated.'
+                    } elseif ($alerts.Count) { $alerts -join ' | ' } else { & $strFn 'dash.alerts.none' }
+                }
+                if ($controls.SideLastSync) { $controls.SideLastSync.Text = (Get-Date).ToString('HH:mm:ss') }
             } catch {
-                try { & $logFn "Sidebar load sys info click failed: $_" -Level WARN -Tool 'UI' } catch { }
+                if ($controls.DashAlertsText) { $controls.DashAlertsText.Text = 'Not evaluated: inventory query failed.' }
+                & $logFn "Dashboard query failed: $_" -Level WARN -Tool UI
+            } finally {
+                $state.Worker.Dispose(); $state.Worker=$null; $state.Pending=$null; $state.Last=[datetime]::UtcNow
             }
-        })
-    }
-
-    # Keep startup instant. System info reading & live monitor stay off until requested on demand.
-    $bootstrapAction = {
-        try {
-            if ($script:AtlasDashboardBooted) { return }
-            $script:AtlasDashboardBooted = $true
-
-            $stopToRun = if ($script:AtlasDashboardStopMonitor -is [scriptblock]) { $script:AtlasDashboardStopMonitor } else { $stopClosed }
-            if ($stopToRun -is [scriptblock]) { & $stopToRun }
-        } catch {
-            try { & $logFn "Dashboard bootstrap failed: $_" -Level WARN -Tool 'UI' } catch { }
         }
+        if ($state.Monitor -and ([datetime]::UtcNow - $state.Last).TotalSeconds -ge 5) { & $startRead }
+    }.GetNewClosure()
+    $timer = New-Object System.Windows.Threading.DispatcherTimer
+    $timer.Interval = [timespan]::FromMilliseconds(200)
+    $timer.Add_Tick($poll)
+    $timer.Start()
+    if ($controls.DashAlertsText) { $controls.DashAlertsText.Text = & $strFn 'dash.monitor.paused' }
+    if ($controls.BtnDashMonitorToggle) {
+        $controls.BtnDashMonitorToggle.Content = & $strFn 'dash.monitor.off'
+        $controls.BtnDashMonitorToggle.Add_Click({
+            $state.Monitor = -not $state.Monitor
+            $controls.BtnDashMonitorToggle.Content = if ($state.Monitor) { & $strFn 'dash.monitor.on' } else { & $strFn 'dash.monitor.off' }
+            if ($state.Monitor) { & $startRead }
+        }.GetNewClosure())
     }
-    $bootstrapClosed = $bootstrapAction.GetNewClosure()
-    $Window.Add_ContentRendered($bootstrapClosed)
-
-    # Stop the timer cleanly when the window closes.
+    if ($controls.BtnDashRefresh) { $controls.BtnDashRefresh.Add_Click({ & $startRead }.GetNewClosure()) }
+    if ($controls.BtnLoadSysInfo) { $controls.BtnLoadSysInfo.Add_Click({ $state.WantSidebar=$true; & $startRead }.GetNewClosure()) }
     $Window.Add_Closed({
-        try {
-            if ($script:AtlasDashboardTimer) {
-                $script:AtlasDashboardTimer.Stop()
-                $script:AtlasDashboardTimer = $null
-            }
-            $script:AtlasDashboardBooted = $false
-            $script:AtlasDashboardMonitorEnabled = $false
-            $script:AtlasDashboardTick = $null
-            $script:AtlasDashboardStartMonitor = $null
-            $script:AtlasDashboardStopMonitor = $null
-            $script:AtlasLoadSysInfo = $null
-            $script:AtlasLiveSnapshotCache = $null
-            $script:AtlasLiveSnapshotAt = [datetime]::MinValue
-        } catch { }
-    })
+        $state.Closed=$true; $timer.Stop()
+        if ($state.Worker) {
+            if ($state.Pending.IsCompleted) { $state.Worker.Dispose() }
+            elseif (-not $state.StopPending) { $state.StopPending=$state.Worker.BeginStop($null,$null) }
+        }
+    }.GetNewClosure())
+    # Exposed for isolated WPF lifecycle tests; no read starts until the user requests it.
+    $Window.Tag = [pscustomobject]@{ DashboardState=$state; DashboardTimer=$timer; DashboardPoll=$poll; DashboardStart=$startRead }
 }
 
 function Show-AtlasWindow {
@@ -7388,7 +7440,7 @@ function Show-AtlasWindow {
         foreach ($entry in $script:AllCards) {
             $t = $entry.Tool
             $matchesCat = ($selectedCat -eq '__all__') -or ($t.category -eq $selectedCat)
-            $matchesQuery = (-not $query) -or ($t.name.ToLower().Contains($query)) -or ($t.description.ToLower().Contains($query))
+            $matchesQuery = Test-AtlasToolQuery -Tool $t -Query $query
             if ($matchesCat -and $matchesQuery) {
                 [void]$toolsGrid.Items.Add($entry.Card)
             }

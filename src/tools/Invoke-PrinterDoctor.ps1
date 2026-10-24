@@ -531,7 +531,7 @@ function Invoke-PrinterDoctor {
         $dir = Join-Path $desktop 'REPORTES_PC'
         if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir | Out-Null }
         $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
-        $base = "PrinterDoctor-$env:COMPUTERNAME-$stamp"
+        $base = "PrinterDoctor-$stamp"
         $htmlPath = Join-Path $dir "$base.html"
         $txtPath = Join-Path $dir "$base.txt"
 
@@ -546,13 +546,13 @@ function Invoke-PrinterDoctor {
         $txt += ""
         $txt += $L.Recommendations
         $txt += ($script:PrinterDoctorReport.Recommendations | ForEach-Object { "- $_" })
-        $txt | Set-Content -LiteralPath $txtPath -Encoding UTF8
+        Write-AtlasShareableReport -Path $txtPath -Content ($txt -join "`n") -Tool 'Printer Doctor'
 
         $printerRows = if ($script:PrinterDoctorReport.Printers.Count) {
             ($script:PrinterDoctorReport.Printers | ForEach-Object { "<tr><td>$(ConvertTo-HtmlCell $_.Name)</td><td>$($_.Default)</td><td>$($_.WorkOffline)</td><td>$(ConvertTo-HtmlCell $_.DriverName)</td><td>$(ConvertTo-HtmlCell $_.PortName)</td></tr>" }) -join "`n"
         } else { "<tr><td colspan='5'>$($L.NoPrinters)</td></tr>" }
         $jobRows = if ($script:PrinterDoctorReport.Jobs.Count) {
-            ($script:PrinterDoctorReport.Jobs | ForEach-Object { "<tr><td>$(ConvertTo-HtmlCell $_.Name)</td><td>$(ConvertTo-HtmlCell $_.Owner)</td><td>$(ConvertTo-HtmlCell $_.Document)</td><td>$(ConvertTo-HtmlCell $_.Status)</td></tr>" }) -join "`n"
+            ($script:PrinterDoctorReport.Jobs | ForEach-Object { "<tr><td>$(ConvertTo-HtmlCell $_.Name)</td><td>[REDACTED]</td><td>[REDACTED]</td><td>$(ConvertTo-HtmlCell $_.Status)</td></tr>" }) -join "`n"
         } else { "<tr><td colspan='4'>$($L.NoJobs)</td></tr>" }
         $eventRows = if ($script:PrinterDoctorReport.Events.Count) {
             ($script:PrinterDoctorReport.Events | Select-Object -First 20 | ForEach-Object { "<tr><td>$($_.TimeCreated)</td><td>$(ConvertTo-HtmlCell $_.ProviderName)</td><td>$($_.Id)</td><td>$(ConvertTo-HtmlCell $_.LevelDisplayName)</td><td>$(ConvertTo-HtmlCell $_.Message)</td></tr>" }) -join "`n"
@@ -593,7 +593,7 @@ li{margin:6px 0}
 <h2>$($L.EventTime)</h2><table><tr><th>$($L.EventTime)</th><th>$($L.Provider)</th><th>$($L.EventId)</th><th>$($L.Level)</th><th>$($L.Message)</th></tr>$eventRows</table>
 </div></div></body></html>
 "@
-        $html | Out-File -LiteralPath $htmlPath -Encoding UTF8
+        Write-AtlasShareableReport -Path $htmlPath -Content $html -Tool 'Printer Doctor' -SensitiveValues @($script:PrinterDoctorReport.Jobs | ForEach-Object { $_.Owner; $_.Document })
         Write-Host ($L.ExportSaved -f $htmlPath) -ForegroundColor Green
         Write-Host ($L.ExportSaved -f $txtPath) -ForegroundColor Green
         try { Invoke-Item $htmlPath } catch {}

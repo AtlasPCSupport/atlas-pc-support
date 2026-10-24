@@ -1,6 +1,7 @@
 # Añadir una nueva herramienta
 
-Esta guía explica cómo añadir una herramienta al panel. Toma ~5 minutos.
+Esta guía describe el registro y publicación; la aceptación requiere pruebas de
+comportamiento y compatibilidad proporcionales al riesgo de la herramienta.
 
 ## 1. Crear el archivo de la herramienta
 
@@ -47,12 +48,15 @@ Edita `config/tools.json` y añade una entrada:
   "id": "mi-tool",
   "name": "Mi Tool",
   "description": "Descripción corta que aparece en la tarjeta (máximo ~150 caracteres).",
+  "nameEs": "Mi herramienta",
+  "descriptionEs": "Descripción en español con alcance y limitaciones.",
   "category": "mantenimiento",
   "function": "Invoke-MiTool",
   "source": "Invoke-MiTool.ps1",
   "requiresAdmin": false,
   "runsInNewWindow": true,
-  "runtime": {"engine":"windows-powershell","minimumVersion":"5.1","architecture":"x64","libraries":["ToolKit","Dependencies","PS7","Release"]},
+  "runtime": {"engine":"windows-powershell","minimumVersion":"5.1","architecture":"x64","libraries":["ToolKit","Dependencies","PS7","Release","Reports"]},
+  "availability": {"minimumBuild":19044,"commands":[]},
   "dependencies": []
 }
 ```
@@ -64,12 +68,14 @@ Edita `config/tools.json` y añade una entrada:
 | `id` | kebab-case | ID único (sin espacios, en minúsculas). |
 | `name` | string | Nombre visible en la tarjeta. |
 | `description` | string | Descripción corta (1-2 líneas). |
+| `nameEs` / `descriptionEs` | string | Tarjeta en español; búsqueda admite ambos idiomas. |
 | `category` | `diagnostico`, `mantenimiento`, `copia`, `redes`, `seguridad`, `software`, `entrega` | Determina pestaña e ícono. |
 | `function` | string | Nombre exacto de la función PowerShell a invocar. |
 | `source` | string | Archivo obligatorio; su nombre debe coincidir con `function`. |
 | `requiresAdmin` | bool | Si `true`, el launcher eleva al ejecutar. |
 | `runsInNewWindow` | bool | Si `true`, abre una nueva ventana de PowerShell. Recomendado para tools TUI. |
 | `runtime` | objeto | Motor, versión mínima, arquitectura y bibliotecas; no hay fallback silencioso a otro motor. |
+| `availability` | objeto | Build mínimo, comandos y `disabledReason` cuando no está disponible. Se vuelve a comprobar en el hijo. |
 | `dependencies` | array | Lista de dependencias externas (`"FastCopy"`, `"winget"`, etc.). |
 
 ### Añadir una nueva categoría
@@ -87,6 +93,7 @@ Edita `branding.example.json` y `src/lib/Branding.ps1`:
 
 ```powershell
 pwsh -NoProfile -File build.ps1
+pwsh -NoProfile -File tests/Update-ToolDocumentation.ps1
 ```
 
 Esto regenera bootstrap, launcher, sidecar, hashes y manifiesto del release.
@@ -110,7 +117,7 @@ irm https://toolspanel.atlaspcsupport.com | iex
 ## 5. Commit y push
 
 ```bash
-git add src/tools/Invoke-MiTool.ps1 config/tools.json config/tool-hashes.json get.ps1 launcher.ps1 launcher.ps1.sha256 release-manifest.json
+git add src/tools/Invoke-MiTool.ps1 config/tools.json config/tool-hashes.json get.ps1 launcher.ps1 launcher.ps1.sha256 release-manifest.json docs/INVENTARIO.md
 git commit -m "feat: añadir herramienta MiTool"
 git push
 ```
@@ -149,7 +156,9 @@ Si tu tool usa un binario externo (p. ej. `CrystalDiskInfo.exe`):
        Write-Host "No se encontró CrystalDiskInfo." -ForegroundColor Red
        return
    }
-   & $exe /Json reporte.json
+   $result = Invoke-AtlasNativeProcess -FilePath $exe -Arguments '/Json reporte.json' -TimeoutSeconds 120
+   if ($result.State -ne 'Correct') { throw "Native operation failed: $($result.State), exit $($result.ExitCode)" }
+   # Comprobar además el estado/artefacto esperado: código cero no lo prueba todo.
    ```
 
 ## Convenciones de código
@@ -159,4 +168,5 @@ Si tu tool usa un binario externo (p. ej. `CrystalDiskInfo.exe`):
 - **Funciones helper**: ponlas DENTRO de la función `Invoke-XXX`, no en el scope global, para no contaminar el launcher.
 - **Variables globales**: evítalas. Si necesitas state compartido, usa `$script:`.
 - **Errores**: captúralos con `try/catch` y escribe a log con `Write-AtlasLog`.
+- **Informes compartidos**: usar `Write-AtlasShareableReport`; no redactar backups que deben restaurar estado. Revisión humana del texto libre antes de compartir.
 - **No uses** `exit`, `$Host.SetShouldExit()`, ni mates procesos del host.
