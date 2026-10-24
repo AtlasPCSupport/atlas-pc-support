@@ -1,51 +1,36 @@
-# Atlas Cloudflare Worker
+# Atlas publication Worker
 
-Versioned Worker code for:
+Serves the existing `https://toolspanel.atlaspcsupport.com` domain.
+The approved commit and SHA-256 of `release-manifest.json` are deployment variables,
+independent of mutable repository reads. Root bootstrap, manifest and members are
+verified before they are served. Unknown refs fail without a main fallback.
 
-- `https://toolspanel.atlaspcsupport.com/`
-- `https://toolspanel.atlaspcsupport.com/launcher.sha256`
-- `https://toolspanel.atlaspcsupport.com/tool-hashes.sha256`
-- `https://toolspanel.atlaspcsupport.com/install.bat`
-- `https://toolspanel.atlaspcsupport.com/install.ps1`
-- `https://toolspanel.atlaspcsupport.com/install.ps1.sha256`
-
-## How it works
-
-The `/launcher.sha256` and `/tool-hashes.sha256` endpoints proxy their
-values **live from the GitHub repo** (with 30s Cloudflare edge cache).
-No manual secret updates are needed after merging to `main`.
-
-## Prerequisites
-
-- Node.js 20+
-- Cloudflare account with access to worker `atlas-launcher`
-- `wrangler` authenticated (`npx wrangler login` or `CLOUDFLARE_API_TOKEN`)
-
-## Set/Rotate Worker Secrets
-
-Only `GITHUB_PAT` needs to be set (for private repo access):
+See [publication and recovery](../../docs/RELEASES.md) for the trust model, endpoint
+contract, complete offline layout, CI gates and first-migration limitations.
 
 ```powershell
-npx wrangler secret put GITHUB_PAT
+npm ci
+npm test
+npm audit --audit-level=moderate
+npx wrangler deploy --dry-run --outdir .wrangler/dry-run
 ```
 
-Or run the helper script:
+After committing the complete bundle and passing `build`, `windows-compat` and
+`worker` on the same SHA, from the repository root:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File ./set-worker-secrets.ps1
+pwsh -NoProfile -File ./api/cloudflare-worker/publish-release.ps1 -Commit <full-tested-SHA>
 ```
 
-## Deploy
+`-DryRun` compiles without publishing. Promotion keeps existing vars/secrets and
+pins the new code and release together. The custom-domain association stays the
+same. No Cloudflare credentials are stored in this repository or required on PCs.
 
-```powershell
-npm install
-npm run deploy
-```
+Wrangler is pinned to 4.152.0. The compatible transitive Undici 7.30.1 override fixes
+the advisories reported by the current lock; no `npm audit fix --force` is used.
+Node 22 is a development/CI requirement, not a requirement for Windows clients.
 
-## Validate
-
-From repo root:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File ./api/cloudflare-worker/test-worker-endpoints.ps1
-```
+`/install.ps1` and its checksum are intentionally public client-distribution routes
+backed by the existing private source repository. They use no shared cache and do
+not accept a public Atlas ref for the private source. Review of the private script
+content and client enrollment design remains separate work.

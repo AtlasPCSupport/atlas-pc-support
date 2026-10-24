@@ -14,6 +14,17 @@
 #   - Cambios aqui afectan a TODAS las tools: mantener minimo y robusto.
 # ============================================================
 
+function Get-AtlasDependencyDefinition {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Name)
+    if (-not $script:AtlasDependencyCatalog) {
+        throw 'Dependency catalog unavailable. Reopen the current Atlas release.'
+    }
+    $entry = $script:AtlasDependencyCatalog.PSObject.Properties[$Name]
+    if (-not $entry) { throw "Unknown dependency: $Name" }
+    return $entry.Value
+}
+
 function Get-AtlasCurrentUserSid {
     [CmdletBinding()]
     [OutputType([string])]

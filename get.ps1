@@ -1,192 +1,266 @@
-# ============================================================
-# Atlas PC Support - get.ps1
-# Downloads the launcher to a temp file and runs it with -File.
-# Save locally and run:  pwsh -ExecutionPolicy Bypass -File get.ps1
-# ============================================================
+#Requires -Version 5.1
+[CmdletBinding()]
+param([string]$OfflineRoot, [string]$InstallRoot, [switch]$Rollback, [switch]$NoLaunch)
 
+# Atlas release transport and activation. Shared by get.ps1, launcher and USB.
+# Trust starts at the HTTPS bootstrap from the existing Cloudflare domain.
+# Cloudflare pins the commit AND manifest digest independently of repository reads.
+
+function Get-AtlasTextHash {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][AllowEmptyString()][string]$Text)
+    $canonical = $Text.TrimStart([char]0xFEFF).Replace("`r`n", "`n").Replace("`r", "`n")
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try {
+        return ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($canonical)))).Replace('-', '').ToLowerInvariant()
+    } finally { $sha.Dispose() }
+}
+
+function Assert-AtlasReleaseDescriptor {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)]$Descriptor)
+    if ($Descriptor.schemaVersion -ne 1 -or [string]$Descriptor.commit -cnotmatch '^[a-f0-9]{40}$' -or
+        [string]$Descriptor.manifestSha256 -cnotmatch '^[a-f0-9]{64}$') {
+        throw 'Invalid Atlas publication descriptor. No mutable-ref fallback is permitted.'
+    }
+}
+
+function Get-AtlasPublishedRelease {
+    [CmdletBinding()]
+    param()
+    $descriptor = Invoke-RestMethod -Uri ('https://toolspanel.atlaspcsupport.com/release.json?v=' + [guid]::NewGuid().ToString('N')) -UseBasicParsing -TimeoutSec 30 -ErrorAction Stop
+    Assert-AtlasReleaseDescriptor $descriptor
+    return $descriptor
+}
+
+function Save-AtlasReleaseFile {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Commit, [Parameter(Mandatory)][string]$RelativePath, [Parameter(Mandatory)][string]$Destination)
+    # Every transport fallback is bound to the SAME full commit. Never fall back to main.
+    $repository = 'mikepchelper-spec/atlas-pc-support'
+    try {
+        Invoke-WebRequest -Uri "https://raw.githubusercontent.com/$repository/$Commit/$RelativePath" -OutFile $Destination -UseBasicParsing -TimeoutSec 60 -ErrorAction Stop
+    } catch {
+        $headers = @{ 'User-Agent' = 'AtlasPCSupport-Release'; Accept = 'application/vnd.github+json' }
+        $response = Invoke-RestMethod -Uri "https://api.github.com/repos/$repository/contents/${RelativePath}?ref=$Commit" -Headers $headers -UseBasicParsing -TimeoutSec 60 -ErrorAction Stop
+        if ($response.encoding -ne 'base64' -or -not $response.content) { throw 'Commit-bound API download did not contain file bytes.' }
+        [IO.File]::WriteAllBytes($Destination, [Convert]::FromBase64String(($response.content -replace '\s', '')))
+    }
+}
+
+function Assert-AtlasPlainDirectory {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Path)
+    $item = Get-Item -LiteralPath $Path -Force -ErrorAction Stop
+    if (-not $item.PSIsContainer) { throw "Not a directory: $Path" }
+    while ($null -ne $item) {
+        if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw "Release paths cannot cross reparse points: $Path" }
+        $item = $item.Parent
+    }
+}
+
+function Test-AtlasRelease {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Directory, [Parameter(Mandatory)][string]$ExpectedManifestSha256)
+    Assert-AtlasPlainDirectory $Directory
+    if ($ExpectedManifestSha256 -cnotmatch '^[a-f0-9]{64}$') { throw 'A trusted manifest digest is required.' }
+    $manifestPath = Join-Path $Directory 'release-manifest.json'
+    $manifestItem = Get-Item -LiteralPath $manifestPath -Force -ErrorAction Stop
+    if ($manifestItem.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Manifest cannot be a link.' }
+    $actual = (Get-FileHash -LiteralPath $manifestPath -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant()
+    if ($actual -cne $ExpectedManifestSha256) { throw 'Atlas manifest digest mismatch.' }
+    $manifest = [IO.File]::ReadAllText($manifestPath, [Text.Encoding]::UTF8) | ConvertFrom-Json -ErrorAction Stop
+    if ($manifest.schemaVersion -ne 1 -or $manifest.algorithm -ne 'SHA256-UTF8-LF' -or -not $manifest.version) { throw 'Unsupported Atlas manifest.' }
+    $names = @($manifest.files.PSObject.Properties.Name)
+    $required = @('get.ps1', 'launcher.ps1', 'config/tools.json', 'config/dependencies.json', 'config/tool-hashes.json', 'onboarding/install.bat')
+    foreach ($name in $required) { if ($names -cnotcontains $name) { throw "Missing release member: $name" } }
+    $seen = @{}
+    foreach ($entry in $manifest.files.PSObject.Properties) {
+        $name = $entry.Name
+        if (($required -cnotcontains $name -and $name -cnotmatch '^src/tools/Invoke-[A-Za-z0-9-]+\.ps1$') -or $seen.ContainsKey($name)) {
+            throw "Invalid or duplicate release path: $name"
+        }
+        $seen[$name] = $true
+        if ([string]$entry.Value -cnotmatch '^[a-f0-9]{64}$') { throw "Invalid release hash: $name" }
+        $file = Join-Path $Directory $name
+        Assert-AtlasPlainDirectory (Split-Path -Parent $file)
+        $item = Get-Item -LiteralPath $file -Force -ErrorAction Stop
+        if ($item.PSIsContainer -or ($item.Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw "Release member is not a plain file: $name" }
+        if ($item.Length -gt 10MB) { throw "Oversized release member: $name" }
+        if ((Get-AtlasTextHash ([IO.File]::ReadAllText($file, [Text.Encoding]::UTF8))) -cne [string]$entry.Value) { throw "Release member digest mismatch: $name" }
+    }
+    $tools = @(([IO.File]::ReadAllText((Join-Path $Directory 'config/tools.json'), [Text.Encoding]::UTF8) | ConvertFrom-Json -ErrorAction Stop).tools)
+    $toolNames = @{}
+    foreach ($tool in $tools) {
+        $name = [string]$tool.source
+        if ($name -cnotmatch '^Invoke-[A-Za-z0-9-]+\.ps1$' -or $toolNames.ContainsKey($name) -or $names -cnotcontains "src/tools/$name") { throw "Missing or duplicated tool: $name" }
+        if ($tool.function -cne [IO.Path]::GetFileNameWithoutExtension($name) -or
+            $tool.runtime.engine -notin @('windows-powershell','pwsh') -or $tool.runtime.architecture -ne 'x64' -or
+            [string]$tool.runtime.minimumVersion -notmatch '^\d+\.\d+(?:\.\d+){0,2}$' -or @($tool.runtime.libraries).Count -eq 0) { throw "Missing tool execution contract: $name" }
+        foreach ($library in @($tool.runtime.libraries)) { if ($library -notin @('ToolKit','Dependencies','PS7','Release')) { throw "Unknown tool library: $library" } }
+        $toolNames[$name] = $true
+    }
+    if ($tools.Count -eq 0 -or $names.Count -ne ($required.Count + $tools.Count)) { throw 'Release members and tool manifest do not match.' }
+    return $manifest
+}
+
+function Get-AtlasInstalledRelease {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Root, [switch]$Previous)
+    $pointerFile = if ($Previous) { 'previous.json' } else { 'current.json' }
+    Assert-AtlasPlainDirectory $Root
+    $pointerPath = Join-Path $Root $pointerFile
+    if ((Get-Item -LiteralPath $pointerPath -Force -ErrorAction Stop).Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Release pointer cannot be a link.' }
+    $pointer = [IO.File]::ReadAllText($pointerPath, [Text.Encoding]::UTF8) | ConvertFrom-Json -ErrorAction Stop
+    Assert-AtlasReleaseDescriptor $pointer
+    if ([string]$pointer.directory -cnotmatch '^[a-f0-9]{40}(?:-[a-f0-9]{32})?$') { throw 'Invalid installed release directory.' }
+    if (-not ([string]$pointer.directory).StartsWith([string]$pointer.commit, [StringComparison]::Ordinal)) { throw 'Release directory and commit differ.' }
+    $directory = Join-Path (Join-Path $Root 'releases') $pointer.directory
+    $manifest = Test-AtlasRelease -Directory $directory -ExpectedManifestSha256 $pointer.manifestSha256
+    return [pscustomobject]@{ Directory = $directory; Commit = $pointer.commit; ManifestSha256 = $pointer.manifestSha256; Manifest = $manifest }
+}
+
+function Set-AtlasReleasePointer {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Root, [Parameter(Mandatory)]$Release)
+    $pointer = [ordered]@{ schemaVersion = 1; commit = $Release.Commit; manifestSha256 = $Release.ManifestSha256; directory = Split-Path -Leaf $Release.Directory }
+    $current = Join-Path $Root 'current.json'
+    $temporary = Join-Path $Root ('pointer-' + [guid]::NewGuid().ToString('N') + '.tmp')
+    try {
+        $bytes = [Text.Encoding]::UTF8.GetBytes(($pointer | ConvertTo-Json -Compress))
+        $stream = [IO.FileStream]::new($temporary, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
+        try { $stream.Write($bytes, 0, $bytes.Length); $stream.Flush($true) } finally { $stream.Dispose() }
+        if (Test-Path -LiteralPath $current) {
+            # Same-volume atomic replacement. If unsupported, leave the current release alone.
+            [IO.File]::Replace($temporary, $current, (Join-Path $Root 'previous.json'), $true)
+        } else { [IO.File]::Move($temporary, $current) }
+    } finally {
+        if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Force -ErrorAction Stop }
+    }
+}
+
+function Install-AtlasRelease {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Root, [Parameter(Mandatory)]$Descriptor, [string]$SourceDirectory, [switch]$PrepareOfflineEntry)
+    Assert-AtlasReleaseDescriptor $Descriptor
+    if (-not (Test-Path -LiteralPath $Root)) { New-Item -ItemType Directory -Path $Root -ErrorAction Stop | Out-Null }
+    Assert-AtlasPlainDirectory $Root
+    $releases = Join-Path $Root 'releases'
+    if (-not (Test-Path -LiteralPath $releases)) { New-Item -ItemType Directory -Path $releases -ErrorAction Stop | Out-Null }
+    Assert-AtlasPlainDirectory $releases
+    $lock = [IO.FileStream]::new((Join-Path $Root '.update.lock'), [IO.FileMode]::OpenOrCreate, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
+    $stage = Join-Path $releases ('.staging-' + [guid]::NewGuid().ToString('N'))
+    try {
+        try {
+            $current = Get-AtlasInstalledRelease -Root $Root
+            if ($current.Commit -ceq $Descriptor.commit -and $current.ManifestSha256 -ceq $Descriptor.manifestSha256) {
+                if ($PrepareOfflineEntry) { Initialize-AtlasOfflineEntry -Root $Root -Release $current }
+                return $current
+            }
+        } catch { Write-Verbose "No matching verified current release: $_" }
+        New-Item -ItemType Directory -Path $stage -ErrorAction Stop | Out-Null
+        $manifestPath = Join-Path $stage 'release-manifest.json'
+        if ($SourceDirectory) {
+            Test-AtlasRelease -Directory $SourceDirectory -ExpectedManifestSha256 $Descriptor.manifestSha256 | Out-Null
+            Copy-Item -LiteralPath (Join-Path $SourceDirectory 'release-manifest.json') -Destination $manifestPath -ErrorAction Stop
+        } else {
+            Save-AtlasReleaseFile -Commit $Descriptor.commit -RelativePath 'release-manifest.json' -Destination $manifestPath
+        }
+        if ((Get-FileHash -LiteralPath $manifestPath -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant() -cne $Descriptor.manifestSha256) { throw 'Downloaded manifest is not the approved publication.' }
+        $manifest = [IO.File]::ReadAllText($manifestPath, [Text.Encoding]::UTF8) | ConvertFrom-Json -ErrorAction Stop
+        if ($manifest.schemaVersion -ne 1 -or $manifest.algorithm -ne 'SHA256-UTF8-LF') { throw 'Unsupported release manifest.' }
+        foreach ($entry in $manifest.files.PSObject.Properties) {
+            $name = $entry.Name
+            if ($name -cnotmatch '^(get\.ps1|launcher\.ps1|onboarding/install\.bat|config/(tools|dependencies|tool-hashes)\.json|src/tools/Invoke-[A-Za-z0-9-]+\.ps1)$') { throw "Unsafe release path: $name" }
+            $destination = Join-Path $stage $name
+            $parent = Split-Path -Parent $destination
+            if (-not (Test-Path -LiteralPath $parent)) { New-Item -ItemType Directory -Path $parent -Force -ErrorAction Stop | Out-Null }
+            if ($SourceDirectory) { Copy-Item -LiteralPath (Join-Path $SourceDirectory $name) -Destination $destination -ErrorAction Stop }
+            else { Save-AtlasReleaseFile -Commit $Descriptor.commit -RelativePath $name -Destination $destination }
+        }
+        $verified = Test-AtlasRelease -Directory $stage -ExpectedManifestSha256 $Descriptor.manifestSha256
+        $name = [string]$Descriptor.commit
+        $destination = Join-Path $releases $name
+        if (Test-Path -LiteralPath $destination) { $destination = Join-Path $releases ($name + '-' + [guid]::NewGuid().ToString('N')) }
+        [IO.Directory]::Move($stage, $destination)
+        $release = [pscustomobject]@{ Directory = $destination; Commit = $Descriptor.commit; ManifestSha256 = $Descriptor.manifestSha256; Manifest = $verified }
+        if ($PrepareOfflineEntry) { Initialize-AtlasOfflineEntry -Root $Root -Release $release }
+        Set-AtlasReleasePointer -Root $Root -Release $release
+        return $release
+    } finally {
+        $lock.Dispose()
+        if (Test-Path -LiteralPath $stage) {
+            # This GUID child was created above, under the already checked releases directory.
+            Assert-AtlasPlainDirectory $stage
+            if ([IO.Path]::GetFullPath((Split-Path -Parent $stage)) -ne [IO.Path]::GetFullPath($releases) -or (Split-Path -Leaf $stage) -notmatch '^\.staging-[a-f0-9]{32}$') { throw 'Unsafe staging cleanup refused.' }
+            Remove-Item -LiteralPath $stage -Recurse -Force -ErrorAction Stop
+        }
+    }
+}
+
+function Restore-AtlasPreviousRelease {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Root)
+    Assert-AtlasPlainDirectory $Root
+    $lock = [IO.FileStream]::new((Join-Path $Root '.update.lock'), [IO.FileMode]::OpenOrCreate, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
+    try {
+        $previous = Get-AtlasInstalledRelease -Root $Root -Previous
+        Set-AtlasReleasePointer -Root $Root -Release $previous
+        return $previous
+    } finally { $lock.Dispose() }
+}
+
+function Initialize-AtlasOfflineEntry {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Root, [Parameter(Mandatory)]$Release)
+    Test-AtlasRelease -Directory $Release.Directory -ExpectedManifestSha256 $Release.ManifestSha256 | Out-Null
+    # A generic offline entry; never refresh individual components on startup.
+    $entry = Join-Path $Root 'get.ps1'
+    $temporary = Join-Path $Root ('entry-' + [guid]::NewGuid().ToString('N') + '.tmp')
+    [IO.File]::WriteAllText($temporary, [IO.File]::ReadAllText((Join-Path $Release.Directory 'get.ps1'), [Text.Encoding]::UTF8), [Text.UTF8Encoding]::new($true))
+    if (Test-Path -LiteralPath $entry) { [IO.File]::Replace($temporary, $entry, $null, $true) }
+    else { [IO.File]::Move($temporary, $entry) }
+    $bat = @('@echo off', 'setlocal', 'cd /d "%~dp0"', 'powershell.exe -NoProfile -Sta -ExecutionPolicy RemoteSigned -File "%~dp0get.ps1" -OfflineRoot "%~dp0."', 'set "RC=%errorlevel%"', 'if not "%RC%"=="0" pause', 'exit /b %RC%') -join "`r`n"
+    [IO.File]::WriteAllText((Join-Path $Root 'run.bat'), $bat + "`r`n", [Text.Encoding]::ASCII)
+}
+
+function Start-AtlasRelease {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)]$Release, [string]$OfflineAssetsRoot = '')
+    Assert-AtlasReleaseDescriptor ([pscustomobject]@{ schemaVersion=1; commit=$Release.Commit; manifestSha256=$Release.ManifestSha256 })
+    Test-AtlasRelease -Directory $Release.Directory -ExpectedManifestSha256 $Release.ManifestSha256 | Out-Null
+    $engine = Join-Path $env:SystemRoot 'System32/WindowsPowerShell/v1.0/powershell.exe'
+    if ([Environment]::Is64BitOperatingSystem -and -not [Environment]::Is64BitProcess) { $engine = Join-Path $env:SystemRoot 'Sysnative/WindowsPowerShell/v1.0/powershell.exe' }
+    if (-not [Environment]::Is64BitOperatingSystem -or -not (Test-Path -LiteralPath $engine)) { throw 'Atlas requires Windows PowerShell 5.1 x64.' }
+    $arguments = @('-NoProfile','-Sta','-ExecutionPolicy','RemoteSigned','-File', ('"{0}"' -f (Join-Path $Release.Directory 'launcher.ps1')), '-AtlasReleaseCommit',$Release.Commit,'-AtlasManifestSha256',$Release.ManifestSha256)
+    # PS 5.1 drops empty native arguments. Omit an absent optional path entirely.
+    if ($OfflineAssetsRoot) { $arguments += @('-AtlasOfflineRoot', ('"{0}"' -f $OfflineAssetsRoot)) }
+    $process = Start-Process -FilePath $engine -ArgumentList $arguments -NoNewWindow -Wait -PassThru -ErrorAction Stop
+    if ($process.ExitCode -ne 0) { throw "Atlas launcher exited with code $($process.ExitCode)." }
+}
+
+# This entry is embedded in get.ps1 by build.ps1. Do not download and execute libraries separately.
 $ErrorActionPreference = 'Stop'
-
-$launcherUrl  = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/launcher.ps1'
-$launcherShaUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/launcher.ps1.sha256'
-$launcherOutOfBandShaUrl = 'https://toolspanel.atlaspcsupport.com/launcher.sha256'
-$requireLauncherOutOfBandSha = $true
-$codeloadZipUrl = 'https://codeload.github.com/mikepchelper-spec/atlas-pc-support/zip/refs/heads/main'
-$launcherApiUrl = 'https://api.github.com/repos/mikepchelper-spec/atlas-pc-support/contents/launcher.ps1?ref=main'
-$launcherShaApiUrl = 'https://api.github.com/repos/mikepchelper-spec/atlas-pc-support/contents/launcher.ps1.sha256?ref=main'
-$githubApiHeaders = @{
-    'User-Agent' = 'AtlasPCSupport-Bootstrap'
-    'Accept'     = 'application/vnd.github+json'
-}
-$script:CodeloadExtractRoot = $null
-
-function Get-CodeloadFilePath {
-    param(
-        [Parameter(Mandatory = $true)][string]$RelativePath
-    )
-    if (-not $script:CodeloadExtractRoot) {
-        $zipPath = Join-Path $env:TEMP ('atlaspc-main-' + [guid]::NewGuid().ToString('N') + '.zip')
-        $extractRoot = Join-Path $env:TEMP ('atlaspc-main-' + [guid]::NewGuid().ToString('N'))
-        Invoke-WebRequest -Uri ($codeloadZipUrl + '?v=' + [guid]::NewGuid().ToString('N')) `
-            -OutFile $zipPath -UseBasicParsing -TimeoutSec 60 -ErrorAction Stop
-        Expand-Archive -LiteralPath $zipPath -DestinationPath $extractRoot -Force -ErrorAction Stop
-        Remove-Item -LiteralPath $zipPath -Force -ErrorAction SilentlyContinue
-        $script:CodeloadExtractRoot = Join-Path $extractRoot 'atlas-pc-support-main'
-    }
-
-    return (Join-Path $script:CodeloadExtractRoot $RelativePath)
-}
-
-function Save-RemoteFileWithFallback {
-    param(
-        [Parameter(Mandatory = $true)][string]$RawUrl,
-        [Parameter(Mandatory = $true)][string]$RelativePath,
-        [Parameter(Mandatory = $true)][string]$ApiUrl,
-        [Parameter(Mandatory = $true)][string]$OutFile,
-        [Parameter(Mandatory = $true)][hashtable]$Headers
-    )
-
-    try {
-        Invoke-WebRequest -Uri $RawUrl -OutFile $OutFile -UseBasicParsing -TimeoutSec 60 -ErrorAction Stop
-        return
-    } catch {
-        Write-Warning "Direct download via raw.githubusercontent.com failed. Retrying via codeload.github.com..."
-    }
-
-    try {
-        $codeloadPath = Get-CodeloadFilePath -RelativePath $RelativePath
-        if (-not (Test-Path -LiteralPath $codeloadPath)) {
-            throw "File not found in codeload snapshot: $RelativePath"
-        }
-        Copy-Item -LiteralPath $codeloadPath -Destination $OutFile -Force -ErrorAction Stop
-        return
-    } catch {
-        Write-Warning "Download via codeload.github.com failed. Retrying via GitHub API..."
-    }
-
-    $apiResponse = Invoke-RestMethod -Uri $ApiUrl -Headers $Headers -UseBasicParsing -TimeoutSec 60 -ErrorAction Stop
-    if (-not $apiResponse.content) {
-        throw "GitHub API fallback did not return file content."
-    }
-    $decodedBytes = [Convert]::FromBase64String(($apiResponse.content -replace '\s', ''))
-    [System.IO.File]::WriteAllBytes($OutFile, $decodedBytes)
-}
-
-function Get-RemoteTextWithFallback {
-    param(
-        [Parameter(Mandatory = $true)][string]$RawUrl,
-        [Parameter(Mandatory = $true)][string]$RelativePath,
-        [Parameter(Mandatory = $true)][string]$ApiUrl,
-        [Parameter(Mandatory = $true)][hashtable]$Headers
-    )
-
-    try {
-        return (Invoke-WebRequest -Uri $RawUrl -UseBasicParsing -TimeoutSec 30 -ErrorAction Stop).Content
-    } catch {
-        Write-Warning "Checksum download via raw.githubusercontent.com failed. Retrying via codeload.github.com..."
-    }
-
-    try {
-        $codeloadPath = Get-CodeloadFilePath -RelativePath $RelativePath
-        if (-not (Test-Path -LiteralPath $codeloadPath)) {
-            throw "File not found in codeload snapshot: $RelativePath"
-        }
-        return [System.IO.File]::ReadAllText($codeloadPath, [System.Text.Encoding]::UTF8)
-    } catch {
-        Write-Warning "Checksum via codeload.github.com failed. Retrying via GitHub API..."
-    }
-
-    $apiResponse = Invoke-RestMethod -Uri $ApiUrl -Headers $Headers -UseBasicParsing -TimeoutSec 60 -ErrorAction Stop
-    if (-not $apiResponse.content) {
-        throw "GitHub API fallback did not return checksum content."
-    }
-    return [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String(($apiResponse.content -replace '\s', '')))
-}
-
-function Get-Sha256FromText {
-    param([string]$Text)
-    if (-not $Text) { return $null }
-    $sha = (($Text -split '\s+') | Where-Object { $_ } | Select-Object -First 1).ToLowerInvariant()
-    if ($sha -and $sha -match '^[a-f0-9]{64}$') { return $sha }
-    return $null
-}
-
-function Get-DirectRemoteText {
-    param([Parameter(Mandatory = $true)][string]$Url)
-    return (Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 30 -ErrorAction Stop).Content
-}
-
-# Keep launcher at a stable path so ToolRunner can read its AST at runtime.
-$atlasDir     = Join-Path $env:LOCALAPPDATA 'AtlasPC'
-if (-not (Test-Path $atlasDir)) { New-Item -ItemType Directory -Path $atlasDir -Force | Out-Null }
-$launcherPath = Join-Path $atlasDir 'launcher.ps1'
-$launcherTempPath = "$launcherPath.download"
-if (Test-Path -LiteralPath $launcherTempPath) {
-    Remove-Item -LiteralPath $launcherTempPath -Force -ErrorAction SilentlyContinue
-}
-
-Write-Host '  [>] Downloading Atlas PC Support...' -ForegroundColor Cyan
 $ProgressPreference = 'SilentlyContinue'
-Save-RemoteFileWithFallback `
-    -RawUrl ($launcherUrl + '?v=' + [guid]::NewGuid().ToString('N')) `
-    -RelativePath 'launcher.ps1' `
-    -ApiUrl $launcherApiUrl `
-    -OutFile $launcherTempPath `
-    -Headers $githubApiHeaders
+$publishedCommit = '__ATLAS_RELEASE_COMMIT__'
+$publishedManifest = '__ATLAS_RELEASE_MANIFEST_SHA256__'
 
-Write-Host '  [>] Verifying launcher integrity (SHA-256)...' -ForegroundColor Cyan
-$shaRaw = Get-RemoteTextWithFallback `
-    -RawUrl ($launcherShaUrl + '?v=' + [guid]::NewGuid().ToString('N')) `
-    -RelativePath 'launcher.ps1.sha256' `
-    -ApiUrl $launcherShaApiUrl `
-    -Headers $githubApiHeaders
-$expectedHash = Get-Sha256FromText -Text $shaRaw
-if (-not $expectedHash -or $expectedHash -notmatch '^[a-f0-9]{64}$') {
-    throw "Invalid checksum metadata from server."
-}
-
-try {
-    $oobRaw = Get-DirectRemoteText -Url ($launcherOutOfBandShaUrl + '?v=' + [guid]::NewGuid().ToString('N'))
-    $oobHash = Get-Sha256FromText -Text $oobRaw
-    if (-not $oobHash) {
-        if ($requireLauncherOutOfBandSha) {
-            throw "Out-of-band launcher checksum is invalid or unavailable."
-        }
-        Write-Warning "Out-of-band launcher checksum invalid/unavailable. Continuing with repo checksum."
-    } elseif ($oobHash -ne $expectedHash) {
-        throw "Checksum mismatch between repo and out-of-band channel. Repo=$expectedHash OOB=$oobHash"
-    } else {
-        Write-Host "  [OK] Out-of-band SHA-256 matched." -ForegroundColor Green
+if ($OfflineRoot) {
+    $root = [IO.Path]::GetFullPath($OfflineRoot)
+    $release = if ($Rollback) { Restore-AtlasPreviousRelease -Root $root } else { Get-AtlasInstalledRelease -Root $root }
+} else {
+    $root = if ($InstallRoot) { [IO.Path]::GetFullPath($InstallRoot) } else { Join-Path $env:LOCALAPPDATA 'AtlasPC' }
+    if ($Rollback) { $release = Restore-AtlasPreviousRelease -Root $root }
+    else {
+        $descriptor = if ($publishedCommit -cmatch '^[a-f0-9]{40}$') {
+            [pscustomobject]@{ schemaVersion = 1; commit = $publishedCommit; manifestSha256 = $publishedManifest }
+        } else { Get-AtlasPublishedRelease }
+        Write-Host '  [>] Downloading and verifying the complete Atlas release...' -ForegroundColor Cyan
+        $release = Install-AtlasRelease -Root $root -Descriptor $descriptor
     }
-} catch {
-    if ($requireLauncherOutOfBandSha) { throw }
-    Write-Warning "Out-of-band checksum check failed: $($_.Exception.Message)"
 }
+Write-Host ("  [OK] Atlas {0}, commit {1}; {2} tools verified." -f $release.Manifest.version, $release.Commit.Substring(0,12), @($release.Manifest.files.PSObject.Properties | Where-Object Name -like 'src/tools/*').Count) -ForegroundColor Green
+if ($NoLaunch) { return $release }
 
-$actualHash = (Get-FileHash -LiteralPath $launcherTempPath -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant()
-if ($actualHash -ne $expectedHash) {
-    Remove-Item -LiteralPath $launcherTempPath -Force -ErrorAction SilentlyContinue
-    throw "Integrity check failed. Expected SHA256=$expectedHash, got $actualHash."
-}
-
-if ($script:CodeloadExtractRoot) {
-    $cleanupRoot = Split-Path -Parent $script:CodeloadExtractRoot
-    Remove-Item -LiteralPath $cleanupRoot -Recurse -Force -ErrorAction SilentlyContinue
-}
-
-Move-Item -LiteralPath $launcherTempPath -Destination $launcherPath -Force
-Unblock-File -LiteralPath $launcherPath -ErrorAction SilentlyContinue
-Write-Host "  [OK] SHA-256: $actualHash" -ForegroundColor Green
-
-# PS 5.1 reads BOM-less .ps1 files as ANSI when invoked with -File,
-# which mojibakes UTF-8 accents and emojis. Prepend BOM if absent.
-$bytes = [System.IO.File]::ReadAllBytes($launcherPath)
-if ($bytes.Length -lt 3 -or $bytes[0] -ne 0xEF -or $bytes[1] -ne 0xBB -or $bytes[2] -ne 0xBF) {
-    $bom = [byte[]](0xEF, 0xBB, 0xBF)
-    $withBom = New-Object byte[] ($bom.Length + $bytes.Length)
-    [System.Buffer]::BlockCopy($bom, 0, $withBom, 0, $bom.Length)
-    [System.Buffer]::BlockCopy($bytes, 0, $withBom, $bom.Length, $bytes.Length)
-    [System.IO.File]::WriteAllBytes($launcherPath, $withBom)
-}
-
-Write-Host '  [OK] Launching...' -ForegroundColor Green
-& powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -Sta -File $launcherPath
+$offlineAssets = if ($OfflineRoot) { $root } else { '' }
+Start-AtlasRelease -Release $release -OfflineAssetsRoot $offlineAssets

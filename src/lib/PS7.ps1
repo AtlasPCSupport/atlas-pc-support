@@ -4,19 +4,19 @@
 # Proposito:
 #   El panel soporta PS 5.1 (Windows de fabrica), pero las tools
 #   sufren bugs de encoding, enums y parametros limitados de 5.1.
-#   Cuando PS 7 esta presente, ToolRunner lo usa automaticamente
-#   y todas las tools corren en el runtime moderno.
+#   ToolRunner usa el runtime declarado por cada herramienta.
+#   Detectar PS 7 no cambia silenciosamente ese contrato.
 #
 # Modo offline (USB):
 #   Install-AtlasPS7 -OfflineSource "$PSScriptRoot\deps\PowerShell-*.msi"
 #   Preparar USB copia el MSI en deps\ para instalacion sin internet.
 # ============================================================
 
-# Versiones conocidas de PS 7 (actualizar cuando salga nueva LTS).
-$script:AtlasPS7Version  = '7.6.6'
-$script:AtlasPS7UrlX64   = "https://github.com/PowerShell/PowerShell/releases/download/v$($script:AtlasPS7Version)/PowerShell-$($script:AtlasPS7Version)-win-x64.msi"
-$script:AtlasPS7MsiName  = "PowerShell-$($script:AtlasPS7Version)-win-x64.msi"
-$script:AtlasPS7HashesUrl = "https://github.com/PowerShell/PowerShell/releases/download/v$($script:AtlasPS7Version)/hashes.sha256"
+$ps7Definition = Get-AtlasDependencyDefinition -Name 'PowerShell7'
+$script:AtlasPS7Version = $ps7Definition.Version
+$script:AtlasPS7UrlX64 = $ps7Definition.DownloadUrl
+$script:AtlasPS7MsiName = $ps7Definition.MsiName
+$script:AtlasPS7HashesUrl = $ps7Definition.HashesUrl
 
 function Get-AtlasPS7Path {
     <#

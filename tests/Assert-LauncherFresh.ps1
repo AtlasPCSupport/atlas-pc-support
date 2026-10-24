@@ -1,90 +1,15 @@
-#!/usr/bin/env pwsh
-<#
-.SYNOPSIS
-    Detecta un launcher.ps1 / tool-hashes.json "stale": commiteados sin
-    reconstruir desde src/. Insensible a diferencias volatiles (fecha de
-    build embebida y fin de linea CRLF/LF).
-
-.DESCRIPTION
-    El launcher distribuible (launcher.ps1) y config/tool-hashes.json son
-    AUTOGENERADOS por build.ps1 a partir de src/. Si alguien edita src/ pero
-    olvida reconstruir y commitear, los usuarios reciben (via irm | iex) una
-    version desincronizada del codigo fuente. Este check lo bloquea en CI.
-
-    Estrategia:
-      1. Toma snapshot normalizado de los artefactos commiteados.
-      2. Reconstruye con build.ps1 (sobre-escribe en sitio; el checkout de CI
-         es efimero).
-      3. Compara el contenido normalizado. Diferencia = stale.
-
-    Las lineas de fecha de build y el campo generatedAt cambian en cada build,
-    asi que se neutralizan antes de comparar. Tambien se normaliza CRLF -> LF
-    para evitar falsos positivos entre Windows y Linux.
-
-    Exit 0 = en sync. Exit 1 = stale (ejecutar `pwsh -File build.ps1` y commitear).
-#>
+#Requires -Version 5.1
 [CmdletBinding()]
-param(
-    [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-)
-
+param([string]$RepoRoot = (Join-Path $PSScriptRoot '..'))
 $ErrorActionPreference = 'Stop'
-
-function Get-AtlasNormalizedArtifact {
-    param([Parameter(Mandatory)][AllowEmptyString()][string]$Text)
-    $t = $Text -replace "`r`n", "`n"
-    $t = $t -replace "`r", "`n"
-    # Neutralizar campos volatiles (cambian en cada build).
-    $t = $t -replace '(?m)^#\s+Build:.*$',                  '#  Build: <normalized>'
-    $t = $t -replace '(?m)^\$script:AtlasBuildDate\s*=.*$',  '$script:AtlasBuildDate = <normalized>'
-    $t = $t -replace '"generatedAt"\s*:\s*"[^"]*"',          '"generatedAt": "<normalized>"'
-    # Normalizar formato e indentacion de JSON (difiere entre PowerShell 5.1 en Windows y PS 7 en Linux).
-    $t = $t -replace '":\s+', '": '
-    $t = $t -replace '(?m)^\s+', ''
-    return $t
+$names = @('get.ps1','launcher.ps1','launcher.ps1.sha256','config/tool-hashes.json','release-manifest.json')
+$before = @{}
+foreach ($name in $names) {
+    $before[$name] = (Get-FileHash -LiteralPath (Join-Path $RepoRoot $name) -Algorithm SHA256 -ErrorAction Stop).Hash
 }
-
-$launcherPath  = Join-Path $RepoRoot 'launcher.ps1'
-$hashesPath    = Join-Path $RepoRoot 'config/tool-hashes.json'
-$buildScript   = Join-Path $RepoRoot 'build.ps1'
-
-foreach ($p in @($launcherPath, $hashesPath, $buildScript)) {
-    if (-not (Test-Path -LiteralPath $p)) { throw "No existe ruta requerida: $p" }
+& (Join-Path $RepoRoot 'build.ps1') | Out-Null
+foreach ($name in $names) {
+    $after = (Get-FileHash -LiteralPath (Join-Path $RepoRoot $name) -Algorithm SHA256 -ErrorAction Stop).Hash
+    if ($before[$name] -cne $after) { throw "Stale distribution artifact: $name. Rebuild and commit the complete release." }
+    Write-Host "[OK] Reproducible distribution artifact: $name"
 }
-
-$committedLauncher = Get-AtlasNormalizedArtifact ([System.IO.File]::ReadAllText($launcherPath, [System.Text.Encoding]::UTF8))
-$committedHashes   = Get-AtlasNormalizedArtifact ([System.IO.File]::ReadAllText($hashesPath, [System.Text.Encoding]::UTF8))
-
-Write-Host '[..] Reconstruyendo launcher desde src/ para comparar...' -ForegroundColor Cyan
-& $buildScript | Out-Null
-
-$rebuiltLauncher = Get-AtlasNormalizedArtifact ([System.IO.File]::ReadAllText($launcherPath, [System.Text.Encoding]::UTF8))
-$rebuiltHashes   = Get-AtlasNormalizedArtifact ([System.IO.File]::ReadAllText($hashesPath, [System.Text.Encoding]::UTF8))
-
-$stale = $false
-
-if ($committedLauncher -ne $rebuiltLauncher) {
-    Write-Host '::error file=launcher.ps1::launcher.ps1 esta desactualizado respecto a src/. Ejecuta `pwsh -File build.ps1` y commitea el resultado.'
-    Write-Host '[FAIL] launcher.ps1 stale.' -ForegroundColor Red
-    $stale = $true
-} else {
-    Write-Host '[OK]   launcher.ps1 coincide con src/.' -ForegroundColor Green
-}
-
-if ($committedHashes -ne $rebuiltHashes) {
-    Write-Host '::error file=config/tool-hashes.json::tool-hashes.json esta desactualizado respecto a src/tools/. Ejecuta `pwsh -File build.ps1` y commitea el resultado.'
-    Write-Host '[FAIL] config/tool-hashes.json stale.' -ForegroundColor Red
-    $stale = $true
-} else {
-    Write-Host '[OK]   config/tool-hashes.json coincide con src/tools/.' -ForegroundColor Green
-}
-
-if ($stale) {
-    Write-Host ''
-    Write-Host '=== RESULTADO: artefactos compilados DESACTUALIZADOS ===' -ForegroundColor Red
-    exit 1
-}
-
-Write-Host ''
-Write-Host '=== RESULTADO: artefactos compilados en sync con src/ ===' -ForegroundColor Green
-exit 0

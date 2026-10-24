@@ -123,9 +123,10 @@ function Invoke-ActualizarPowerShell {
     $atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
 
     # ----- Constants (mirrored from src/lib/PS7.ps1, self-contained) -----
-    $PS7_VERSION  = '7.6.6'
-    $PS7_URL_X64  = "https://github.com/PowerShell/PowerShell/releases/download/v$PS7_VERSION/PowerShell-$PS7_VERSION-win-x64.msi"
-    $PS7_MSI_NAME = "PowerShell-$PS7_VERSION-win-x64.msi"
+    $ps7Definition = Get-AtlasDependencyDefinition -Name 'PowerShell7'
+    $PS7_VERSION = $ps7Definition.Version
+    $PS7_URL_X64 = $ps7Definition.DownloadUrl
+    $PS7_MSI_NAME = $ps7Definition.MsiName
 
     # ----- Inline helpers (no dependency on launcher libs) -----
     function _Write-AtlasHeader {

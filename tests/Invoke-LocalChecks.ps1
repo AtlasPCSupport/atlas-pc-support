@@ -33,10 +33,10 @@ function Invoke-CheckScript {
 }
 
 # Keep the build away from the public launcher/checksums in the working tree.
-foreach ($relative in @('src', 'config', 'build.ps1', 'launcher.ps1', 'launcher.ps1.sha256')) {
+foreach ($relative in @('src', 'config', 'onboarding', 'build.ps1', 'get.ps1', 'release-manifest.json', 'launcher.ps1', 'launcher.ps1.sha256')) {
     Copy-Item -LiteralPath (Join-Path $repoRoot $relative) -Destination $staging -Recurse -Force
 }
-$artifacts = @('launcher.ps1', 'launcher.ps1.sha256', 'config/tool-hashes.json')
+$artifacts = @('get.ps1', 'release-manifest.json', 'launcher.ps1', 'launcher.ps1.sha256', 'config/tool-hashes.json')
 $before = @{}
 foreach ($relative in $artifacts) {
     $before[$relative] = (Get-FileHash -LiteralPath (Join-Path $repoRoot $relative) -Algorithm SHA256).Hash
@@ -59,7 +59,8 @@ $testPaths = @(
     (Join-Path $PSScriptRoot 'Accounts.Tests.ps1'),
     (Join-Path $PSScriptRoot 'Installers.Tests.ps1'),
     (Join-Path $PSScriptRoot 'BitLocker.Tests.ps1'),
-    (Join-Path $PSScriptRoot 'Execution.Tests.ps1')
+    (Join-Path $PSScriptRoot 'Execution.Tests.ps1'),
+    (Join-Path $PSScriptRoot 'Release.Tests.ps1')
 )
 $knownIssuesPath = Join-Path $PSScriptRoot 'KnownIssues.Tests.ps1'
 if ($IncludeKnownIssues -and (Test-Path -LiteralPath $knownIssuesPath)) { $testPaths += $knownIssuesPath }

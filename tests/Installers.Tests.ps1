@@ -14,7 +14,8 @@ Describe 'A01 installer verification regressions' {
         function Write-Centered { param($Text, $Color) }
         function Format-Size { param($Size) 'test size' }
         function Invoke-ExternalProcessWithTimeout { param($FilePath,$ArgumentList,$TimeoutSec) throw 'Real extractor blocked' }
-        foreach ($name in @('Assert-AtlasInstaller', 'Get-AtlasReleaseFileHash')) {
+        $script:AtlasDependencyCatalog = [IO.File]::ReadAllText((Join-Path $script:RepoRoot 'config/dependencies.json'), [Text.Encoding]::UTF8) | ConvertFrom-Json
+        foreach ($name in @('Assert-AtlasInstaller', 'Get-AtlasReleaseFileHash', 'Get-AtlasDependencyDefinition')) {
             . (Get-TestFunction $script:RepoRoot 'src/lib/ToolKit.ps1' $name)
         }
         . (Join-Path $script:RepoRoot 'src/lib/PS7.ps1')

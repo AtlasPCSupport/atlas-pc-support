@@ -13,8 +13,14 @@ Describe 'Quoted paths for the real launcher invocation' {
         function Initialize-AtlasSecureDirectory { param($Path) throw 'Real ACL change blocked' }
         function Unblock-AtlasFile { param($Path) throw 'Real unblock blocked' }
         function Test-IsAdmin { $false }
+        function Get-AtlasToolRuntime { param($Tool) 'powershell.exe' }
+        . (Get-TestFunction $script:RepoRoot 'src/lib/Release.ps1' 'Get-AtlasTextHash')
+        . (Get-TestFunction $script:RepoRoot 'src/lib/ToolRunner.ps1' 'Get-AtlasToolExpectedHash')
         . (Get-TestFunction $script:RepoRoot 'src/lib/ToolRunner.ps1' 'Invoke-AtlasTool')
         . (Get-TestFunction $script:RepoRoot 'src/lib/Admin.ps1' 'Invoke-AsAdmin')
+        $ast=Get-TestAst $script:RepoRoot 'launcher.ps1'
+        $assignment=$ast.Find({param($n) $n -is [Management.Automation.Language.AssignmentStatementAst] -and $n.Left.Extent.Text -eq '$script:AtlasChildLibrarySource'},$true)
+        $script:RealChildSource=$assignment.Right.Expression.Value
     }
     BeforeEach {
         $script:RunDir=Join-Path $TestDrive 'profile with spaces'
@@ -23,6 +29,10 @@ Describe 'Quoted paths for the real launcher invocation' {
         [IO.File]::WriteAllText($script:ToolFile,'function Invoke-Fixture { Write-Output "fixture" }',[Text.UTF8Encoding]::new($true))
         $script:AtlasToolKitSource=''
         $script:AtlasPS7CachedPath=$null
+        $script:AtlasDevelopmentMode=$false
+        $script:AtlasRoot=$TestDrive
+        $script:AtlasChildLibrarySource='# fixture child libraries'
+        $script:AtlasToolHashes=@{'Invoke-Fixture.ps1'=(Get-AtlasTextHash ([IO.File]::ReadAllText($script:ToolFile,[Text.Encoding]::UTF8)))}
         Mock Start-Process { }
         Mock Get-AtlasToolScript { $script:ToolFile }
         Mock Get-AtlasSecureRunDir { $script:RunDir }
@@ -46,6 +56,74 @@ Describe 'Quoted paths for the real launcher invocation' {
         Should -Invoke Start-Process -Times 1 -Exactly -ParameterFilter {
             $Verb -eq 'RunAs' -and $ArgumentList[-1] -match '^".*profile with spaces.*\.ps1"$'
         }
+    }
+    It 'blocks execution when the required child libraries are absent' {
+        $script:AtlasChildLibrarySource=''
+        { Invoke-AtlasTool -Tool @{name='Fixture';id='fixture';function='Invoke-Fixture'} } | Should -Throw '*libraries*'
+        Should -Invoke Start-Process -Times 0 -Exactly
+    }
+    It 'blocks a tool changed between acquisition and wrapper creation' {
+        Add-Content -LiteralPath $script:ToolFile -Value '# changed'
+        { Invoke-AtlasTool -Tool @{name='Fixture';id='fixture';function='Invoke-Fixture'} } | Should -Throw '*changed*'
+        Should -Invoke Start-Process -Times 0 -Exactly
+    }
+    It 'runs the actual generated wrapper with all helpers and complex paths without modifying a tool' {
+        $script:AtlasChildLibrarySource=$script:RealChildSource
+        $script:RunDir=Join-Path $TestDrive ("Jos$([char]0xe9)'s profile with spaces")
+        New-Item -ItemType Directory -Path $script:RunDir -Force | Out-Null
+        $fixture=@'
+function Read-Host { 'fixture-no-prompt' }
+function Invoke-Fixture {
+    foreach ($name in @('Resolve-AtlasDependency','Install-AtlasPS7','Test-AtlasRelease','Write-AtlasHeader')) {
+        if (-not (Get-Command $name -ErrorAction SilentlyContinue)) { throw "Missing helper: $name" }
+    }
+    if ((Get-AtlasDependencyDefinition 'PowerShell7').Version -ne '7.6.6') { throw 'Missing catalog' }
+    Write-Output 'child-context-ok'
+}
+'@
+        [IO.File]::WriteAllText($script:ToolFile,$fixture,[Text.UTF8Encoding]::new($false))
+        $script:AtlasToolHashes['Invoke-Fixture.ps1']=Get-AtlasTextHash $fixture
+        $before=(Get-FileHash $script:ToolFile -Algorithm SHA256).Hash
+        Invoke-AtlasTool -Tool @{name='Fixture';id='fixture';function='Invoke-Fixture'}
+        $wrapper=Get-ChildItem -LiteralPath $script:RunDir -Filter 'run-*.ps1' | Select-Object -First 1
+        $wrapper | Should -Not -BeNullOrEmpty
+        $engine=(Get-Process -Id $PID).Path
+        $output=& $engine -NoProfile -File $wrapper.FullName 2>&1 | Out-String
+        $LASTEXITCODE | Should -Be 0
+        $output | Should -Match 'child-context-ok'
+        (Get-FileHash $script:ToolFile -Algorithm SHA256).Hash | Should -Be $before
+    }
+}
+
+Describe 'Explicit runtime selection' {
+    BeforeAll {
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        . (Get-TestFunction (Split-Path -Parent $PSScriptRoot) 'src/lib/ToolRunner.ps1' 'Get-AtlasToolRuntime')
+    }
+    BeforeEach {
+        $script:AtlasPS7CachedPath=Join-Path $TestDrive 'old-pwsh.exe'
+        Mock Test-Path { $true }
+        $script:Contract=@{runtime=@{engine='windows-powershell';minimumVersion='5.1';architecture='x64';libraries=@('ToolKit','Dependencies','PS7','Release')}}
+    }
+    It 'uses Windows PowerShell when declared even if a PS7 path is cached' -Skip:($env:OS -ne 'Windows_NT') {
+        Get-AtlasToolRuntime -Tool $script:Contract | Should -Match 'System32[\\/]WindowsPowerShell[\\/]v1.0[\\/]powershell.exe$'
+    }
+    It 'rejects an undeclared engine without falling back' {
+        $script:Contract.runtime.engine='unknown'
+        { Get-AtlasToolRuntime -Tool $script:Contract } | Should -Throw '*Unknown runtime*'
+    }
+    It 'does not silently substitute 5.1 for a missing required PS7' {
+        $script:Contract.runtime.engine='pwsh'
+        $script:AtlasPS7CachedPath=$null
+        { Get-AtlasToolRuntime -Tool $script:Contract } | Should -Throw '*unavailable*'
+    }
+    It 'rejects an unsupported architecture' {
+        $script:Contract.runtime.architecture='arm64'
+        { Get-AtlasToolRuntime -Tool $script:Contract } | Should -Throw '*x64*'
+    }
+    It 'rejects an unknown helper requirement' {
+        $script:Contract.runtime.libraries=@('Unknown')
+        { Get-AtlasToolRuntime -Tool $script:Contract } | Should -Throw '*library*'
     }
 }
 
