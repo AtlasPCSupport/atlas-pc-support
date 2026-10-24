@@ -189,6 +189,8 @@ function Invoke-AtlasTool {
     )
 
     Invoke-AtlasRunnerTempCleanup
+    $availability = Test-AtlasToolAvailability -Tool $Tool
+    if (-not $availability.Available) { throw $availability.Reason }
     Write-AtlasLog "Ejecutando: $($Tool.name) [$($Tool.id)]" -Tool 'Runner'
 
     $function = $Tool.function
@@ -255,6 +257,10 @@ function Invoke-AtlasTool {
     [void]$sb.AppendLine("`$atlasContext = '" + $context.Replace("'", "''") + "' | ConvertFrom-Json")
     [void]$sb.AppendLine('foreach ($entry in $atlasContext.PSObject.Properties) { Set-Variable -Name $entry.Name -Value $entry.Value -Scope Script }')
     [void]$sb.AppendLine('$env:ATLAS_OFFLINE_ROOT = $script:AtlasOfflineRoot')
+    $toolContract = $Tool | ConvertTo-Json -Depth 12 -Compress
+    [void]$sb.AppendLine("`$atlasToolContract = ConvertFrom-AtlasJson '" + $toolContract.Replace("'", "''") + "'")
+    [void]$sb.AppendLine('$availability = Test-AtlasToolAvailability -Tool $atlasToolContract -Capabilities (Get-AtlasPlatformCapabilities -Refresh)')
+    [void]$sb.AppendLine('if (-not $availability.Available) { throw $availability.Reason }')
     [void]$sb.AppendLine($toolSource)
     [void]$sb.AppendLine('')
     [void]$sb.AppendLine('$atlasToolExitCode = 0')

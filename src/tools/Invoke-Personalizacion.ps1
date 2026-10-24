@@ -243,8 +243,8 @@ function Set-AccentColor {
 function Optimize-Taskbar {
     try {
         $RegPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
-        Set-ItemProperty -Path $RegPath -Name "TaskbarAl" -Value 0 -Force
-        Set-ItemProperty -Path $RegPath -Name "SearchboxTaskbarMode" -Value 0 -Force
+        if ((Get-AtlasPlatformCapabilities).Windows11) { Set-ItemProperty -Path $RegPath -Name "TaskbarAl" -Value 0 -Force -ErrorAction Stop }
+        Hide-SearchBar
         Write-Centered $L.TaskbarApplied "Green"
         Write-Centered $L.RestartingExpl "Yellow"
         Stop-Process -Name "explorer" -Force
@@ -256,7 +256,7 @@ function Hide-SearchBar {
         $RegPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search"
         if (-not (Test-Path $RegPath)) { New-Item -Path $RegPath -Force | Out-Null }
         $Adv = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
-        Set-ItemProperty -Path $Adv -Name "SearchboxTaskbarMode" -Value 0 -Force
+        Set-ItemProperty -Path $RegPath -Name "SearchboxTaskbarMode" -Value 0 -Force -ErrorAction Stop
         Write-Centered $L.SearchHidden "Green"
         Write-Centered $L.RestartingExpl "Yellow"
         Stop-Process -Name "explorer" -Force -ErrorAction SilentlyContinue
@@ -266,8 +266,8 @@ function Hide-SearchBar {
 function Hide-Widgets {
     try {
         $Adv = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
-        Set-ItemProperty -Path $Adv -Name "TaskbarDa" -Value 0 -Force
-        Set-ItemProperty -Path $Adv -Name "TaskbarMn" -Value 0 -Force
+        if ((Get-AtlasPlatformCapabilities).Windows11) { Set-ItemProperty -Path $Adv -Name "TaskbarDa" -Value 0 -Force -ErrorAction Stop }
+        if ((Get-AtlasPlatformCapabilities).Windows11) { Set-ItemProperty -Path $Adv -Name "TaskbarMn" -Value 0 -Force -ErrorAction Stop }
         $Feed = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Feeds"
         if (-not (Test-Path $Feed)) { New-Item -Path $Feed -Force | Out-Null }
         Set-ItemProperty -Path $Feed -Name "ShellFeedsTaskbarViewMode" -Value 2 -Force
@@ -278,6 +278,7 @@ function Hide-Widgets {
 }
 
 function Align-TaskbarLeft {
+    if (-not (Get-AtlasPlatformCapabilities).Windows11) { Write-Warning 'Windows 11 feature unavailable on this platform.'; return }
     try {
         $Adv = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
         Set-ItemProperty -Path $Adv -Name "TaskbarAl" -Value 0 -Force
@@ -288,12 +289,13 @@ function Align-TaskbarLeft {
 }
 
 function Apply-Win11Minimal {
+    if (-not (Get-AtlasPlatformCapabilities).Windows11) { Write-Warning 'Windows 11 feature unavailable on this platform.'; return }
     try {
         $Adv = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
         Set-ItemProperty -Path $Adv -Name "TaskbarAl" -Value 0 -Force
         Set-ItemProperty -Path $Adv -Name "SearchboxTaskbarMode" -Value 0 -Force
-        Set-ItemProperty -Path $Adv -Name "TaskbarDa" -Value 0 -Force
-        Set-ItemProperty -Path $Adv -Name "TaskbarMn" -Value 0 -Force
+        if ((Get-AtlasPlatformCapabilities).Windows11) { Set-ItemProperty -Path $Adv -Name "TaskbarDa" -Value 0 -Force -ErrorAction Stop }
+        if ((Get-AtlasPlatformCapabilities).Windows11) { Set-ItemProperty -Path $Adv -Name "TaskbarMn" -Value 0 -Force -ErrorAction Stop }
         $Feed = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Feeds"
         if (-not (Test-Path $Feed)) { New-Item -Path $Feed -Force | Out-Null }
         Set-ItemProperty -Path $Feed -Name "ShellFeedsTaskbarViewMode" -Value 2 -Force
@@ -333,7 +335,7 @@ function Apply-AllSafeTweaks {
     Optimize-Taskbar
     Toggle-Watermark
     Disable-StartSuggestions
-    Apply-Win11Minimal
+    if ((Get-AtlasPlatformCapabilities).Windows11) { Apply-Win11Minimal }
     Write-Host ''
     Write-Centered $L.AllDone 'Green'
 }
@@ -360,11 +362,13 @@ while ($ejecutar) {
     Write-Host "$M $($L.Opt4)"
     Write-Host "$M $($L.Opt5)"
     Write-Host "$M $($L.Opt6)"
+    if ((Get-AtlasPlatformCapabilities).Windows11) {
     Write-Host "$M $($L.OptHeaderWin11)" -ForegroundColor Cyan
     Write-Host "$M $($L.Opt7)"
     Write-Host "$M $($L.Opt8)"
     Write-Host "$M $($L.Opt9)"
     Write-Host "$M $($L.OptA)" -ForegroundColor Green
+    }
     Write-Host "$M $($L.OptB)" -ForegroundColor Magenta
     Write-Host "`n"
     Write-Host "$M $($L.Opt0)" -ForegroundColor Gray

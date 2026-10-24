@@ -104,7 +104,7 @@ jobs:
           Install-Module Pester -Scope CurrentUser -Force -RequiredVersion 5.8.0 -ErrorAction Stop
           Remove-Module Pester -Force -ErrorAction SilentlyContinue
           Import-Module Pester -RequiredVersion 5.8.0 -Force
-          Invoke-Pester -Path ./tests/Lib.Tests.ps1,./tests/Platform.Tests.ps1,./tests/Accounts.Tests.ps1,./tests/Installers.Tests.ps1,./tests/BitLocker.Tests.ps1,./tests/Execution.Tests.ps1,./tests/Release.Tests.ps1 -Output Detailed -CI
+          Invoke-Pester -Path ./tests/*.Tests.ps1 -Output Detailed -CI
 
       - name: Upload complete verified release
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

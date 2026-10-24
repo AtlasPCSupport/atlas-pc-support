@@ -21,6 +21,10 @@
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -43,6 +47,10 @@
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -72,6 +80,10 @@
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -93,6 +105,12 @@
           "Dependencies",
           "PS7",
           "Release"
+        ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": [
+          "Get-WinEvent"
         ]
       }
     },
@@ -116,6 +134,10 @@
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -138,6 +160,10 @@
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -160,6 +186,10 @@
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -186,6 +216,10 @@
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -208,6 +242,10 @@
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -230,16 +268,20 @@
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
       "id": "instalar-ms-store",
-      "name": "Install Microsoft Store",
-      "description": "Installs the Microsoft Store on systems where it is absent (LTSC, IoT Enterprise, corporate images). Uses wsreset -i on W11 or downloads the Appx bundle from Microsoft CDN.",
+      "name": "Store and App Installer Check",
+      "description": "Checks registration, policy and App Installer separately. Re-registers an existing Store only; no generic LTSC installation.",
       "category": "software",
       "function": "Invoke-InstalarMicrosoftStore",
       "source": "Invoke-InstalarMicrosoftStore.ps1",
-      "requiresAdmin": true,
+      "requiresAdmin": false,
       "runsInNewWindow": true,
       "dependencies": [],
       "runtime": {
@@ -251,6 +293,13 @@
           "Dependencies",
           "PS7",
           "Release"
+        ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": [
+          "Get-AppxPackage",
+          "Add-AppxPackage"
         ]
       }
     },
@@ -274,6 +323,10 @@
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -296,6 +349,10 @@
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -318,6 +375,10 @@
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -340,6 +401,10 @@
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -364,6 +429,10 @@
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -386,6 +455,10 @@
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -407,6 +480,12 @@
           "Dependencies",
           "PS7",
           "Release"
+        ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": [
+          "Export-WindowsDriver"
         ]
       }
     },
@@ -430,6 +509,12 @@
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": [
+          "robocopy.exe"
+        ]
       }
     },
     {
@@ -451,6 +536,14 @@
           "Dependencies",
           "PS7",
           "Release"
+        ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": [
+          "Get-NetAdapter",
+          "Get-DnsClientServerAddress",
+          "Set-DnsClientServerAddress"
         ]
       }
     },
@@ -474,6 +567,10 @@
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -496,6 +593,10 @@
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -517,6 +618,13 @@
           "Dependencies",
           "PS7",
           "Release"
+        ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": [
+          "Get-BitLockerVolume",
+          "Enable-BitLocker"
         ]
       }
     },
@@ -540,6 +648,13 @@
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": [
+          "Get-LocalUser",
+          "Get-LocalGroupMember"
+        ]
       }
     },
     {
@@ -562,6 +677,10 @@
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -584,6 +703,10 @@
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -605,6 +728,12 @@
           "Dependencies",
           "PS7",
           "Release"
+        ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": [
+          "Get-LocalUser"
         ]
       }
     }

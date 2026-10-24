@@ -237,6 +237,12 @@ function New-AtlasToolCard {
 
     $adminBadge = if ($Tool.requiresAdmin) { (Get-AtlasString 'badge.requiresAdmin') } else { "" }
     $btnRunText = Get-AtlasString 'button.run'
+    $availability = if ($Tool.ContainsKey('_availability')) { $Tool._availability } else { $null }
+    if ($availability -and -not $availability.Available) {
+        $xaml = $xaml.Replace("x:Name='BtnRun'", "x:Name='BtnRun' IsEnabled='False' ToolTip='" + [Security.SecurityElement]::Escape($availability.Reason) + "'")
+        $xaml = $xaml.Replace("Text='{{DESCRIPTION}}'", "Text='{{DESCRIPTION}}' ToolTip='" + [Security.SecurityElement]::Escape($availability.Reason) + "'")
+        $btnRunText = if ($script:AtlasCurrentLang -eq 'es') { 'No disponible' } else { 'Unavailable' }
+    }
 
     $xaml = $xaml.Replace('{{ICON}}', $icon).
                   Replace('{{NAME}}', [System.Security.SecurityElement]::Escape($Tool.name)).
@@ -774,6 +780,8 @@ function Show-AtlasWindow {
     # Renderizar tools
     $script:AllCards = @()
     foreach ($tool in $Tools) {
+        try { $tool._availability = Test-AtlasToolAvailability -Tool $tool }
+        catch { $tool._availability = [pscustomobject]@{ Available=$false; Reason="Platform could not be evaluated: $_" } }
         $cardXaml = New-AtlasToolCard -Tool $tool -Branding $Branding -Palette $palette
         [xml]$cardDoc = $cardXaml
         $cardReader = New-Object System.Xml.XmlNodeReader $cardDoc

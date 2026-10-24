@@ -20,7 +20,7 @@ if ($PSVersionTable.PSEdition -eq 'Desktop') {
 }
 
 
-$script:AtlasVersion = '1.1.0'
+$script:AtlasVersion = '1.2.0'
 $script:AtlasBuildDate = '2026-10-24'
 $script:AtlasToolsManifest = '{
   "$comment": "Tool manifest. Each entry describes one tool. The launcher uses this to render the panel''s tool tiles.",
@@ -45,6 +45,10 @@ $script:AtlasToolsManifest = '{
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -67,6 +71,10 @@ $script:AtlasToolsManifest = '{
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -96,6 +104,10 @@ $script:AtlasToolsManifest = '{
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -117,6 +129,12 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release"
+        ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": [
+          "Get-WinEvent"
         ]
       }
     },
@@ -140,6 +158,10 @@ $script:AtlasToolsManifest = '{
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -162,6 +184,10 @@ $script:AtlasToolsManifest = '{
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -184,6 +210,10 @@ $script:AtlasToolsManifest = '{
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -210,6 +240,10 @@ $script:AtlasToolsManifest = '{
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -232,6 +266,10 @@ $script:AtlasToolsManifest = '{
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -254,16 +292,20 @@ $script:AtlasToolsManifest = '{
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
       "id": "instalar-ms-store",
-      "name": "Install Microsoft Store",
-      "description": "Installs the Microsoft Store on systems where it is absent (LTSC, IoT Enterprise, corporate images). Uses wsreset -i on W11 or downloads the Appx bundle from Microsoft CDN.",
+      "name": "Store and App Installer Check",
+      "description": "Checks registration, policy and App Installer separately. Re-registers an existing Store only; no generic LTSC installation.",
       "category": "software",
       "function": "Invoke-InstalarMicrosoftStore",
       "source": "Invoke-InstalarMicrosoftStore.ps1",
-      "requiresAdmin": true,
+      "requiresAdmin": false,
       "runsInNewWindow": true,
       "dependencies": [],
       "runtime": {
@@ -275,6 +317,13 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release"
+        ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": [
+          "Get-AppxPackage",
+          "Add-AppxPackage"
         ]
       }
     },
@@ -298,6 +347,10 @@ $script:AtlasToolsManifest = '{
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -320,6 +373,10 @@ $script:AtlasToolsManifest = '{
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -342,6 +399,10 @@ $script:AtlasToolsManifest = '{
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -364,6 +425,10 @@ $script:AtlasToolsManifest = '{
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -388,6 +453,10 @@ $script:AtlasToolsManifest = '{
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -410,6 +479,10 @@ $script:AtlasToolsManifest = '{
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -431,6 +504,12 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release"
+        ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": [
+          "Export-WindowsDriver"
         ]
       }
     },
@@ -454,6 +533,12 @@ $script:AtlasToolsManifest = '{
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": [
+          "robocopy.exe"
+        ]
       }
     },
     {
@@ -475,6 +560,14 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release"
+        ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": [
+          "Get-NetAdapter",
+          "Get-DnsClientServerAddress",
+          "Set-DnsClientServerAddress"
         ]
       }
     },
@@ -498,6 +591,10 @@ $script:AtlasToolsManifest = '{
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -520,6 +617,10 @@ $script:AtlasToolsManifest = '{
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -541,6 +642,13 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release"
+        ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": [
+          "Get-BitLockerVolume",
+          "Enable-BitLocker"
         ]
       }
     },
@@ -564,6 +672,13 @@ $script:AtlasToolsManifest = '{
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": [
+          "Get-LocalUser",
+          "Get-LocalGroupMember"
+        ]
       }
     },
     {
@@ -586,6 +701,10 @@ $script:AtlasToolsManifest = '{
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -608,6 +727,10 @@ $script:AtlasToolsManifest = '{
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": []
       }
     },
     {
@@ -630,12 +753,18 @@ $script:AtlasToolsManifest = '{
           "PS7",
           "Release"
         ]
+      },
+      "availability": {
+        "minimumBuild": 19044,
+        "commands": [
+          "Get-LocalUser"
+        ]
       }
     }
   ]
 }
 '
-$script:AtlasToolHashesJson = '{"generatedAt":"2026-10-24","algorithm":"SHA256","files":{"Invoke-AIReadiness.ps1":"8a0c2ca9e4e20ed8aa1d99a11afce64ecbdb84cd6466e8a95d1ca0e46b581000","Invoke-ActualizarPowerShell.ps1":"58d41edc086c4d35db882f508a9f9efaaccb06cc2dfa7f207cc9fc7520f85b7d","Invoke-AuditoriaRouter.ps1":"6500c6bfdc3f37e19ba3a66e3c6d348d0c9a50e782859918e10fc2ed344df8f6","Invoke-Deduplicador.ps1":"b48df614411e9ace66f0c774ded389d1146fdc5c9f40867e92c15ad8bf0a5e3b","Invoke-DiagnosticoEventos.ps1":"d8bcd80253e7118747e819618f8814729d615ff2fc359d7740ccad97b9c6cb1b","Invoke-DiagnosticoMaster.ps1":"55b07593b743e653bbe47f887710edb2392c13e2811bdc755e62855f077c79f5","Invoke-EntregaPC.ps1":"862a6547eff9d9de6c7f941ea9baa7ca44ddd18414bfbbc187a2d8999dcf713a","Invoke-ExtraerLicencias.ps1":"03310f849ee3d4c826a984565aa9e6b51a0bca57f9f450d4c302eb8e97500f22","Invoke-Fase0.ps1":"87f903655a9873823f44091b8adf696242556e2332a26183bea67618d07cf41a","Invoke-FastCopy.ps1":"22c76639e7c2208a98d68446f2864ee6171dc7aabbca16de70e18c715b16e0e8","Invoke-GPUCheck.ps1":"ffe1f161d80a4425373d98fa50ef1aa4fa0aa2f08bada158df0a15b0b0233ec0","Invoke-GestorBitLocker.ps1":"93969ccbf4b2810c7e8f480c58de5af4e0d96d6c979eda8a1ac44bf14bd453a9","Invoke-HostsManager.ps1":"fe26ffe69919dc72b3cce423df40364e597caf387c72ce5e7d961ba42eba6e35","Invoke-InstalarMicrosoftStore.ps1":"a96e3adf0507b6d0fa9ea4777e0141dda0c29f067e8e1dfcfa487c0b17a8105d","Invoke-InstalarPaquetes.ps1":"ac22a9f4eea505a5548344a6f8022528bed73e451f5f930c7cb89d67f72f6129","Invoke-InstalarRuntimes.ps1":"141b92b26d1f99ec712a7e67085629f63218595b969fcede54f072332877d5a3","Invoke-KeyboardDoctor.ps1":"f4e2e484b3b08ccbc3d829b3893df82719943f6dc226f0e26dc72d0203cd5660","Invoke-MantenimientoPRO.ps1":"475d9f7dd1cc3c7e26ee4afac6b0e698e65644216796a8fbb7a440ff323ce245","Invoke-MenorPrivilegio.ps1":"93d6d30992dc2abb8cc9b044c2c9f457feff87011431238a9d47ecf683da435c","Invoke-PartsUpgrade.ps1":"d8703a7ff9a2c6cc8aa42caedc4457451174b0ae0c6fa70d7b8a76038c03d3be","Invoke-Personalizacion.ps1":"0212b1ac489832ac2d87242849dbd7be5e2a96ef80604f272a2f586d05cde5e3","Invoke-PrepararUSB.ps1":"a8bd74fb81de958dac0a3525919731dddfcb2006a43cad61b9561eaf42a06507","Invoke-PrinterDoctor.ps1":"fe78e343744f8182427a6c157f54e7a24185fe950dba86ca193bd02541a243d2","Invoke-RespaldoControladores.ps1":"eb813133976f704c216e1fd8280d3869384040c67ee51fa72a007501edebedb5","Invoke-Robocopy.ps1":"29f5abf91d82946d6fd7ffd7786de8165ad3e481e7075e7654fd4071328f0a7a","Invoke-SelectorDNS.ps1":"71ed1eb9a2087f02c7f2810dd25f819a6dcfb8d9a897fbcc9de1a12341bf4e94","Invoke-StopServices.ps1":"04013323966c6326b13567a265001a74731ab3bf28c9264b6c7348a4441d56fe"}}'
+$script:AtlasToolHashesJson = '{"generatedAt":"2026-10-24","algorithm":"SHA256","files":{"Invoke-AIReadiness.ps1":"8a0c2ca9e4e20ed8aa1d99a11afce64ecbdb84cd6466e8a95d1ca0e46b581000","Invoke-ActualizarPowerShell.ps1":"58d41edc086c4d35db882f508a9f9efaaccb06cc2dfa7f207cc9fc7520f85b7d","Invoke-AuditoriaRouter.ps1":"6500c6bfdc3f37e19ba3a66e3c6d348d0c9a50e782859918e10fc2ed344df8f6","Invoke-Deduplicador.ps1":"b48df614411e9ace66f0c774ded389d1146fdc5c9f40867e92c15ad8bf0a5e3b","Invoke-DiagnosticoEventos.ps1":"d8bcd80253e7118747e819618f8814729d615ff2fc359d7740ccad97b9c6cb1b","Invoke-DiagnosticoMaster.ps1":"55b07593b743e653bbe47f887710edb2392c13e2811bdc755e62855f077c79f5","Invoke-EntregaPC.ps1":"862a6547eff9d9de6c7f941ea9baa7ca44ddd18414bfbbc187a2d8999dcf713a","Invoke-ExtraerLicencias.ps1":"03310f849ee3d4c826a984565aa9e6b51a0bca57f9f450d4c302eb8e97500f22","Invoke-Fase0.ps1":"87f903655a9873823f44091b8adf696242556e2332a26183bea67618d07cf41a","Invoke-FastCopy.ps1":"22c76639e7c2208a98d68446f2864ee6171dc7aabbca16de70e18c715b16e0e8","Invoke-GPUCheck.ps1":"ffe1f161d80a4425373d98fa50ef1aa4fa0aa2f08bada158df0a15b0b0233ec0","Invoke-GestorBitLocker.ps1":"93969ccbf4b2810c7e8f480c58de5af4e0d96d6c979eda8a1ac44bf14bd453a9","Invoke-HostsManager.ps1":"fe26ffe69919dc72b3cce423df40364e597caf387c72ce5e7d961ba42eba6e35","Invoke-InstalarMicrosoftStore.ps1":"d2d73a1a359585c13e09cf2eafe89fe588d5cdb9a89872730ab7a4e9de5a09de","Invoke-InstalarPaquetes.ps1":"0bca7d0507716cd2f2928b9cd0d7bde6b5234c2737deb8dc932e893f6db1b5a5","Invoke-InstalarRuntimes.ps1":"b21d419e5cfb2b60b2aded4f2332b9e72d216b307f6349a2e758dca58de66ad8","Invoke-KeyboardDoctor.ps1":"f4e2e484b3b08ccbc3d829b3893df82719943f6dc226f0e26dc72d0203cd5660","Invoke-MantenimientoPRO.ps1":"475d9f7dd1cc3c7e26ee4afac6b0e698e65644216796a8fbb7a440ff323ce245","Invoke-MenorPrivilegio.ps1":"93d6d30992dc2abb8cc9b044c2c9f457feff87011431238a9d47ecf683da435c","Invoke-PartsUpgrade.ps1":"d8703a7ff9a2c6cc8aa42caedc4457451174b0ae0c6fa70d7b8a76038c03d3be","Invoke-Personalizacion.ps1":"52b06a32f2bc95f3144d3c973bd689428adbdcbf44f9f6ea480e429f3d774212","Invoke-PrepararUSB.ps1":"a8bd74fb81de958dac0a3525919731dddfcb2006a43cad61b9561eaf42a06507","Invoke-PrinterDoctor.ps1":"fe78e343744f8182427a6c157f54e7a24185fe950dba86ca193bd02541a243d2","Invoke-RespaldoControladores.ps1":"eb813133976f704c216e1fd8280d3869384040c67ee51fa72a007501edebedb5","Invoke-Robocopy.ps1":"29f5abf91d82946d6fd7ffd7786de8165ad3e481e7075e7654fd4071328f0a7a","Invoke-SelectorDNS.ps1":"13ac31eb16b7884089d36d27f429ca918e8785ce92f5c4c01d634de2ff7b1459","Invoke-StopServices.ps1":"04013323966c6326b13567a265001a74731ab3bf28c9264b6c7348a4441d56fe"}}'
 $script:AtlasXamlTemplate = '<Window
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -3584,6 +3713,92 @@ function Start-AtlasRelease {
     $process = Start-Process -FilePath $engine -ArgumentList $arguments -NoNewWindow -Wait -PassThru -ErrorAction Stop
     if ($process.ExitCode -ne 0) { throw "Atlas launcher exited with code $($process.ExitCode)." }
 }
+
+
+# ---- lib/Capabilities ----
+# Platform facts are collected read-only. Build and capabilities, never ProductName alone.
+function Resolve-AtlasPlatform {
+    [CmdletBinding()]
+    param([int]$Build, [string]$EditionId, [int]$ProductType = 1, [string]$Architecture, [string[]]$Commands = @())
+    $client = $ProductType -eq 1
+    $baseline = $client -and $Build -ge 19044 -and $Architecture -eq ''x64''
+    $is11 = $client -and $Build -ge 22000
+    $ltsc = $EditionId -match ''EnterpriseS|IoTEnterpriseS''
+    [pscustomobject]@{
+        Build=$Build; EditionId=$EditionId; Architecture=$Architecture; Client=$client
+        Windows11=$is11; LTSC=$ltsc; Baseline=$baseline
+        SupportProfile= $(if (-not $baseline) {''Outside tested target''} elseif ($ltsc) {''LTSC capability-dependent''} elseif ($is11) {''Windows 11''} else {''Windows 10 22H2/LTSC target; VM qualification pending''})
+        NativeDoh=($is11 -and $Commands -contains ''Get-DnsClientDohServerAddress'' -and $Commands -contains ''Set-DnsClientDohServerAddress'')
+        BitLocker=($EditionId -notmatch ''^Core'' -and $Commands -contains ''Get-BitLockerVolume'' -and $Commands -contains ''Enable-BitLocker'')
+        Commands=@($Commands)
+    }
+}
+
+function Get-AtlasPlatformCapabilities {
+    [CmdletBinding()]
+    param([switch]$Refresh)
+    if ($script:AtlasPlatformCapabilities -and -not $Refresh) { return $script:AtlasPlatformCapabilities }
+    $os = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction Stop
+    $edition = (Get-ItemProperty -LiteralPath ''HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion'' -Name EditionID -ErrorAction Stop).EditionID
+    $architecture = if ($env:PROCESSOR_ARCHITEW6432) { $env:PROCESSOR_ARCHITEW6432 } else { $env:PROCESSOR_ARCHITECTURE }
+    $architecture = switch ($architecture) { ''AMD64'' {''x64''} ''ARM64'' {''arm64''} default {''x86''} }
+    $names = @(''Get-CimInstance'',''Get-WinEvent'',''Get-NetAdapter'',''Get-DnsClientServerAddress'',''Set-DnsClientServerAddress'',''Get-DnsClientDohServerAddress'',''Set-DnsClientDohServerAddress'',''Get-BitLockerVolume'',''Enable-BitLocker'',''Get-LocalUser'',''Get-LocalGroupMember'',''Get-AppxPackage'',''Add-AppxPackage'',''Get-WindowsOptionalFeature'',''Enable-WindowsOptionalFeature'',''Export-WindowsDriver'',''robocopy.exe'',''netsh.exe'',''dism.exe'',''sfc.exe'')
+    $available = @($names | Where-Object { Get-Command $_ -ErrorAction SilentlyContinue })
+    $script:AtlasPlatformCapabilities = Resolve-AtlasPlatform -Build ([int]$os.BuildNumber) -EditionId $edition -ProductType ([int]$os.ProductType) -Architecture $architecture -Commands $available
+    return $script:AtlasPlatformCapabilities
+}
+
+function Test-AtlasToolAvailability {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][hashtable]$Tool, $Capabilities)
+    if (-not $Capabilities) { $Capabilities = Get-AtlasPlatformCapabilities }
+    $reasons = @()
+    if ($Tool.availability -and $Tool.availability.disabledReason) { $reasons += [string]$Tool.availability.disabledReason }
+    if (-not $Capabilities.Baseline) { $reasons += ''Requires a Windows client build 19044+ on x64; this platform is outside the current target.'' }
+    if ($Tool.availability.minimumBuild -and $Capabilities.Build -lt [int]$Tool.availability.minimumBuild) { $reasons += "Requires build $($Tool.availability.minimumBuild) or newer." }
+    foreach ($name in @($Tool.availability.commands)) {
+        if ($name -and $Capabilities.Commands -notcontains $name) { $reasons += "Missing Windows capability: $name" }
+    }
+    if ($Tool.id -eq ''gestor-bitlocker'' -and -not $Capabilities.BitLocker) { $reasons += ''Full BitLocker management is unavailable for this edition/modules. Device Encryption is managed in Windows Settings.'' }
+    [pscustomobject]@{ Available=($reasons.Count -eq 0); Reason=($reasons -join '' ''); Profile=$Capabilities.SupportProfile }
+}
+
+function Assert-AtlasPackageRequest {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)]$Package, [int]$Build)
+    if ($Package.Type -eq ''Action'') { throw ''Maintenance actions cannot be installed as packages.'' }
+    if ([string]$Package.Id -cnotmatch ''^[A-Za-z0-9][A-Za-z0-9._+-]{0,199}$'') { throw ''Invalid package identifier; options and whitespace are not allowed.'' }
+    if ($Package.Source -and $Package.Source -cnotin @(''winget'',''msstore'')) { throw ''Unsupported package source.'' }
+    if ($Build -lt 19044) { throw ''Package installation is outside the supported Windows baseline.'' }
+    if ($Package.MinimumBuild -and $Build -lt [int]$Package.MinimumBuild) { throw ''Package requires a newer Windows build.'' }
+}
+
+function Get-AtlasStoreState {
+    [CmdletBinding()]
+    param()
+    $platform = Get-AtlasPlatformCapabilities
+    $store = $null; $provisioned = $null; $errorMessage = $null
+    try { $store = Get-AppxPackage -Name Microsoft.WindowsStore -ErrorAction Stop } catch { $errorMessage=$_.Exception.Message }
+    if (-not $store) {
+        try { $provisioned = @(Get-AppxPackage -AllUsers -Name Microsoft.WindowsStore -ErrorAction Stop) | Select-Object -First 1 }
+        catch { $errorMessage=$_.Exception.Message }
+    }
+    $blocked = $false
+    foreach ($path in @(''HKLM:\SOFTWARE\Policies\Microsoft\WindowsStore'',''HKCU:\SOFTWARE\Policies\Microsoft\WindowsStore'')) {
+        if (Test-Path -LiteralPath $path) {
+            $policy = Get-ItemProperty -LiteralPath $path -ErrorAction Stop
+            if ($policy.RemoveWindowsStore -eq 1 -or $policy.DisableStoreApps -eq 1) { $blocked=$true }
+        }
+    }
+    $appInstaller = $null
+    try { $appInstaller=Get-AppxPackage -Name Microsoft.DesktopAppInstaller -ErrorAction Stop } catch { $errorMessage=$_.Exception.Message }
+    [pscustomobject]@{
+        State=$(if($blocked){''BlockedByPolicy''} elseif($store){''RegisteredForCurrentUser''} elseif($provisioned){''PresentNotRegisteredForCurrentUser''} elseif($errorMessage){''NotEvaluated''} else {''NotInstalled''})
+        Store=$store; ExistingPackage=$provisioned; AppInstaller=$appInstaller
+        WingetAvailable=[bool](Get-Command winget.exe -ErrorAction SilentlyContinue)
+        LTSC=$platform.LTSC; Error=$errorMessage
+    }
+}
 '
 
 # ---- lib/Branding ----
@@ -5514,6 +5729,92 @@ function Start-AtlasRelease {
 }
 
 
+# ---- lib/Capabilities ----
+# Platform facts are collected read-only. Build and capabilities, never ProductName alone.
+function Resolve-AtlasPlatform {
+    [CmdletBinding()]
+    param([int]$Build, [string]$EditionId, [int]$ProductType = 1, [string]$Architecture, [string[]]$Commands = @())
+    $client = $ProductType -eq 1
+    $baseline = $client -and $Build -ge 19044 -and $Architecture -eq 'x64'
+    $is11 = $client -and $Build -ge 22000
+    $ltsc = $EditionId -match 'EnterpriseS|IoTEnterpriseS'
+    [pscustomobject]@{
+        Build=$Build; EditionId=$EditionId; Architecture=$Architecture; Client=$client
+        Windows11=$is11; LTSC=$ltsc; Baseline=$baseline
+        SupportProfile= $(if (-not $baseline) {'Outside tested target'} elseif ($ltsc) {'LTSC capability-dependent'} elseif ($is11) {'Windows 11'} else {'Windows 10 22H2/LTSC target; VM qualification pending'})
+        NativeDoh=($is11 -and $Commands -contains 'Get-DnsClientDohServerAddress' -and $Commands -contains 'Set-DnsClientDohServerAddress')
+        BitLocker=($EditionId -notmatch '^Core' -and $Commands -contains 'Get-BitLockerVolume' -and $Commands -contains 'Enable-BitLocker')
+        Commands=@($Commands)
+    }
+}
+
+function Get-AtlasPlatformCapabilities {
+    [CmdletBinding()]
+    param([switch]$Refresh)
+    if ($script:AtlasPlatformCapabilities -and -not $Refresh) { return $script:AtlasPlatformCapabilities }
+    $os = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction Stop
+    $edition = (Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion' -Name EditionID -ErrorAction Stop).EditionID
+    $architecture = if ($env:PROCESSOR_ARCHITEW6432) { $env:PROCESSOR_ARCHITEW6432 } else { $env:PROCESSOR_ARCHITECTURE }
+    $architecture = switch ($architecture) { 'AMD64' {'x64'} 'ARM64' {'arm64'} default {'x86'} }
+    $names = @('Get-CimInstance','Get-WinEvent','Get-NetAdapter','Get-DnsClientServerAddress','Set-DnsClientServerAddress','Get-DnsClientDohServerAddress','Set-DnsClientDohServerAddress','Get-BitLockerVolume','Enable-BitLocker','Get-LocalUser','Get-LocalGroupMember','Get-AppxPackage','Add-AppxPackage','Get-WindowsOptionalFeature','Enable-WindowsOptionalFeature','Export-WindowsDriver','robocopy.exe','netsh.exe','dism.exe','sfc.exe')
+    $available = @($names | Where-Object { Get-Command $_ -ErrorAction SilentlyContinue })
+    $script:AtlasPlatformCapabilities = Resolve-AtlasPlatform -Build ([int]$os.BuildNumber) -EditionId $edition -ProductType ([int]$os.ProductType) -Architecture $architecture -Commands $available
+    return $script:AtlasPlatformCapabilities
+}
+
+function Test-AtlasToolAvailability {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][hashtable]$Tool, $Capabilities)
+    if (-not $Capabilities) { $Capabilities = Get-AtlasPlatformCapabilities }
+    $reasons = @()
+    if ($Tool.availability -and $Tool.availability.disabledReason) { $reasons += [string]$Tool.availability.disabledReason }
+    if (-not $Capabilities.Baseline) { $reasons += 'Requires a Windows client build 19044+ on x64; this platform is outside the current target.' }
+    if ($Tool.availability.minimumBuild -and $Capabilities.Build -lt [int]$Tool.availability.minimumBuild) { $reasons += "Requires build $($Tool.availability.minimumBuild) or newer." }
+    foreach ($name in @($Tool.availability.commands)) {
+        if ($name -and $Capabilities.Commands -notcontains $name) { $reasons += "Missing Windows capability: $name" }
+    }
+    if ($Tool.id -eq 'gestor-bitlocker' -and -not $Capabilities.BitLocker) { $reasons += 'Full BitLocker management is unavailable for this edition/modules. Device Encryption is managed in Windows Settings.' }
+    [pscustomobject]@{ Available=($reasons.Count -eq 0); Reason=($reasons -join ' '); Profile=$Capabilities.SupportProfile }
+}
+
+function Assert-AtlasPackageRequest {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)]$Package, [int]$Build)
+    if ($Package.Type -eq 'Action') { throw 'Maintenance actions cannot be installed as packages.' }
+    if ([string]$Package.Id -cnotmatch '^[A-Za-z0-9][A-Za-z0-9._+-]{0,199}$') { throw 'Invalid package identifier; options and whitespace are not allowed.' }
+    if ($Package.Source -and $Package.Source -cnotin @('winget','msstore')) { throw 'Unsupported package source.' }
+    if ($Build -lt 19044) { throw 'Package installation is outside the supported Windows baseline.' }
+    if ($Package.MinimumBuild -and $Build -lt [int]$Package.MinimumBuild) { throw 'Package requires a newer Windows build.' }
+}
+
+function Get-AtlasStoreState {
+    [CmdletBinding()]
+    param()
+    $platform = Get-AtlasPlatformCapabilities
+    $store = $null; $provisioned = $null; $errorMessage = $null
+    try { $store = Get-AppxPackage -Name Microsoft.WindowsStore -ErrorAction Stop } catch { $errorMessage=$_.Exception.Message }
+    if (-not $store) {
+        try { $provisioned = @(Get-AppxPackage -AllUsers -Name Microsoft.WindowsStore -ErrorAction Stop) | Select-Object -First 1 }
+        catch { $errorMessage=$_.Exception.Message }
+    }
+    $blocked = $false
+    foreach ($path in @('HKLM:\SOFTWARE\Policies\Microsoft\WindowsStore','HKCU:\SOFTWARE\Policies\Microsoft\WindowsStore')) {
+        if (Test-Path -LiteralPath $path) {
+            $policy = Get-ItemProperty -LiteralPath $path -ErrorAction Stop
+            if ($policy.RemoveWindowsStore -eq 1 -or $policy.DisableStoreApps -eq 1) { $blocked=$true }
+        }
+    }
+    $appInstaller = $null
+    try { $appInstaller=Get-AppxPackage -Name Microsoft.DesktopAppInstaller -ErrorAction Stop } catch { $errorMessage=$_.Exception.Message }
+    [pscustomobject]@{
+        State=$(if($blocked){'BlockedByPolicy'} elseif($store){'RegisteredForCurrentUser'} elseif($provisioned){'PresentNotRegisteredForCurrentUser'} elseif($errorMessage){'NotEvaluated'} else {'NotInstalled'})
+        Store=$store; ExistingPackage=$provisioned; AppInstaller=$appInstaller
+        WingetAvailable=[bool](Get-Command winget.exe -ErrorAction SilentlyContinue)
+        LTSC=$platform.LTSC; Error=$errorMessage
+    }
+}
+
+
 # ============================================================
 # Atlas PC Support - Tool runner
 # Ejecuta una herramienta en una nueva ventana de PowerShell.
@@ -5705,6 +6006,8 @@ function Invoke-AtlasTool {
     )
 
     Invoke-AtlasRunnerTempCleanup
+    $availability = Test-AtlasToolAvailability -Tool $Tool
+    if (-not $availability.Available) { throw $availability.Reason }
     Write-AtlasLog "Ejecutando: $($Tool.name) [$($Tool.id)]" -Tool 'Runner'
 
     $function = $Tool.function
@@ -5771,6 +6074,10 @@ function Invoke-AtlasTool {
     [void]$sb.AppendLine("`$atlasContext = '" + $context.Replace("'", "''") + "' | ConvertFrom-Json")
     [void]$sb.AppendLine('foreach ($entry in $atlasContext.PSObject.Properties) { Set-Variable -Name $entry.Name -Value $entry.Value -Scope Script }')
     [void]$sb.AppendLine('$env:ATLAS_OFFLINE_ROOT = $script:AtlasOfflineRoot')
+    $toolContract = $Tool | ConvertTo-Json -Depth 12 -Compress
+    [void]$sb.AppendLine("`$atlasToolContract = ConvertFrom-AtlasJson '" + $toolContract.Replace("'", "''") + "'")
+    [void]$sb.AppendLine('$availability = Test-AtlasToolAvailability -Tool $atlasToolContract -Capabilities (Get-AtlasPlatformCapabilities -Refresh)')
+    [void]$sb.AppendLine('if (-not $availability.Available) { throw $availability.Reason }')
     [void]$sb.AppendLine($toolSource)
     [void]$sb.AppendLine('')
     [void]$sb.AppendLine('$atlasToolExitCode = 0')
@@ -6087,6 +6394,12 @@ function New-AtlasToolCard {
 
     $adminBadge = if ($Tool.requiresAdmin) { (Get-AtlasString 'badge.requiresAdmin') } else { "" }
     $btnRunText = Get-AtlasString 'button.run'
+    $availability = if ($Tool.ContainsKey('_availability')) { $Tool._availability } else { $null }
+    if ($availability -and -not $availability.Available) {
+        $xaml = $xaml.Replace("x:Name='BtnRun'", "x:Name='BtnRun' IsEnabled='False' ToolTip='" + [Security.SecurityElement]::Escape($availability.Reason) + "'")
+        $xaml = $xaml.Replace("Text='{{DESCRIPTION}}'", "Text='{{DESCRIPTION}}' ToolTip='" + [Security.SecurityElement]::Escape($availability.Reason) + "'")
+        $btnRunText = if ($script:AtlasCurrentLang -eq 'es') { 'No disponible' } else { 'Unavailable' }
+    }
 
     $xaml = $xaml.Replace('{{ICON}}', $icon).
                   Replace('{{NAME}}', [System.Security.SecurityElement]::Escape($Tool.name)).
@@ -6624,6 +6937,8 @@ function Show-AtlasWindow {
     # Renderizar tools
     $script:AllCards = @()
     foreach ($tool in $Tools) {
+        try { $tool._availability = Test-AtlasToolAvailability -Tool $tool }
+        catch { $tool._availability = [pscustomobject]@{ Available=$false; Reason="Platform could not be evaluated: $_" } }
         $cardXaml = New-AtlasToolCard -Tool $tool -Branding $Branding -Palette $palette
         [xml]$cardDoc = $cardXaml
         $cardReader = New-Object System.Xml.XmlNodeReader $cardDoc
