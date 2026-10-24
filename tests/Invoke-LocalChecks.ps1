@@ -5,7 +5,7 @@
 .DESCRIPTION
     Requires Pester 5.8.0 and PSScriptAnalyzer 1.25.0 already installed.
     Rebuilds only an isolated copy. Reports remain in a new temporary directory.
-    -IncludeKnownIssues runs pending acceptance tests and fails until fixed.
+    -IncludeKnownIssues also runs any pending acceptance tests when that file exists.
 #>
 [CmdletBinding()]
 param([switch]$IncludeKnownIssues)
@@ -53,8 +53,16 @@ $findings | Select-Object ScriptName, Line, Severity, RuleName, Message |
 Write-Host "PSScriptAnalyzer: $($errors.Count) errors; $(@($findings | Where-Object Severity -eq 'Warning').Count) warnings."
 if ($errors.Count) { $errors | Format-Table -AutoSize | Out-Host; throw 'Script analyzer errors found.' }
 
-$testPaths = @((Join-Path $PSScriptRoot 'Lib.Tests.ps1'), (Join-Path $PSScriptRoot 'Platform.Tests.ps1'))
-if ($IncludeKnownIssues) { $testPaths += (Join-Path $PSScriptRoot 'KnownIssues.Tests.ps1') }
+$testPaths = @(
+    (Join-Path $PSScriptRoot 'Lib.Tests.ps1'),
+    (Join-Path $PSScriptRoot 'Platform.Tests.ps1'),
+    (Join-Path $PSScriptRoot 'Accounts.Tests.ps1'),
+    (Join-Path $PSScriptRoot 'Installers.Tests.ps1'),
+    (Join-Path $PSScriptRoot 'BitLocker.Tests.ps1'),
+    (Join-Path $PSScriptRoot 'Execution.Tests.ps1')
+)
+$knownIssuesPath = Join-Path $PSScriptRoot 'KnownIssues.Tests.ps1'
+if ($IncludeKnownIssues -and (Test-Path -LiteralPath $knownIssuesPath)) { $testPaths += $knownIssuesPath }
 $config = New-PesterConfiguration
 $config.Run.Path = $testPaths
 $config.Run.PassThru = $true
@@ -81,6 +89,6 @@ $summary = [ordered]@{
 $summary | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $reportDir 'summary.json') -Encoding UTF8
 Write-Host "Reports saved: $reportDir"
 if ($result.Result -ne 'Passed') { throw 'Pester failed. Inspect pester.xml and the diagnostics above.' }
-if (-not $IncludeKnownIssues) {
+if (-not $IncludeKnownIssues -and (Test-Path -LiteralPath $knownIssuesPath)) {
     Write-Warning 'Baseline only: known critical acceptance tests are not included. This does not approve a release.'
 }

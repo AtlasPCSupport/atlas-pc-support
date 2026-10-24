@@ -32,12 +32,22 @@ function Invoke-EntregaPC {
             CfgUser      = '--- CONFIGURING CURRENT USER: [{0}] ---'
             CancelHint   = "   (Type '0' at any time to cancel and go back)"
             AskFullName  = "   -> Customer's full name"
-            AskPwdHint   = '   -> Password (type blindly and press ENTER. Leave blank to NOT use a password)'
+            AskPwdHint   = '   -> Password (blank: unchanged when editing; allowed only for new standard accounts)'
             AskPwdLbl    = '      Password'
             UpdName      = '   [OK] Display name updated to: {0}'
             UpdPwd       = '   [OK] Password set.'
-            NoPwd        = '   [OK] Account kept without a password.'
+            NoPwd        = '   [i] Existing password unchanged.'
             ErrFmt       = '   [ERROR] {0}'
+            AdminNeedsPwd = 'Administrator accounts require a non-empty password.'
+            BadRole      = 'Choose Y/S for administrator or N for standard user.'
+            ReloadPanel  = 'Close and reopen the current Atlas panel before changing accounts.'
+            TokenAccount = '   Account used by this window: {0}. Elevation with another login changes this account.'
+            PartialUser  = 'Account {0} was created, but its group setup could not be completed.'
+            SystemUser   = 'Built-in Windows accounts cannot be deleted by this tool.'
+            CurrentUser  = 'The account used by this window cannot be deleted.'
+            PwdResetWarn = 'Resetting a password can affect EFS, certificates and saved credentials. Verify recovery first.'
+            PwdResetConfirm = "Type RESET to set a new password for '{0}' (anything else cancels)"
+            PwdResetWord = 'RESET'
             ReturnHint   = "`n   Press ENTER to return to the main menu..."
             CreateUser   = '--- CREATING NEW USER ---'
             AskNewLogon  = '   -> Internal account name (e.g. jorge, no spaces)'
@@ -154,12 +164,22 @@ function Invoke-EntregaPC {
             CfgUser      = '--- CONFIGURANDO USUARIO ACTUAL: [{0}] ---'
             CancelHint   = "   (Escriba '0' en cualquier momento para cancelar y volver)"
             AskFullName  = '   -> Nombre y apellido del cliente'
-            AskPwdHint   = '   -> Contrasena (Escriba a ciegas y presione ENTER. Deje en blanco para NO usar clave)'
+            AskPwdHint   = '   -> Contrasena (vacia: no cambia al editar; permitida solo en nuevas cuentas estandar)'
             AskPwdLbl    = '      Clave'
             UpdName      = '   [OK] Nombre actualizado a: {0}'
             UpdPwd       = '   [OK] Contrasena establecida.'
-            NoPwd        = '   [OK] El usuario se mantiene sin contrasena.'
+            NoPwd        = '   [i] La contrasena existente no se modifico.'
             ErrFmt       = '   [ERROR] {0}'
+            AdminNeedsPwd = 'Una cuenta administradora necesita una contrasena no vacia.'
+            BadRole      = 'Elige S/Y para administrador o N para usuario estandar.'
+            ReloadPanel  = 'Cierra y vuelve a abrir el panel Atlas actualizado antes de cambiar cuentas.'
+            TokenAccount = '   Cuenta usada por esta ventana: {0}. Al elevar con otro usuario, esta es su cuenta.'
+            PartialUser  = 'La cuenta {0} se creo, pero no se pudo completar su asignacion de grupo.'
+            SystemUser   = 'Esta herramienta no permite eliminar cuentas integradas de Windows.'
+            CurrentUser  = 'No se puede eliminar la cuenta usada por esta ventana.'
+            PwdResetWarn = 'Restablecer la clave puede afectar EFS, certificados y credenciales guardadas. Verifica la recuperacion.'
+            PwdResetConfirm = "Escribe CAMBIAR para establecer la clave de '{0}' (otra respuesta cancela)"
+            PwdResetWord = 'CAMBIAR'
             ReturnHint   = "`n   Presione ENTER para volver al menu principal..."
             CreateUser   = '--- CREANDO NUEVO USUARIO ---'
             AskNewLogon  = '   -> Nombre interno de la cuenta (ej. jorge, sin espacios)'
@@ -328,8 +348,18 @@ function Mostrar-Encabezado {
 }
 
 function Modificar-UsuarioActual {
-    $userName = $env:USERNAME
+    try {
+        if (-not (Get-Command Get-AtlasCurrentUserSid -ErrorAction SilentlyContinue)) { throw $L.ReloadPanel }
+        $user = Get-LocalUser -SID (Get-AtlasCurrentUserSid) -ErrorAction Stop
+        if (-not $user.SID) { throw 'The account used by this window is not a verified local account.' }
+        $userName = $user.Name
+    } catch {
+        Write-Host ($L.ErrFmt -f $_.Exception.Message) -ForegroundColor Red
+        Wait-AtlasReturn -Message $L.ReturnHint
+        return
+    }
     Escribir-Centrado ($L.CfgUser -f $userName) "Cyan"
+    Write-Host ($L.TokenAccount -f $userName) -ForegroundColor Yellow
     Write-Host ""
     Write-Host $L.CancelHint -ForegroundColor DarkGray
     Write-Host ""
@@ -342,11 +372,14 @@ function Modificar-UsuarioActual {
 
     try {
         if (![string]::IsNullOrWhiteSpace($newDisplayName)) {
-            Set-LocalUser -Name $userName -FullName $newDisplayName
+            Set-LocalUser -SID $user.SID -FullName $newDisplayName -ErrorAction Stop
             Write-Host ("`n" + ($L.UpdName -f $newDisplayName)) -ForegroundColor Green
         }
         if ($securePassword.Length -gt 0) {
-            Set-LocalUser -Name $userName -Password $securePassword
+            Write-Host $L.PwdResetWarn -ForegroundColor Yellow
+            $confirm = Read-Host ($L.PwdResetConfirm -f $userName)
+            if ($confirm -ne $L.PwdResetWord) { return }
+            Set-LocalUser -SID $user.SID -Password $securePassword -ErrorAction Stop
             Write-Host $L.UpdPwd -ForegroundColor Green
         } else {
             Write-Host ("`n" + $L.NoPwd) -ForegroundColor Green
@@ -374,25 +407,40 @@ function Crear-NuevoUsuario {
 
     $esAdmin = Read-Host $L.AskAdmin
     if ($esAdmin -eq "0") { return }
+    $esAdmin = ([string]$esAdmin).Trim()
+    if ($esAdmin -notmatch '^[sSyYnN]$') {
+        Write-Host $L.BadRole -ForegroundColor Red
+        Wait-AtlasReturn -Message $L.ReturnHint
+        return
+    }
+    $makeAdmin = $esAdmin -match '^[sSyY]$'
+    if ($makeAdmin -and $securePassword.Length -eq 0) {
+        Write-Host $L.AdminNeedsPwd -ForegroundColor Red
+        Wait-AtlasReturn -Message $L.ReturnHint
+        return
+    }
 
+    $createdUser = $null
     try {
         if ($securePassword.Length -gt 0) {
-            New-LocalUser -Name $newUser -FullName $newDisplayName -Password $securePassword -PasswordNeverExpires:$true | Out-Null
+            $createdUser = New-LocalUser -Name $newUser -FullName $newDisplayName -Password $securePassword -PasswordNeverExpires:$true -ErrorAction Stop
         } else {
-            New-LocalUser -Name $newUser -FullName $newDisplayName -NoPassword | Out-Null
+            $createdUser = New-LocalUser -Name $newUser -FullName $newDisplayName -NoPassword -ErrorAction Stop
+        }
+        if (-not $createdUser.SID) { throw 'The new account SID could not be verified.' }
+        $groupSid = if ($makeAdmin) { 'S-1-5-32-544' } else { 'S-1-5-32-545' }
+        $members = @(Get-LocalGroupMember -SID $groupSid -ErrorAction Stop)
+        if ([string]$createdUser.SID -notin @($members | ForEach-Object { [string]$_.SID })) {
+            Add-LocalGroupMember -SID $groupSid -Member ([string]$createdUser.SID) -ErrorAction Stop
+        }
+        $members = @(Get-LocalGroupMember -SID $groupSid -ErrorAction Stop)
+        if ([string]$createdUser.SID -notin @($members | ForEach-Object { [string]$_.SID })) {
+            throw 'The requested group membership could not be verified.'
         }
         Write-Host ("`n" + ($L.UserCreated -f $newUser)) -ForegroundColor Green
-
-        if ($esAdmin -match "^[sSyY]") {
-            $AdminGroup = Get-LocalGroup | Where-Object SID -eq "S-1-5-32-544"
-            Add-LocalGroupMember -Group $AdminGroup -Member $newUser
-            Write-Host $L.GrantedAdm -ForegroundColor Green
-        } else {
-            $UsersGroup = Get-LocalGroup | Where-Object SID -eq "S-1-5-32-545"
-            Add-LocalGroupMember -Group $UsersGroup -Member $newUser
-            Write-Host $L.GrantedStd -ForegroundColor Green
-        }
+        Write-Host $(if ($makeAdmin) { $L.GrantedAdm } else { $L.GrantedStd }) -ForegroundColor Green
     } catch {
+        if ($createdUser.SID) { Write-Host ($L.PartialUser -f $newUser) -ForegroundColor Yellow }
         Write-Host ("`n" + ($L.ErrFmt -f $_.Exception.Message)) -ForegroundColor Red
     }
     Wait-AtlasReturn -Message $L.ReturnHint
@@ -403,7 +451,7 @@ function Get-AtlasLocalUsersList {
         return @(Get-LocalUser -ErrorAction Stop)
     } catch {
         return @(Get-CimInstance Win32_UserAccount -Filter "LocalAccount=True" -ErrorAction SilentlyContinue | ForEach-Object {
-            [pscustomobject]@{ Name = $_.Name; Enabled = -not $_.Disabled; FullName = $_.FullName }
+            [pscustomobject]@{ Name = $_.Name; SID = $_.SID; Enabled = -not $_.Disabled; FullName = $_.FullName }
         })
     }
 }
@@ -440,10 +488,15 @@ function Quitar-UsuarioLocal {
         return
     }
 
-    $targetUser = $users[$index - 1].Name
-
-    if ($targetUser -eq $env:USERNAME) {
-        Write-Host "`n   [!] WARNING: Cannot delete the currently logged-in account ($targetUser)." -ForegroundColor Red
+    $target = $users[$index - 1]
+    $targetUser = $target.Name
+    try {
+        if (-not (Get-Command Assert-AtlasLocalAdminRetention -ErrorAction SilentlyContinue)) { throw $L.ReloadPanel }
+        if (-not $target.SID) { throw 'The selected account SID could not be verified.' }
+        if ([string]$target.SID -eq (Get-AtlasCurrentUserSid)) { throw $L.CurrentUser }
+        if ([string]$target.SID -match '-(500|501|503|504)$') { throw $L.SystemUser }
+    } catch {
+        Write-Host ($L.ErrFmt -f $_.Exception.Message) -ForegroundColor Red
         Wait-AtlasReturn -Message $L.ReturnHint
         return
     }
@@ -456,15 +509,13 @@ function Quitar-UsuarioLocal {
     }
 
     try {
-        Remove-LocalUser -Name $targetUser -ErrorAction Stop
+        Assert-AtlasLocalAdminRetention -TargetSid ([string]$target.SID)
+        Remove-LocalUser -SID $target.SID -ErrorAction Stop
+        $remaining = @(Get-LocalUser -ErrorAction Stop | Where-Object { [string]$_.SID -eq [string]$target.SID })
+        if ($remaining.Count) { throw 'The account still exists after removal.' }
         Write-Host ("`n" + ($L.UserRemovedOk -f $targetUser)) -ForegroundColor Green
     } catch {
-        try {
-            net user "$targetUser" /delete | Out-Null
-            Write-Host ("`n" + ($L.UserRemovedOk -f $targetUser)) -ForegroundColor Green
-        } catch {
-            Write-Host ("`n" + ($L.ErrFmt -f $_.Exception.Message)) -ForegroundColor Red
-        }
+        Write-Host ("`n" + ($L.ErrFmt -f $_.Exception.Message)) -ForegroundColor Red
     }
     Wait-AtlasReturn -Message $L.ReturnHint
 }
@@ -501,19 +552,23 @@ function Cambiar-PasswordUsuario {
         return
     }
 
-    $targetUser = $users[$index - 1].Name
+    $target = $users[$index - 1]
+    $targetUser = $target.Name
 
     Write-Host ($L.AskNewPwdFor -f $targetUser) -ForegroundColor Yellow
     $securePassword = Read-Host $L.AskPwdLbl -AsSecureString
 
     try {
-        if ($securePassword.Length -gt 0) {
-            Set-LocalUser -Name $targetUser -Password $securePassword -ErrorAction Stop
-            Write-Host ("`n" + ($L.PwdChangedOk -f $targetUser)) -ForegroundColor Green
-        } else {
-            Set-LocalUser -Name $targetUser -NoPassword -ErrorAction Stop
-            Write-Host ("`n" + ($L.NoPwdSetOk -f $targetUser)) -ForegroundColor Green
+        if ($securePassword.Length -eq 0) {
+            Write-Host $L.NoPwd -ForegroundColor Yellow
+            return
         }
+        Write-Host $L.PwdResetWarn -ForegroundColor Yellow
+        $confirm = Read-Host ($L.PwdResetConfirm -f $targetUser)
+        if ($confirm -ne $L.PwdResetWord) { return }
+        if (-not $target.SID) { throw 'The selected account SID could not be verified.' }
+        Set-LocalUser -SID $target.SID -Password $securePassword -ErrorAction Stop
+        Write-Host ("`n" + ($L.PwdChangedOk -f $targetUser)) -ForegroundColor Green
     } catch {
         Write-Host ("`n" + ($L.ErrFmt -f $_.Exception.Message)) -ForegroundColor Red
     }
@@ -681,7 +736,7 @@ function Generar-ChecklistEntrega {
             $rk = $v.KeyProtector | Where-Object { $_.KeyProtectorType -eq 'RecoveryPassword' }
             $keys = ''
             foreach ($r in $rk) {
-                $maskedKey = "[Recovery Key Protected - Escrow Active]"
+                $maskedKey = "[Recovery protector present; backup not verified by this report]"
                 if ($r.RecoveryPassword -and $r.RecoveryPassword.Length -gt 6) {
                     $lastChars = $r.RecoveryPassword.Substring($r.RecoveryPassword.Length - 6)
                     $maskedKey = "••••-••••-••••-••••-••••-••••-••••-$lastChars"

@@ -585,7 +585,7 @@ function Invoke-AtlasTool {
         '-NoProfile',
         '-Sta',
         '-ExecutionPolicy', 'RemoteSigned',
-        '-File', $tempScript
+        '-File', ('"{0}"' -f $tempScript)
     )
 
     $startArgs = @{

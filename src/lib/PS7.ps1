@@ -13,7 +13,7 @@
 # ============================================================
 
 # Versiones conocidas de PS 7 (actualizar cuando salga nueva LTS).
-$script:AtlasPS7Version  = '7.5.0'
+$script:AtlasPS7Version  = '7.6.6'
 $script:AtlasPS7UrlX64   = "https://github.com/PowerShell/PowerShell/releases/download/v$($script:AtlasPS7Version)/PowerShell-$($script:AtlasPS7Version)-win-x64.msi"
 $script:AtlasPS7MsiName  = "PowerShell-$($script:AtlasPS7Version)-win-x64.msi"
 $script:AtlasPS7HashesUrl = "https://github.com/PowerShell/PowerShell/releases/download/v$($script:AtlasPS7Version)/hashes.sha256"
@@ -65,7 +65,7 @@ function Find-AtlasPS7OfflineMsi {
 
     foreach ($dir in $searchDirs) {
         if (Test-Path -LiteralPath $dir) {
-            $msi = Get-ChildItem -Path $dir -Filter 'PowerShell-*-win-x64.msi' -ErrorAction SilentlyContinue |
+            $msi = Get-ChildItem -Path $dir -Filter $script:AtlasPS7MsiName -ErrorAction SilentlyContinue |
                 Sort-Object Name -Descending | Select-Object -First 1
             if ($msi) { return $msi.FullName }
         }
@@ -81,23 +81,7 @@ function Get-AtlasPS7ExpectedHash {
     [CmdletBinding()]
     param()
 
-    try {
-        $ProgressPreference = 'SilentlyContinue'
-        $raw = (Invoke-WebRequest -Uri $script:AtlasPS7HashesUrl -UseBasicParsing -TimeoutSec 30 -ErrorAction Stop).Content
-    } catch {
-        throw "No se pudo descargar hashes.sha256 oficial: $($_.Exception.Message)"
-    }
-
-    $line = ($raw -split "`r?`n" | Where-Object { $_ -match [regex]::Escape($script:AtlasPS7MsiName) } | Select-Object -First 1)
-    if (-not $line) {
-        throw "No se encontro hash para $($script:AtlasPS7MsiName) en hashes.sha256."
-    }
-
-    $hash = (($line -split '\s+') | Where-Object { $_ } | Select-Object -First 1).ToLowerInvariant()
-    if ($hash -notmatch '^[a-f0-9]{64}$') {
-        throw "Formato de hash invalido en hashes.sha256."
-    }
-    return $hash
+    return Get-AtlasReleaseFileHash -HashesUrl $script:AtlasPS7HashesUrl -FileName $script:AtlasPS7MsiName
 }
 
 function Test-AtlasFileHash {
@@ -183,8 +167,9 @@ function Install-AtlasPS7 {
         }
         Write-Host "  [OK] Integridad verificada." -ForegroundColor Green
     } else {
-        Write-Host "  [!] No se pudo validar hash del MSI (sin sidecar/local hash)." -ForegroundColor Yellow
+        throw 'No se pudo validar SHA-256 del MSI. Se requiere su archivo .sha256 para instalar sin conexion.'
     }
+    Assert-AtlasInstaller -Path $msi -ExpectedSha256 $expectedHash -MicrosoftSignature
 
     # Instalar silencioso con feature completa
     $msiArgs = @(

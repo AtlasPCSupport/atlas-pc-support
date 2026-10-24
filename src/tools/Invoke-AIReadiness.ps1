@@ -461,7 +461,7 @@ function Invoke-AIReadiness {
         $hasBasicGpu = @($gpuRows | Where-Object { $_.Name -match '(?i)basic display|microsoft basic' }).Count -gt 0
         $hasSsd = @($diskRows | Where-Object { $_.MediaType -match '(?i)ssd|nvme' -or $_.BusType -match '(?i)nvme' }).Count -gt 0
         $hasHddOnly = ($diskRows.Count -gt 0 -and -not $hasSsd)
-        $badDisk = @($diskRows | Where-Object { $_.Health -and $_.Health -notmatch '(?i)^ok$|healthy|unknown' }).Count -gt 0
+        $badDisk = @($diskRows | Where-Object { $_.Health -and $_.Health -notmatch '(?i)^(ok|healthy|unknown)$' }).Count -gt 0
 
         $ollama = Get-AIRCommandState 'ollama'
         $python = Get-AIRCommandState 'python'

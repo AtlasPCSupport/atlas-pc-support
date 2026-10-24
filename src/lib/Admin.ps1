@@ -78,7 +78,7 @@ function Invoke-AsAdmin {
     $psArgs = @(
         "-NoProfile",
         "-ExecutionPolicy", "RemoteSigned",
-        "-File", $tmp
+        "-File", ('"{0}"' -f $tmp)
     )
 
     $startArgs = @{

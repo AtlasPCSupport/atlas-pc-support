@@ -25,28 +25,27 @@ Las fuentes Unicode se leen como UTF-8 y se cargan desde copias con BOM en TestD
 para 5.1; no se altera el encoding de los originales. Esta prueba no certifica la
 invocación directa de fuentes sin BOM ni la descarga del bootstrap.
 
-## Fallos conocidos
+`Accounts.Tests.ps1` es parte de la comprobación obligatoria y del CI. Cubre
+retención de administradores habilitados, identidad por SID, creación y asignación
+de grupo, cancelaciones, contraseñas y errores. Las operaciones de cuentas/procesos
+están bloqueadas por stubs y sustituidas por mocks; no actúan sobre usuarios reales.
 
-Las pruebas de aceptación de `KnownIssues.Tests.ps1` son **rojas hasta que se corrijan
-los defectos**. Se ejecutan por separado de la comprobación básica:
+## Regresiones de la fase 1
 
-```powershell
-rtk proxy pwsh -NoProfile -STA -File ./tests/Invoke-LocalChecks.ps1 -IncludeKnownIssues
-```
+Los cuatro casos rojos de la fase 0 se conservaron en `Accounts.Tests.ps1` y
+`Installers.Tests.ps1`; ahora forman parte del grupo obligatorio y deben pasar.
+Los instaladores son texto ficticio y firma/proceso/red están simulados. Se prueban
+también hash inválido, firma no confiable, resultados nativos y preparación USB.
 
-En la fase 0 hay cuatro casos: MSI sin firma, MSI offline sin hash requerido,
-administrador sin contraseña y degradación con solo otro administrador deshabilitado.
-Usan archivos de texto ficticios y operaciones simuladas, sin instalar ni cambiar
-cuentas. El runner devuelve error cuando una expectativa no se cumple. Una excepción
-de preparación de la prueba debe investigarse y no contarse como reproducción.
+`BitLocker.Tests.ps1` bloquea operaciones reales y comprueba protectores, orden de
+backup antes del cifrado, errores y la escritura/lectura de una clave ficticia en
+TestDrive con discos simulados. `Execution.Tests.ps1` comprueba los argumentos del
+runner real y clasificaciones de diagnóstico sin lanzar las herramientas.
 
-Al corregir cada caso, mover esa prueba al grupo normal de regresión y conservarla
-en CI. No borrar la expectativa ni invertirla para hacer pasar el comportamiento
-defectuoso. BitLocker y los demás casos del backlog requieren pruebas adicionales.
-
-La comprobación básica verde **no autoriza una publicación mientras existan P0**.
-El CI de cliente corre sobre `windows-latest`; se necesita además la matriz real de
-Windows 10 del plan de fase 0.
+`-IncludeKnownIssues` se mantiene compatible: solo añade el fichero de pendientes
+si existe. Ya no hay casos deliberadamente rojos en esta entrega. Esto no sustituye
+la matriz Windows 10 ni una prueba de recuperación BitLocker en VM. El CI de
+cliente corre sobre `windows-latest`.
 
 ## Windows PowerShell iniciado desde PowerShell 7
 

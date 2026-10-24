@@ -101,8 +101,7 @@ jobs:
           Install-Module Pester -Scope CurrentUser -Force -RequiredVersion 5.8.0 -ErrorAction Stop
           Remove-Module Pester -Force -ErrorAction SilentlyContinue
           Import-Module Pester -RequiredVersion 5.8.0 -Force
-          # KnownIssues.Tests.ps1 is a separate, deliberately red acceptance suite.
-          Invoke-Pester -Path ./tests/Lib.Tests.ps1,./tests/Platform.Tests.ps1 -Output Detailed -CI
+          Invoke-Pester -Path ./tests/Lib.Tests.ps1,./tests/Platform.Tests.ps1,./tests/Accounts.Tests.ps1,./tests/Installers.Tests.ps1,./tests/BitLocker.Tests.ps1,./tests/Execution.Tests.ps1 -Output Detailed -CI
 
       - name: Upload built launcher
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

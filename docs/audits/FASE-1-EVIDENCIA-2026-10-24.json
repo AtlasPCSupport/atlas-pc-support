@@ -1,0 +1,86 @@
+{
+  "date": "2026-10-24",
+  "phase": 1,
+  "baseCommit": "a965f5b0202a90ec490bbf5448a5661c99de7cff",
+  "implementationStatus": "implemented; local gates passed; VM qualification pending",
+  "localRuns": [
+    {
+      "Runtime": "7.6.6",
+      "OSVersion": "10.0.26100.0",
+      "Windows10Validated": false,
+      "IncludeKnownIssues": false,
+      "Passed": 95,
+      "Failed": 0,
+      "Skipped": 0,
+      "AnalyzerErrors": 0,
+      "DistributionArtifactsUnchanged": true,
+      "AnalyzerWarnings": 398,
+      "TestCasesBySource": {
+        "Lib.Tests.ps1": 13,
+        "Platform.Tests.ps1": 2,
+        "Accounts.Tests.ps1": 37,
+        "Installers.Tests.ps1": 18,
+        "BitLocker.Tests.ps1": 14,
+        "Execution.Tests.ps1": 11
+      },
+      "PesterVersion": "5.8.0",
+      "PSScriptAnalyzerVersion": "1.25.0"
+    },
+    {
+      "Runtime": "5.1.26100.9711",
+      "OSVersion": "10.0.26100.0",
+      "Windows10Validated": false,
+      "IncludeKnownIssues": false,
+      "Passed": 95,
+      "Failed": 0,
+      "Skipped": 0,
+      "AnalyzerErrors": 0,
+      "DistributionArtifactsUnchanged": true,
+      "AnalyzerWarnings": 383,
+      "TestCasesBySource": {
+        "Lib.Tests.ps1": 13,
+        "Platform.Tests.ps1": 2,
+        "Accounts.Tests.ps1": 37,
+        "Installers.Tests.ps1": 18,
+        "BitLocker.Tests.ps1": 14,
+        "Execution.Tests.ps1": 11
+      },
+      "PesterVersion": "5.8.0",
+      "PSScriptAnalyzerVersion": "1.25.0"
+    }
+  ],
+  "distribution": {
+    "bootstrapUnchangedFromBase": true,
+    "bootstrapSha256": "c26e3e54324f9d686e45642a880c074bb063ecbcc4985aac6c9d516fbdd8f5e2",
+    "launcherSha256": "1f1b9e0c5c359abbf468e1c0842dfbdf3ac2d41396e77f0f8512905149d6f994",
+    "toolManifestSha256": "a6ec3695edd1fccaf018e973b2c43f00ac9877aabefc6b87d5e2594a59645aae",
+    "toolSourcesVerifiedAgainstManifest": 27,
+    "publicVerification": "Required after merge; results to be reported in the delivery message."
+  },
+  "officialMetadataRead": {
+    "url": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.6/hashes.sha256",
+    "file": "PowerShell-7.6.6-win-x64.msi",
+    "sha256": "958838ff55091e1c8705d89efed0cc7e8245a3a6ef6c0ccfae20015227108ad8",
+    "parsedInRuntimes": [
+      "5.1",
+      "7.6.6"
+    ],
+    "encoding": "UTF-16 LE BOM",
+    "installerExecuted": false
+  },
+  "testSafety": {
+    "accountMutations": "mocked",
+    "encryptionAndProtectors": "mocked",
+    "recoveryKeys": "fictitious; temporary TestDrive files only",
+    "installerAndStressExecutions": "stubbed",
+    "wpf": "loaded in STA without showing windows or connecting tool buttons",
+    "defenderConfigurationChanged": false
+  },
+  "pendingQualification": [
+    "Windows 10 VM with actual MSI install and update",
+    "Account operations with alternate elevated identity in a VM",
+    "BitLocker vTPM, reboot and recovery using the verified backup in a VM",
+    "AD/Entra policy, RAID/Storage Spaces, UNC and non-TPM scenarios",
+    "Authenticated immutable Atlas releases and atomic updates in phase 2"
+  ]
+}

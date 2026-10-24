@@ -14,6 +14,80 @@
 #   - Cambios aqui afectan a TODAS las tools: mantener minimo y robusto.
 # ============================================================
 
+function Get-AtlasCurrentUserSid {
+    [CmdletBinding()]
+    [OutputType([string])]
+    param()
+    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+    try { return $identity.User.Value } finally { $identity.Dispose() }
+}
+
+function Assert-AtlasLocalAdminRetention {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$TargetSid)
+
+    # Read afresh immediately before a destructive account change. Domain groups
+    # and disabled accounts do not establish a usable local recovery account.
+    $users = @(Get-LocalUser -ErrorAction Stop)
+    $target = @($users | Where-Object { [string]$_.SID -eq $TargetSid })
+    if ($target.Count -ne 1) { throw 'The selected local account could not be verified.' }
+    if ($target[0].Enabled -isnot [bool]) { throw 'The selected account enabled state could not be verified.' }
+    $adminSids = @(Get-LocalGroupMember -SID 'S-1-5-32-544' -ErrorAction Stop |
+        ForEach-Object { [string]$_.SID })
+    if ($target[0].Enabled -and $adminSids -contains $TargetSid) {
+        $otherAdmins = @($users | Where-Object {
+            $_.Enabled -is [bool] -and $_.Enabled -and
+            ($null -eq $_.AccountExpires -or $_.AccountExpires -gt (Get-Date)) -and
+            [string]$_.SID -ne $TargetSid -and $adminSids -contains [string]$_.SID
+        })
+        if ($otherAdmins.Count -eq 0) {
+            throw 'Another enabled local administrator must remain. Verify a recovery account first.'
+        }
+    }
+}
+
+function Get-AtlasReleaseFileHash {
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory)][string]$HashesUrl,
+        [Parameter(Mandatory)][string]$FileName
+    )
+    $response = Invoke-WebRequest -Uri $HashesUrl -UseBasicParsing -TimeoutSec 30 -ErrorAction Stop
+    if ($response.Content -is [byte[]]) {
+        # Release checksum assets can be UTF-16 with a BOM and octet-stream MIME.
+        $stream = [IO.MemoryStream]::new([byte[]]$response.Content)
+        $reader = [IO.StreamReader]::new($stream, [Text.Encoding]::UTF8, $true)
+        try { $raw = $reader.ReadToEnd() } finally { $reader.Dispose() }
+    } else {
+        $raw = [string]$response.Content
+    }
+    $pattern = '^\s*([a-fA-F0-9]{64})\s+\*?' + [regex]::Escape($FileName) + '\s*$'
+    $matchesForFile = @(($raw -split '\r?\n') | Where-Object { $_ -match $pattern })
+    if ($matchesForFile.Count -ne 1) { throw "Missing or ambiguous SHA-256 for $FileName." }
+    $null = $matchesForFile[0] -match $pattern
+    return $Matches[1].ToLowerInvariant()
+}
+
+function Assert-AtlasInstaller {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][AllowEmptyString()][string]$ExpectedSha256,
+        [switch]$MicrosoftSignature
+    )
+    if ($ExpectedSha256 -notmatch '^[a-fA-F0-9]{64}$') { throw 'A valid expected SHA-256 is required before executing the installer.' }
+    $actual = (Get-FileHash -LiteralPath $Path -Algorithm SHA256 -ErrorAction Stop).Hash
+    if ($actual -ine $ExpectedSha256) { throw 'Installer SHA-256 mismatch. Installation blocked.' }
+    if ($MicrosoftSignature) {
+        $signature = Get-AuthenticodeSignature -FilePath $Path -ErrorAction Stop
+        if ($signature.Status -ne 'Valid' -or
+            $signature.SignerCertificate.Subject -notmatch '(?:^|,\s*)O=Microsoft Corporation(?:,|$)') {
+            throw 'A valid Microsoft Authenticode signature is required. Installation blocked.'
+        }
+    }
+}
+
 function Write-AtlasHeader {
     [CmdletBinding()]
     param(
