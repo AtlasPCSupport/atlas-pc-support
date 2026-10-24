@@ -222,13 +222,18 @@ function Restore-AtlasPreviousRelease {
 function Initialize-AtlasOfflineEntry {
     [CmdletBinding()]
     param([Parameter(Mandatory)][string]$Root, [Parameter(Mandatory)]$Release)
+    Assert-AtlasPlainDirectory $Root
     Test-AtlasRelease -Directory $Release.Directory -ExpectedManifestSha256 $Release.ManifestSha256 | Out-Null
     # A generic offline entry; never refresh individual components on startup.
     $entry = Join-Path $Root 'get.ps1'
     $temporary = Join-Path $Root ('entry-' + [guid]::NewGuid().ToString('N') + '.tmp')
-    [IO.File]::WriteAllText($temporary, [IO.File]::ReadAllText((Join-Path $Release.Directory 'get.ps1'), [Text.Encoding]::UTF8), [Text.UTF8Encoding]::new($true))
-    if (Test-Path -LiteralPath $entry) { [IO.File]::Replace($temporary, $entry, $null, $true) }
-    else { [IO.File]::Move($temporary, $entry) }
+    try {
+        [IO.File]::WriteAllText($temporary, [IO.File]::ReadAllText((Join-Path $Release.Directory 'get.ps1'), [Text.Encoding]::UTF8), [Text.UTF8Encoding]::new($true))
+        if (Test-Path -LiteralPath $entry) { [IO.File]::Replace($temporary, $entry, (Join-Path $Root 'get.previous.ps1'), $true) }
+        else { [IO.File]::Move($temporary, $entry) }
+    } finally {
+        if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Force -ErrorAction Stop }
+    }
     $bat = @('@echo off', 'setlocal', 'cd /d "%~dp0"', 'powershell.exe -NoProfile -Sta -ExecutionPolicy RemoteSigned -File "%~dp0get.ps1" -OfflineRoot "%~dp0."', 'set "RC=%errorlevel%"', 'if not "%RC%"=="0" pause', 'exit /b %RC%') -join "`r`n"
     [IO.File]::WriteAllText((Join-Path $Root 'run.bat'), $bat + "`r`n", [Text.Encoding]::ASCII)
 }

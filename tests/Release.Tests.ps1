@@ -165,6 +165,9 @@ Describe 'Complete immutable releases and recovery' {
         $digest=(Get-FileHash (Join-Path $script:RepoRoot 'release-manifest.json') -Algorithm SHA256).Hash.ToLowerInvariant()
         $descriptor=[pscustomobject]@{schemaVersion=1;commit=('c'*40);manifestSha256=$digest}
         $release=Install-AtlasRelease -Root $script:Root -Descriptor $descriptor -SourceDirectory $script:RepoRoot -PrepareOfflineEntry
+        # Repeating preparation must work on an existing entry under 5.1 and Core.
+        Initialize-AtlasOfflineEntry -Root $script:Root -Release $release
+        Test-Path -LiteralPath (Join-Path $script:Root 'get.previous.ps1') | Should -BeTrue
         @($release.Manifest.files.PSObject.Properties | Where-Object Name -like 'src/tools/*').Count | Should -Be 27
         $bat=Get-Content -LiteralPath (Join-Path $script:Root 'run.bat') -Raw
         $bat | Should -Not -Match 'Bypass|Unblock|https://'

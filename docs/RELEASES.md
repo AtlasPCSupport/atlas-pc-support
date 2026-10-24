@@ -95,6 +95,7 @@ previous.json                puntero anterior, cuando exista
 releases/<commit>/           conjunto completo; nunca se modifica para actualizar
 releases/.staging-<guid>/     descarga incompleta, no ejecutable como release activo
 get.ps1 + run.bat            entrada estable solo en la USB
+get.previous.ps1             backup de la entrada al volver a preparar la USB
 apps/ y deps/                paquetes de terceros opcionales, separados del código
 ```
 

@@ -50,9 +50,9 @@
   "pesterVersion": "5.8.0",
   "psScriptAnalyzerVersion": "1.25.0",
   "distribution": {
-    "manifestSha256": "a31c0f3a2df78b9b99eebac15bccffd5194a3ed3efba27546ff214fb03a097b1",
-    "launcherRawSha256": "1dcdb4926cde5a3e29b461f0e93fe7d92a039f6d95802ee208b64d95d163dae8",
-    "launcherBytes": 308549,
+    "manifestSha256": "f72ecd4bd5e8af6c5082344136ca4e59651487019e98024c39dabec099d09b4b",
+    "launcherRawSha256": "b899a1f316e29a0e31185c396f20945ae2afbf7c5e7486aa431031eba0cd6b85",
+    "launcherBytes": 308999,
     "payloadMembersVerified": 33,
     "toolScriptsVerified": 27,
     "reproducibleArtifacts": 5,
