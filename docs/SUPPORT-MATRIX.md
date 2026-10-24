@@ -1,6 +1,6 @@
 # Compatibilidad y homologación
 
-Versión candidata 1.4.0, 24 de octubre de 2026. «Objetivo» describe el contrato del
+Versión candidata 1.4.1, 24 de octubre de 2026. «Objetivo» describe el contrato del
 código, no una prueba ejecutada en ese sistema. La compatibilidad de Atlas tampoco
 extiende el ciclo de soporte de Microsoft ni sustituye la licencia de Windows.
 

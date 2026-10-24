@@ -20,7 +20,7 @@ if ($PSVersionTable.PSEdition -eq 'Desktop') {
 }
 
 
-$script:AtlasVersion = '1.4.0'
+$script:AtlasVersion = '1.4.1'
 $script:AtlasBuildDate = '2026-10-24'
 $script:AtlasToolsManifest = '{
   "$comment": "Tool manifest. Each entry describes one tool. The launcher uses this to render the panel''s tool tiles.",
@@ -7234,7 +7234,7 @@ function Initialize-AtlasDashboard {
         [void]$state.Worker.AddScript($collector)
         $state.Started = [datetime]::UtcNow
         $state.Pending = $state.Worker.BeginInvoke()
-        if ($controls.DashAlertsText) { $controls.DashAlertsText.Text = & $strFn 'status.loading' }
+        if ($controls.DashAlertsText) { $controls.DashAlertsText.Text = '...' }
     }.GetNewClosure()
     $poll = {
         if ($state.Closed) { return }
