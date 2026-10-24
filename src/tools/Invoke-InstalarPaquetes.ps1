@@ -1398,11 +1398,7 @@ function Invoke-InstalarPaquetes {
                             $exitCode = $proc.ExitCode
                             $alreadyInstalledCodes = @(
                                 -1978335189,   # APPINSTALLER_CLI_ERROR_UPDATE_NOT_APPLICABLE
-                                -1978335212,   # APPINSTALLER_CLI_ERROR_PACKAGE_ALREADY_INSTALLED
-                                -1978335135,   # APPINSTALLER_CLI_ERROR_NO_APPLICABLE_UPDATE
-                                2316632083,    # 0x8A150013 unsigned
-                                2316632068,    # 0x8A150004 unsigned
-                                2316632145     # 0x8A150051 unsigned
+                                -1978335135    # APPINSTALLER_CLI_ERROR_PACKAGE_ALREADY_INSTALLED
                             )
 
                             if ($exitCode -eq 0) {

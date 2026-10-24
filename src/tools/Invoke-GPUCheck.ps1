@@ -369,7 +369,7 @@ function Invoke-GPUCheck {
             [string]$Label,
             [System.Diagnostics.Process]$StressProc = $null
         )
-        if ($Seconds -le 0) { return }
+        if ($Seconds -le 0) { return 'NotRun' }
         Write-Host ("[GPU Check] {0} ({1}s)" -f $Label, $Seconds) -ForegroundColor Cyan
         $elapsed = 0
         $maxTempLimit = 93
@@ -388,21 +388,31 @@ function Invoke-GPUCheck {
                             if ($StressProc -and -not $StressProc.HasExited) {
                                 Stop-Proc -Process $StressProc
                             }
-                            return
+                            return 'ThermalStop'
                         }
                     }
                 }
             } catch {}
 
             if ($StressProc -and $StressProc.HasExited -and $elapsed -lt ($Seconds - 5)) {
-                Write-Host "  [!] Stress process exited early (driver crash or TDR detected)." -ForegroundColor Yellow
-                return
+                Write-Host "  [!] Stress process exited early. Cause not established; session incomplete." -ForegroundColor Yellow
+                return 'ExitedEarly'
             }
 
             if (($elapsed % 15) -eq 0 -or $elapsed -eq $Seconds) {
                 Write-Host ("  {0}/{1} sec" -f $elapsed, $Seconds) -ForegroundColor Gray
             }
         }
+        return 'Completed'
+    }
+
+    function Get-GpuSessionLevel {
+        param([double]$Total, [bool]$HasTelemetry, [bool]$StressRequested, [string]$SessionStatus)
+        if ($Total -ge 70) { return 'RIESGO ALTO' }
+        if ($Total -ge 40) { return 'OBSERVACION' }
+        if (-not $HasTelemetry -or $SessionStatus -ne 'Completed') { return 'NO CONCLUYENTE' }
+        if (-not $StressRequested) { return 'SIN HALLAZGOS EN REPOSO' }
+        return 'SIN HALLAZGOS EN ESTA SESION'
     }
 
     function Start-NvidiaSmiLoop {
@@ -569,7 +579,8 @@ table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6p
             $pS = Start-Stress -ExePath $deps.FurMark -Minutes $testMinutes
         }
 
-        Wait-WithProgress -Seconds ($testMinutes * 60) -Label $L.TestProgress
+        $sessionStatus = Wait-WithProgress -Seconds ($testMinutes * 60) -Label $L.TestProgress -StressProc $pS
+        if (-not $skipStress -and -not $pS) { $sessionStatus = 'NotStarted' }
     } finally {
         Write-Host ("[GPU Check] " + $L.ClosingProcs) -ForegroundColor Gray
         Stop-Proc -Process $pS
@@ -642,10 +653,12 @@ table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6p
     if ($eventsScore -gt 100) { $eventsScore = 100 }
 
     $total = [Math]::Round(($eventsScore * 0.50) + ($gpuzScore * 0.35) + ($nvidiaScore * 0.15), 1)
-    $level = if ($total -ge 70) { 'RIESGO ALTO' } elseif ($total -ge 40) { 'OBSERVACION' } else { 'APTO' }
+    $hasTelemetry = $null -ne $gpuzMaxT -or $null -ne $nvidiaMaxT
+    $level = Get-GpuSessionLevel -Total $total -HasTelemetry $hasTelemetry -StressRequested:(-not $skipStress) -SessionStatus $sessionStatus
     $advice = switch ($level) {
         'RIESGO ALTO' { 'Recomendar validacion de hardware profunda y no prometer mejora por mantenimiento general.' }
         'OBSERVACION' { 'Aplicar mantenimiento termico/driver y repetir prueba para confirmar tendencia.' }
+        'NO CONCLUYENTE' { 'Faltan mediciones o la sesion quedo incompleta. No se puede concluir que la GPU este sana.' }
         default { 'Sin senales fuertes de falla GPU en esta sesion.' }
     }
     if ($notes.Count -eq 0) { $notes.Add('Sin hallazgos criticos automaticos.') | Out-Null }
@@ -658,6 +671,8 @@ table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6p
             toolsDir = $toolsDir
             testMinutes = $testMinutes
             skipStress = $skipStress
+            sessionStatus = $sessionStatus
+            hasTemperatureTelemetry = $hasTelemetry
         }
         scores = @{
             events = $eventsScore

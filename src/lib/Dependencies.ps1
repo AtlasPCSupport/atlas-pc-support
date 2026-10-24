@@ -240,11 +240,7 @@ function Resolve-AtlasDependency {
             $ProgressPreference = 'SilentlyContinue'
             Invoke-WebRequest -Uri $dep.DownloadUrl -OutFile $installerFile -UseBasicParsing -TimeoutSec 120 -ErrorAction Stop
             if ((Get-Item $installerFile).Length -gt 100KB) {
-                if ($dep.DownloadSha256) {
-                    if (-not (Test-AtlasDependencyHash -Path $installerFile -ExpectedSha256 $dep.DownloadSha256)) {
-                        throw "Hash SHA-256 invalido para el instalador de $Name."
-                    }
-                }
+                Assert-AtlasInstaller -Path $installerFile -ExpectedSha256 ([string]$dep.DownloadSha256)
                 $targetDir = Join-Path $env:LOCALAPPDATA "AtlasPC\bin\$Name"
                 if (-not (Test-Path $targetDir)) { New-Item -ItemType Directory -Path $targetDir -Force | Out-Null }
                 $p = Start-Process -FilePath $installerFile -ArgumentList @('/EXTRACT64', '/NOSUBDIR', '/AGREE_LICENSE', "/DIR=`"$targetDir`"") -Wait -PassThru -ErrorAction SilentlyContinue

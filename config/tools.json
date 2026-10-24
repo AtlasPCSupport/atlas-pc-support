@@ -248,7 +248,7 @@
     {
       "id": "gestor-bitlocker",
       "name": "BitLocker Manager",
-      "description": "BitLocker status, activation, suspension and recovery key export.",
+      "description": "BitLocker status, activation with a verified recovery file on a separate disk, decryption and recovery key export. Use Windows BitLocker management for suspension.",
       "category": "seguridad",
       "function": "Invoke-GestorBitLocker",
       "source": "Invoke-GestorBitLocker.ps1",

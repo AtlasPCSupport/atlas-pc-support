@@ -224,10 +224,13 @@ function Invoke-InstalarRuntimes {
                               '--accept-package-agreements', '--accept-source-agreements' `
                 -Wait -PassThru -NoNewWindow
 
-            # -1978335189 = WINGET_ERROR_ALREADY_INSTALLED
-            if ($proc.ExitCode -eq 0 -or $proc.ExitCode -eq -1978335189) {
+            if ($proc.ExitCode -eq 0) {
                 Write-Host ($L.PkgOk -f $idx, $total, $label) -ForegroundColor Green
                 $cntOk++
+            } elseif ($proc.ExitCode -in @(-1978335189, -1978335135)) {
+                # UPDATE_NOT_APPLICABLE / PACKAGE_ALREADY_INSTALLED are skips, not fresh installs.
+                Write-Host ($L.AlreadyInst -f $idx, $total, $label) -ForegroundColor DarkGray
+                $cntSkip++
             } else {
                 Write-Host ($L.PkgFail -f $idx, $total, $label, $proc.ExitCode) -ForegroundColor Red
                 $cntFail++

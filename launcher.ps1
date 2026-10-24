@@ -1,7 +1,7 @@
 # ============================================================
 #  Atlas PC Support - launcher.ps1 (compilado)
 #  Version: 1.0.0
-#  Build:   2026-07-27 19:12:31
+#  Build:   2026-10-24 15:01:55
 #  Repo:    https://github.com/mikepchelper-spec/atlas-pc-support
 #
 #  Uso:
@@ -19,7 +19,7 @@
 # ============================================================
 
 $script:AtlasVersion = '1.0.0'
-$script:AtlasBuildDate = '2026-07-27 19:12:31'
+$script:AtlasBuildDate = '2026-10-24 15:01:55'
 $script:AtlasToolsBaseUrl = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/src/tools'
 
 $script:AtlasToolsManifest = @'
@@ -273,7 +273,7 @@ $script:AtlasToolsManifest = @'
     {
       "id": "gestor-bitlocker",
       "name": "BitLocker Manager",
-      "description": "BitLocker status, activation, suspension and recovery key export.",
+      "description": "BitLocker status, activation with a verified recovery file on a separate disk, decryption and recovery key export. Use Windows BitLocker management for suspension.",
       "category": "seguridad",
       "function": "Invoke-GestorBitLocker",
       "source": "Invoke-GestorBitLocker.ps1",
@@ -332,31 +332,31 @@ $script:AtlasToolsManifest = @'
 
 $script:AtlasToolHashesJson = @'
 {
-  "generatedAt": "2026-07-27T19:12:31.6956190-05:00",
+  "generatedAt": "2026-10-24T15:01:55.3297941-05:00",
   "algorithm": "SHA256",
   "files": {
-    "Invoke-ActualizarPowerShell.ps1": "094062f8ebf7c9279dc8eeedaf2e635e6fad889630feb1e73ce73ab4bb107304",
-    "Invoke-AIReadiness.ps1": "6f734eac4cdc9d3c8da7ba3b84fda9ad31fa596c2af239f8d69dd8ee3bcce280",
+    "Invoke-ActualizarPowerShell.ps1": "6a0fef8b6984149f0dcbc4ffc20b1ee00caf8d272aa76fd0f132825aae1c2b52",
+    "Invoke-AIReadiness.ps1": "8a0c2ca9e4e20ed8aa1d99a11afce64ecbdb84cd6466e8a95d1ca0e46b581000",
     "Invoke-AuditoriaRouter.ps1": "6500c6bfdc3f37e19ba3a66e3c6d348d0c9a50e782859918e10fc2ed344df8f6",
     "Invoke-Deduplicador.ps1": "b48df614411e9ace66f0c774ded389d1146fdc5c9f40867e92c15ad8bf0a5e3b",
     "Invoke-DiagnosticoEventos.ps1": "d8bcd80253e7118747e819618f8814729d615ff2fc359d7740ccad97b9c6cb1b",
     "Invoke-DiagnosticoMaster.ps1": "55b07593b743e653bbe47f887710edb2392c13e2811bdc755e62855f077c79f5",
-    "Invoke-EntregaPC.ps1": "d50c58648ae9f737d17eb2712011ddd0e4bee06cfcadb1772d9c22bcf8fa1446",
+    "Invoke-EntregaPC.ps1": "862a6547eff9d9de6c7f941ea9baa7ca44ddd18414bfbbc187a2d8999dcf713a",
     "Invoke-ExtraerLicencias.ps1": "03310f849ee3d4c826a984565aa9e6b51a0bca57f9f450d4c302eb8e97500f22",
     "Invoke-Fase0.ps1": "87f903655a9873823f44091b8adf696242556e2332a26183bea67618d07cf41a",
     "Invoke-FastCopy.ps1": "22c76639e7c2208a98d68446f2864ee6171dc7aabbca16de70e18c715b16e0e8",
-    "Invoke-GestorBitLocker.ps1": "da6bb20b8e689b180e5ea20ad3274bdbf960279b6c5517db695edff90df13675",
-    "Invoke-GPUCheck.ps1": "ec3c2e1c0a24d5ea6b38c40694bd0dd18a132102d518aa399c859fdb92bf9e28",
+    "Invoke-GestorBitLocker.ps1": "93969ccbf4b2810c7e8f480c58de5af4e0d96d6c979eda8a1ac44bf14bd453a9",
+    "Invoke-GPUCheck.ps1": "ffe1f161d80a4425373d98fa50ef1aa4fa0aa2f08bada158df0a15b0b0233ec0",
     "Invoke-HostsManager.ps1": "fe26ffe69919dc72b3cce423df40364e597caf387c72ce5e7d961ba42eba6e35",
     "Invoke-InstalarMicrosoftStore.ps1": "a96e3adf0507b6d0fa9ea4777e0141dda0c29f067e8e1dfcfa487c0b17a8105d",
-    "Invoke-InstalarPaquetes.ps1": "73a58e8a95908e9ceff213964d9bc9750e35fa29333c0254ce504210f33daba4",
-    "Invoke-InstalarRuntimes.ps1": "1baad75ad5ccd5ce0459f8fb2e00e7ebca3eecbf0b56bb27483e197f5bcd3c29",
+    "Invoke-InstalarPaquetes.ps1": "ac22a9f4eea505a5548344a6f8022528bed73e451f5f930c7cb89d67f72f6129",
+    "Invoke-InstalarRuntimes.ps1": "141b92b26d1f99ec712a7e67085629f63218595b969fcede54f072332877d5a3",
     "Invoke-KeyboardDoctor.ps1": "f4e2e484b3b08ccbc3d829b3893df82719943f6dc226f0e26dc72d0203cd5660",
     "Invoke-MantenimientoPRO.ps1": "475d9f7dd1cc3c7e26ee4afac6b0e698e65644216796a8fbb7a440ff323ce245",
-    "Invoke-MenorPrivilegio.ps1": "306fdd239dc8cc4dee8b460b35915558e5966ff0f86ffdea47d25b3295be2bfe",
+    "Invoke-MenorPrivilegio.ps1": "93d6d30992dc2abb8cc9b044c2c9f457feff87011431238a9d47ecf683da435c",
     "Invoke-PartsUpgrade.ps1": "d8703a7ff9a2c6cc8aa42caedc4457451174b0ae0c6fa70d7b8a76038c03d3be",
     "Invoke-Personalizacion.ps1": "0212b1ac489832ac2d87242849dbd7be5e2a96ef80604f272a2f586d05cde5e3",
-    "Invoke-PrepararUSB.ps1": "17abb8c974a3c9609a35498553bae7eeabf3d6a1c9630051e85b9b1ebf306413",
+    "Invoke-PrepararUSB.ps1": "82401205bb4ffddefd655aa0401442784ba43a22cad82cbf0331a51904d2d583",
     "Invoke-PrinterDoctor.ps1": "fe78e343744f8182427a6c157f54e7a24185fe950dba86ca193bd02541a243d2",
     "Invoke-RespaldoControladores.ps1": "eb813133976f704c216e1fd8280d3869384040c67ee51fa72a007501edebedb5",
     "Invoke-Robocopy.ps1": "29f5abf91d82946d6fd7ffd7786de8165ad3e481e7075e7654fd4071328f0a7a",
@@ -1026,6 +1026,80 @@ $script:AtlasToolKitSource = @'
 #   - Nunca debe lanzar al cargarse (solo define funciones).
 #   - Cambios aqui afectan a TODAS las tools: mantener minimo y robusto.
 # ============================================================
+
+function Get-AtlasCurrentUserSid {
+    [CmdletBinding()]
+    [OutputType([string])]
+    param()
+    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+    try { return $identity.User.Value } finally { $identity.Dispose() }
+}
+
+function Assert-AtlasLocalAdminRetention {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$TargetSid)
+
+    # Read afresh immediately before a destructive account change. Domain groups
+    # and disabled accounts do not establish a usable local recovery account.
+    $users = @(Get-LocalUser -ErrorAction Stop)
+    $target = @($users | Where-Object { [string]$_.SID -eq $TargetSid })
+    if ($target.Count -ne 1) { throw 'The selected local account could not be verified.' }
+    if ($target[0].Enabled -isnot [bool]) { throw 'The selected account enabled state could not be verified.' }
+    $adminSids = @(Get-LocalGroupMember -SID 'S-1-5-32-544' -ErrorAction Stop |
+        ForEach-Object { [string]$_.SID })
+    if ($target[0].Enabled -and $adminSids -contains $TargetSid) {
+        $otherAdmins = @($users | Where-Object {
+            $_.Enabled -is [bool] -and $_.Enabled -and
+            ($null -eq $_.AccountExpires -or $_.AccountExpires -gt (Get-Date)) -and
+            [string]$_.SID -ne $TargetSid -and $adminSids -contains [string]$_.SID
+        })
+        if ($otherAdmins.Count -eq 0) {
+            throw 'Another enabled local administrator must remain. Verify a recovery account first.'
+        }
+    }
+}
+
+function Get-AtlasReleaseFileHash {
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory)][string]$HashesUrl,
+        [Parameter(Mandatory)][string]$FileName
+    )
+    $response = Invoke-WebRequest -Uri $HashesUrl -UseBasicParsing -TimeoutSec 30 -ErrorAction Stop
+    if ($response.Content -is [byte[]]) {
+        # Release checksum assets can be UTF-16 with a BOM and octet-stream MIME.
+        $stream = [IO.MemoryStream]::new([byte[]]$response.Content)
+        $reader = [IO.StreamReader]::new($stream, [Text.Encoding]::UTF8, $true)
+        try { $raw = $reader.ReadToEnd() } finally { $reader.Dispose() }
+    } else {
+        $raw = [string]$response.Content
+    }
+    $pattern = '^\s*([a-fA-F0-9]{64})\s+\*?' + [regex]::Escape($FileName) + '\s*$'
+    $matchesForFile = @(($raw -split '\r?\n') | Where-Object { $_ -match $pattern })
+    if ($matchesForFile.Count -ne 1) { throw "Missing or ambiguous SHA-256 for $FileName." }
+    $null = $matchesForFile[0] -match $pattern
+    return $Matches[1].ToLowerInvariant()
+}
+
+function Assert-AtlasInstaller {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][AllowEmptyString()][string]$ExpectedSha256,
+        [switch]$MicrosoftSignature
+    )
+    if ($ExpectedSha256 -notmatch '^[a-fA-F0-9]{64}$') { throw 'A valid expected SHA-256 is required before executing the installer.' }
+    $actual = (Get-FileHash -LiteralPath $Path -Algorithm SHA256 -ErrorAction Stop).Hash
+    if ($actual -ine $ExpectedSha256) { throw 'Installer SHA-256 mismatch. Installation blocked.' }
+    if ($MicrosoftSignature) {
+        $signature = Get-AuthenticodeSignature -FilePath $Path -ErrorAction Stop
+        if ($signature.Status -ne 'Valid' -or
+            $signature.SignerCertificate.Subject -notmatch '(?:^|,\s*)O=Microsoft Corporation(?:,|$)') {
+            throw 'A valid Microsoft Authenticode signature is required. Installation blocked.'
+        }
+    }
+}
 
 function Write-AtlasHeader {
     [CmdletBinding()]
@@ -2162,7 +2236,7 @@ function Invoke-AsAdmin {
     $psArgs = @(
         "-NoProfile",
         "-ExecutionPolicy", "RemoteSigned",
-        "-File", $tmp
+        "-File", ('"{0}"' -f $tmp)
     )
 
     $startArgs = @{
@@ -2262,6 +2336,80 @@ function Get-AtlasLogPath {
 #   - Nunca debe lanzar al cargarse (solo define funciones).
 #   - Cambios aqui afectan a TODAS las tools: mantener minimo y robusto.
 # ============================================================
+
+function Get-AtlasCurrentUserSid {
+    [CmdletBinding()]
+    [OutputType([string])]
+    param()
+    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+    try { return $identity.User.Value } finally { $identity.Dispose() }
+}
+
+function Assert-AtlasLocalAdminRetention {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$TargetSid)
+
+    # Read afresh immediately before a destructive account change. Domain groups
+    # and disabled accounts do not establish a usable local recovery account.
+    $users = @(Get-LocalUser -ErrorAction Stop)
+    $target = @($users | Where-Object { [string]$_.SID -eq $TargetSid })
+    if ($target.Count -ne 1) { throw 'The selected local account could not be verified.' }
+    if ($target[0].Enabled -isnot [bool]) { throw 'The selected account enabled state could not be verified.' }
+    $adminSids = @(Get-LocalGroupMember -SID 'S-1-5-32-544' -ErrorAction Stop |
+        ForEach-Object { [string]$_.SID })
+    if ($target[0].Enabled -and $adminSids -contains $TargetSid) {
+        $otherAdmins = @($users | Where-Object {
+            $_.Enabled -is [bool] -and $_.Enabled -and
+            ($null -eq $_.AccountExpires -or $_.AccountExpires -gt (Get-Date)) -and
+            [string]$_.SID -ne $TargetSid -and $adminSids -contains [string]$_.SID
+        })
+        if ($otherAdmins.Count -eq 0) {
+            throw 'Another enabled local administrator must remain. Verify a recovery account first.'
+        }
+    }
+}
+
+function Get-AtlasReleaseFileHash {
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory)][string]$HashesUrl,
+        [Parameter(Mandatory)][string]$FileName
+    )
+    $response = Invoke-WebRequest -Uri $HashesUrl -UseBasicParsing -TimeoutSec 30 -ErrorAction Stop
+    if ($response.Content -is [byte[]]) {
+        # Release checksum assets can be UTF-16 with a BOM and octet-stream MIME.
+        $stream = [IO.MemoryStream]::new([byte[]]$response.Content)
+        $reader = [IO.StreamReader]::new($stream, [Text.Encoding]::UTF8, $true)
+        try { $raw = $reader.ReadToEnd() } finally { $reader.Dispose() }
+    } else {
+        $raw = [string]$response.Content
+    }
+    $pattern = '^\s*([a-fA-F0-9]{64})\s+\*?' + [regex]::Escape($FileName) + '\s*$'
+    $matchesForFile = @(($raw -split '\r?\n') | Where-Object { $_ -match $pattern })
+    if ($matchesForFile.Count -ne 1) { throw "Missing or ambiguous SHA-256 for $FileName." }
+    $null = $matchesForFile[0] -match $pattern
+    return $Matches[1].ToLowerInvariant()
+}
+
+function Assert-AtlasInstaller {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][AllowEmptyString()][string]$ExpectedSha256,
+        [switch]$MicrosoftSignature
+    )
+    if ($ExpectedSha256 -notmatch '^[a-fA-F0-9]{64}$') { throw 'A valid expected SHA-256 is required before executing the installer.' }
+    $actual = (Get-FileHash -LiteralPath $Path -Algorithm SHA256 -ErrorAction Stop).Hash
+    if ($actual -ine $ExpectedSha256) { throw 'Installer SHA-256 mismatch. Installation blocked.' }
+    if ($MicrosoftSignature) {
+        $signature = Get-AuthenticodeSignature -FilePath $Path -ErrorAction Stop
+        if ($signature.Status -ne 'Valid' -or
+            $signature.SignerCertificate.Subject -notmatch '(?:^|,\s*)O=Microsoft Corporation(?:,|$)') {
+            throw 'A valid Microsoft Authenticode signature is required. Installation blocked.'
+        }
+    }
+}
 
 function Write-AtlasHeader {
     [CmdletBinding()]
@@ -2783,11 +2931,7 @@ function Resolve-AtlasDependency {
             $ProgressPreference = 'SilentlyContinue'
             Invoke-WebRequest -Uri $dep.DownloadUrl -OutFile $installerFile -UseBasicParsing -TimeoutSec 120 -ErrorAction Stop
             if ((Get-Item $installerFile).Length -gt 100KB) {
-                if ($dep.DownloadSha256) {
-                    if (-not (Test-AtlasDependencyHash -Path $installerFile -ExpectedSha256 $dep.DownloadSha256)) {
-                        throw "Hash SHA-256 invalido para el instalador de $Name."
-                    }
-                }
+                Assert-AtlasInstaller -Path $installerFile -ExpectedSha256 ([string]$dep.DownloadSha256)
                 $targetDir = Join-Path $env:LOCALAPPDATA "AtlasPC\bin\$Name"
                 if (-not (Test-Path $targetDir)) { New-Item -ItemType Directory -Path $targetDir -Force | Out-Null }
                 $p = Start-Process -FilePath $installerFile -ArgumentList @('/EXTRACT64', '/NOSUBDIR', '/AGREE_LICENSE', "/DIR=`"$targetDir`"") -Wait -PassThru -ErrorAction SilentlyContinue
@@ -2837,7 +2981,7 @@ function Register-AtlasDependency {
 # ============================================================
 
 # Versiones conocidas de PS 7 (actualizar cuando salga nueva LTS).
-$script:AtlasPS7Version  = '7.5.0'
+$script:AtlasPS7Version  = '7.6.6'
 $script:AtlasPS7UrlX64   = "https://github.com/PowerShell/PowerShell/releases/download/v$($script:AtlasPS7Version)/PowerShell-$($script:AtlasPS7Version)-win-x64.msi"
 $script:AtlasPS7MsiName  = "PowerShell-$($script:AtlasPS7Version)-win-x64.msi"
 $script:AtlasPS7HashesUrl = "https://github.com/PowerShell/PowerShell/releases/download/v$($script:AtlasPS7Version)/hashes.sha256"
@@ -2889,7 +3033,7 @@ function Find-AtlasPS7OfflineMsi {
 
     foreach ($dir in $searchDirs) {
         if (Test-Path -LiteralPath $dir) {
-            $msi = Get-ChildItem -Path $dir -Filter 'PowerShell-*-win-x64.msi' -ErrorAction SilentlyContinue |
+            $msi = Get-ChildItem -Path $dir -Filter $script:AtlasPS7MsiName -ErrorAction SilentlyContinue |
                 Sort-Object Name -Descending | Select-Object -First 1
             if ($msi) { return $msi.FullName }
         }
@@ -2905,23 +3049,7 @@ function Get-AtlasPS7ExpectedHash {
     [CmdletBinding()]
     param()
 
-    try {
-        $ProgressPreference = 'SilentlyContinue'
-        $raw = (Invoke-WebRequest -Uri $script:AtlasPS7HashesUrl -UseBasicParsing -TimeoutSec 30 -ErrorAction Stop).Content
-    } catch {
-        throw "No se pudo descargar hashes.sha256 oficial: $($_.Exception.Message)"
-    }
-
-    $line = ($raw -split "`r?`n" | Where-Object { $_ -match [regex]::Escape($script:AtlasPS7MsiName) } | Select-Object -First 1)
-    if (-not $line) {
-        throw "No se encontro hash para $($script:AtlasPS7MsiName) en hashes.sha256."
-    }
-
-    $hash = (($line -split '\s+') | Where-Object { $_ } | Select-Object -First 1).ToLowerInvariant()
-    if ($hash -notmatch '^[a-f0-9]{64}$') {
-        throw "Formato de hash invalido en hashes.sha256."
-    }
-    return $hash
+    return Get-AtlasReleaseFileHash -HashesUrl $script:AtlasPS7HashesUrl -FileName $script:AtlasPS7MsiName
 }
 
 function Test-AtlasFileHash {
@@ -3007,8 +3135,9 @@ function Install-AtlasPS7 {
         }
         Write-Host "  [OK] Integridad verificada." -ForegroundColor Green
     } else {
-        Write-Host "  [!] No se pudo validar hash del MSI (sin sidecar/local hash)." -ForegroundColor Yellow
+        throw 'No se pudo validar SHA-256 del MSI. Se requiere su archivo .sha256 para instalar sin conexion.'
     }
+    Assert-AtlasInstaller -Path $msi -ExpectedSha256 $expectedHash -MicrosoftSignature
 
     # Instalar silencioso con feature completa
     $msiArgs = @(
@@ -3634,7 +3763,7 @@ function Invoke-AtlasTool {
         '-NoProfile',
         '-Sta',
         '-ExecutionPolicy', 'RemoteSigned',
-        '-File', $tempScript
+        '-File', ('"{0}"' -f $tempScript)
     )
 
     $startArgs = @{

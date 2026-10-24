@@ -206,6 +206,89 @@ function Show-EncryptionProgress {
 
 # ==================== HEALTH CHECK PRE-ENCRIPTACION ====================
 
+function Save-AtlasRecoveryBackup {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][string]$MountPoint,
+        [Parameter(Mandatory)][string]$Directory,
+        [Parameter(Mandatory)]$Protector
+    )
+    if (-not $Protector.KeyProtectorId -or $Protector.RecoveryPassword -notmatch '^\d{6}(-\d{6}){7}$') {
+        throw 'A readable recovery password and protector ID are required.'
+    }
+    $folder = Get-Item -LiteralPath $Directory -ErrorAction Stop
+    if (-not $folder.PSIsContainer -or $folder.PSProvider.Name -ne 'FileSystem' -or $folder.FullName -notmatch '^[A-Za-z]:\\') {
+        throw 'Select an existing folder on a separate local backup disk.'
+    }
+    $ancestor = $folder
+    while ($ancestor) {
+        if ($ancestor.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Recovery backup folders must not contain junctions or symbolic links.' }
+        $ancestor = $ancestor.Parent
+    }
+    $sourceDisk = @(Get-Partition -DriveLetter $MountPoint.Substring(0,1) -ErrorAction Stop)
+    $backupDisk = @(Get-Partition -DriveLetter $folder.FullName.Substring(0,1) -ErrorAction Stop)
+    if ($sourceDisk.Count -ne 1 -or $backupDisk.Count -ne 1 -or $null -eq $sourceDisk[0].DiskNumber -or
+        $null -eq $backupDisk[0].DiskNumber -or $sourceDisk[0].DiskNumber -eq $backupDisk[0].DiskNumber) {
+        throw 'The recovery backup must be on a different physical disk from the encrypted volume.'
+    }
+    $path = Join-Path $folder.FullName ('BitLocker-Recovery-' + [guid]::NewGuid().ToString('N') + '.txt')
+    $content = "BitLocker recovery / recuperacion`r`nVolume: $MountPoint`r`nKey ID: $($Protector.KeyProtectorId)`r`nRecovery password: $($Protector.RecoveryPassword)`r`n"
+    $bytes = [Text.UTF8Encoding]::new($false).GetBytes($content)
+    $stream = [IO.File]::Open($path, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
+    try { $stream.Write($bytes,0,$bytes.Length); $stream.Flush($true) } finally { $stream.Dispose() }
+    if ([IO.File]::ReadAllText($path, [Text.Encoding]::UTF8) -cne $content) { throw 'Recovery backup read-back failed. Encryption was not started.' }
+    return $path
+}
+
+function Enable-AtlasBitLockerSafely {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][string]$MountPoint,
+        [Parameter(Mandatory)][string]$RecoveryDirectory,
+        [securestring]$Password
+    )
+    if ($MountPoint -notmatch '^[A-Za-z]:$') { throw 'A drive-letter volume is required.' }
+    $volume = Get-BitLockerVolume -MountPoint $MountPoint -ErrorAction Stop
+    if ($volume.VolumeStatus.ToString() -ne 'FullyDecrypted' -or $volume.LockStatus.ToString() -ne 'Unlocked') {
+        throw 'Only an unlocked, fully decrypted volume can be enabled here. Existing encryption is preserved.'
+    }
+    $isOS = $volume.VolumeType.ToString() -eq 'OperatingSystem'
+    if ($isOS) {
+        $tpm = Get-Tpm -ErrorAction Stop
+        if (-not $tpm.TpmPresent -or -not $tpm.TpmReady) {
+            throw 'OS encryption here requires a ready TPM. Use the Windows BitLocker wizard for a policy-approved non-TPM setup.'
+        }
+    } elseif ($volume.VolumeType.ToString() -notin @('FixedData','RemovableData')) {
+        throw 'Unsupported or unknown BitLocker volume type.'
+    } elseif (-not $Password -or $Password.Length -eq 0) {
+        throw 'A non-empty unlock password is required for a data volume.'
+    }
+    $recovery = @($volume.KeyProtector | Where-Object { $_.KeyProtectorType.ToString() -eq 'RecoveryPassword' })
+    if ($recovery.Count -eq 0) {
+        Add-BitLockerKeyProtector -MountPoint $MountPoint -RecoveryPasswordProtector -ErrorAction Stop | Out-Null
+        $volume = Get-BitLockerVolume -MountPoint $MountPoint -ErrorAction Stop
+        $recovery = @($volume.KeyProtector | Where-Object { $_.KeyProtectorType.ToString() -eq 'RecoveryPassword' })
+    }
+    if ($recovery.Count -eq 0) { throw 'No recovery protector was created. Encryption was not started.' }
+    $backup = Save-AtlasRecoveryBackup -MountPoint $MountPoint -Directory $RecoveryDirectory -Protector $recovery[0]
+    # No key is printed, written to logs or inferred to be escrowed in AD.
+    if ($isOS) {
+        Enable-BitLocker -MountPoint $MountPoint -EncryptionMethod XtsAes256 -TpmProtector -ErrorAction Stop | Out-Null
+    } else {
+        Enable-BitLocker -MountPoint $MountPoint -EncryptionMethod XtsAes256 -PasswordProtector -Password $Password -ErrorAction Stop | Out-Null
+    }
+    $after = Get-BitLockerVolume -MountPoint $MountPoint -ErrorAction Stop
+    $types = @($after.KeyProtector | ForEach-Object { $_.KeyProtectorType.ToString() })
+    $primary = if ($isOS) { 'Tpm' } else { 'Password' }
+    if ($types -notcontains $primary -or $types -notcontains 'RecoveryPassword') {
+        throw 'BitLocker did not report the required primary and recovery protectors. Keep the backup and inspect Windows BitLocker status.'
+    }
+    return [pscustomobject]@{
+        MountPoint=$MountPoint; RecoveryBackup=$backup; VolumeStatus=[string]$after.VolumeStatus
+        ProtectionStatus=[string]$after.ProtectionStatus; RebootMayBeRequired=$isOS
+    }
+}
+
 function Test-PreEncryptionHealth {
     param([string]$MountPoint)
     
@@ -262,13 +345,9 @@ function Test-PreEncryptionHealth {
     # 3. ESTADO SMART DEL DISCO
     Write-Host "    [3/5] Disk health (SMART)..." -NoNewline -ForegroundColor DarkGray
     try {
-        $partition = Get-Partition -DriveLetter $driveLetter -ErrorAction Stop
-        $physDisk = Get-PhysicalDisk -ErrorAction SilentlyContinue | Where-Object { $_.DeviceId -eq $partition.DiskNumber.ToString() }
-        if (-not $physDisk) {
-            $physDisk = Get-PhysicalDisk -ErrorAction SilentlyContinue | Select-Object -First 1
-        }
+        $physDisk = Get-Partition -DriveLetter $driveLetter -ErrorAction Stop | Get-Disk -ErrorAction Stop
         if ($physDisk) {
-            $health = $physDisk.HealthStatus.ToString()
+            $health = [string]$physDisk.HealthStatus
             if ($health -ne "Healthy") {
                 $issues += "DISCO CON PROBLEMAS: Estado SMART = ${health}. Encriptar un disk danado puede causar perdida total."
                 $canProceed = $false
@@ -278,9 +357,11 @@ function Test-PreEncryptionHealth {
                 Write-Host " OK (${health}, ${opStatus})" -ForegroundColor Green
             }
         } else {
+            $warnings += 'Disk health could not be evaluated for this volume.'
             Write-Host " No verificable" -ForegroundColor Yellow
         }
     } catch {
+        $warnings += 'Disk health could not be evaluated for this volume.'
         Write-Host " No verificable" -ForegroundColor Yellow
     }
     
@@ -443,7 +524,7 @@ function Generate-QRCode {
         $content += "|  ${Data}".PadRight(49) + "|"
         $content += "|  PC: $env:COMPUTERNAME | $(Get-Date -Format 'dd/MM/yyyy')".PadRight(49) + "|"
         $content += $border
-        $content += "  Cut out and stick on the computer case."
+        $content += "  Store separately from the computer. Do not attach to the case."
         
         $content -join "`r`n" | Out-File -FilePath $txtPath -Encoding UTF8
         return $txtPath
@@ -567,7 +648,7 @@ while ($true) {
     Write-Host ""
     Escribir-Centrado "[ 1 ] Escanear y Guardar Claves" "White"
     Escribir-Centrado "[ 2 ] Activar BitLocker" "White"
-    Escribir-Centrado "[ 3 ] Desactivar BitLocker" "White"
+    Escribir-Centrado "[ 3 ] Descifrar unidad (no suspende protectores) / Decrypt drive" "White"
     Escribir-Centrado "[ 4 ] Ver Estado Completo" "White"
     Escribir-Centrado "[ 5 ] Ver Historial de Operaciones" "White"
     Escribir-Centrado "[ S ] Salir" "DarkGray"
@@ -693,7 +774,7 @@ while ($true) {
                             }
                         }
                         Write-Host ""
-                        Escribir-Centrado "Print the image and stick it on the computer case." "Cyan"
+                        Escribir-Centrado "Store the recovery printout separately from the computer. Never attach it to the case." "Yellow"
                     }
                     
                     # AD / Azure AD backup
@@ -735,21 +816,6 @@ while ($true) {
             Escribir-Centrado "=== ACTIVAR BITLOCKER ===" "DarkYellow"
             Write-Host ""
             
-            # TPM check
-            $tpm = Get-TPMStatus
-            $tpmColor = if ($tpm.HasTPM -and $tpm.IsReady) { "Green" } elseif ($tpm.HasTPM) { "Yellow" } else { "Red" }
-            Write-Host "    TPM: $($tpm.Summary)" -ForegroundColor $tpmColor
-            
-            if (-not $tpm.HasTPM) {
-                Write-Host "    No TPM = password required at every boot." -ForegroundColor Yellow
-                Write-Host ""
-                Write-Host "    [C] Continue with password  [B] Back" -ForegroundColor White
-                $tpmChoice = Read-Host "    >"
-                if ($tpmChoice -ne "C" -and $tpmChoice -ne "c") { continue }
-            } elseif (-not $tpm.IsReady) {
-                Write-Host "    May require activation in BIOS." -ForegroundColor Yellow
-            }
-            
             Write-Host ""
             $allVolumes = Show-DiskTable
             if (-not $allVolumes) { Wait-AtlasReturnCompat -Message "    ENTER to go back..."; continue }
@@ -778,15 +844,10 @@ while ($true) {
             
             if (-not $health.CanProceed) {
                 Write-Host ""
-                Escribir-Centrado "NO SE RECOMIENDA ENCRIPTAR EN ESTE ESTADO." "Red"
-                Write-Host ""
-                Write-Host "    [F] Force anyway  [B] Back (recommended)" -ForegroundColor Yellow
-                $forceChoice = Read-Host "    >"
-                if ($forceChoice -ne "F" -and $forceChoice -ne "f") {
-                    Write-Log "Encryption cancelled por HealthCheck: ${disk}"
-                    continue
-                }
-                Write-Log "HealthCheck FORZADO por user: ${disk}"
+                Escribir-Centrado "CORRIGE LOS PROBLEMAS ANTES DE CIFRAR / FIX ISSUES BEFORE ENCRYPTING." "Red"
+                Write-Log "Encryption blocked by HealthCheck: ${disk}"
+                Wait-AtlasReturnCompat -Message '    ENTER to go back...'
+                continue
             }
             
             # Confirmación
@@ -801,23 +862,21 @@ while ($true) {
             Write-Host "    Activating BitLocker on ${disk}..." -ForegroundColor Yellow
             
             try {
-                if ($tpm.HasTPM -and $tpm.IsReady) {
-                    Enable-BitLocker -MountPoint $disk -EncryptionMethod XtsAes256 -RecoveryPasswordProtector -ErrorAction Stop
-                } else {
-                    Write-Host "    Enter boot password:" -ForegroundColor Cyan
-                    $secPwd = Read-Host "    Password" -AsSecureString
-                    Enable-BitLocker -MountPoint $disk -EncryptionMethod XtsAes256 -PasswordProtector -Password $secPwd -ErrorAction Stop
-                    Add-BitLockerKeyProtector -MountPoint $disk -RecoveryPasswordProtector -ErrorAction Stop
+                Write-Host '    Guarda la recuperacion en OTRO disco y retiralo despues / Use a SEPARATE backup disk.' -ForegroundColor Yellow
+                $recoveryDir = Read-Host '    Carpeta existente de respaldo (vacio cancela) / Existing backup folder'
+                if ([string]::IsNullOrWhiteSpace($recoveryDir)) { continue }
+                $secPwd = $null
+                $actualVolume = Get-BitLockerVolume -MountPoint $disk -ErrorAction Stop
+                if ($actualVolume.VolumeType.ToString() -ne 'OperatingSystem') {
+                    $secPwd = Read-Host '    Clave de desbloqueo del volumen de datos / Data unlock password' -AsSecureString
                 }
-                
+                $enabled = Enable-AtlasBitLockerSafely -MountPoint $disk -RecoveryDirectory $recoveryDir -Password $secPwd
                 Write-Host ""
-                Escribir-Centrado "BitLocker ACTIVADO en ${disk}" "Green"
-                Escribir-Centrado "USA OPCION [1] PARA GUARDAR LA CLAVE!" "Cyan"
-                Write-Log "BitLocker ACTIVADO: ${disk} (XtsAes256)"
-                
-                # AD backup automatico
-                Write-Host ""
-                Backup-KeyToAD -MountPoint $disk
+                Escribir-Centrado "Solicitud BitLocker verificada / Request verified: ${disk}" "Green"
+                Write-Host ("    Status: {0}; Protection: {1}" -f $enabled.VolumeStatus,$enabled.ProtectionStatus)
+                Write-Host ("    Recovery backup verified: {0}" -f $enabled.RecoveryBackup) -ForegroundColor Cyan
+                if ($enabled.RebootMayBeRequired) { Write-Host '    Windows puede requerir reinicio y prueba de hardware / Restart and hardware check may be required.' -ForegroundColor Yellow }
+                Write-Log "BitLocker request verified: ${disk}; Status=$($enabled.VolumeStatus)"
                 
                 Write-Host ""
                 Write-Host "    [M] Monitorear progreso  [ENTER] Volver" -ForegroundColor DarkGray
@@ -846,7 +905,7 @@ while ($true) {
         "3" {
             Clear-Host
             Write-Host "`n"
-            Escribir-Centrado "=== DESACTIVAR BITLOCKER ===" "DarkYellow"
+            Escribir-Centrado "=== DESCIFRAR BITLOCKER / DECRYPT DRIVE ===" "DarkYellow"
             Write-Host ""
             
             $encVolumes = Show-DiskTable -OnlyEncrypted
@@ -871,14 +930,19 @@ while ($true) {
             Write-Host ""
             Escribir-Centrado "CONFIRMAR: Desactivar BitLocker en ${disk} (${capGB} GB)?" "Red"
             Write-Host "    WARNING: Data will be left unprotected." -ForegroundColor Yellow
-            Write-Host "    [S] Desencriptar  [N] Cancelar" -ForegroundColor White
+            Write-Host '    Para suspender temporalmente, usa la administracion BitLocker de Windows.' -ForegroundColor Yellow
+            Write-Host '    Escribe DESCIFRAR / Type DECRYPT to remove encryption. Any other answer cancels.' -ForegroundColor White
             $confirm = Read-Host "    >"
-            if ($confirm -ne "S" -and $confirm -ne "s") { continue }
+            if ($confirm -notin @('DESCIFRAR','DECRYPT')) { continue }
             
             try {
-                Disable-BitLocker -MountPoint $disk -ErrorAction Stop
+                Disable-BitLocker -MountPoint $disk -ErrorAction Stop | Out-Null
+                $after = Get-BitLockerVolume -MountPoint $disk -ErrorAction Stop
+                if ($after.VolumeStatus.ToString() -notin @('DecryptionInProgress','FullyDecrypted')) {
+                    throw 'Windows did not confirm decryption in progress or completed.'
+                }
                 Escribir-Centrado "Decryption iniciada en ${disk}." "Green"
-                Write-Log "BitLocker DESACTIVADO: ${disk}"
+                Write-Log "BitLocker decryption requested: ${disk}; Status=$($after.VolumeStatus)"
                 
                 Write-Host "    [M] Monitorear  [ENTER] Volver" -ForegroundColor DarkGray
                 $monSel = Read-Host "    >"

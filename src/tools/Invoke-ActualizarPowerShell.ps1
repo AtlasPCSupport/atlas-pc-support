@@ -123,7 +123,7 @@ function Invoke-ActualizarPowerShell {
     $atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
 
     # ----- Constants (mirrored from src/lib/PS7.ps1, self-contained) -----
-    $PS7_VERSION  = '7.5.0'
+    $PS7_VERSION  = '7.6.6'
     $PS7_URL_X64  = "https://github.com/PowerShell/PowerShell/releases/download/v$PS7_VERSION/PowerShell-$PS7_VERSION-win-x64.msi"
     $PS7_MSI_NAME = "PowerShell-$PS7_VERSION-win-x64.msi"
 
@@ -220,7 +220,7 @@ function Invoke-ActualizarPowerShell {
         } catch {}
         foreach ($dir in ($searchDirs | Select-Object -Unique)) {
             if (Test-Path -LiteralPath $dir) {
-                $msi = Get-ChildItem -Path $dir -Filter 'PowerShell-*-win-x64.msi' -ErrorAction SilentlyContinue |
+                $msi = Get-ChildItem -Path $dir -Filter $PS7_MSI_NAME -ErrorAction SilentlyContinue |
                     Sort-Object Name -Descending | Select-Object -First 1
                 if ($msi) { return $msi.FullName }
             }
@@ -230,10 +230,18 @@ function Invoke-ActualizarPowerShell {
 
     function _Install-PS7 {
         param([string]$OfflineSource, $L, [string]$Version, [string]$Url, [string]$MsiName)
+        if (-not (Get-Command Assert-AtlasInstaller -ErrorAction SilentlyContinue)) {
+            throw 'Close and reopen the updated Atlas panel before installing PowerShell.'
+        }
         $msi = $null
+        $expectedHash = $null
         if ($OfflineSource -and (Test-Path -LiteralPath $OfflineSource)) {
             $msi = (Resolve-Path -LiteralPath $OfflineSource).Path
             _Write-AtlasStepCompat ($L.UsingLocalMsi -f $msi)
+            $sidecar = "$msi.sha256"
+            if (-not (Test-Path -LiteralPath $sidecar)) { throw 'Offline MSI requires its SHA-256 sidecar.' }
+            $raw = Get-Content -LiteralPath $sidecar -Raw -Encoding UTF8 -ErrorAction Stop
+            $expectedHash = (($raw.Trim() -split '\s+')[0])
         }
         if (-not $msi) {
             $cacheDir = Join-Path $env:LOCALAPPDATA 'AtlasPC\deps'
@@ -243,38 +251,17 @@ function Invoke-ActualizarPowerShell {
             $msi = Join-Path $cacheDir $MsiName
             _Write-AtlasStepCompat ($L.Downloading -f $Version)
             try {
+                $hashesUrl = "https://github.com/PowerShell/PowerShell/releases/download/v$Version/hashes.sha256"
+                $expectedHash = Get-AtlasReleaseFileHash -HashesUrl $hashesUrl -FileName $MsiName
                 $ProgressPreference = 'SilentlyContinue'
-                Invoke-WebRequest -Uri $Url -OutFile $msi -UseBasicParsing -TimeoutSec 900
+                Invoke-WebRequest -Uri $Url -OutFile $msi -UseBasicParsing -TimeoutSec 900 -ErrorAction Stop
             } catch {
                 throw ($L.DownloadFailed -f $_.Exception.Message)
             }
         }
 
-        # SHA-256 Check & Authenticode Verification
-        if (Test-Path -LiteralPath $msi) {
-            try {
-                $sig = Get-AuthenticodeSignature -FilePath $msi -ErrorAction SilentlyContinue
-                if ($sig -and $sig.Status -eq 'Valid' -and $sig.SignerCertificate.Subject -like '*Microsoft*') {
-                    _Write-AtlasOkCompat "Microsoft Authenticode signature verified for $($MsiName)."
-                } else {
-                    _Write-AtlasWarnCompat "Signature verification notice: $($sig.StatusMessage)"
-                }
-            } catch {}
-
-            if (Get-Command Get-AtlasPS7ExpectedHash -ErrorAction SilentlyContinue) {
-                try {
-                    $expectedHash = Get-AtlasPS7ExpectedHash
-                    $actualHash = (Get-FileHash -LiteralPath $msi -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant()
-                    if ($expectedHash -and $actualHash -ne $expectedHash) {
-                        Remove-Item -LiteralPath $msi -Force -ErrorAction SilentlyContinue
-                        throw "SHA-256 hash mismatch for $MsiName. Expected: $expectedHash, Got: $actualHash"
-                    }
-                    _Write-AtlasOkCompat "SHA-256 checksum verified ($actualHash)."
-                } catch {
-                    _Write-AtlasWarnCompat "SHA-256 check skipped: $($_.Exception.Message)"
-                }
-            }
-        }
+        Assert-AtlasInstaller -Path $msi -ExpectedSha256 $expectedHash -MicrosoftSignature
+        _Write-AtlasOkCompat 'SHA-256 and Microsoft Authenticode signature verified.'
 
         $msiArgs = @('/i', "`"$msi`"", '/qn', '/norestart', 'ADD_PATH=1', 'ENABLE_PSREMOTING=0', 'REGISTER_MANIFEST=1')
         _Write-AtlasStepCompat $L.Installing

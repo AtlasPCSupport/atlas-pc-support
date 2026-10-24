@@ -498,7 +498,7 @@ Generado por Atlas PC Support - Preparar USB Offline
     $LAUNCHER_URL_FALLBACK  = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/launcher.ps1'
     $TOOLS_BASE_URL         = 'https://raw.githubusercontent.com/mikepchelper-spec/atlas-pc-support/main/src/tools'
     $FASTCOPY_URL           = 'https://fastcopy.jp/archive/FastCopy5.11.2_installer.exe'
-    $PS7_VERSION            = '7.5.0'
+    $PS7_VERSION            = '7.6.6'
     $PS7_URL                = "https://github.com/PowerShell/PowerShell/releases/download/v$PS7_VERSION/PowerShell-$PS7_VERSION-win-x64.msi"
     $USB_ROOT_NAME          = 'ATLAS_PC_SUPPORT'
     $MAX_LAUNCHER_AGE_DAYS  = 7
@@ -675,6 +675,10 @@ Generado por Atlas PC Support - Preparar USB Offline
             Invoke-WebRequest -Uri $FASTCOPY_URL -OutFile $installer -UseBasicParsing -TimeoutSec 120 -ErrorAction Stop
             $sz = (Get-Item $installer).Length
             if ($sz -gt 200KB) {
+                if (-not (Get-Command Assert-AtlasInstaller -ErrorAction SilentlyContinue)) {
+                    throw 'Close and reopen the updated Atlas panel before preparing installers.'
+                }
+                Assert-AtlasInstaller -Path $installer -ExpectedSha256 '70b273dd08c15d40fac59a217b93be195bacfa47acabd031463a6df800d29fea'
                 Write-Centered ($L.FCInstOk -f (Format-Size $sz)) 'Green'
                 Write-Centered $L.FCExtract 'DarkGray'
                 $extractResult = Invoke-ExternalProcessWithTimeout -FilePath $installer -ArgumentList @(
@@ -731,12 +735,19 @@ Generado por Atlas PC Support - Preparar USB Offline
             New-Item -ItemType Directory -Path $DepsDir -Force | Out-Null
         }
         $msiFile = Join-Path $DepsDir "PowerShell-$PS7_VERSION-win-x64.msi"
-        if (-not $ForceRedownload -and (Test-Path $msiFile) -and ((Get-Item $msiFile).Length -gt 50MB)) {
-            Write-Centered ($L.PS7Exists -f $msiFile) 'Green'
-            return $true
-        }
-        $tmpFile = "$msiFile.download"
+        $tmpFile = "$msiFile.download.msi"
         try {
+            if (-not (Get-Command Assert-AtlasInstaller -ErrorAction SilentlyContinue)) {
+                throw 'Close and reopen the updated Atlas panel before preparing installers.'
+            }
+            $hashesUrl = "https://github.com/PowerShell/PowerShell/releases/download/v$PS7_VERSION/hashes.sha256"
+            $expectedHash = Get-AtlasReleaseFileHash -HashesUrl $hashesUrl -FileName ([IO.Path]::GetFileName($msiFile))
+            if (-not $ForceRedownload -and (Test-Path -LiteralPath $msiFile)) {
+                Assert-AtlasInstaller -Path $msiFile -ExpectedSha256 $expectedHash -MicrosoftSignature
+                [IO.File]::WriteAllText("$msiFile.sha256", $expectedHash, [Text.UTF8Encoding]::new($false))
+                Write-Centered ($L.PS7Exists -f $msiFile) 'Green'
+                return $true
+            }
             $ProgressPreference = 'SilentlyContinue'
             if (Test-Path -LiteralPath $tmpFile) {
                 Remove-Item -LiteralPath $tmpFile -Force -ErrorAction SilentlyContinue
@@ -744,7 +755,9 @@ Generado por Atlas PC Support - Preparar USB Offline
             Invoke-WebRequest -Uri $PS7_URL -OutFile $tmpFile -UseBasicParsing -TimeoutSec 300 -ErrorAction Stop
             $sz = (Get-Item $tmpFile).Length
             if ($sz -gt 50MB) {
+                Assert-AtlasInstaller -Path $tmpFile -ExpectedSha256 $expectedHash -MicrosoftSignature
                 Move-Item -LiteralPath $tmpFile -Destination $msiFile -Force
+                [IO.File]::WriteAllText("$msiFile.sha256", $expectedHash, [Text.UTF8Encoding]::new($false))
                 Write-Centered ($L.PS7Ok -f (Format-Size $sz)) 'Green'
                 return $true
             } else {
