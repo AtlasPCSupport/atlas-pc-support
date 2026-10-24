@@ -612,20 +612,10 @@ function Dibujar-Header {
 }
 
 function Start-ProcessWithTimeout {
-    param([string]$FilePath, [string]$Arguments = "", [int]$TimeoutSeconds = 60, [string]$WindowStyle = "Hidden")
-    try {
-        $proc = Start-Process $FilePath -ArgumentList $Arguments -PassThru -WindowStyle $WindowStyle -ErrorAction Stop
-        $waited = $proc.WaitForExit($TimeoutSeconds * 1000)
-        if (-not $waited) {
-            $proc | Stop-Process -Force -ErrorAction SilentlyContinue
-            Write-Host ($L.TimeoutMsg -f $TimeoutSeconds) -ForegroundColor Yellow
-            return $false
-        }
-        return $true
-    } catch {
-        Write-Host ($L.ExecError -f $_) -ForegroundColor Red
-        return $false
-    }
+    param([string]$FilePath,[string]$Arguments='', [int]$TimeoutSeconds=60,[string]$WindowStyle='Hidden')
+    $result=Invoke-AtlasNativeProcess -FilePath $FilePath -Arguments $Arguments -TimeoutSeconds $TimeoutSeconds
+    if($result.State -ne 'Correct'){Write-Warning "Diagnostic process ${FilePath}: $($result.State), exit $($result.ExitCode)";return $false}
+    return $true
 }
 
 function Get-RAMDiagnostic {

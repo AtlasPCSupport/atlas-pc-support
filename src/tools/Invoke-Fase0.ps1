@@ -231,60 +231,13 @@ function Stop-AtlasLog {
 
 # --- 5. ACTION FUNCTIONS WITH LOGGING ---
 function Hardening-Apply {
-    Show-Header
-    Write-Centered $L.ApplyHeader $AtlasWhite
-    Write-Host "`n"
-
-    Write-AtlasLog $L.ApplyStart
-
-    Write-Centered $L.DisablingTeredo $AtlasGreen
-    Write-AtlasLog ($L.ExecLabel + $L.DisablingTeredo)
-    $res1 = netsh interface teredo set state disabled
-    Write-AtlasLog ($L.Result + $res1)
-
-    Write-Centered $L.Disabling6to4 $AtlasGreen
-    Write-AtlasLog ($L.ExecLabel + $L.Disabling6to4)
-    $res2 = netsh interface ipv6 6to4 set state state=disabled undoonstop=disabled
-    Write-AtlasLog ($L.Result + $res2)
-
-    Write-Centered $L.DisablingIsatap $AtlasGreen
-    Write-AtlasLog ($L.ExecLabel + $L.DisablingIsatap)
-    $res3 = netsh interface ipv6 isatap set state state=disabled
-    Write-AtlasLog ($L.Result + $res3)
-
-    Write-AtlasLog $L.ApplyDone
-
-    Write-Host "`n"
-    Write-Centered $L.Done $AtlasOrange
-    Write-Host "`n"
-    Wait-AtlasReturn
+    Write-Warning 'Automatic transition-tunnel changes are restricted until exact policy/state restoration is qualified. This is not a universal hardening or speed improvement.'
+    Check-Status
 }
 
 function Restore-Defaults {
-    Show-Header
-    Write-Centered $L.UndoHeader $AtlasRed
-    Write-Host "`n"
-
-    Write-AtlasLog $L.UndoStart
-
-    Write-Centered $L.RestoringTeredo $AtlasWhite
-    $res1 = netsh interface teredo set state type=default
-    Write-AtlasLog ($L.ExecLabel + $L.RestoringTeredo + ' ' + $L.Result + $res1)
-
-    Write-Centered $L.Restoring6to4 $AtlasWhite
-    $res2 = netsh interface ipv6 6to4 set state state=enabled
-    Write-AtlasLog ($L.ExecLabel + $L.Restoring6to4 + ' ' + $L.Result + $res2)
-
-    Write-Centered $L.RestoringIsatap $AtlasWhite
-    $res3 = netsh interface ipv6 isatap set state state=enabled
-    Write-AtlasLog ($L.ExecLabel + $L.RestoringIsatap + ' ' + $L.Result + $res3)
-
-    Write-AtlasLog $L.UndoDone
-
-    Write-Host "`n"
-    Write-Centered $L.Warn $AtlasWhite
-    Write-Host "`n"
-    Wait-AtlasReturn
+    Write-Warning 'Fixed defaults are not a rollback of the previous state. No tunnel configuration was changed; use the verified policy baseline for this machine.'
+    Check-Status
 }
 
 function Check-Status {

@@ -1,4 +1,4 @@
-﻿# ============================================================
+# ============================================================
 # Invoke-GPUCheck
 # GPU diagnostics with optional stress test and report export.
 # Atlas PC Support
@@ -342,7 +342,7 @@ function Invoke-GPUCheck {
         if (-not $ExePath) { return $null }
         $seconds = [Math]::Max(1, $Minutes * 60)
         $help = ''
-        try { $help = (& $ExePath --help 2>&1 | Out-String) } catch {}
+        try { $probe = Invoke-AtlasNativeProcess -FilePath $ExePath -Arguments '--help' -TimeoutSeconds 10; if ($probe.State -eq 'Correct') { $help = $probe.Stdout } } catch {}
         $args = "/nogui /max_time=$seconds"
         if ($help -match '--max-time') {
             $args = "--benchmark --p1080 --max-time $seconds --no-score-box"
@@ -631,9 +631,9 @@ table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6p
         foreach ($r in $nvidiaRows) {
             $n = Clean-Number ([string]$r.'temperature.gpu')
             if ($null -ne $n -and $n -gt 0) { $temps.Add($n) | Out-Null }
-            if (([string]$r.'clocks_throttle_reasons.hw_thermal_slowdown').Trim() -match '^(?i:1|yes|true|on|active|enabled)$') { $nvidiaScore += 20 }
-            if (([string]$r.'clocks_throttle_reasons.hw_slowdown').Trim() -match '^(?i:1|yes|true|on|active|enabled)$') { $nvidiaScore += 15 }
-            if (([string]$r.'clocks_throttle_reasons.sw_power_cap').Trim() -match '^(?i:1|yes|true|on|active|enabled)$') { $nvidiaScore += 8 }
+            if (([string]$r.'clocks_throttle_reasons.hw_thermal_slowdown').Trim() -match '^(?i:1|yes|true|on|active|enabled)$') { $nvidiaScore = [Math]::Max($nvidiaScore,20) }
+            if (([string]$r.'clocks_throttle_reasons.hw_slowdown').Trim() -match '^(?i:1|yes|true|on|active|enabled)$') { $nvidiaScore = [Math]::Max($nvidiaScore,15) }
+            if (([string]$r.'clocks_throttle_reasons.sw_power_cap').Trim() -match '^(?i:1|yes|true|on|active|enabled)$') { $notes.Add('Power cap observed; may be normal under load.') | Out-Null }
         }
         if ($temps.Count -gt 0) {
             $nvidiaMaxT = [Math]::Round((($temps.ToArray() | Measure-Object -Maximum).Maximum), 1)

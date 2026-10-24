@@ -393,7 +393,7 @@ function Invoke-KeyboardDoctor {
         $events = @()
         try {
             $all = @(Get-WinEvent -FilterHashtable @{ LogName='System'; StartTime=$start } -ErrorAction SilentlyContinue | Where-Object {
-                ($_.LevelDisplayName -match 'Error|Warning|Critical|Advertencia') -and (
+                ($_.Level -in @(1,2,3)) -and (
                     $_.ProviderName -match 'i8042|kbd|hid|Kernel-PnP|UserPnp|DriverFrameworks|SynTP|ETD|ELAN|I2C' -or
                     $_.Message -match 'keyboard|teclado|touchpad|trackpad|hid|i2c|ps/2'
                 )
@@ -407,7 +407,7 @@ function Invoke-KeyboardDoctor {
     function Invoke-KDQuickDiagnosis {
         $script:KeyboardDoctorReport.Findings = @()
         $script:KeyboardDoctorReport.Recommendations = @()
-        $script:KeyboardDoctorReport.Result = $L.ResultApto
+        $script:KeyboardDoctorReport.Result = 'Inventory observations; hardware health not certified'
 
         Get-KDSystemInfo
         $keyboards = @(Get-KDKeyboardDevices)
@@ -427,7 +427,7 @@ function Invoke-KeyboardDoctor {
         }
         if ($battery -and $battery.WearPercent -ne $null -and $battery.WearPercent -ge 55) {
             $sev = if ($battery.WearPercent -ge 70) { 'risk' } else { 'observation' }
-            Add-KDFinding $sev ($L.FindingBattery -f $battery.WearPercent) $L.RecBattery
+            Add-KDFinding 'observation' ("Battery wear $($battery.WearPercent)%; this does not establish swelling or keyboard pressure.") 'Physical inspection is required to evaluate swelling; wear alone is not evidence.'
         }
         if ($events.Count -ge 8) {
             $sev2 = if ($events.Count -ge 25) { 'risk' } else { 'observation' }
@@ -510,60 +510,25 @@ function Invoke-KeyboardDoctor {
     }
 
     function Invoke-KDMonitor {
-        Write-KDHeader
-        Write-Host $L.MonitorWarn -ForegroundColor Yellow
-        $consent = Read-Host $L.Confirm
-        if ($consent -ne 'CONSENT') { Write-Host $L.Cancelled; Pause-KeyboardDoctor; return }
-        $minutes = Read-Host $L.MonitorMinutes
-        if ([string]::IsNullOrWhiteSpace($minutes) -or $minutes -notmatch '^\d+$') { $minutes = 3 }
-        $minutes = [Math]::Max(1, [Math]::Min(10, [int]$minutes))
-        $api = '[DllImport("user32.dll")] public static extern short GetAsyncKeyState(int vk);'
-        if (-not ([System.Management.Automation.PSTypeName]'Atlas.KeyboardDoctor.Native').Type) {
-            Add-Type -Name Native -Namespace Atlas.KeyboardDoctor -MemberDefinition $api
-        }
-        $map = @{
-            8='Backspace';9='Tab';13='Enter';27='Esc';32='Space';46='Delete'
-            48='0';49='1';50='2';51='3';52='4';53='5';54='6';55='7';56='8';57='9'
-            65='A';66='B';67='C';68='D';69='E';70='F';71='G';72='H';73='I';74='J';75='K';76='L';77='M';78='N';79='O';80='P';81='Q';82='R';83='S';84='T';85='U';86='V';87='W';88='X';89='Y';90='Z'
-            112='F1';113='F2';114='F3';115='F4';116='F5';117='F6';118='F7';119='F8';120='F9';121='F10';122='F11';123='F12'
-        }
-        $ignore = @(16,17,18,91,92,160,161,162,163,164,165)
-        $start = Get-Date
-        $end = $start.AddMinutes($minutes)
-        $captured = @()
-        Write-Host $L.MonitorActive -ForegroundColor Cyan
-        Start-Sleep -Seconds 2
-        while ((Get-Date) -lt $end) {
-            foreach ($i in 8..123) {
-                if ($i -in $ignore) { continue }
-                $state = [Atlas.KeyboardDoctor.Native]::GetAsyncKeyState($i)
-                if (($state -band 0x0001) -ne 0) {
-                    $name = if ($map.ContainsKey($i)) { $map[$i] } else { "VK$i" }
-                    $entry = [pscustomobject]@{ Time = Get-Date; Key = $name; Code = $i }
-                    $captured += $entry
-                    Write-Host ("  {0:HH:mm:ss.fff}  {1}" -f $entry.Time, $entry.Key) -ForegroundColor Yellow
-                }
-            }
-            Start-Sleep -Milliseconds 75
-        }
-        $script:KeyboardDoctorReport.Monitor += $captured
-        Write-Host ($L.MonitorDone -f $captured.Count) -ForegroundColor Green
-        Pause-KeyboardDoctor
-    }
+    Write-Host 'Focused keyboard test only. No global keyboard capture. Close the window or press Escape to stop; no typed text is recorded.'
+    if((Read-Host 'Type CONSENT to open the test window') -cne 'CONSENT'){return}
+    Add-Type -AssemblyName PresentationFramework
+    $window=[Windows.Window]::new();$window.Title='Atlas focused keyboard test';$window.Width=560;$window.Height=220
+    $label=[Windows.Controls.TextBlock]::new();$label.Text='Press keys while this window has focus. Escape closes. Events: 0';$label.TextWrapping='Wrap';$label.Margin='24'
+    $window.Content=$label
+    $count=[Collections.Generic.List[datetime]]::new()
+    $window.Add_KeyDown({param($sender,$eventArgs)
+        if($eventArgs.Key -eq [Windows.Input.Key]::Escape){$sender.Close();return}
+        $count.Add([datetime]::UtcNow);$label.Text="Key-down events observed in this window: $($count.Count). Escape closes."
+    }.GetNewClosure())
+    [void]$window.ShowDialog()
+    $script:KeyboardDoctorReport.Monitor=@([pscustomobject]@{Scope='FocusedWindow';Count=$count.Count;CapturedText=$false;AtUtc=[datetime]::UtcNow})
+}
 
     function Invoke-KDDisableAccessibilityKeys {
-        $targets = @(
-            @{ Path='HKCU:\Control Panel\Accessibility\StickyKeys'; Name='Flags'; Value='506' },
-            @{ Path='HKCU:\Control Panel\Accessibility\Keyboard Response'; Name='Flags'; Value='122' },
-            @{ Path='HKCU:\Control Panel\Accessibility\ToggleKeys'; Name='Flags'; Value='58' },
-            @{ Path='HKCU:\Control Panel\Accessibility\Keyboard Preference'; Name='On'; Value='0' }
-        )
-        foreach ($tgt in $targets) {
-            if (-not (Test-Path -LiteralPath $tgt.Path)) { New-Item -Path $tgt.Path -Force | Out-Null }
-            Set-ItemProperty -LiteralPath $tgt.Path -Name $tgt.Name -Value $tgt.Value -ErrorAction Stop
-        }
-        Write-Host $L.AccessibilityDisabled -ForegroundColor Green
-    }
+    Write-Host 'Review accessibility preferences for the intended user. Atlas does not replace existing accessibility flags with fixed values.'
+    Start-Process -FilePath 'ms-settings:easeofaccess-keyboard' -ErrorAction Stop | Out-Null
+}
 
     function Invoke-KDRepairMenu {
         do {

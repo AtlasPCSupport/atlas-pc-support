@@ -16,7 +16,7 @@ function ConvertTo-PowerShellLiteral {
     param([string]$Text)
     return "'" + $Text.Replace("'", "''") + "'"
 }
-$version = '1.2.0'
+$version = '1.3.0'
 $buildDate = '2026-10-24' # Release metadata, deliberately reproducible across hosts.
 $manifest = Get-EmbeddedContent (Join-Path $PSScriptRoot 'config/tools.json')
 $dependencies = Get-EmbeddedContent (Join-Path $PSScriptRoot 'config/dependencies.json')
@@ -40,7 +40,7 @@ foreach ($name in $sourceNames) {
 }
 $toolHashesJson = ([ordered]@{ generatedAt=$buildDate; algorithm='SHA256'; files=$toolHashes } | ConvertTo-Json -Depth 8 -Compress).Replace("`r`n", "`n")
 [IO.File]::WriteAllText((Join-Path $PSScriptRoot 'config/tool-hashes.json'), $toolHashesJson, $utf8)
-$sharedLibraries = @('Branding','Strings','Admin','Logging','ToolKit','Dependencies','PS7','Release','Capabilities')
+$sharedLibraries = @('Branding','Strings','Admin','Logging','ToolKit','Dependencies','PS7','Release','Capabilities','Operations')
 $catalogAssignment = '$script:AtlasDependencyCatalog = ' + (ConvertTo-PowerShellLiteral $dependencies) + ' | ConvertFrom-Json'
 $libraryText = @($sharedLibraries | ForEach-Object { "# ---- lib/$_ ----`n" + (Get-EmbeddedContent (Join-Path $PSScriptRoot "src/lib/$_.ps1")) }) -join "`n`n"
 $childSource = $runtimeHeader + "`n" + $catalogAssignment + "`n" + $libraryText
