@@ -49,14 +49,11 @@ Describe 'ToolKit Unit Tests' {
     Context 'ToolKit - rutas de reporte' {
         BeforeAll {
             $script:OrigProfile = $env:USERPROFILE
-            $script:TmpProfile  = Join-Path ([System.IO.Path]::GetTempPath()) ("atlas-test-" + [guid]::NewGuid().ToString('N').Substring(0,8))
+            $script:TmpProfile  = Join-Path $TestDrive 'profile with spaces'
             $env:USERPROFILE    = $script:TmpProfile
         }
         AfterAll {
             $env:USERPROFILE = $script:OrigProfile
-            if (Test-Path -LiteralPath $script:TmpProfile) {
-                Remove-Item -LiteralPath $script:TmpProfile -Recurse -Force -ErrorAction SilentlyContinue
-            }
         }
         It 'Get-AtlasReportDir crea y devuelve la carpeta' {
             $dir = Get-AtlasReportDir
@@ -105,7 +102,7 @@ Describe 'ToolKit Unit Tests' {
     Context 'ToolRunner - inyeccion del ToolKit en una tool aislada' {
         It 'una tool en proceso aislado puede usar los helpers inyectados' {
             $toolkitSource = Get-Content -Raw -LiteralPath $script:ToolKit
-            $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("atlas-inject-" + [guid]::NewGuid().ToString('N').Substring(0,8) + '.ps1')
+            $tmp = Join-Path $TestDrive 'injected tool.ps1'
             $wrapper = @"
 `$ErrorActionPreference = 'Continue'
 try {
@@ -122,17 +119,14 @@ function Invoke-FakeTool {
 Invoke-FakeTool
 "@
             Set-Content -LiteralPath $tmp -Value $wrapper -Encoding UTF8
-            try {
-                $pwsh = (Get-Process -Id $PID).Path
-                if (-not $pwsh) { $pwsh = (Get-Command pwsh -ErrorAction SilentlyContinue).Source }
-                if (-not $pwsh) { $pwsh = (Get-Command powershell -ErrorAction SilentlyContinue).Source }
-                $out  = & $pwsh -NoProfile -File $tmp 2>&1 | Out-String
-                $out  | Should -Match 'helper-ok'
-                $out  | Should -Match 'HTML-OK'
-                $out  | Should -Not -Match 'TOOLKIT-FAIL'
-            } finally {
-                Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue
-            }
+            $pwsh = (Get-Process -Id $PID).Path
+            if (-not $pwsh) { $pwsh = (Get-Command pwsh -ErrorAction SilentlyContinue).Source }
+            if (-not $pwsh) { $pwsh = (Get-Command powershell -ErrorAction SilentlyContinue).Source }
+            $out  = & $pwsh -NoProfile -File $tmp 2>&1 | Out-String
+            $LASTEXITCODE | Should -Be 0
+            $out  | Should -Match 'helper-ok'
+            $out  | Should -Match 'HTML-OK'
+            $out  | Should -Not -Match 'TOOLKIT-FAIL'
         }
     }
 }

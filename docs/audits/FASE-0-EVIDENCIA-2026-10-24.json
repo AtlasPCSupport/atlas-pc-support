@@ -1,0 +1,108 @@
+{
+  "date": "2026-10-24",
+  "timezone": "America/Lima",
+  "functional_baseline_commit": "2b3efafc327ac9bd84e9ae316fb24281c95db08b",
+  "stage": "Phase 0: local verification and planning foundation",
+  "test_modules": {
+    "Pester": "5.8.0",
+    "PSScriptAnalyzer": "1.25.0"
+  },
+  "baseline_powershell7": {
+    "passed": 15,
+    "failed": 0,
+    "evidence": "All 15 baseline tests passed within the combined 19-test run; the 4 failures belong only to KnownIssues."
+  },
+  "powershell7_combined_run": {
+    "Runtime": "7.6.6",
+    "OSVersion": "10.0.26100.0",
+    "Windows10Validated": false,
+    "IncludeKnownIssues": true,
+    "Passed": 15,
+    "Failed": 4,
+    "Skipped": 0,
+    "AnalyzerErrors": 0,
+    "DistributionArtifactsUnchanged": true
+  },
+  "windows_powershell51_baseline_run": {
+    "Runtime": "5.1.26100.9711",
+    "OSVersion": "10.0.26100.0",
+    "Windows10Validated": false,
+    "IncludeKnownIssues": false,
+    "Passed": 15,
+    "Failed": 0,
+    "Skipped": 0,
+    "AnalyzerErrors": 0,
+    "DistributionArtifactsUnchanged": true
+  },
+  "known_issue_failures_powershell7": [
+    {
+      "name": "Critical acceptance tests pending phase 1.A01: rejects an unsigned MSI in the standalone updater",
+      "message": "Expected Start-Process to be called 0 times exactly, but was called 1 times"
+    },
+    {
+      "name": "Critical acceptance tests pending phase 1.A01: refuses offline installation without a required expected hash",
+      "message": "Expected Start-Process to be called 0 times exactly, but was called 1 times"
+    },
+    {
+      "name": "Critical acceptance tests pending phase 1.A02: refuses to create an administrator with an empty password",
+      "message": "Expected New-LocalUser to be called 0 times exactly, but was called 1 times"
+    },
+    {
+      "name": "Critical acceptance tests pending phase 1.A02: a disabled backup admin does not permit demoting the active admin",
+      "message": "Expected Remove-LocalGroupMember to be called 0 times exactly, but was called 1 times"
+    }
+  ],
+  "known_issue_failures_windows_powershell51": [
+    {
+      "name": "Critical acceptance tests pending phase 1.A01: rejects an unsigned MSI in the standalone updater",
+      "message": "Expected Start-Process to be called 0 times exactly, but was called 1 times"
+    },
+    {
+      "name": "Critical acceptance tests pending phase 1.A01: refuses offline installation without a required expected hash",
+      "message": "Expected Start-Process to be called 0 times exactly, but was called 1 times"
+    },
+    {
+      "name": "Critical acceptance tests pending phase 1.A02: refuses to create an administrator with an empty password",
+      "message": "Expected New-LocalUser to be called 0 times exactly, but was called 1 times"
+    },
+    {
+      "name": "Critical acceptance tests pending phase 1.A02: a disabled backup admin does not permit demoting the active admin",
+      "message": "Expected Remove-LocalGroupMember to be called 0 times exactly, but was called 1 times"
+    }
+  ],
+  "expected_known_issue_exit_code": 1,
+  "critical_operations_performed": "None: processes, network and account actions in acceptance cases were replaced by mocks; MSI fixture is plain text.",
+  "new_test_scripts_analyzer_errors": 0,
+  "source_analyzer_warning_counts": {
+    "powershell7": 399,
+    "windows_powershell51": 384
+  },
+  "guard_and_source_checks": "Passed in both runtimes; 27 tools and hashes; native child exit codes checked.",
+  "isolated_build": "Passed in both runtimes in a temporary directory containing spaces.",
+  "wpf_smoke": "Window and 27 cards loaded without Show/ShowDialog, click handlers or dashboard initialization.",
+  "distribution_sha256": {
+    "launcher.ps1": "0fe3b26cb9f44315d2e2630d8a8f7460f692129ac1f555ee9fb2f5027762e07c",
+    "launcher.ps1.sha256": "c09a1b53a7c7afce061e2118a62e2891821c98726196b86b07b5b2562c734750",
+    "config/tool-hashes.json": "3f7ee4a3fd965b1d05d02ef06fefc122a603b56bca8603c6d1d21fe0aa8754c9",
+    "config/tools.json": "34997411e8eeb12aceb0ee1575c0725b877aa3e849038bf2c4f176d821fc0623",
+    "get.ps1": "c26e3e54324f9d686e45642a880c074bb063ecbcc4985aac6c9d516fbdd8f5e2",
+    "onboarding/install.bat": "dd2d9d3709952528e8514fdc15666d205ab5a5d943025ab192c59f55ee9f04f0",
+    "api/cloudflare-worker/src/index.js": "d74b860a631f7922aff847eaf2cc0860e753d0b405abd94725ee42aef0e7731b"
+  },
+  "production_git_diff_exit_code": 0,
+  "workflow_yaml_parse": "Passed locally; remote GitHub Actions not run.",
+  "windows_10_client_validation": "Pending VM/hardware; host build is 26100.",
+  "environment_notes": [
+    "Initial Windows PowerShell invocation inherited PowerShell 7 modules and lacked Get-FileHash. Native modules were prioritized only in the test process.",
+    "Initial PS5 WPF setup exposed BOM-less Unicode loading. TestDrive copies now have a UTF-8 BOM; original files were not rewritten.",
+    "Baseline green does not approve release while P0 acceptance tests remain red."
+  ],
+  "not_performed": [
+    "Deployment",
+    "Push",
+    "Defender exclusions or deactivation",
+    "Persistent ExecutionPolicy changes",
+    "Public endpoint execution",
+    "Real BitLocker/account/service/DNS changes"
+  ]
+}

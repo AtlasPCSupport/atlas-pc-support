@@ -7,6 +7,12 @@ on:
       - 'src/**'
       - 'config/**'
       - 'build.ps1'
+      - 'get.ps1'
+      - 'launcher.ps1'
+      - 'launcher.ps1.sha256'
+      - 'tests/**'
+      - 'PSScriptAnalyzerSettings.psd1'
+      - '.github/workflows/**'
   pull_request:
   workflow_dispatch:
 
@@ -20,7 +26,7 @@ jobs:
       - name: Lint (PSScriptAnalyzer)
         shell: pwsh
         run: |
-          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser -ErrorAction Stop
+          Install-Module PSScriptAnalyzer -RequiredVersion 1.25.0 -Force -Scope CurrentUser -ErrorAction Stop
           # launcher.ps1 es autogenerado: se valida por AST mas abajo, no por linter.
           $findings = Invoke-ScriptAnalyzer -Path . -Recurse -Settings ./PSScriptAnalyzerSettings.psd1 |
                         Where-Object { $_.ScriptName -ne 'launcher.ps1' }
@@ -92,10 +98,11 @@ jobs:
       - name: Unit tests (Pester v5)
         shell: pwsh
         run: |
-          Install-Module Pester -Scope CurrentUser -Force -MinimumVersion 5.5.0 -MaximumVersion 5.99.99 -SkipPublisherCheck -ErrorAction Stop
+          Install-Module Pester -Scope CurrentUser -Force -RequiredVersion 5.8.0 -ErrorAction Stop
           Remove-Module Pester -Force -ErrorAction SilentlyContinue
-          Import-Module Pester -MinimumVersion 5.5.0 -MaximumVersion 5.99.99 -Force
-          Invoke-Pester -Path ./tests/Lib.Tests.ps1 -Output Detailed -CI
+          Import-Module Pester -RequiredVersion 5.8.0 -Force
+          # KnownIssues.Tests.ps1 is a separate, deliberately red acceptance suite.
+          Invoke-Pester -Path ./tests/Lib.Tests.ps1,./tests/Platform.Tests.ps1 -Output Detailed -CI
 
       - name: Upload built launcher
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -110,41 +117,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build launcher with Windows PowerShell 5.1
+      - name: Install pinned test modules
         shell: powershell
         run: |
-          .\build.ps1
+          Install-Module Pester -Scope CurrentUser -Force -RequiredVersion 5.8.0 -ErrorAction Stop
+          Install-Module PSScriptAnalyzer -Scope CurrentUser -Force -RequiredVersion 1.25.0 -ErrorAction Stop
 
-      - name: Parse scripts with Windows PowerShell 5.1
+      - name: Local baseline and real WPF load with Windows PowerShell 5.1
         shell: powershell
         run: |
-          $targets = @(
-            "$PWD\src\Launcher.ps1"
-            "$PWD\launcher.ps1"
-          ) + (Get-ChildItem "$PWD\src\tools\Invoke-*.ps1" | Select-Object -ExpandProperty FullName)
-          $fail = 0
-          foreach ($path in $targets) {
-            $tokens = $null
-            $errors = $null
-            $text = Get-Content -Raw -LiteralPath $path -Encoding UTF8
-            [System.Management.Automation.Language.Parser]::ParseInput($text, $path, [ref]$tokens, [ref]$errors) | Out-Null
-            if ($errors.Count -gt 0) {
-              $fail++
-              Write-Host "::error file=$path::Parse errors:"
-              $errors | ForEach-Object {
-                Write-Host ("  line {0}: {1}" -f $_.Extent.StartLineNumber, $_.Message)
-              }
-            }
-          }
-          if ($fail -gt 0) { exit 1 }
-
-      - name: XAML smoke parse (Windows PowerShell 5.1)
-        shell: powershell
-        run: |
-          [xml]$xaml = Get-Content -Raw -LiteralPath "$PWD\src\gui\MainWindow.xaml" -Encoding UTF8
-          if (-not $xaml.DocumentElement) {
-            throw "MainWindow.xaml no tiene documento XML valido."
-          }
-          if ($xaml.DocumentElement.LocalName -ne 'Window') {
-            throw "MainWindow.xaml root esperado: Window. Actual: $($xaml.DocumentElement.LocalName)"
-          }
+          .\tests\Invoke-LocalChecks.ps1
