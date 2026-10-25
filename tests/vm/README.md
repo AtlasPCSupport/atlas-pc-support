@@ -57,6 +57,12 @@ el identificador de ventana no demuestran visibilidad. El invitado espera hasta
 diez minutos para observar y cerrar el panel normalmente. Guardar la observación
 y captura como evidencia externa; no se genera `panel.png` automáticamente.
 `results-<perfil>-<intento>/summary.json` y logs contienen evidencia del invitado;
+el paquete incluye `branding.example.json`, necesario para preparar las cuatro
+pruebas WPF. El XML de Pester y su resumen se copian también cuando el comprobador
+falla. Solo se acepta un directorio de informe creado durante ese intento; no se
+selecciona un resultado antiguo por tener una fecha más reciente. El campo
+`Windows10SuiteExecuted` indica que se produjo un resumen de la suite, incluso si
+hay pruebas fallidas; `Passed` y `FullWindows10Qualification` son estados distintos.
 `status.json` indica el directorio del intento. Las primeras ejecuciones del
 controlador usaban `results-<perfil>`. El
 campo `Windows10SuiteExecuted` no equivale a `FullWindows10Qualification`: faltan

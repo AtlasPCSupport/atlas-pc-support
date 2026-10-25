@@ -6,6 +6,23 @@ $root='C:\AtlasQA'
 $results=Join-Path $root 'results'
 New-Item -ItemType Directory -Path $results -Force|Out-Null
 function Write-LabStage {param($Stage);[ordered]@{Stage=$Stage;Utc=[datetime]::UtcNow.ToString('o')}|ConvertTo-Json|Set-Content (Join-Path $results 'status.json') -Encoding UTF8}
+function Invoke-AtlasGuestLocalChecks {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Repo,[Parameter(Mandatory)][string]$Results,
+        [string]$TempRoot=([IO.Path]::GetTempPath()))
+    $previous=@(Get-ChildItem -LiteralPath $TempRoot -Directory -Filter 'atlas-local-checks-*'|ForEach-Object FullName)
+    $failure=$null
+    try{& (Join-Path $Repo 'tests/Invoke-LocalChecks.ps1') *>&1|Out-File (Join-Path $Results 'local-checks.log') -Encoding UTF8}catch{$failure=$_}
+    $report=Get-ChildItem -LiteralPath $TempRoot -Directory -Filter 'atlas-local-checks-*'|
+        Where-Object FullName -NotIn $previous|Sort-Object LastWriteTimeUtc -Descending|Select-Object -First 1
+    if(-not $report){if($failure){throw $failure};throw 'A fresh local test report was not produced.'}
+    # Pester failures still leave useful XML and a summary. Copy before propagating
+    # the error, and never replace a missing fresh result with an earlier report.
+    Copy-Item -LiteralPath $report.FullName -Destination (Join-Path $Results 'local-checks') -Recurse -Force -ErrorAction Stop
+    $summaryPath=Join-Path $report.FullName 'summary.json'
+    $checks=if(Test-Path -LiteralPath $summaryPath){Get-Content -LiteralPath $summaryPath -Raw -Encoding UTF8|ConvertFrom-Json}else{$null}
+    [pscustomobject]@{Summary=$checks;Failure=$failure}
+}
 $summary=[ordered]@{SchemaVersion=1;Windows10SuiteExecuted=$false;FullWindows10Qualification=$false;Passed=$false;RepairsExecuted=$false}
 try{
     $summary.GuestRunnerSha256=(Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -40,14 +57,13 @@ try{
         $summary.TestBundleFiles[$relative]=(Get-FileHash -LiteralPath (Join-Path $repo $relative) -Algorithm SHA256).Hash.ToLowerInvariant()
     }
     Write-LabStage 'Local checks and WPF'
-    & (Join-Path $repo 'tests/Invoke-LocalChecks.ps1') *>&1|Out-File (Join-Path $results 'local-checks.log') -Encoding UTF8
-    $report=Get-ChildItem $env:TEMP -Directory -Filter 'atlas-local-checks-*'|Sort-Object LastWriteTimeUtc -Descending|Select-Object -First 1
-    if(-not $report){throw 'Local test report was not produced.'}
-    $checks=Get-Content (Join-Path $report.FullName 'summary.json') -Raw -Encoding UTF8|ConvertFrom-Json
-    Copy-Item -LiteralPath $report.FullName -Destination (Join-Path $results 'local-checks') -Recurse -Force
+    $localRun=Invoke-AtlasGuestLocalChecks -Repo $repo -Results $results
+    $checks=$localRun.Summary
     $summary.LocalChecks=$checks
+    $summary.Windows10SuiteExecuted=$null -ne $checks
+    if($localRun.Failure){throw $localRun.Failure}
+    if(-not $checks){throw 'Fresh local test summary was not produced.'}
     if($checks.Failed -or $checks.AnalyzerErrors -or -not $checks.DistributionArtifactsUnchanged){throw 'Guest local checks failed.'}
-    $summary.Windows10SuiteExecuted=$true
     Write-LabStage 'Actual platform capabilities'
     . (Join-Path $repo 'src/lib/Capabilities.ps1')
     $cap=Get-AtlasPlatformCapabilities -Refresh

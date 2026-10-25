@@ -136,3 +136,64 @@ Describe 'PowerShell Direct checkpoint boundaries' {
         ($script:checkpointCalls -join ',')|Should -Be 'close,checkpoint'
     }
 }
+
+Describe 'Guest test bundle and failed-report preservation' {
+    BeforeAll {
+        . (Join-Path $PSScriptRoot 'vm/LabHelpers.ps1')
+        function Invoke-Command {param($Session,$ScriptBlock,$ArgumentList);throw 'Unmocked guest invocation.'}
+        function Copy-Item {param($LiteralPath,$Destination,$ToSession,[switch]$Recurse,[switch]$Force);throw 'Unmocked bundle transfer.'}
+        $secret=[Security.SecureString]::new();$secret.AppendChar('x')
+        $bundleCredential=[pscredential]::new('AtlasLab',$secret)
+        $repoFixture=Split-Path -Parent $PSScriptRoot
+    }
+    It 'transfers the real branding fixture required by the WPF tests' {
+        $script:transferred=[Collections.Generic.List[string]]::new()
+        Mock Invoke-Command {}
+        Mock Copy-Item {$script:transferred.Add([string]$LiteralPath)}
+        Mock New-AtlasLabModuleArchive {throw 'Reached archive after repository transfer.'}
+        {Invoke-AtlasLabGuestQA -Session 'fixture-session' -VM ([pscustomobject]@{Id=[guid]::Empty}) `
+            -Credential $bundleCredential -Entry ([ordered]@{Profile='Home';ComputerName='ATLAS-HOME'}) `
+            -Modules @{Pester=$TestDrive;PSScriptAnalyzer=$TestDrive} -Repo $repoFixture -LabFull $TestDrive `
+            -Publication ([pscustomobject]@{}) -SaveState {}}|Should -Throw '*Reached archive*'
+        $brandingPath=Join-Path $repoFixture 'branding.example.json'
+        Test-Path -LiteralPath $brandingPath|Should -BeTrue
+        $script:transferred|Should -Contain $brandingPath
+    }
+}
+
+Describe 'Guest local-check report freshness' {
+    BeforeAll {
+        $tokens=$null;$parseErrors=$null
+        $ast=[Management.Automation.Language.Parser]::ParseFile((Join-Path $PSScriptRoot 'vm/Invoke-GuestQA.ps1'),[ref]$tokens,[ref]$parseErrors)
+        $definition=$ast.Find({param($n)$n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Invoke-AtlasGuestLocalChecks'},$true)
+        $collector=$definition.Body.GetScriptBlock()
+    }
+    BeforeEach {
+        $caseRoot=Join-Path $TestDrive ([guid]::NewGuid().ToString('N'))
+        $fakeRepo=Join-Path $caseRoot 'repo';$tempRoot=Join-Path $caseRoot 'temporary';$resultsRoot=Join-Path $caseRoot 'results'
+        New-Item -ItemType Directory -Path (Join-Path $fakeRepo 'tests'),$tempRoot,$resultsRoot -Force|Out-Null
+        $old=New-Item -ItemType Directory -Path (Join-Path $tempRoot 'atlas-local-checks-old')
+        [IO.File]::WriteAllText((Join-Path $old.FullName 'summary.json'),'{"Passed":999,"Failed":0}')
+        $old.LastWriteTimeUtc=[datetime]::UtcNow.AddDays(1)
+    }
+    It 'copies fresh XML and failed counts even when the checker throws' {
+        $fakeScript=@'
+$report=Join-Path (Join-Path $PSScriptRoot '../../temporary') 'atlas-local-checks-fresh'
+New-Item -ItemType Directory -Path $report -Force|Out-Null
+[IO.File]::WriteAllText((Join-Path $report 'summary.json'),'{"Passed":0,"Failed":1}')
+[IO.File]::WriteAllText((Join-Path $report 'pester.xml'),'<test-results fixture="failed"/>')
+throw 'Fixture checker failure.'
+'@
+        [IO.File]::WriteAllText((Join-Path $fakeRepo 'tests/Invoke-LocalChecks.ps1'),$fakeScript)
+        $run=& $collector -Repo $fakeRepo -Results $resultsRoot -TempRoot $tempRoot
+        $run.Failure.Exception.Message|Should -Be 'Fixture checker failure.'
+        $run.Summary.Failed|Should -Be 1
+        $run.Summary.Passed|Should -Be 0
+        Get-Content (Join-Path $resultsRoot 'local-checks/pester.xml')|Should -Be '<test-results fixture="failed"/>'
+    }
+    It 'rejects an earlier successful report if no fresh report was created' {
+        [IO.File]::WriteAllText((Join-Path $fakeRepo 'tests/Invoke-LocalChecks.ps1'),"throw 'Fixture failure before report.'")
+        {& $collector -Repo $fakeRepo -Results $resultsRoot -TempRoot $tempRoot}|Should -Throw '*Fixture failure before report*'
+        Test-Path (Join-Path $resultsRoot 'local-checks')|Should -BeFalse
+    }
+}

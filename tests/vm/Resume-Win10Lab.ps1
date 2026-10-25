@@ -18,7 +18,7 @@ $entry=[ordered]@{};foreach($property in $rows[0].PSObject.Properties){$entry[$p
 $history=Join-Path $labFull ('status-before-resume-'+[guid]::NewGuid().ToString('N')+'.json')
 Assert-AtlasLabLocation $labFull $history
 Copy-Item -LiteralPath (Join-Path $labFull 'status.json') -Destination $history -ErrorAction Stop
-$entry.Remove('Error');$entry.Remove('Result');$entry.Remove('GuestStage')
+$entry.Remove('Error');$entry.Remove('Result');$entry.Remove('GuestStage');$entry.Remove('ResultDirectory')
 $state.Profiles=@(foreach($row in $state.Profiles){if([string]$row.VMId -eq [string]$VMId){$entry}else{$row}})
 $state.PSObject.Properties.Remove('FinishedUtc')
 $vm=Get-VM -Id $VMId -ErrorAction Stop

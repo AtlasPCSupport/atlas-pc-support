@@ -205,7 +205,7 @@ function Invoke-AtlasLabGuestQA {
         }
         New-Item -ItemType Directory -Path C:\AtlasQA\repo,C:\AtlasQA\modules,C:\AtlasQA\results -Force|Out-Null
     } -ArgumentList $entry.ComputerName
-    foreach($relative in @('src','config','onboarding','docs','tests','build.ps1','get.ps1','launcher.ps1','launcher.ps1.sha256','release-manifest.json','PSScriptAnalyzerSettings.psd1')){
+    foreach($relative in @('src','config','onboarding','docs','tests','branding.example.json','build.ps1','get.ps1','launcher.ps1','launcher.ps1.sha256','release-manifest.json','PSScriptAnalyzerSettings.psd1')){
         Copy-Item -LiteralPath (Join-Path $repo $relative) -Destination C:\AtlasQA\repo -ToSession $session -Recurse -Force
     }
     # Compatibility profiles alone exceed 280 MB. Transfer one lossless archive,
@@ -254,8 +254,8 @@ function Invoke-AtlasLabGuestQA {
     $out=Join-Path $labFull ("results-$profileName-"+[guid]::NewGuid().ToString('N'))
     Assert-AtlasLabLocation $labFull $out
     Copy-Item -LiteralPath C:\AtlasQA\results -Destination $out -FromSession $session -Recurse -Force
-    if(-not $guestSummary){throw 'Guest tests timed out. Logs retained.'}
     $entry.ResultDirectory=Split-Path $out -Leaf
+    if(-not $guestSummary){throw 'Guest tests timed out. Logs retained.'}
     $entry.Result=$guestSummary;$entry.Status=if($guestSummary.Passed){'Passed'}else{'Failed'}
     }finally{Remove-PSSession -Session $session -ErrorAction SilentlyContinue}
 }
