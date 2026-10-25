@@ -49,3 +49,9 @@ Los timeouts y fallos quedan registrados, sin transformar una instalación o
 prueba fallida en éxito. `status.json` permite seguir la ejecución. Un fallo de
 instalación conserva la VM para inspección; corregir la plantilla antes de repetir
 en otra carpeta, evitando reutilizar datos parciales como si fueran una base limpia.
+
+Si se interrumpe el controlador, `Resume-Win10Lab.ps1 -LabRoot <carpeta> -VMId
+<guid> -TestModuleRoot <módulos>` retoma una VM de un laboratorio de un solo perfil.
+Comprueba nombre/ID, carpeta, único disco virtual y publicación antes de usar la
+credencial DPAPI ya existente. No reconstruye el disco ni reanuda un conjunto
+arbitrario de VMs. Registrar la interrupción junto al resultado de la prueba.

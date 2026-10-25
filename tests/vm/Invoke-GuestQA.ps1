@@ -12,9 +12,11 @@ try{
     $computer=Get-CimInstance Win32_ComputerSystem
     if($computer.Model -notmatch 'Virtual Machine' -or $env:COMPUTERNAME -cne $marker.ComputerName){throw 'Guest-only guard failed.'}
     $os=Get-CimInstance Win32_OperatingSystem
-    $edition=(Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion').EditionID
+    $version=Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion'
+    $edition=$version.EditionID
     $summary.Profile=$marker.Profile;$summary.Build=[int]$os.BuildNumber;$summary.Edition=$edition
     $summary.Runtime=$PSVersionTable.PSVersion.ToString();$summary.Caption=$os.Caption
+    $summary.UBR=$version.UBR;$summary.LabSource=$marker.LabSource
     if($summary.Build -ne $marker.ExpectedBuild -or $edition -cne $marker.ExpectedEdition){throw 'Installed edition/build does not match the target profile.'}
     $env:PSModulePath=(Join-Path $root 'modules')+';'+$env:PSModulePath
     Write-LabStage 'Defender'
@@ -23,6 +25,10 @@ try{
     if(-not $defender.AntivirusEnabled -or -not $defender.RealTimeProtectionEnabled -or -not $defender.AMServiceEnabled){throw 'Defender is not active in this guest.'}
     $summary.ActivationStatuses=@(Get-CimInstance SoftwareLicensingProduct -Filter "ApplicationID='55c92734-d682-4d71-983e-d6ec3f16059f'"|Where-Object PartialProductKey|Select-Object -ExpandProperty LicenseStatus)
     $repo=Join-Path $root 'repo'
+    $summary.TestBundleFiles=[ordered]@{}
+    foreach($relative in @('tests/Invoke-LocalChecks.ps1','tests/VmLab.Tests.ps1','tests/vm/LabHelpers.ps1','tests/vm/Invoke-Win10Lab.ps1','tests/vm/Resume-Win10Lab.ps1','tests/vm/Invoke-GuestQA.ps1')){
+        $summary.TestBundleFiles[$relative]=(Get-FileHash -LiteralPath (Join-Path $repo $relative) -Algorithm SHA256).Hash.ToLowerInvariant()
+    }
     Write-LabStage 'Local checks and WPF'
     & (Join-Path $repo 'tests/Invoke-LocalChecks.ps1') *>&1|Out-File (Join-Path $results 'local-checks.log') -Encoding UTF8
     $report=Get-ChildItem $env:TEMP -Directory -Filter 'atlas-local-checks-*'|Sort-Object LastWriteTimeUtc -Descending|Select-Object -First 1

@@ -92,3 +92,53 @@ public static class AtlasLabIsoStream {
         [AtlasLabIsoStream]::Save($result.ImageStream,$Destination)
     }finally{[void][Runtime.InteropServices.Marshal]::ReleaseComObject($image)}
 }
+
+
+function Invoke-AtlasLabGuestQA {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)]$Session,[Parameter(Mandatory)]$VM,
+        [Parameter(Mandatory)]$Entry,[Parameter(Mandatory)][hashtable]$Modules,
+        [Parameter(Mandatory)][string]$Repo,[Parameter(Mandatory)][string]$LabFull,
+        [Parameter(Mandatory)]$Publication,[int]$TestTimeoutMinutes=25,
+        [Parameter(Mandatory)][scriptblock]$SaveState)
+    $profileName=[string]$Entry.Profile
+    $entry.Status='Copying test bundle';& $SaveState
+    Invoke-Command -Session $session -ScriptBlock {New-Item -ItemType Directory -Path C:\AtlasQA\repo,C:\AtlasQA\modules,C:\AtlasQA\results -Force|Out-Null}
+    foreach($relative in @('src','config','onboarding','docs','tests','build.ps1','get.ps1','launcher.ps1','launcher.ps1.sha256','release-manifest.json','PSScriptAnalyzerSettings.psd1')){
+        Copy-Item -LiteralPath (Join-Path $repo $relative) -Destination C:\AtlasQA\repo -ToSession $session -Recurse -Force
+    }
+    foreach($moduleName in $modules.Keys){
+        Invoke-Command -Session $session -ScriptBlock {param($n)New-Item -ItemType Directory -Path (Join-Path C:\AtlasQA\modules $n) -Force|Out-Null} -ArgumentList $moduleName
+        Copy-Item -LiteralPath $modules[$moduleName] -Destination ("C:\AtlasQA\modules\$moduleName") -ToSession $session -Recurse -Force
+    }
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Invoke-GuestQA.ps1') -Destination C:\AtlasQA\Invoke-GuestQA.ps1 -ToSession $session -Force
+    $labSource=[ordered]@{Commit=(& git -C $repo rev-parse HEAD|Out-String).Trim();Dirty=[bool](& git -C $repo status --porcelain|Out-String).Trim();Files=@{}}
+    foreach($relative in @('tests/VmLab.Tests.ps1','tests/vm/LabHelpers.ps1','tests/vm/Invoke-Win10Lab.ps1','tests/vm/Resume-Win10Lab.ps1','tests/vm/Invoke-GuestQA.ps1')){
+        $labSource.Files[$relative]=(Get-FileHash -LiteralPath (Join-Path $repo $relative) -Algorithm SHA256).Hash.ToLowerInvariant()
+    }
+    $marker=[pscustomobject]@{Profile=$profileName;ComputerName=$entry.ComputerName;ExpectedBuild=$entry.ExpectedBuild;ExpectedEdition=$entry.ExpectedEdition;ReleaseCommit=$publication.commit;ManifestSha256=$publication.manifestSha256;LabSource=$labSource}
+    Invoke-Command -Session $session -ScriptBlock {param($json)$json|Set-Content C:\AtlasQA\marker.json -Encoding UTF8} -ArgumentList ($marker|ConvertTo-Json -Depth 6)
+    Checkpoint-VM -VM $vm -SnapshotName 'Before Atlas QA'|Out-Null
+    Invoke-Command -Session $session -ScriptBlock {
+        $principal=New-ScheduledTaskPrincipal -UserId "$env:COMPUTERNAME\AtlasLab" -LogonType Interactive -RunLevel Highest
+        $action=New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument '-NoProfile -STA -ExecutionPolicy RemoteSigned -File C:\AtlasQA\Invoke-GuestQA.ps1'
+        Register-ScheduledTask -TaskName AtlasQA -Principal $principal -Action $action -Force|Out-Null
+        Start-ScheduledTask -TaskName AtlasQA
+    }
+    $entry.Status='Testing';& $SaveState
+    $deadline=[datetime]::UtcNow.AddMinutes($TestTimeoutMinutes);$guestSummary=$null
+    while([datetime]::UtcNow -lt $deadline -and -not $guestSummary){
+        Start-Sleep -Seconds 20
+        $guest=Invoke-Command -Session $session -ScriptBlock {
+            if(Test-Path C:\AtlasQA\results\summary.json){Get-Content C:\AtlasQA\results\summary.json -Raw -Encoding UTF8}
+        }
+        if($guest){$guestSummary=$guest|ConvertFrom-Json}else{
+            $stage=Invoke-Command -Session $session -ScriptBlock {if(Test-Path C:\AtlasQA\results\status.json){(Get-Content C:\AtlasQA\results\status.json -Raw|ConvertFrom-Json).Stage}}
+            $entry.GuestStage=$stage;& $SaveState
+        }
+    }
+    $out=Join-Path $labFull ("results-$profileName")
+    Copy-Item -LiteralPath C:\AtlasQA\results -Destination $out -FromSession $session -Recurse -Force
+    if(-not $guestSummary){throw 'Guest tests timed out. Logs retained.'}
+    $entry.Result=$guestSummary;$entry.Status=if($guestSummary.Passed){'Passed'}else{'Failed'}
+}

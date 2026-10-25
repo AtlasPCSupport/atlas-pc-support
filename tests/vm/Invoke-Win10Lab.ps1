@@ -126,41 +126,8 @@ foreach($profile in $Profiles){
             if(-not $session){Start-Sleep -Seconds 15;Save-LabState}
         }
         if(-not $session){throw 'Windows installation/first logon timed out. VM retained for inspection.'}
-        $entry.Status='Copying test bundle';$state.Stage="Copy $profile";Save-LabState
-        Invoke-Command -Session $session -ScriptBlock {New-Item -ItemType Directory -Path C:\AtlasQA\repo,C:\AtlasQA\modules,C:\AtlasQA\results -Force|Out-Null}
-        foreach($relative in @('src','config','onboarding','docs','tests','build.ps1','get.ps1','launcher.ps1','launcher.ps1.sha256','release-manifest.json','PSScriptAnalyzerSettings.psd1')){
-            Copy-Item -LiteralPath (Join-Path $repo $relative) -Destination C:\AtlasQA\repo -ToSession $session -Recurse -Force
-        }
-        foreach($moduleName in $modules.Keys){
-            Invoke-Command -Session $session -ScriptBlock {param($n)New-Item -ItemType Directory -Path (Join-Path C:\AtlasQA\modules $n) -Force|Out-Null} -ArgumentList $moduleName
-            Copy-Item -LiteralPath $modules[$moduleName] -Destination ("C:\AtlasQA\modules\$moduleName") -ToSession $session -Recurse -Force
-        }
-        Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Invoke-GuestQA.ps1') -Destination C:\AtlasQA\Invoke-GuestQA.ps1 -ToSession $session -Force
-        $marker=[pscustomobject]@{Profile=$profile;ComputerName=$computerName;ExpectedBuild=$entry.ExpectedBuild;ExpectedEdition=$entry.ExpectedEdition;ReleaseCommit=$publication.commit;ManifestSha256=$publication.manifestSha256}
-        Invoke-Command -Session $session -ScriptBlock {param($json)$json|Set-Content C:\AtlasQA\marker.json -Encoding UTF8} -ArgumentList ($marker|ConvertTo-Json)
-        Checkpoint-VM -VM $vm -SnapshotName 'Before Atlas QA'|Out-Null
-        Invoke-Command -Session $session -ScriptBlock {
-            $principal=New-ScheduledTaskPrincipal -UserId "$env:COMPUTERNAME\AtlasLab" -LogonType Interactive -RunLevel Highest
-            $action=New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument '-NoProfile -STA -ExecutionPolicy RemoteSigned -File C:\AtlasQA\Invoke-GuestQA.ps1'
-            Register-ScheduledTask -TaskName AtlasQA -Principal $principal -Action $action -Force|Out-Null
-            Start-ScheduledTask -TaskName AtlasQA
-        }
-        $entry.Status='Testing';$state.Stage="Test $profile";Save-LabState
-        $deadline=[datetime]::UtcNow.AddMinutes($TestTimeoutMinutes);$guestSummary=$null
-        while([datetime]::UtcNow -lt $deadline -and -not $guestSummary){
-            Start-Sleep -Seconds 20
-            $guest=Invoke-Command -Session $session -ScriptBlock {
-                if(Test-Path C:\AtlasQA\results\summary.json){Get-Content C:\AtlasQA\results\summary.json -Raw -Encoding UTF8}
-            }
-            if($guest){$guestSummary=$guest|ConvertFrom-Json}else{
-                $stage=Invoke-Command -Session $session -ScriptBlock {if(Test-Path C:\AtlasQA\results\status.json){(Get-Content C:\AtlasQA\results\status.json -Raw|ConvertFrom-Json).Stage}}
-                $entry.GuestStage=$stage;Save-LabState
-            }
-        }
-        $out=Join-Path $labFull ("results-$profile")
-        Copy-Item -LiteralPath C:\AtlasQA\results -Destination $out -FromSession $session -Recurse -Force
-        if(-not $guestSummary){throw 'Guest tests timed out. Logs retained.'}
-        $entry.Result=$guestSummary;$entry.Status=if($guestSummary.Passed){'Passed'}else{'Failed'}
+        Invoke-AtlasLabGuestQA -Session $session -VM $vm -Entry $entry -Modules $modules -Repo $repo -LabFull $labFull -Publication $publication -TestTimeoutMinutes $TestTimeoutMinutes -SaveState { $state.Stage="$($entry.Status) $($entry.Profile)"; Save-LabState }
+
     }catch{$entry.Status='Failed';$entry.Error=$_.Exception.Message}
     finally{
         if($session){Remove-PSSession $session -ErrorAction SilentlyContinue}
