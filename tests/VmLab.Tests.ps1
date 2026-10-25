@@ -12,6 +12,7 @@ Describe 'Windows 10 lab boundaries and unattended metadata' {
         $answer.SelectSingleNode('//u:LocalAccount/u:Password/u:Value',$ns).InnerText|Should -Be $password
         $answer.SelectSingleNode('//u:InstallTo/u:DiskID',$ns).InnerText|Should -Be '0'
         $answer.SelectSingleNode('//u:AutoLogon/u:LogonCount',$ns).InnerText|Should -Be '3'
+        $answer.SelectSingleNode('//u:AutoLogon/u:Domain',$ns).InnerText|Should -Be $fixtureComputer
         $answer.SelectNodes('//u:Key',$ns).Count|Should -Be 2
         $answer.SelectSingleNode('//u:UserData/u:ProductKey/u:Key',$ns).InnerText|Should -Match '^[A-Z0-9]{5}(?:-[A-Z0-9]{5}){4}$'
         $answer.SelectNodes('//u:component[@name="Microsoft-Windows-Shell-Setup"]/u:ProductKey',$ns).Count|Should -Be 0
@@ -75,8 +76,9 @@ Describe 'Windows 10 lab boundaries and unattended metadata' {
 Describe 'Guest readiness before file transfer' {
     BeforeAll {
         if(-not (Get-Command Get-CimInstance -ErrorAction SilentlyContinue)){
-            function Get-CimInstance {param([string]$ClassName);throw 'Unmocked lab readiness query.'}
+            function Get-CimInstance {param([string]$ClassName,[string]$Filter);throw 'Unmocked lab readiness query.'}
         }
+        function Invoke-CimMethod {param($InputObject,[string]$MethodName);throw 'Unmocked lab owner query.'}
         . (Join-Path $PSScriptRoot 'vm/LabHelpers.ps1')
         $assignment=(Get-Command Wait-AtlasLabDesktop).ScriptBlock.Ast.Find({
             param($node)
@@ -86,22 +88,51 @@ Describe 'Guest readiness before file transfer' {
     }
     BeforeEach {
         $previousComputer=$env:COMPUTERNAME;$env:COMPUTERNAME='ATLAS-QA'
-        Mock Get-CimInstance {[pscustomobject]@{Model=$fixtureModel}}
+        Mock Get-CimInstance {[pscustomobject]@{Model=$fixtureModel}} -ParameterFilter {$ClassName -eq 'Win32_ComputerSystem'}
+        Mock Get-CimInstance {if($explorerExists){[pscustomobject]@{SessionId=1}}} -ParameterFilter {$ClassName -eq 'Win32_Process'}
+        Mock Invoke-CimMethod {[pscustomobject]@{ReturnValue=0;User=$shellUser;Domain=$env:COMPUTERNAME}}
         Mock Get-ItemProperty {[pscustomobject]@{SystemSetupInProgress=$systemSetup;OOBEInProgress=$oobe}}
         Mock Test-Path {$profileExists}
-        Mock Get-Process {if($explorerExists){[pscustomobject]@{ProcessName='explorer'}}}
     }
     AfterEach {$env:COMPUTERNAME=$previousComputer}
     It '<case>' -ForEach @(
-        @{case='does not accept a profile created while OOBE is running';systemSetup=0;oobe=1;profileExists=$true;explorerExists=$true;fixtureModel='Virtual Machine';expectedComputer='ATLAS-QA';ready=$false},
-        @{case='does not accept system setup';systemSetup=1;oobe=0;profileExists=$true;explorerExists=$true;fixtureModel='Virtual Machine';expectedComputer='ATLAS-QA';ready=$false},
-        @{case='does not accept unknown setup state';systemSetup=$null;oobe=$null;profileExists=$true;explorerExists=$true;fixtureModel='Virtual Machine';expectedComputer='ATLAS-QA';ready=$false},
-        @{case='requires the interactive shell';systemSetup=0;oobe=0;profileExists=$true;explorerExists=$false;fixtureModel='Virtual Machine';expectedComputer='ATLAS-QA';ready=$false},
-        @{case='requires the lab user profile';systemSetup=0;oobe=0;profileExists=$false;explorerExists=$true;fixtureModel='Virtual Machine';expectedComputer='ATLAS-QA';ready=$false},
-        @{case='rejects another computer';systemSetup=0;oobe=0;profileExists=$true;explorerExists=$true;fixtureModel='Virtual Machine';expectedComputer='ATLAS-OTHER';ready=$false},
-        @{case='rejects a physical computer';systemSetup=0;oobe=0;profileExists=$true;explorerExists=$true;fixtureModel='Physical Computer';expectedComputer='ATLAS-QA';ready=$false},
-        @{case='accepts the completed owned VM desktop';systemSetup=0;oobe=0;profileExists=$true;explorerExists=$true;fixtureModel='Virtual Machine';expectedComputer='ATLAS-QA';ready=$true}
+        @{case='does not accept a profile created while OOBE is running';systemSetup=0;oobe=1;profileExists=$true;explorerExists=$true;shellUser='AtlasLab';fixtureModel='Virtual Machine';expectedComputer='ATLAS-QA';ready=$false},
+        @{case='does not accept system setup';systemSetup=1;oobe=0;profileExists=$true;explorerExists=$true;shellUser='AtlasLab';fixtureModel='Virtual Machine';expectedComputer='ATLAS-QA';ready=$false},
+        @{case='does not accept unknown setup state';systemSetup=$null;oobe=$null;profileExists=$true;explorerExists=$true;shellUser='AtlasLab';fixtureModel='Virtual Machine';expectedComputer='ATLAS-QA';ready=$false},
+        @{case='requires the interactive shell';systemSetup=0;oobe=0;profileExists=$true;explorerExists=$false;shellUser='AtlasLab';fixtureModel='Virtual Machine';expectedComputer='ATLAS-QA';ready=$false},
+        @{case='requires the lab user profile';systemSetup=0;oobe=0;profileExists=$false;explorerExists=$true;shellUser='AtlasLab';fixtureModel='Virtual Machine';expectedComputer='ATLAS-QA';ready=$false},
+        @{case='rejects another computer';systemSetup=0;oobe=0;profileExists=$true;explorerExists=$true;shellUser='AtlasLab';fixtureModel='Virtual Machine';expectedComputer='ATLAS-OTHER';ready=$false},
+        @{case='rejects a physical computer';systemSetup=0;oobe=0;profileExists=$true;explorerExists=$true;shellUser='AtlasLab';fixtureModel='Physical Computer';expectedComputer='ATLAS-QA';ready=$false},
+        @{case='rejects another interactive identity';systemSetup=0;oobe=0;profileExists=$true;explorerExists=$true;shellUser='defaultuser0';fixtureModel='Virtual Machine';expectedComputer='ATLAS-QA';ready=$false},
+        @{case='accepts the completed owned VM desktop';systemSetup=0;oobe=0;profileExists=$true;explorerExists=$true;shellUser='AtlasLab';fixtureModel='Virtual Machine';expectedComputer='ATLAS-QA';ready=$true}
     ) {
-        (& $desktopPredicate $expectedComputer)|Should -Be $ready
+        (& $desktopPredicate $expectedComputer).Ready|Should -Be $ready
+    }
+}
+
+Describe 'PowerShell Direct checkpoint boundaries' {
+    BeforeAll {
+        . (Join-Path $PSScriptRoot 'vm/LabHelpers.ps1')
+        function Remove-PSSession {param($Session);throw 'Unmocked session removal.'}
+        function Checkpoint-VM {param($VM,[string]$SnapshotName);throw 'Unmocked VM checkpoint.'}
+        $secret=[Security.SecureString]::new();$secret.AppendChar('x')
+        $credentialFixture=[pscredential]::new('AtlasLab',$secret)
+        $vmFixture=[pscustomobject]@{Id=[guid]::Empty}
+    }
+    BeforeEach {
+        $script:checkpointCalls=[Collections.Generic.List[string]]::new()
+        Mock Remove-PSSession {$script:checkpointCalls.Add('close')}
+        Mock Checkpoint-VM {$script:checkpointCalls.Add('checkpoint')}
+        Mock Wait-AtlasLabDesktop {$script:checkpointCalls.Add('fresh');[pscustomobject]@{Name='fresh-session'}}
+    }
+    It 'opens a fresh channel only after closing the old one and checkpointing' {
+        $result=New-AtlasLabCheckpointSession -Session 'old-session' -VM $vmFixture -Credential $credentialFixture -ExpectedComputer 'ATLAS-QA'
+        $result.Name|Should -Be 'fresh-session'
+        ($script:checkpointCalls -join ',')|Should -Be 'close,checkpoint,fresh'
+    }
+    It 'stops when checkpointing fails instead of reusing the old channel' {
+        Mock Checkpoint-VM {$script:checkpointCalls.Add('checkpoint');throw 'checkpoint fixture failure'}
+        {New-AtlasLabCheckpointSession -Session 'old-session' -VM $vmFixture -Credential $credentialFixture -ExpectedComputer 'ATLAS-QA'}|Should -Throw '*fixture failure*'
+        ($script:checkpointCalls -join ',')|Should -Be 'close,checkpoint'
     }
 }

@@ -65,7 +65,7 @@ function New-AtlasLabAnswer {
   <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
    <OOBE><HideEULAPage>true</HideEULAPage><HideOnlineAccountScreens>true</HideOnlineAccountScreens><HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE><ProtectYourPC>1</ProtectYourPC></OOBE>
    <UserAccounts><LocalAccounts><LocalAccount wcm:action="add"><Password><Value>$secret</Value><PlainText>true</PlainText></Password><Group>Administrators</Group><Name>AtlasLab</Name><DisplayName>Atlas QA</DisplayName></LocalAccount></LocalAccounts></UserAccounts>
-   <AutoLogon><Password><Value>$secret</Value><PlainText>true</PlainText></Password><Username>AtlasLab</Username><Enabled>true</Enabled><LogonCount>3</LogonCount></AutoLogon>
+   <AutoLogon><Password><Value>$secret</Value><PlainText>true</PlainText></Password><Domain>$ComputerName</Domain><Username>AtlasLab</Username><Enabled>true</Enabled><LogonCount>3</LogonCount></AutoLogon>
   </component>
  </settings>
 </unattend>
@@ -127,33 +127,64 @@ function New-AtlasLabModuleArchive {
 function Wait-AtlasLabDesktop {
     [CmdletBinding()]
     param([Parameter(Mandatory)][guid]$VMId,[Parameter(Mandatory)][pscredential]$Credential,
-        [Parameter(Mandatory)][string]$ExpectedComputer,[ValidateRange(1,120)][int]$TimeoutMinutes=75)
+        [Parameter(Mandatory)][string]$ExpectedComputer,[ValidateRange(1,120)][int]$TimeoutMinutes=75,
+        [scriptblock]$OnProgress)
     $readyScript={
         param($expected)
         $setup=Get-ItemProperty 'HKLM:\SYSTEM\Setup' -ErrorAction Stop
-        $env:COMPUTERNAME -ceq $expected -and (Get-CimInstance Win32_ComputerSystem).Model -match 'Virtual Machine' -and
-            (Test-Path 'C:\Users\AtlasLab\NTUSER.DAT') -and $setup.SystemSetupInProgress -eq 0 -and
-            $setup.OOBEInProgress -eq 0 -and @(Get-Process explorer -ErrorAction SilentlyContinue).Count -gt 0
+        $model=(Get-CimInstance Win32_ComputerSystem).Model
+        $owners=@(foreach($shell in @(Get-CimInstance Win32_Process -Filter "Name='explorer.exe'" -ErrorAction Stop)){
+            if($shell.SessionId -gt 0){
+                $owner=Invoke-CimMethod -InputObject $shell -MethodName GetOwner -ErrorAction Stop
+                if($owner.ReturnValue -eq 0){[pscustomobject]@{User=$owner.User;Domain=$owner.Domain;SessionId=$shell.SessionId}}
+            }
+        })
+        $ownedShells=@($owners|Where-Object {$_.User -ieq 'AtlasLab' -and $_.Domain -ieq $expected})
+        [pscustomobject]@{
+            Ready=($env:COMPUTERNAME -ceq $expected -and $model -match 'Virtual Machine' -and
+                (Test-Path 'C:\Users\AtlasLab\NTUSER.DAT') -and $setup.SystemSetupInProgress -eq 0 -and
+                $setup.OOBEInProgress -eq 0 -and $ownedShells.Count -gt 0)
+            ComputerName=$env:COMPUTERNAME;Model=$model;SystemSetupInProgress=$setup.SystemSetupInProgress
+            OOBEInProgress=$setup.OOBEInProgress;ShellOwners=$owners
+        }
     }
     $deadline=[datetime]::UtcNow.AddMinutes($TimeoutMinutes)
     while([datetime]::UtcNow -lt $deadline){
         $candidate=$null
         try{
             $candidate=New-PSSession -VMId $VMId -Credential $Credential -ErrorAction Stop
-            if(Invoke-Command -Session $candidate -ScriptBlock $readyScript -ArgumentList $ExpectedComputer){
+            $facts=Invoke-Command -Session $candidate -ScriptBlock $readyScript -ArgumentList $ExpectedComputer
+            if($OnProgress){& $OnProgress $facts}
+            if($facts.Ready){
                 Start-Sleep -Seconds 5
-                if(Invoke-Command -Session $candidate -ScriptBlock $readyScript -ArgumentList $ExpectedComputer){return $candidate}
+                $facts=Invoke-Command -Session $candidate -ScriptBlock $readyScript -ArgumentList $ExpectedComputer
+                if($OnProgress){& $OnProgress $facts}
+                if($facts.Ready){return $candidate}
             }
-        }catch{Write-Verbose ("Guest desktop not ready: "+$_.Exception.Message)}
+        }catch{
+            Write-Verbose ("Guest desktop not ready: "+$_.Exception.Message)
+            if($OnProgress){& $OnProgress ([pscustomobject]@{Ready=$false;ConnectionError=$_.Exception.Message})}
+        }
         if($candidate){Remove-PSSession $candidate -ErrorAction SilentlyContinue}
         Start-Sleep -Seconds 15
     }
     throw 'Windows installation/OOBE/interactive desktop timed out. VM retained; no qualification claimed.'
 }
 
-function Invoke-AtlasLabGuestQA {
+function New-AtlasLabCheckpointSession {
     [CmdletBinding()]
     param([Parameter(Mandatory)]$Session,[Parameter(Mandatory)]$VM,
+        [Parameter(Mandatory)][pscredential]$Credential,[Parameter(Mandatory)][string]$ExpectedComputer,
+        [string]$SnapshotName='Before Atlas QA',[scriptblock]$OnProgress)
+    # A standard checkpoint saves VM memory. Never reuse its old Direct channel.
+    Remove-PSSession -Session $Session -ErrorAction Stop
+    Checkpoint-VM -VM $VM -SnapshotName $SnapshotName -ErrorAction Stop|Out-Null
+    Wait-AtlasLabDesktop -VMId $VM.Id -Credential $Credential -ExpectedComputer $ExpectedComputer -TimeoutMinutes 5 -OnProgress $OnProgress
+}
+
+function Invoke-AtlasLabGuestQA {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)]$Session,[Parameter(Mandatory)]$VM,[Parameter(Mandatory)][pscredential]$Credential,
         [Parameter(Mandatory)]$Entry,[Parameter(Mandatory)][hashtable]$Modules,
         [Parameter(Mandatory)][string]$Repo,[Parameter(Mandatory)][string]$LabFull,
         [Parameter(Mandatory)]$Publication,[int]$TestTimeoutMinutes=25,
@@ -198,7 +229,10 @@ function Invoke-AtlasLabGuestQA {
     }
     $marker=[pscustomobject]@{Profile=$profileName;ComputerName=$entry.ComputerName;ExpectedBuild=$entry.ExpectedBuild;ExpectedEdition=$entry.ExpectedEdition;ReleaseCommit=$publication.commit;ManifestSha256=$publication.manifestSha256;LabSource=$labSource}
     Invoke-Command -Session $session -ScriptBlock {param($json)$json|Set-Content C:\AtlasQA\marker.json -Encoding UTF8} -ArgumentList ($marker|ConvertTo-Json -Depth 6)
-    Checkpoint-VM -VM $vm -SnapshotName 'Before Atlas QA'|Out-Null
+    $entry.Status='Checkpoint and fresh Direct session';& $SaveState
+    $entry.CheckpointName='Before Atlas QA '+[guid]::NewGuid().ToString('N').Substring(0,8)
+    $session=New-AtlasLabCheckpointSession -Session $session -VM $vm -Credential $Credential -ExpectedComputer $entry.ComputerName -SnapshotName $entry.CheckpointName -OnProgress {param($facts)$entry.Readiness=$facts;& $SaveState}
+    try{
     Invoke-Command -Session $session -ScriptBlock {
         $principal=New-ScheduledTaskPrincipal -UserId "$env:COMPUTERNAME\AtlasLab" -LogonType Interactive -RunLevel Highest
         $action=New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument '-NoProfile -STA -ExecutionPolicy RemoteSigned -File C:\AtlasQA\Invoke-GuestQA.ps1'
@@ -223,4 +257,5 @@ function Invoke-AtlasLabGuestQA {
     if(-not $guestSummary){throw 'Guest tests timed out. Logs retained.'}
     $entry.ResultDirectory=Split-Path $out -Leaf
     $entry.Result=$guestSummary;$entry.Status=if($guestSummary.Passed){'Passed'}else{'Failed'}
+    }finally{Remove-PSSession -Session $session -ErrorAction SilentlyContinue}
 }

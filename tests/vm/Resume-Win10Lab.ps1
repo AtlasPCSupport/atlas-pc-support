@@ -50,8 +50,8 @@ try{
     }
     elseif($vm.State -eq 'Saved'){Start-VM -VM $vm|Out-Null}
     $entry.Status='Installing';$state.Stage='Resume installation';Save-ResumedLab
-    $session=Wait-AtlasLabDesktop -VMId $VMId -Credential $credential -ExpectedComputer $entry.ComputerName -TimeoutMinutes $InstallTimeoutMinutes
-    Invoke-AtlasLabGuestQA -Session $session -VM $vm -Entry $entry -Modules $modules -Repo $repo -LabFull $labFull -Publication $publication -SaveState {$state.Stage="$($entry.Status) $($entry.Profile)";Save-ResumedLab}
+    $session=Wait-AtlasLabDesktop -VMId $VMId -Credential $credential -ExpectedComputer $entry.ComputerName -TimeoutMinutes $InstallTimeoutMinutes -OnProgress {param($facts)$entry.Readiness=$facts;Save-ResumedLab}
+    Invoke-AtlasLabGuestQA -Session $session -VM $vm -Credential $credential -Entry $entry -Modules $modules -Repo $repo -LabFull $labFull -Publication $publication -SaveState {$state.Stage="$($entry.Status) $($entry.Profile)";Save-ResumedLab}
 }catch{$entry.Status='Failed';$entry.Error=$_.Exception.Message}
 finally{
     if($session){Remove-PSSession $session -ErrorAction SilentlyContinue}

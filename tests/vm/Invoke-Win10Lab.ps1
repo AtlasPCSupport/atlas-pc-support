@@ -117,8 +117,8 @@ foreach($profile in $Profiles){
             $keyboard=$system|Get-CimAssociatedInstance -ResultClassName Msvm_Keyboard
             if($keyboard){$key=Invoke-CimMethod -InputObject $keyboard -MethodName TypeKey -Arguments @{KeyCode=[uint32]32};if($key.ReturnValue -notin @(0,4096)){throw 'Initial guest keyboard request failed.'}}
         }
-        $session=Wait-AtlasLabDesktop -VMId $vm.Id -Credential $credential -ExpectedComputer $entry.ComputerName -TimeoutMinutes $InstallTimeoutMinutes
-        Invoke-AtlasLabGuestQA -Session $session -VM $vm -Entry $entry -Modules $modules -Repo $repo -LabFull $labFull -Publication $publication -TestTimeoutMinutes $TestTimeoutMinutes -SaveState { $state.Stage="$($entry.Status) $($entry.Profile)"; Save-LabState }
+        $session=Wait-AtlasLabDesktop -VMId $vm.Id -Credential $credential -ExpectedComputer $entry.ComputerName -TimeoutMinutes $InstallTimeoutMinutes -OnProgress {param($facts)$entry.Readiness=$facts;Save-LabState}
+        Invoke-AtlasLabGuestQA -Session $session -VM $vm -Credential $credential -Entry $entry -Modules $modules -Repo $repo -LabFull $labFull -Publication $publication -TestTimeoutMinutes $TestTimeoutMinutes -SaveState { $state.Stage="$($entry.Status) $($entry.Profile)"; Save-LabState }
 
     }catch{$entry.Status='Failed';$entry.Error=$_.Exception.Message}
     finally{

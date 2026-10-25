@@ -51,8 +51,12 @@ expandirlos; 286,6 MiB se transportan como 14,3 MiB.
 
 La tarea interactiva del invitado comprueba build/edición/modelo, Defender,
 regresiones de la suite y WPF, capacidades/Store, entrada online/offline verificada,
-visibilidad y cierre del panel, sin pulsar herramientas ni ejecutar reparaciones.
-`results-<perfil>-<intento>/summary.json`, logs y panel.png contienen evidencia real;
+creación y cierre normal del panel, sin pulsar herramientas ni ejecutar reparaciones.
+La verificación visual se hace externamente en la consola de la VM: el título y
+el identificador de ventana no demuestran visibilidad. El invitado espera hasta
+diez minutos para observar y cerrar el panel normalmente. Guardar la observación
+y captura como evidencia externa; no se genera `panel.png` automáticamente.
+`results-<perfil>-<intento>/summary.json` y logs contienen evidencia del invitado;
 `status.json` indica el directorio del intento. Las primeras ejecuciones del
 controlador usaban `results-<perfil>`. El
 campo `Windows10SuiteExecuted` no equivale a `FullWindows10Qualification`: faltan
@@ -70,6 +74,10 @@ credencial DPAPI ya existente. No reconstruye el disco ni reanuda un conjunto
 arbitrario de VMs. Una matriz debe haber terminado antes de repetir uno de sus
 perfiles y se rechaza arrancar mientras otra VM Atlas está encendida. Se conservan
 el estado anterior y los resultados de intentos anteriores. La copia y el inicio
-de pruebas esperan a OOBE completo y Explorer; la mera existencia de NTUSER.DAT
+de pruebas esperan a OOBE completo y Explorer de AtlasLab en una sesión interactiva;
+la mera existencia de NTUSER.DAT
 durante Setup no demuestra que el escritorio esté listo. Registrar las
 interrupciones junto al resultado de la prueba.
+
+El checkpoint cierra primero el canal Direct existente y abre uno nuevo al terminar.
+No se reutiliza la sesión anterior al guardado del estado de la VM.
