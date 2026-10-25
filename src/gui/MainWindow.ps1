@@ -481,7 +481,7 @@ function Initialize-AtlasDashboard {
         [void]$state.Worker.AddScript($collector)
         $state.Started = [datetime]::UtcNow
         $state.Pending = $state.Worker.BeginInvoke()
-        if ($controls.DashAlertsText) { $controls.DashAlertsText.Text = & $strFn 'status.loading' }
+        if ($controls.DashAlertsText) { $controls.DashAlertsText.Text = '...' }
     }.GetNewClosure()
     $poll = {
         if ($state.Closed) { return }

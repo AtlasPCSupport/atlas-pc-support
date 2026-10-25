@@ -1,8 +1,8 @@
 {
   "phase": 5,
   "date": "2026-10-24",
-  "version": "1.4.0",
-  "manifestSha256": "152610f7e518fe4a8c6ed8dc24506681b26e81399ec2136d85f1145f6366139c",
+  "version": "1.4.1",
+  "manifestSha256": "cd0a129db2fc223e7947b21eb9824587a91a5621312ea0f40f28db45531cd26b",
   "payloadMembersVerified": 33,
   "toolScriptsVerified": 27,
   "localRuns": [

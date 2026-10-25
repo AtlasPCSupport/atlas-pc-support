@@ -1,6 +1,6 @@
 # Cierre de implementación y aceptación pendiente
 
-Fecha: 24 de octubre de 2026. Candidata: **Atlas 1.4.0**. Informe de origen:
+Fecha: 24 de octubre de 2026. Candidata: **Atlas 1.4.1**. Informe de origen:
 [auditoría](AUDITORIA-2026-10-24.md). Se han recorrido las fases 0–5 con entregas
 separadas. Los controles implementados y las restricciones reducen los fallos
 identificados, pero **la aceptación integral del plan no está completada**:
@@ -21,6 +21,12 @@ La fase 4 promovió `75731b29a4c2f26c0508d017af56563e17324c11`, manifiesto
 `298addd09fe4b69dac709ca08f5f861883d3aee55b24d9f7a14f165bdec5a603`, Worker
 `8a2cb9a2-a71a-46de-a014-81574f08e3e7`. El commit de publicación puede diferir del
 merge: se publica el SHA probado explícitamente. La fase 5 conserva este mecanismo.
+
+La fase 5 se integró en [#154](https://github.com/AtlasPCSupport/atlas-pc-support/pull/154)
+como 1.4.0; la revisión 1.4.1 corrige únicamente el indicador de carga del monitor
+que mostraba una clave sin traducción. Se conserva el flujo y sus comprobaciones.
+Se detectó Hyper-V en este host, pero la sesión no tiene permiso para inventariar
+sus máquinas; eso no aporta evidencia de una VM Windows 10 ejecutada.
 
 ## Aceptación por criterio
 
