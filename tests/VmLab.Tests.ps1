@@ -35,6 +35,9 @@ Describe 'Windows 10 lab boundaries and unattended metadata' {
 
 Describe 'Guest readiness before file transfer' {
     BeforeAll {
+        if(-not (Get-Command Get-CimInstance -ErrorAction SilentlyContinue)){
+            function Get-CimInstance {param([string]$ClassName);throw 'Unmocked lab readiness query.'}
+        }
         . (Join-Path $PSScriptRoot 'vm/LabHelpers.ps1')
         $assignment=(Get-Command Wait-AtlasLabDesktop).ScriptBlock.Ast.Find({
             param($node)
