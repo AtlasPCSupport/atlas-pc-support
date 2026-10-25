@@ -20,7 +20,7 @@ if ($PSVersionTable.PSEdition -eq 'Desktop') {
 }
 
 
-$script:AtlasVersion = '1.4.1'
+$script:AtlasVersion = '1.5.0'
 $script:AtlasBuildDate = '2026-10-24'
 $script:AtlasToolsManifest = '{
   "$comment": "Tool manifest. Each entry describes one tool. The launcher uses this to render the panel''s tool tiles.",
@@ -44,7 +44,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -73,7 +74,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -109,7 +111,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -138,7 +141,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -169,7 +173,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -198,7 +203,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -227,7 +233,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -260,7 +267,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -289,7 +297,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -318,7 +327,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -347,7 +357,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -379,7 +390,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -408,7 +420,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -437,7 +450,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -466,7 +480,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -497,7 +512,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -526,7 +542,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -555,7 +572,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -586,7 +604,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -617,7 +636,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -650,7 +670,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -679,7 +700,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -708,7 +730,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -740,7 +763,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -772,7 +796,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -801,7 +826,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -831,7 +857,8 @@ $script:AtlasToolsManifest = '{
           "Dependencies",
           "PS7",
           "Release",
-          "Reports"
+          "Reports",
+          "Operations"
         ]
       },
       "availability": {
@@ -846,7 +873,7 @@ $script:AtlasToolsManifest = '{
   ]
 }
 '
-$script:AtlasToolHashesJson = '{"generatedAt":"2026-10-24","algorithm":"SHA256","files":{"Invoke-AIReadiness.ps1":"62d6388cf643f1d5ca6bc8217929a2299cb6accae2c574f1f694ff9ceff5e248","Invoke-ActualizarPowerShell.ps1":"58d41edc086c4d35db882f508a9f9efaaccb06cc2dfa7f207cc9fc7520f85b7d","Invoke-AuditoriaRouter.ps1":"c60b60203f6a7627d91a13d64bc592e36ea2fd5d552d0a83b4f6a9394d1119bb","Invoke-Deduplicador.ps1":"2147b9d475f36f93c2908bb3c1701b35c5e4a144eb1b5356653e90af322c1a01","Invoke-DiagnosticoEventos.ps1":"6e3b3763abcfe0e8f975c23f69d2bcdc716f6cd478e03b372f4602123552ccf3","Invoke-DiagnosticoMaster.ps1":"a32e590a631ecc57480508c2fd1f02a640b792e385181be207510c4c33642131","Invoke-EntregaPC.ps1":"b6a7326be8dc1d7edf9c556e5ebaaaae5d43efb2c9936d111ac803f72a5c9ac8","Invoke-ExtraerLicencias.ps1":"bd8436451e725c872ac155aa948a1af5e3fb0734a9f479fac220b3ba52f43871","Invoke-Fase0.ps1":"14e7d9f9498853c4dc98d392cb022e21681064208cb208a88baff5f15d1e1966","Invoke-FastCopy.ps1":"60a183afe4c3d0992ccadfbcd6044e72a5fe42d61b61bdc72d214b6d41e37bc7","Invoke-GPUCheck.ps1":"a54fb65b9f9d894cbb44cf9ee3d05cb391b2e91580540f7bab52737314b95c0b","Invoke-GestorBitLocker.ps1":"93969ccbf4b2810c7e8f480c58de5af4e0d96d6c979eda8a1ac44bf14bd453a9","Invoke-HostsManager.ps1":"21bb6ec2607f7b35f4651c0fb061b6ac0f45db8c1d4683bd4ca96cf85f2d8dc2","Invoke-InstalarMicrosoftStore.ps1":"d2d73a1a359585c13e09cf2eafe89fe588d5cdb9a89872730ab7a4e9de5a09de","Invoke-InstalarPaquetes.ps1":"0bca7d0507716cd2f2928b9cd0d7bde6b5234c2737deb8dc932e893f6db1b5a5","Invoke-InstalarRuntimes.ps1":"b21d419e5cfb2b60b2aded4f2332b9e72d216b307f6349a2e758dca58de66ad8","Invoke-KeyboardDoctor.ps1":"ee6b0d31e41874aa98e427e6d3adadc89490f1c900bb41568a023689e3b6d28b","Invoke-MantenimientoPRO.ps1":"226545d07cf4f201e958670f8c49168785b838320ddbc8959d2fc65751582931","Invoke-MenorPrivilegio.ps1":"93d6d30992dc2abb8cc9b044c2c9f457feff87011431238a9d47ecf683da435c","Invoke-PartsUpgrade.ps1":"ac447e5450c8cdee9c00f6bdcd739d0f720422da24fd6ca847d9ec75845fff90","Invoke-Personalizacion.ps1":"57f979ffe953aaed57632b004b687d5651cb41b21e0313ea3d23c423a6dcf1c4","Invoke-PrepararUSB.ps1":"a8bd74fb81de958dac0a3525919731dddfcb2006a43cad61b9561eaf42a06507","Invoke-PrinterDoctor.ps1":"f27fbed8ff8725a0a460a6a78964b4c5f6ccd374f59486596ef18abb5f5841a4","Invoke-RespaldoControladores.ps1":"f0854415a9a2cf8415b207c18df178e68904761d62f29e2f848ef5f159d15169","Invoke-Robocopy.ps1":"b1f35e5afe88948f0697171464c689645247ece47ba724782808cf0e924a80d0","Invoke-SelectorDNS.ps1":"1dee53c8a288e5b76eacd96241771052ee05478c840795deebdd9907c3a89cae","Invoke-StopServices.ps1":"9cb88839b1e350bcee6ce63b5809ccc7c4ff4d11ee773ca3715b2d5386f1212b"}}'
+$script:AtlasToolHashesJson = '{"generatedAt":"2026-10-24","algorithm":"SHA256","files":{"Invoke-AIReadiness.ps1":"62d6388cf643f1d5ca6bc8217929a2299cb6accae2c574f1f694ff9ceff5e248","Invoke-ActualizarPowerShell.ps1":"8c158942a37b2ec4cca0c8c0b23b7e922e6b334d706ee57d90f3f72739079b41","Invoke-AuditoriaRouter.ps1":"c60b60203f6a7627d91a13d64bc592e36ea2fd5d552d0a83b4f6a9394d1119bb","Invoke-Deduplicador.ps1":"2147b9d475f36f93c2908bb3c1701b35c5e4a144eb1b5356653e90af322c1a01","Invoke-DiagnosticoEventos.ps1":"6e3b3763abcfe0e8f975c23f69d2bcdc716f6cd478e03b372f4602123552ccf3","Invoke-DiagnosticoMaster.ps1":"a32e590a631ecc57480508c2fd1f02a640b792e385181be207510c4c33642131","Invoke-EntregaPC.ps1":"b6a7326be8dc1d7edf9c556e5ebaaaae5d43efb2c9936d111ac803f72a5c9ac8","Invoke-ExtraerLicencias.ps1":"bd8436451e725c872ac155aa948a1af5e3fb0734a9f479fac220b3ba52f43871","Invoke-Fase0.ps1":"14e7d9f9498853c4dc98d392cb022e21681064208cb208a88baff5f15d1e1966","Invoke-FastCopy.ps1":"a04f7b24e1683c61108a544001f2e6ef4bc6bc24851ad1b18a2ee463597c9119","Invoke-GPUCheck.ps1":"31c10a8e7800714a7ff53ddf1bb01b6fa4de9a6bea049c439c5db3a8bb36faca","Invoke-GestorBitLocker.ps1":"93969ccbf4b2810c7e8f480c58de5af4e0d96d6c979eda8a1ac44bf14bd453a9","Invoke-HostsManager.ps1":"21bb6ec2607f7b35f4651c0fb061b6ac0f45db8c1d4683bd4ca96cf85f2d8dc2","Invoke-InstalarMicrosoftStore.ps1":"d2d73a1a359585c13e09cf2eafe89fe588d5cdb9a89872730ab7a4e9de5a09de","Invoke-InstalarPaquetes.ps1":"0507dbb0d1ce9e13e3fb27f2b0b3bb9f11a1833b4aab1189f32af7679e897c90","Invoke-InstalarRuntimes.ps1":"0d973d2105d0468ad15e05543d10cf24d168beb4363df3dd261444a067812ef5","Invoke-KeyboardDoctor.ps1":"ee6b0d31e41874aa98e427e6d3adadc89490f1c900bb41568a023689e3b6d28b","Invoke-MantenimientoPRO.ps1":"226545d07cf4f201e958670f8c49168785b838320ddbc8959d2fc65751582931","Invoke-MenorPrivilegio.ps1":"93d6d30992dc2abb8cc9b044c2c9f457feff87011431238a9d47ecf683da435c","Invoke-PartsUpgrade.ps1":"ac447e5450c8cdee9c00f6bdcd739d0f720422da24fd6ca847d9ec75845fff90","Invoke-Personalizacion.ps1":"57f979ffe953aaed57632b004b687d5651cb41b21e0313ea3d23c423a6dcf1c4","Invoke-PrepararUSB.ps1":"fd449b67ae250164d92e80c0e62c46d8ef03139143eccd16b0072d928891b009","Invoke-PrinterDoctor.ps1":"f27fbed8ff8725a0a460a6a78964b4c5f6ccd374f59486596ef18abb5f5841a4","Invoke-RespaldoControladores.ps1":"c5817dc1e4b03b751bed7ff6b029a6a6e4a3b08da8fad8e2aba549dc4e30435d","Invoke-Robocopy.ps1":"d08cdc873f722652d94a64b1582ac3425d74e18b190c8588c2cbd461c6b6c60d","Invoke-SelectorDNS.ps1":"1dee53c8a288e5b76eacd96241771052ee05478c840795deebdd9907c3a89cae","Invoke-StopServices.ps1":"9cb88839b1e350bcee6ce63b5809ccc7c4ff4d11ee773ca3715b2d5386f1212b"}}'
 $script:AtlasXamlTemplate = '<Window
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -3144,7 +3171,7 @@ function Test-AtlasDependencyHash {
     )
 
     if (-not (Test-Path -LiteralPath $Path)) { return $false }
-    if (-not $ExpectedSha256) { return $true }
+    if (-not $ExpectedSha256) { return $false }
 
     $expected = $ExpectedSha256.ToLowerInvariant()
     if ($expected -notmatch ''^[a-f0-9]{64}$'') {
@@ -3169,7 +3196,7 @@ function Resolve-AtlasDependency {
     #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)] [string]$Name,
+        [Parameter(Mandatory)][ValidatePattern(''^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$'')][string]$Name,
         [switch]$InstallIfMissing
     )
 
@@ -3212,14 +3239,13 @@ function Resolve-AtlasDependency {
     if ($dep.WingetId -and (Get-Command ''winget'' -ErrorAction SilentlyContinue)) {
         Write-AtlasLog "Instalando $Name vía winget ($($dep.WingetId))" -Tool ''Deps''
         try {
-            winget install --id $dep.WingetId --exact --accept-source-agreements --accept-package-agreements --silent | Out-Null
+            $result = Invoke-AtlasNativeProcess -FilePath ''winget.exe'' -ArgumentList @(''install'',''--id'',$dep.WingetId,''--exact'',''--source'',''winget'',''--accept-source-agreements'',''--accept-package-agreements'',''--silent'') -TimeoutSeconds 1800
+            if ($result.State -ne ''Correct'') { Write-AtlasLog "Dependency installation $($result.State), exit $($result.ExitCode); no second installer is started." -Level ERROR -Tool Deps; return $null }
         } catch {
-            Write-AtlasLog "winget falló: $_" -Level WARN -Tool ''Deps''
+            Write-AtlasLog "winget failed: $_; no second installer is started." -Level ERROR -Tool Deps
+            return $null
         }
-        foreach ($p in $dep.SearchPaths) {
-            $expanded = Expand-AtlasPath $p
-            if (Test-Path $expanded) { return Resolve-SymlinkPath $expanded }
-        }
+        return Resolve-AtlasDependency -Name $Name
     }
 
     # Fallback: direct download via DownloadUrl when winget is unavailable or failed
@@ -3235,17 +3261,11 @@ function Resolve-AtlasDependency {
                 Assert-AtlasInstaller -Path $installerFile -ExpectedSha256 ([string]$dep.DownloadSha256)
                 $targetDir = Join-Path $env:LOCALAPPDATA "AtlasPC\bin\$Name"
                 if (-not (Test-Path $targetDir)) { New-Item -ItemType Directory -Path $targetDir -Force | Out-Null }
-                $p = Start-Process -FilePath $installerFile -ArgumentList @(''/EXTRACT64'', ''/NOSUBDIR'', ''/AGREE_LICENSE'', "/DIR=`"$targetDir`"") -Wait -PassThru -ErrorAction SilentlyContinue
-                if (-not ($p -and $p.ExitCode -eq 0)) {
-                    Start-Process -FilePath $installerFile -ArgumentList @(''/SILENT'', ''/AGREE_LICENSE'', "/DIR=`"$targetDir`"") -Wait -ErrorAction SilentlyContinue
-                }
-                Remove-Item $installerFile -ErrorAction SilentlyContinue
-                foreach ($sp in $dep.SearchPaths) {
-                    $expanded = Expand-AtlasPath $sp
-                    if (Test-Path $expanded) { return Resolve-SymlinkPath $expanded }
-                }
-                $found = Get-ChildItem -Path $targetDir -Filter $dep.ExecutableName -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-                if ($found) { return Resolve-SymlinkPath $found.FullName }
+                if ($Name -ne ''FastCopy'') { throw ''No direct extraction contract is defined for this dependency.'' }
+                $result = Invoke-AtlasNativeProcess -FilePath $installerFile -ArgumentList @(''/EXTRACT64'',''/NOSUBDIR'',''/AGREE_LICENSE'',("/DIR=$targetDir")) -TimeoutSeconds 180
+                if ($result.State -ne ''Correct'') { throw "Dependency extraction $($result.State), exit $($result.ExitCode). No alternative installer was started." }
+                Remove-Item -LiteralPath $installerFile -ErrorAction Stop
+                return Resolve-AtlasDependency -Name $Name
             }
         } catch {
             Write-AtlasLog "Descarga directa falló: $_" -Level WARN -Tool ''Deps''
@@ -3259,7 +3279,7 @@ function Resolve-AtlasDependency {
 
 function Register-AtlasDependency {
     param(
-        [Parameter(Mandatory)] [string]$Name,
+        [Parameter(Mandatory)][ValidatePattern(''^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$'')][string]$Name,
         [Parameter(Mandatory)] [hashtable]$Definition
     )
     $script:AtlasDepsRegistry[$Name] = $Definition
@@ -3449,10 +3469,9 @@ function Install-AtlasPS7 {
         ''REGISTER_MANIFEST=1''
     )
     Write-Host "  [>] Instalando MSI (msiexec silencioso)..." -ForegroundColor Cyan
-    $p = Start-Process -FilePath ''msiexec.exe'' -ArgumentList $msiArgs -Wait -PassThru
-    if ($p.ExitCode -ne 0 -and $p.ExitCode -ne 3010) {
-        throw "msiexec salio con codigo $($p.ExitCode)"
-    }
+    $p = Invoke-AtlasNativeProcess -FilePath ''msiexec.exe'' -Arguments ($msiArgs -join '' '') -TimeoutSeconds 1800 -SuccessCodes @(0,3010)
+    if ($p.State -ne ''Correct'') { throw "msiexec: $($p.State), exit $($p.ExitCode). Inspect installation state before retrying." }
+    if ($p.ExitCode -eq 3010) { Write-Warning ''PowerShell installation requires a Windows restart.'' }
 
     $path = Get-AtlasPS7Path
     if (-not $path) {
@@ -3572,7 +3591,7 @@ function Test-AtlasRelease {
         if ($tool.function -cne [IO.Path]::GetFileNameWithoutExtension($name) -or
             $tool.runtime.engine -notin @(''windows-powershell'',''pwsh'') -or $tool.runtime.architecture -ne ''x64'' -or
             [string]$tool.runtime.minimumVersion -notmatch ''^\d+\.\d+(?:\.\d+){0,2}$'' -or @($tool.runtime.libraries).Count -eq 0) { throw "Missing tool execution contract: $name" }
-        foreach ($library in @($tool.runtime.libraries)) { if ($library -notin @(''ToolKit'',''Dependencies'',''PS7'',''Release'',''Reports'')) { throw "Unknown tool library: $library" } }
+        foreach ($library in @($tool.runtime.libraries)) { if ($library -notin @(''ToolKit'',''Dependencies'',''PS7'',''Release'',''Reports'',''Operations'')) { throw "Unknown tool library: $library" } }
         $toolNames[$name] = $true
     }
     if ($tools.Count -eq 0 -or $names.Count -ne ($required.Count + $tools.Count)) { throw ''Release members and tool manifest do not match.'' }
@@ -3817,27 +3836,72 @@ function Assert-AtlasCopyDestination {
         $target.StartsWith($origin+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw ''Copy destination cannot be the source or a child of the source.''}
 }
 
+function ConvertTo-AtlasNativeArgument {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][AllowEmptyString()][string]$Value)
+    if ($Value.IndexOf([char]0) -ge 0 -or $Value -match ''[\r\n]'') { throw ''Native arguments cannot contain NUL or newlines.'' }
+    $escaped = [regex]::Replace($Value, ''(\\*)"'', ''$1$1\"'')
+    $escaped = [regex]::Replace($escaped, ''(\\+)$'', ''$1$1'')
+    return ''"'' + $escaped + ''"''
+}
+
+function Stop-AtlasOwnedNativeProcess {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][Diagnostics.Process]$Process)
+    if ($Process.HasExited) { return }
+    if ($env:OS -eq ''Windows_NT'') {
+        $info = [Diagnostics.ProcessStartInfo]::new()
+        $info.FileName = [IO.Path]::Combine($env:SystemRoot, ''System32\taskkill.exe'')
+        $info.Arguments = "/PID $($Process.Id) /T /F"
+        $info.UseShellExecute = $false; $info.CreateNoWindow = $true
+        $info.RedirectStandardOutput = $true; $info.RedirectStandardError = $true
+        $stopper = [Diagnostics.Process]::Start($info)
+        try {
+            $output = $stopper.StandardOutput.ReadToEndAsync(); $errorOutput = $stopper.StandardError.ReadToEndAsync()
+            if (-not $stopper.WaitForExit(5000)) { $stopper.Kill(); throw ''Owned process tree termination timed out.'' }
+            if ($stopper.ExitCode -ne 0 -and -not $Process.HasExited) { throw ''Owned process tree termination failed.'' }
+            [void]$output.Wait(1000); [void]$errorOutput.Wait(1000)
+        } finally { $stopper.Dispose() }
+    } else { $Process.Kill($true) }
+    if (-not $Process.WaitForExit(5000)) { throw ''Owned process could not be stopped; inspect manually.'' }
+}
+
 function Invoke-AtlasNativeProcess {
     [CmdletBinding()]
-    param([Parameter(Mandatory)][string]$FilePath,[string]$Arguments='''', [ValidateRange(1,86400)][int]$TimeoutSeconds=600,[int[]]$SuccessCodes=@(0))
+    param([Parameter(Mandatory)][string]$FilePath,[string]$Arguments='''',
+        [string[]]$ArgumentList, [string]$WorkingDirectory,
+        [ValidateRange(1,86400)][int]$TimeoutSeconds=600,[int[]]$SuccessCodes=@(0),
+        [Threading.CancellationToken]$CancellationToken = [Threading.CancellationToken]::None,
+        [switch]$NoCapture)
+    if ($PSBoundParameters.ContainsKey(''ArgumentList'') -and $PSBoundParameters.ContainsKey(''Arguments'')) { throw ''Choose ArgumentList or raw Arguments, not both.'' }
+    if ($PSBoundParameters.ContainsKey(''ArgumentList'')) { $Arguments = (@($ArgumentList | ForEach-Object { ConvertTo-AtlasNativeArgument $_ }) -join '' '') }
+    if ($CancellationToken.IsCancellationRequested) {
+        return [pscustomobject]@{State=''Cancelled'';Started=$false;Completed=$false;Cancelled=$true;TimedOut=$false;ExitCode=$null;Stdout='''';Stderr='''';DurationSeconds=0;OutputCaptured=$false}
+    }
     $info=[Diagnostics.ProcessStartInfo]::new()
     $info.FileName=$FilePath; $info.Arguments=$Arguments
+    if ($WorkingDirectory) { $info.WorkingDirectory = $WorkingDirectory }
     $info.UseShellExecute=$false; $info.CreateNoWindow=$true
-    $info.RedirectStandardOutput=$true; $info.RedirectStandardError=$true
+    $info.RedirectStandardOutput=-not $NoCapture; $info.RedirectStandardError=-not $NoCapture
     $watch=[Diagnostics.Stopwatch]::StartNew(); $process=$null
     try {
         $process=[Diagnostics.Process]::Start($info)
-        $stdout=$process.StandardOutput.ReadToEndAsync(); $stderr=$process.StandardError.ReadToEndAsync()
-        $timedOut=-not $process.WaitForExit($TimeoutSeconds*1000)
-        if($timedOut){
-            if($env:OS -eq ''Windows_NT'') { & "$env:SystemRoot\System32\taskkill.exe" /PID $process.Id /T /F 2>&1 | Out-Null }
-            else { $process.Kill() }
-            if(-not $process.WaitForExit(5000)){throw ''Timed-out process could not be stopped; inspect manually.''}
+        $stdout=$null; $stderr=$null; $cancelled=$false; $timedOut=$false
+        if (-not $NoCapture) { $stdout=$process.StandardOutput.ReadToEndAsync(); $stderr=$process.StandardError.ReadToEndAsync() }
+        while (-not $process.WaitForExit(100)) {
+            if ($CancellationToken.IsCancellationRequested) { $cancelled=$true; break }
+            if ($watch.Elapsed.TotalSeconds -ge $TimeoutSeconds) { $timedOut=$true; break }
         }
-        # Descendants may retain stdout handles. Never wait indefinitely for output.
-        $captured=$stdout.Wait(3000) -and $stderr.Wait(3000)
-        [pscustomobject]@{State=$(if($timedOut){''TimedOut''}elseif(-not $captured){''NotEvaluated''}elseif($SuccessCodes -contains $process.ExitCode){''Correct''}else{''Failed''});ExitCode=$process.ExitCode;TimedOut=$timedOut;Stdout=$(if($stdout.IsCompleted){$stdout.Result}else{''''});Stderr=$(if($stderr.IsCompleted){$stderr.Result}else{''''});DurationSeconds=$watch.Elapsed.TotalSeconds}
-    } finally { $watch.Stop(); if($process){$process.Dispose()} }
+        if ($cancelled -or $timedOut) { Stop-AtlasOwnedNativeProcess -Process $process }
+        $captured=$NoCapture -or ($stdout.Wait(3000) -and $stderr.Wait(3000))
+        [pscustomobject]@{State=$(if($cancelled){''Cancelled''}elseif($timedOut){''TimedOut''}elseif(-not $captured){''NotEvaluated''}elseif($SuccessCodes -contains $process.ExitCode){''Correct''}else{''Failed''});Started=$true;Completed=(-not($timedOut -or $cancelled));Cancelled=$cancelled;ExitCode=$process.ExitCode;TimedOut=$timedOut;Stdout=$(if($stdout -and $stdout.IsCompleted){$stdout.Result}else{''''});Stderr=$(if($stderr -and $stderr.IsCompleted){$stderr.Result}else{''''});DurationSeconds=$watch.Elapsed.TotalSeconds;OutputCaptured=([bool]$captured -and -not $NoCapture)}
+    } finally {
+        $watch.Stop()
+        if($process){
+            try { if (-not $process.HasExited) { Stop-AtlasOwnedNativeProcess -Process $process } }
+            finally { $process.Dispose() }
+        }
+    }
 }
 
 function Test-AtlasCopySample {
@@ -5415,7 +5479,7 @@ function Test-AtlasDependencyHash {
     )
 
     if (-not (Test-Path -LiteralPath $Path)) { return $false }
-    if (-not $ExpectedSha256) { return $true }
+    if (-not $ExpectedSha256) { return $false }
 
     $expected = $ExpectedSha256.ToLowerInvariant()
     if ($expected -notmatch '^[a-f0-9]{64}$') {
@@ -5440,7 +5504,7 @@ function Resolve-AtlasDependency {
     #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)] [string]$Name,
+        [Parameter(Mandatory)][ValidatePattern('^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$')][string]$Name,
         [switch]$InstallIfMissing
     )
 
@@ -5483,14 +5547,13 @@ function Resolve-AtlasDependency {
     if ($dep.WingetId -and (Get-Command 'winget' -ErrorAction SilentlyContinue)) {
         Write-AtlasLog "Instalando $Name vía winget ($($dep.WingetId))" -Tool 'Deps'
         try {
-            winget install --id $dep.WingetId --exact --accept-source-agreements --accept-package-agreements --silent | Out-Null
+            $result = Invoke-AtlasNativeProcess -FilePath 'winget.exe' -ArgumentList @('install','--id',$dep.WingetId,'--exact','--source','winget','--accept-source-agreements','--accept-package-agreements','--silent') -TimeoutSeconds 1800
+            if ($result.State -ne 'Correct') { Write-AtlasLog "Dependency installation $($result.State), exit $($result.ExitCode); no second installer is started." -Level ERROR -Tool Deps; return $null }
         } catch {
-            Write-AtlasLog "winget falló: $_" -Level WARN -Tool 'Deps'
+            Write-AtlasLog "winget failed: $_; no second installer is started." -Level ERROR -Tool Deps
+            return $null
         }
-        foreach ($p in $dep.SearchPaths) {
-            $expanded = Expand-AtlasPath $p
-            if (Test-Path $expanded) { return Resolve-SymlinkPath $expanded }
-        }
+        return Resolve-AtlasDependency -Name $Name
     }
 
     # Fallback: direct download via DownloadUrl when winget is unavailable or failed
@@ -5506,17 +5569,11 @@ function Resolve-AtlasDependency {
                 Assert-AtlasInstaller -Path $installerFile -ExpectedSha256 ([string]$dep.DownloadSha256)
                 $targetDir = Join-Path $env:LOCALAPPDATA "AtlasPC\bin\$Name"
                 if (-not (Test-Path $targetDir)) { New-Item -ItemType Directory -Path $targetDir -Force | Out-Null }
-                $p = Start-Process -FilePath $installerFile -ArgumentList @('/EXTRACT64', '/NOSUBDIR', '/AGREE_LICENSE', "/DIR=`"$targetDir`"") -Wait -PassThru -ErrorAction SilentlyContinue
-                if (-not ($p -and $p.ExitCode -eq 0)) {
-                    Start-Process -FilePath $installerFile -ArgumentList @('/SILENT', '/AGREE_LICENSE', "/DIR=`"$targetDir`"") -Wait -ErrorAction SilentlyContinue
-                }
-                Remove-Item $installerFile -ErrorAction SilentlyContinue
-                foreach ($sp in $dep.SearchPaths) {
-                    $expanded = Expand-AtlasPath $sp
-                    if (Test-Path $expanded) { return Resolve-SymlinkPath $expanded }
-                }
-                $found = Get-ChildItem -Path $targetDir -Filter $dep.ExecutableName -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-                if ($found) { return Resolve-SymlinkPath $found.FullName }
+                if ($Name -ne 'FastCopy') { throw 'No direct extraction contract is defined for this dependency.' }
+                $result = Invoke-AtlasNativeProcess -FilePath $installerFile -ArgumentList @('/EXTRACT64','/NOSUBDIR','/AGREE_LICENSE',("/DIR=$targetDir")) -TimeoutSeconds 180
+                if ($result.State -ne 'Correct') { throw "Dependency extraction $($result.State), exit $($result.ExitCode). No alternative installer was started." }
+                Remove-Item -LiteralPath $installerFile -ErrorAction Stop
+                return Resolve-AtlasDependency -Name $Name
             }
         } catch {
             Write-AtlasLog "Descarga directa falló: $_" -Level WARN -Tool 'Deps'
@@ -5530,7 +5587,7 @@ function Resolve-AtlasDependency {
 
 function Register-AtlasDependency {
     param(
-        [Parameter(Mandatory)] [string]$Name,
+        [Parameter(Mandatory)][ValidatePattern('^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$')][string]$Name,
         [Parameter(Mandatory)] [hashtable]$Definition
     )
     $script:AtlasDepsRegistry[$Name] = $Definition
@@ -5720,10 +5777,9 @@ function Install-AtlasPS7 {
         'REGISTER_MANIFEST=1'
     )
     Write-Host "  [>] Instalando MSI (msiexec silencioso)..." -ForegroundColor Cyan
-    $p = Start-Process -FilePath 'msiexec.exe' -ArgumentList $msiArgs -Wait -PassThru
-    if ($p.ExitCode -ne 0 -and $p.ExitCode -ne 3010) {
-        throw "msiexec salio con codigo $($p.ExitCode)"
-    }
+    $p = Invoke-AtlasNativeProcess -FilePath 'msiexec.exe' -Arguments ($msiArgs -join ' ') -TimeoutSeconds 1800 -SuccessCodes @(0,3010)
+    if ($p.State -ne 'Correct') { throw "msiexec: $($p.State), exit $($p.ExitCode). Inspect installation state before retrying." }
+    if ($p.ExitCode -eq 3010) { Write-Warning 'PowerShell installation requires a Windows restart.' }
 
     $path = Get-AtlasPS7Path
     if (-not $path) {
@@ -5843,7 +5899,7 @@ function Test-AtlasRelease {
         if ($tool.function -cne [IO.Path]::GetFileNameWithoutExtension($name) -or
             $tool.runtime.engine -notin @('windows-powershell','pwsh') -or $tool.runtime.architecture -ne 'x64' -or
             [string]$tool.runtime.minimumVersion -notmatch '^\d+\.\d+(?:\.\d+){0,2}$' -or @($tool.runtime.libraries).Count -eq 0) { throw "Missing tool execution contract: $name" }
-        foreach ($library in @($tool.runtime.libraries)) { if ($library -notin @('ToolKit','Dependencies','PS7','Release','Reports')) { throw "Unknown tool library: $library" } }
+        foreach ($library in @($tool.runtime.libraries)) { if ($library -notin @('ToolKit','Dependencies','PS7','Release','Reports','Operations')) { throw "Unknown tool library: $library" } }
         $toolNames[$name] = $true
     }
     if ($tools.Count -eq 0 -or $names.Count -ne ($required.Count + $tools.Count)) { throw 'Release members and tool manifest do not match.' }
@@ -6088,27 +6144,72 @@ function Assert-AtlasCopyDestination {
         $target.StartsWith($origin+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw 'Copy destination cannot be the source or a child of the source.'}
 }
 
+function ConvertTo-AtlasNativeArgument {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][AllowEmptyString()][string]$Value)
+    if ($Value.IndexOf([char]0) -ge 0 -or $Value -match '[\r\n]') { throw 'Native arguments cannot contain NUL or newlines.' }
+    $escaped = [regex]::Replace($Value, '(\\*)"', '$1$1\"')
+    $escaped = [regex]::Replace($escaped, '(\\+)$', '$1$1')
+    return '"' + $escaped + '"'
+}
+
+function Stop-AtlasOwnedNativeProcess {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][Diagnostics.Process]$Process)
+    if ($Process.HasExited) { return }
+    if ($env:OS -eq 'Windows_NT') {
+        $info = [Diagnostics.ProcessStartInfo]::new()
+        $info.FileName = [IO.Path]::Combine($env:SystemRoot, 'System32\taskkill.exe')
+        $info.Arguments = "/PID $($Process.Id) /T /F"
+        $info.UseShellExecute = $false; $info.CreateNoWindow = $true
+        $info.RedirectStandardOutput = $true; $info.RedirectStandardError = $true
+        $stopper = [Diagnostics.Process]::Start($info)
+        try {
+            $output = $stopper.StandardOutput.ReadToEndAsync(); $errorOutput = $stopper.StandardError.ReadToEndAsync()
+            if (-not $stopper.WaitForExit(5000)) { $stopper.Kill(); throw 'Owned process tree termination timed out.' }
+            if ($stopper.ExitCode -ne 0 -and -not $Process.HasExited) { throw 'Owned process tree termination failed.' }
+            [void]$output.Wait(1000); [void]$errorOutput.Wait(1000)
+        } finally { $stopper.Dispose() }
+    } else { $Process.Kill($true) }
+    if (-not $Process.WaitForExit(5000)) { throw 'Owned process could not be stopped; inspect manually.' }
+}
+
 function Invoke-AtlasNativeProcess {
     [CmdletBinding()]
-    param([Parameter(Mandatory)][string]$FilePath,[string]$Arguments='', [ValidateRange(1,86400)][int]$TimeoutSeconds=600,[int[]]$SuccessCodes=@(0))
+    param([Parameter(Mandatory)][string]$FilePath,[string]$Arguments='',
+        [string[]]$ArgumentList, [string]$WorkingDirectory,
+        [ValidateRange(1,86400)][int]$TimeoutSeconds=600,[int[]]$SuccessCodes=@(0),
+        [Threading.CancellationToken]$CancellationToken = [Threading.CancellationToken]::None,
+        [switch]$NoCapture)
+    if ($PSBoundParameters.ContainsKey('ArgumentList') -and $PSBoundParameters.ContainsKey('Arguments')) { throw 'Choose ArgumentList or raw Arguments, not both.' }
+    if ($PSBoundParameters.ContainsKey('ArgumentList')) { $Arguments = (@($ArgumentList | ForEach-Object { ConvertTo-AtlasNativeArgument $_ }) -join ' ') }
+    if ($CancellationToken.IsCancellationRequested) {
+        return [pscustomobject]@{State='Cancelled';Started=$false;Completed=$false;Cancelled=$true;TimedOut=$false;ExitCode=$null;Stdout='';Stderr='';DurationSeconds=0;OutputCaptured=$false}
+    }
     $info=[Diagnostics.ProcessStartInfo]::new()
     $info.FileName=$FilePath; $info.Arguments=$Arguments
+    if ($WorkingDirectory) { $info.WorkingDirectory = $WorkingDirectory }
     $info.UseShellExecute=$false; $info.CreateNoWindow=$true
-    $info.RedirectStandardOutput=$true; $info.RedirectStandardError=$true
+    $info.RedirectStandardOutput=-not $NoCapture; $info.RedirectStandardError=-not $NoCapture
     $watch=[Diagnostics.Stopwatch]::StartNew(); $process=$null
     try {
         $process=[Diagnostics.Process]::Start($info)
-        $stdout=$process.StandardOutput.ReadToEndAsync(); $stderr=$process.StandardError.ReadToEndAsync()
-        $timedOut=-not $process.WaitForExit($TimeoutSeconds*1000)
-        if($timedOut){
-            if($env:OS -eq 'Windows_NT') { & "$env:SystemRoot\System32\taskkill.exe" /PID $process.Id /T /F 2>&1 | Out-Null }
-            else { $process.Kill() }
-            if(-not $process.WaitForExit(5000)){throw 'Timed-out process could not be stopped; inspect manually.'}
+        $stdout=$null; $stderr=$null; $cancelled=$false; $timedOut=$false
+        if (-not $NoCapture) { $stdout=$process.StandardOutput.ReadToEndAsync(); $stderr=$process.StandardError.ReadToEndAsync() }
+        while (-not $process.WaitForExit(100)) {
+            if ($CancellationToken.IsCancellationRequested) { $cancelled=$true; break }
+            if ($watch.Elapsed.TotalSeconds -ge $TimeoutSeconds) { $timedOut=$true; break }
         }
-        # Descendants may retain stdout handles. Never wait indefinitely for output.
-        $captured=$stdout.Wait(3000) -and $stderr.Wait(3000)
-        [pscustomobject]@{State=$(if($timedOut){'TimedOut'}elseif(-not $captured){'NotEvaluated'}elseif($SuccessCodes -contains $process.ExitCode){'Correct'}else{'Failed'});ExitCode=$process.ExitCode;TimedOut=$timedOut;Stdout=$(if($stdout.IsCompleted){$stdout.Result}else{''});Stderr=$(if($stderr.IsCompleted){$stderr.Result}else{''});DurationSeconds=$watch.Elapsed.TotalSeconds}
-    } finally { $watch.Stop(); if($process){$process.Dispose()} }
+        if ($cancelled -or $timedOut) { Stop-AtlasOwnedNativeProcess -Process $process }
+        $captured=$NoCapture -or ($stdout.Wait(3000) -and $stderr.Wait(3000))
+        [pscustomobject]@{State=$(if($cancelled){'Cancelled'}elseif($timedOut){'TimedOut'}elseif(-not $captured){'NotEvaluated'}elseif($SuccessCodes -contains $process.ExitCode){'Correct'}else{'Failed'});Started=$true;Completed=(-not($timedOut -or $cancelled));Cancelled=$cancelled;ExitCode=$process.ExitCode;TimedOut=$timedOut;Stdout=$(if($stdout -and $stdout.IsCompleted){$stdout.Result}else{''});Stderr=$(if($stderr -and $stderr.IsCompleted){$stderr.Result}else{''});DurationSeconds=$watch.Elapsed.TotalSeconds;OutputCaptured=([bool]$captured -and -not $NoCapture)}
+    } finally {
+        $watch.Stop()
+        if($process){
+            try { if (-not $process.HasExited) { Stop-AtlasOwnedNativeProcess -Process $process } }
+            finally { $process.Dispose() }
+        }
+    }
 }
 
 function Test-AtlasCopySample {
@@ -6568,7 +6669,7 @@ function Get-AtlasToolRuntime {
     param([Parameter(Mandatory)][hashtable]$Tool)
     if (-not $Tool.runtime -or $Tool.runtime.architecture -ne 'x64' -or -not $Tool.runtime.minimumVersion -or @($Tool.runtime.libraries).Count -eq 0) { throw 'A supported x64 runtime contract is required.' }
     foreach ($library in @($Tool.runtime.libraries)) {
-        if ($library -notin @('ToolKit','Dependencies','PS7','Release')) { throw "Unknown child library: $library" }
+        if ($library -notin @('ToolKit','Dependencies','PS7','Release','Reports','Operations')) { throw "Unknown child library: $library" }
     }
     if ($Tool.runtime.engine -eq 'windows-powershell') {
         if ([version]$Tool.runtime.minimumVersion -gt [version]'5.1') { throw 'This contract requires a newer Windows PowerShell.' }

@@ -1,5 +1,9 @@
 # Cierre de implementación y aceptación pendiente
 
+Continuación: [seguimiento autónomo del 25 de octubre](SEGUIMIENTO-2026-10-25.md).
+El estado de esta fotografía 1.4.1 se conserva; las correcciones posteriores se
+documentan en el seguimiento y sus evidencias.
+
 Fecha: 24 de octubre de 2026. Candidata: **Atlas 1.4.1**. Informe de origen:
 [auditoría](AUDITORIA-2026-10-24.md). Se han recorrido las fases 0–5 con entregas
 separadas. Los controles implementados y las restricciones reducen los fallos

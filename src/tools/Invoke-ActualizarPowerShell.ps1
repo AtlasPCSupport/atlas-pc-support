@@ -266,10 +266,9 @@ function Invoke-ActualizarPowerShell {
 
         $msiArgs = @('/i', "`"$msi`"", '/qn', '/norestart', 'ADD_PATH=1', 'ENABLE_PSREMOTING=0', 'REGISTER_MANIFEST=1')
         _Write-AtlasStepCompat $L.Installing
-        $p = Start-Process -FilePath 'msiexec.exe' -ArgumentList $msiArgs -Wait -PassThru
-        if ($p.ExitCode -ne 0 -and $p.ExitCode -ne 3010) {
-            throw ($L.MsiExitCode -f $p.ExitCode)
-        }
+        $p = Invoke-AtlasNativeProcess -FilePath 'msiexec.exe' -Arguments ($msiArgs -join ' ') -TimeoutSeconds 1800 -SuccessCodes @(0,3010)
+        if ($p.State -ne 'Correct') { throw ("{0}: {1}; {2}" -f $p.State,($L.MsiExitCode -f $p.ExitCode),'Inspect installation state before retrying.') }
+        if ($p.ExitCode -eq 3010) { Write-Warning 'PowerShell installation requires a Windows restart.' }
         $path = _Get-PS7Path
         if (-not $path) {
             throw $L.InstalledButLost

@@ -76,7 +76,7 @@ Describe 'Quoted paths for the real launcher invocation' {
         $fixture=@'
 function Read-Host { 'fixture-no-prompt' }
 function Invoke-Fixture {
-    foreach ($name in @('Resolve-AtlasDependency','Install-AtlasPS7','Test-AtlasRelease','Write-AtlasHeader')) {
+    foreach ($name in @('Resolve-AtlasDependency','Install-AtlasPS7','Test-AtlasRelease','Write-AtlasHeader','ConvertTo-AtlasNativeArgument','Stop-AtlasOwnedNativeProcess','Invoke-AtlasNativeProcess')) {
         if (-not (Get-Command $name -ErrorAction SilentlyContinue)) { throw "Missing helper: $name" }
     }
     if ((Get-AtlasDependencyDefinition 'PowerShell7').Version -ne '7.6.6') { throw 'Missing catalog' }
@@ -126,6 +126,17 @@ Describe 'Explicit runtime selection' {
     It 'rejects an unknown helper requirement' {
         $script:Contract.runtime.libraries=@('Unknown')
         { Get-AtlasToolRuntime -Tool $script:Contract } | Should -Throw '*library*'
+    }
+    It 'resolves all 27 real manifest contracts without running any tool' -Skip:($env:OS -ne 'Windows_NT') {
+        Mock Test-Path { [IO.File]::Exists([string]$LiteralPath) }
+        $catalog=Get-Content (Join-Path (Split-Path -Parent $PSScriptRoot) 'config/tools.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+        $catalog.tools.Count|Should -Be 27
+        foreach($entry in $catalog.tools){
+            $runtime=@{};foreach($property in $entry.runtime.PSObject.Properties){$runtime[$property.Name]=$property.Value}
+            $runtime.libraries|Should -Contain Reports
+            $runtime.libraries|Should -Contain Operations
+            Get-AtlasToolRuntime -Tool @{runtime=$runtime}|Should -Match 'WindowsPowerShell[\\/]v1.0[\\/]powershell.exe$' -Because $entry.id
+        }
     }
 }
 

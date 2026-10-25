@@ -953,7 +953,11 @@ function Invoke-InstalarPaquetes {
             & $LogMessage ($L.Searching -f $query)
             $ctl.BtnSearchWinget.IsEnabled = $false
 
-            $rs = [System.Management.Automation.Runspaces.RunspaceFactory]::CreateRunspace()
+            $initial = [System.Management.Automation.Runspaces.InitialSessionState]::CreateDefault()
+            foreach ($name in @('ConvertTo-AtlasNativeArgument','Stop-AtlasOwnedNativeProcess','Invoke-AtlasNativeProcess')) {
+                $initial.Commands.Add([System.Management.Automation.Runspaces.SessionStateFunctionEntry]::new($name,(Get-Command $name -CommandType Function).Definition))
+            }
+            $rs = [System.Management.Automation.Runspaces.RunspaceFactory]::CreateRunspace($initial)
             $rs.Open()
             $ps = [System.Management.Automation.PowerShell]::Create()
             $ps.Runspace = $rs
@@ -1036,27 +1040,20 @@ function Invoke-InstalarPaquetes {
                 if ($SupportsMsStore) { $sources += 'msstore' }
 
                 $allRes = @()
+                $searchErrors = @()
                 foreach ($src in $sources) {
                     $searchArgs = @('search', $term, '--source', $src, '--accept-source-agreements')
                     if ($SupportsNoInteract) { $searchArgs += '--disable-interactivity' }
-                    $out = try { & $exe $searchArgs 2>&1 } catch { $null }
+                    $search = Invoke-AtlasNativeProcess -FilePath $exe -ArgumentList $searchArgs -TimeoutSeconds 45
+                    if ($search.State -ne 'Correct' -and $search.ExitCode -ne -1978335212) { $searchErrors += "${src}: $($search.State), exit $($search.ExitCode)" }
+                    $out = if ($search.State -eq 'Correct') { $search.Stdout -split '\r?\n' } else { $null }
                     if ($out) {
                         $lines = & $cleanLines @($out | ForEach-Object { [string]$_ })
                         $parsed = Parse-SearchOutputInner -Lines $lines -SourceTag $src
                         if ($parsed.Count -gt 0) { $allRes += $parsed }
                     }
                 }
-                if ($allRes.Count -eq 0) {
-                    $searchArgs = @('search', $term, '--accept-source-agreements')
-                    if ($SupportsNoInteract) { $searchArgs += '--disable-interactivity' }
-                    $out = try { & $exe $searchArgs 2>&1 } catch { $null }
-                    if ($out) {
-                        $lines = & $cleanLines @($out | ForEach-Object { [string]$_ })
-                        $parsed = Parse-SearchOutputInner -Lines $lines -SourceTag ''
-                        if ($parsed.Count -gt 0) { $allRes += $parsed }
-                    }
-                }
-                return @{ Query = $term; Results = $allRes }
+                return @{ Query = $term; Results = $allRes; Errors=$searchErrors }
             }).AddArgument($query).AddArgument($script:WingetPath).AddArgument([bool]($script:WingetCaps -and $script:WingetCaps.SupportsNoInteract)).AddArgument([bool]($script:WingetCaps -and $script:WingetCaps.SupportsMsStore))
 
             $asyncResult = $ps.BeginInvoke()
@@ -1081,6 +1078,11 @@ function Invoke-InstalarPaquetes {
                     }
 
                     if ($ctl -and $ctl.BtnSearchWinget) { $ctl.BtnSearchWinget.IsEnabled = $true }
+
+                    if ($resObj -and $resObj.Errors.Count) {
+                        & $LogMessage ('Search partially/not evaluated: ' + ($resObj.Errors -join '; '))
+                        if (-not $resObj.Results.Count) { return }
+                    }
 
                     if (-not $resObj -or -not $resObj.Results -or $resObj.Results.Count -eq 0) {
                         & $LogMessage ($ctl.L.SearchNoResults -f $query)
@@ -1136,6 +1138,16 @@ function Invoke-InstalarPaquetes {
         })
     }
 
+    $installOperation = @{ Active=$false; CloseAfterCancel=$false; Cancellation=$null }
+    $window.Add_Closing({
+        param($sender,$eventArgs)
+        if ($installOperation.Active) {
+            $eventArgs.Cancel=$true
+            $installOperation.CloseAfterCancel=$true
+            $installOperation.Cancellation.Cancel()
+            if ($window.Tag.TxtConsoleLog) { $window.Tag.TxtConsoleLog.AppendText("`nCancelling current installer; partial changes may require review...`n") }
+        }
+    }.GetNewClosure())
     # Event: Install Selection
     if ($ui.BtnInstall) {
         $ui.BtnInstall.add_Click({
@@ -1171,18 +1183,23 @@ function Invoke-InstalarPaquetes {
                 $ctl.PrgInstall.Maximum = $selectedPkgs.Count
             }
 
+            $installOperation.Cancellation = [Threading.CancellationTokenSource]::new()
             & $LogMessage ($L.InstallStarted -f $selectedPkgs.Count)
 
             $logQueue = [System.Collections.Concurrent.ConcurrentQueue[string]]::new()
             $progressQueue = [System.Collections.Concurrent.ConcurrentQueue[int]]::new()
 
-            $rs = [System.Management.Automation.Runspaces.RunspaceFactory]::CreateRunspace()
+            $initial = [System.Management.Automation.Runspaces.InitialSessionState]::CreateDefault()
+            foreach ($name in @('ConvertTo-AtlasNativeArgument','Stop-AtlasOwnedNativeProcess','Invoke-AtlasNativeProcess')) {
+                $initial.Commands.Add([System.Management.Automation.Runspaces.SessionStateFunctionEntry]::new($name,(Get-Command $name -CommandType Function).Definition))
+            }
+            $rs = [System.Management.Automation.Runspaces.RunspaceFactory]::CreateRunspace($initial)
             $rs.Open()
             $ps = [System.Management.Automation.PowerShell]::Create()
             $ps.Runspace = $rs
 
             $null = $ps.AddScript({
-                param($packages, $logQueue, $progressQueue, $L_Installing, $L_InstalledOK, $L_AlreadyInstalled, $L_InstallFailed, $L_InstallTimeout, $L_InstallException, $ID_MIGRATIONS, $L_CleaningTemp, $L_CleanupSummary, $WingetExecutable, $SupportsNoInteract, $SupportsMsStore)
+                param($packages, $logQueue, $progressQueue, $L_Installing, $L_InstalledOK, $L_AlreadyInstalled, $L_InstallFailed, $L_InstallTimeout, $L_InstallException, $ID_MIGRATIONS, $L_CleaningTemp, $L_CleanupSummary, $WingetExecutable, $SupportsNoInteract, $SupportsMsStore, $CancellationToken)
 
                 function Resolve-PackageIdInner {
                     param([hashtable]$Pkg, [hashtable]$Migrations)
@@ -1232,6 +1249,7 @@ function Invoke-InstalarPaquetes {
                 $okCount = 0; $alreadyCount = 0; $failCount = 0
 
                 for ($i = 0; $i -lt $packages.Count; $i++) {
+                    if ($CancellationToken.IsCancellationRequested) { $failCount += $packages.Count - $i; break }
                     $p = $packages[$i]
                     $logQueue.Enqueue(($L_Installing -f $p.Name, $p.Id))
 
@@ -1261,26 +1279,15 @@ function Invoke-InstalarPaquetes {
                                 $progressQueue.Enqueue($i + 1)
                                 continue
                             }
-                        }
+                        } else { $wingetArgs += @('--source','winget') }
 
-                        $pinfo = New-Object System.Diagnostics.ProcessStartInfo
-                        $pinfo.FileName = if ($WingetExecutable -and (Test-Path -LiteralPath $WingetExecutable)) { $WingetExecutable } else { 'winget.exe' }
-                        $pinfo.Arguments = ($wingetArgs -join ' ')
-                        $pinfo.UseShellExecute = $false
-                        $pinfo.CreateNoWindow = $true
-                        $pinfo.RedirectStandardOutput = $false
-                        $pinfo.RedirectStandardError = $false
-
-                        $proc = [System.Diagnostics.Process]::Start($pinfo)
-
-                        # 10 minutes timeout per installer
-                        $exited = $proc.WaitForExit(600000)
-                        if (-not $exited) {
-                            try { $proc.Kill() } catch {}
+                        $executable = if ($WingetExecutable -and (Test-Path -LiteralPath $WingetExecutable)) { $WingetExecutable } else { 'winget.exe' }
+                        $native = Invoke-AtlasNativeProcess -FilePath $executable -ArgumentList $wingetArgs -TimeoutSeconds 600 -CancellationToken $CancellationToken -NoCapture
+                        if ($native.State -in @('TimedOut','Cancelled','NotEvaluated')) {
                             $failCount++
-                            $logQueue.Enqueue(($L_InstallTimeout -f $p.Name))
+                            $logQueue.Enqueue("$($p.Name): $($native.State). Installation may be partial; inspect before retrying.")
                         } else {
-                            $exitCode = $proc.ExitCode
+                            $exitCode = $native.ExitCode
                             $alreadyInstalledCodes = @(
                                 -1978335189,   # APPINSTALLER_CLI_ERROR_UPDATE_NOT_APPLICABLE
                                 -1978335135    # APPINSTALLER_CLI_ERROR_PACKAGE_ALREADY_INSTALLED
@@ -1307,9 +1314,10 @@ function Invoke-InstalarPaquetes {
                 }
 
                 return @{ OK = $okCount; Already = $alreadyCount; Fail = $failCount }
-            }).AddArgument($selectedPkgs).AddArgument($logQueue).AddArgument($progressQueue).AddArgument($L.Installing).AddArgument($L.InstalledOK).AddArgument($L.AlreadyInstalled).AddArgument($L.InstallFailed).AddArgument($L.InstallTimeout).AddArgument($L.InstallException).AddArgument($ID_MIGRATIONS).AddArgument($L.CleaningTemp).AddArgument($L.CleanupSummary).AddArgument($script:WingetPath).AddArgument([bool]($script:WingetCaps -and $script:WingetCaps.SupportsNoInteract)).AddArgument([bool]($script:WingetCaps -and $script:WingetCaps.SupportsMsStore))
+            }).AddArgument($selectedPkgs).AddArgument($logQueue).AddArgument($progressQueue).AddArgument($L.Installing).AddArgument($L.InstalledOK).AddArgument($L.AlreadyInstalled).AddArgument($L.InstallFailed).AddArgument($L.InstallTimeout).AddArgument($L.InstallException).AddArgument($ID_MIGRATIONS).AddArgument($L.CleaningTemp).AddArgument($L.CleanupSummary).AddArgument($script:WingetPath).AddArgument([bool]($script:WingetCaps -and $script:WingetCaps.SupportsNoInteract)).AddArgument([bool]($script:WingetCaps -and $script:WingetCaps.SupportsMsStore)).AddArgument($installOperation.Cancellation.Token)
 
             $asyncResult = $ps.BeginInvoke()
+            $installOperation.Active = $true
 
             $timer = [System.Windows.Threading.DispatcherTimer]::new()
             $timer.Interval = [TimeSpan]::FromMilliseconds(150)
@@ -1357,6 +1365,10 @@ function Invoke-InstalarPaquetes {
                     if ($ctl -and $ctl.PrgInstall) {
                         $ctl.PrgInstall.Value = $ctl.PrgInstall.Maximum
                     }
+
+                    $installOperation.Active=$false
+                    $installOperation.Cancellation.Dispose()
+                    if ($installOperation.CloseAfterCancel) { $window.Close(); return }
 
                     if ($res) {
                         $summaryText = ($ctl.L.Summary -f $res.OK, $res.Already, $res.Fail)

@@ -477,60 +477,11 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
 
 
     function Invoke-ExternalProcessWithTimeout {
-        param(
-            [Parameter(Mandatory)][string]$FilePath,
-            [string[]]$ArgumentList = @(),
-            [int]$TimeoutSec = 180
-        )
-
+        param([Parameter(Mandatory)][string]$FilePath,[string[]]$ArgumentList=@(),[int]$TimeoutSec=180)
         try {
-            $proc = Start-Process -FilePath $FilePath -ArgumentList $ArgumentList -PassThru -ErrorAction Stop
-        } catch {
-            return @{
-                Started   = $false
-                Completed = $false
-                TimedOut  = $false
-                ExitCode  = $null
-                Error     = $_.Exception.Message
-            }
-        }
-
-        $timedOut = $false
-        try {
-            Wait-Process -Id $proc.Id -Timeout $TimeoutSec -ErrorAction Stop
-        } catch {
-            if ($proc -and -not $proc.HasExited) {
-                $timedOut = $true
-            }
-        }
-
-        if ($timedOut) {
-            try {
-                # Kill process tree to avoid orphan installer children.
-                & taskkill.exe /PID $proc.Id /T /F > $null 2>&1
-            } catch {}
-            return @{
-                Started   = $true
-                Completed = $false
-                TimedOut  = $true
-                ExitCode  = $null
-                Error     = 'timeout'
-            }
-        }
-
-        $exitCode = $null
-        try {
-            $proc.Refresh()
-            $exitCode = $proc.ExitCode
-        } catch {}
-
-        return @{
-            Started   = $true
-            Completed = $true
-            TimedOut  = $false
-            ExitCode  = $exitCode
-            Error     = $null
-        }
+            $result=Invoke-AtlasNativeProcess -FilePath $FilePath -Arguments ($ArgumentList -join ' ') -TimeoutSeconds $TimeoutSec
+            return @{Started=$result.Started;Completed=$result.Completed;TimedOut=$result.TimedOut;ExitCode=$result.ExitCode;Error=$(if($result.State -eq 'Correct'){$null}else{$result.State})}
+        } catch { return @{Started=$false;Completed=$false;TimedOut=$false;ExitCode=$null;Error=$_.Exception.Message} }
     }
 
     function Download-FastCopy {
@@ -787,9 +738,9 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
             if ($robo) {
                 # Delta sync (size/date) to avoid recopying unchanged trees.
                 # /XJ avoids junction loops and /FFT improves compatibility across filesystems.
-                & $robo.Source $SourceDir $DestinationDir /E /R:1 /W:1 /NFL /NDL /NJH /NJS /NP /XJ /FFT /COPY:DAT /DCOPY:DAT | Out-Null
-                $rc = $LASTEXITCODE
-                if ($rc -ge 0 -and $rc -lt 8) {
+                $result = Invoke-AtlasNativeProcess -FilePath $robo.Source -ArgumentList @($SourceDir,$DestinationDir,'/E','/R:1','/W:1','/NFL','/NDL','/NJH','/NJS','/NP','/XJ','/FFT','/COPY:DAT','/DCOPY:DAT') -TimeoutSeconds 86400 -SuccessCodes @(0,1,2,3)
+                if ($result.State -in @('TimedOut','Cancelled','NotEvaluated')) { throw "USB copy $($result.State); inspect partial destination before retrying." }
+                if ($result.State -eq 'Correct') {
                     $copyOk = $true
                 }
             }

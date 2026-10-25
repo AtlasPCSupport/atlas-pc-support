@@ -106,7 +106,7 @@ function Test-AtlasRelease {
         if ($tool.function -cne [IO.Path]::GetFileNameWithoutExtension($name) -or
             $tool.runtime.engine -notin @('windows-powershell','pwsh') -or $tool.runtime.architecture -ne 'x64' -or
             [string]$tool.runtime.minimumVersion -notmatch '^\d+\.\d+(?:\.\d+){0,2}$' -or @($tool.runtime.libraries).Count -eq 0) { throw "Missing tool execution contract: $name" }
-        foreach ($library in @($tool.runtime.libraries)) { if ($library -notin @('ToolKit','Dependencies','PS7','Release','Reports')) { throw "Unknown tool library: $library" } }
+        foreach ($library in @($tool.runtime.libraries)) { if ($library -notin @('ToolKit','Dependencies','PS7','Release','Reports','Operations')) { throw "Unknown tool library: $library" } }
         $toolNames[$name] = $true
     }
     if ($tools.Count -eq 0 -or $names.Count -ne ($required.Count + $tools.Count)) { throw 'Release members and tool manifest do not match.' }

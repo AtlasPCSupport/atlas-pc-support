@@ -155,7 +155,7 @@ function Get-AtlasToolRuntime {
     param([Parameter(Mandatory)][hashtable]$Tool)
     if (-not $Tool.runtime -or $Tool.runtime.architecture -ne 'x64' -or -not $Tool.runtime.minimumVersion -or @($Tool.runtime.libraries).Count -eq 0) { throw 'A supported x64 runtime contract is required.' }
     foreach ($library in @($Tool.runtime.libraries)) {
-        if ($library -notin @('ToolKit','Dependencies','PS7','Release')) { throw "Unknown child library: $library" }
+        if ($library -notin @('ToolKit','Dependencies','PS7','Release','Reports','Operations')) { throw "Unknown child library: $library" }
     }
     if ($Tool.runtime.engine -eq 'windows-powershell') {
         if ([version]$Tool.runtime.minimumVersion -gt [version]'5.1') { throw 'This contract requires a newer Windows PowerShell.' }

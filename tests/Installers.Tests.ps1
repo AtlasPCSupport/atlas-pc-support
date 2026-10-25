@@ -6,6 +6,7 @@ Describe 'A01 installer verification regressions' {
         $script:RepoRoot = Split-Path -Parent $PSScriptRoot
         . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
         function Start-Process { [CmdletBinding()] param($FilePath, $ArgumentList, [switch]$Wait, [switch]$PassThru) throw 'Real process blocked' }
+        function Invoke-AtlasNativeProcess { [CmdletBinding()] param($FilePath,$Arguments,$ArgumentList,$TimeoutSeconds,$SuccessCodes) throw 'Real native process blocked' }
         function Invoke-WebRequest { [CmdletBinding()] param($Uri, $OutFile, [switch]$UseBasicParsing, $TimeoutSec) throw 'Network blocked' }
         function Get-AuthenticodeSignature { [CmdletBinding()] param($FilePath) throw 'Real signature inspection blocked' }
         function _Write-AtlasStepCompat { param($Message) }
@@ -25,7 +26,9 @@ Describe 'A01 installer verification regressions' {
     }
     BeforeEach {
         Mock Write-Host { }
+        Mock Write-Warning { }
         Mock Start-Process { [pscustomobject]@{ ExitCode = 0 } }
+        Mock Invoke-AtlasNativeProcess { [pscustomobject]@{ State='Correct'; ExitCode=0 } }
         Mock Get-AtlasPS7Path { 'mock-pwsh.exe' }
         Mock Invoke-WebRequest { throw 'Network blocked' }
         Mock Get-AuthenticodeSignature {
@@ -70,7 +73,7 @@ Describe 'A01 installer verification regressions' {
     It 'launches a verified local MSI with a quoted path and checks its native exit' {
         Set-Content -LiteralPath "$script:Msi.sha256" -Value $script:Hash
         _Install-PS7 -OfflineSource $script:Msi -L $script:L -MsiName 'fixture.msi' | Should -Be 'mock-pwsh.exe'
-        Should -Invoke Start-Process -Times 1 -Exactly -ParameterFilter { $FilePath -eq 'msiexec.exe' -and $ArgumentList[1] -eq ('"'+$script:Msi+'"') }
+        Should -Invoke Invoke-AtlasNativeProcess -Times 1 -Exactly -ParameterFilter { $FilePath -eq 'msiexec.exe' -and $Arguments.Contains(('"'+$script:Msi+'"')) -and $TimeoutSeconds -eq 1800 }
     }
     It 'does not swallow a mismatch in the standalone updater' {
         Set-Content -LiteralPath "$script:Msi.sha256" -Value ('0'*64)
@@ -79,7 +82,7 @@ Describe 'A01 installer verification regressions' {
     }
     It 'rejects a nonzero MSI result after verification' {
         Set-Content -LiteralPath "$script:Msi.sha256" -Value $script:Hash
-        Mock Start-Process { [pscustomobject]@{ ExitCode=1603 } }
+        Mock Invoke-AtlasNativeProcess { [pscustomobject]@{ State='Failed'; ExitCode=1603 } }
         { _Install-PS7 -OfflineSource $script:Msi -L $script:L -MsiName 'fixture.msi' } | Should -Throw '*1603*'
     }
     It 'rejects an offline library MSI with a mismatching digest' {
@@ -125,5 +128,54 @@ Describe 'A01 installer verification regressions' {
         Download-PS7 -DepsDir $deps | Should -BeTrue
         (Get-Content -LiteralPath "$file.sha256" -Raw).Trim() | Should -Be $script:Hash
         Should -Invoke Get-AuthenticodeSignature -Times 1 -Exactly
+    }
+    It 'does not convert a timeout to a completed MSI installation' {
+        Set-Content -LiteralPath "$script:Msi.sha256" -Value $script:Hash
+        Mock Invoke-AtlasNativeProcess { [pscustomobject]@{State='TimedOut';ExitCode=0} }
+        {_Install-PS7 -OfflineSource $script:Msi -L $script:L -MsiName 'fixture.msi'}|Should -Throw '*TimedOut*'
+    }
+    It 'accepts a successful MSI reboot-required code distinctly' {
+        Set-Content -LiteralPath "$script:Msi.sha256" -Value $script:Hash
+        Mock Invoke-AtlasNativeProcess { [pscustomobject]@{State='Correct';ExitCode=3010} }
+        _Install-PS7 -OfflineSource $script:Msi -L $script:L -MsiName 'fixture.msi'|Should -Be 'mock-pwsh.exe'
+        Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -match 'restart' }
+    }
+}
+
+Describe 'Dependency failure does not launch an alternative installer' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        function Write-AtlasLog { param($Message,$Tool,$Level) }
+        function Expand-AtlasPath { param($Path) $Path }
+        function Invoke-AtlasNativeProcess { [CmdletBinding()]param($FilePath,$ArgumentList,$TimeoutSeconds)throw 'Real installation blocked' }
+        function Invoke-WebRequest { [CmdletBinding()]param($Uri,$OutFile,$TimeoutSec,[switch]$UseBasicParsing)throw 'Network blocked' }
+        foreach($name in @('Resolve-AtlasDependency','Resolve-SymlinkPath','Test-AtlasDependencyHash')){. (Get-TestFunction $script:RepoRoot 'src/lib/Dependencies.ps1' $name)}
+    }
+    BeforeEach {
+        $script:Candidate=Join-Path $TestDrive ('dependency-'+[guid]::NewGuid().ToString('N')+'.exe')
+        $script:AtlasDepsRegistry=@{Fixture=@{SearchPaths=@($script:Candidate);ExecutableName='fixture-dependency.exe';WingetId='Vendor.Fixture';DownloadUrl='https://example.invalid/installer.exe'}}
+        Mock Get-Command {if($Name -eq 'winget'){[pscustomobject]@{Source='winget.exe'}}}
+        Mock Invoke-WebRequest {throw 'Network must not be reached after an installer attempt'}
+        Mock Invoke-AtlasNativeProcess {[pscustomobject]@{State='Failed';ExitCode=1603}}
+    }
+    It 'does not download or retry after an unsuccessful install even when partial files exist' {
+        Mock Invoke-AtlasNativeProcess {[IO.File]::WriteAllText($script:Candidate,'partial');[pscustomobject]@{State='Failed';ExitCode=1603}}
+        Resolve-AtlasDependency -Name Fixture -InstallIfMissing|Should -BeNullOrEmpty
+        Should -Invoke Invoke-WebRequest -Times 0 -Exactly
+        Should -Invoke Invoke-AtlasNativeProcess -Times 1 -Exactly
+    }
+    It 'does not retry another installer after a timeout' {
+        Mock Invoke-AtlasNativeProcess {[pscustomobject]@{State='TimedOut';ExitCode=0}}
+        Resolve-AtlasDependency -Name Fixture -InstallIfMissing|Should -BeNullOrEmpty
+        Should -Invoke Invoke-WebRequest -Times 0 -Exactly
+    }
+    It 'resolves a newly installed candidate only after a successful native result' {
+        Mock Invoke-AtlasNativeProcess {[IO.File]::WriteAllText($script:Candidate,'fixture');[pscustomobject]@{State='Correct';ExitCode=0}}
+        Resolve-AtlasDependency -Name Fixture -InstallIfMissing|Should -Be $script:Candidate
+    }
+    It 'does not call missing expected hashes verified' {
+        [IO.File]::WriteAllText($script:Candidate,'fixture')
+        {Test-AtlasDependencyHash -Path $script:Candidate -ExpectedSha256 ''}|Should -Throw
     }
 }

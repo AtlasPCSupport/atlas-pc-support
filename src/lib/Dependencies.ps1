@@ -33,7 +33,7 @@ function Test-AtlasDependencyHash {
     )
 
     if (-not (Test-Path -LiteralPath $Path)) { return $false }
-    if (-not $ExpectedSha256) { return $true }
+    if (-not $ExpectedSha256) { return $false }
 
     $expected = $ExpectedSha256.ToLowerInvariant()
     if ($expected -notmatch '^[a-f0-9]{64}$') {
@@ -58,7 +58,7 @@ function Resolve-AtlasDependency {
     #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)] [string]$Name,
+        [Parameter(Mandatory)][ValidatePattern('^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$')][string]$Name,
         [switch]$InstallIfMissing
     )
 
@@ -101,14 +101,13 @@ function Resolve-AtlasDependency {
     if ($dep.WingetId -and (Get-Command 'winget' -ErrorAction SilentlyContinue)) {
         Write-AtlasLog "Instalando $Name vía winget ($($dep.WingetId))" -Tool 'Deps'
         try {
-            winget install --id $dep.WingetId --exact --accept-source-agreements --accept-package-agreements --silent | Out-Null
+            $result = Invoke-AtlasNativeProcess -FilePath 'winget.exe' -ArgumentList @('install','--id',$dep.WingetId,'--exact','--source','winget','--accept-source-agreements','--accept-package-agreements','--silent') -TimeoutSeconds 1800
+            if ($result.State -ne 'Correct') { Write-AtlasLog "Dependency installation $($result.State), exit $($result.ExitCode); no second installer is started." -Level ERROR -Tool Deps; return $null }
         } catch {
-            Write-AtlasLog "winget falló: $_" -Level WARN -Tool 'Deps'
+            Write-AtlasLog "winget failed: $_; no second installer is started." -Level ERROR -Tool Deps
+            return $null
         }
-        foreach ($p in $dep.SearchPaths) {
-            $expanded = Expand-AtlasPath $p
-            if (Test-Path $expanded) { return Resolve-SymlinkPath $expanded }
-        }
+        return Resolve-AtlasDependency -Name $Name
     }
 
     # Fallback: direct download via DownloadUrl when winget is unavailable or failed
@@ -124,17 +123,11 @@ function Resolve-AtlasDependency {
                 Assert-AtlasInstaller -Path $installerFile -ExpectedSha256 ([string]$dep.DownloadSha256)
                 $targetDir = Join-Path $env:LOCALAPPDATA "AtlasPC\bin\$Name"
                 if (-not (Test-Path $targetDir)) { New-Item -ItemType Directory -Path $targetDir -Force | Out-Null }
-                $p = Start-Process -FilePath $installerFile -ArgumentList @('/EXTRACT64', '/NOSUBDIR', '/AGREE_LICENSE', "/DIR=`"$targetDir`"") -Wait -PassThru -ErrorAction SilentlyContinue
-                if (-not ($p -and $p.ExitCode -eq 0)) {
-                    Start-Process -FilePath $installerFile -ArgumentList @('/SILENT', '/AGREE_LICENSE', "/DIR=`"$targetDir`"") -Wait -ErrorAction SilentlyContinue
-                }
-                Remove-Item $installerFile -ErrorAction SilentlyContinue
-                foreach ($sp in $dep.SearchPaths) {
-                    $expanded = Expand-AtlasPath $sp
-                    if (Test-Path $expanded) { return Resolve-SymlinkPath $expanded }
-                }
-                $found = Get-ChildItem -Path $targetDir -Filter $dep.ExecutableName -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-                if ($found) { return Resolve-SymlinkPath $found.FullName }
+                if ($Name -ne 'FastCopy') { throw 'No direct extraction contract is defined for this dependency.' }
+                $result = Invoke-AtlasNativeProcess -FilePath $installerFile -ArgumentList @('/EXTRACT64','/NOSUBDIR','/AGREE_LICENSE',("/DIR=$targetDir")) -TimeoutSeconds 180
+                if ($result.State -ne 'Correct') { throw "Dependency extraction $($result.State), exit $($result.ExitCode). No alternative installer was started." }
+                Remove-Item -LiteralPath $installerFile -ErrorAction Stop
+                return Resolve-AtlasDependency -Name $Name
             }
         } catch {
             Write-AtlasLog "Descarga directa falló: $_" -Level WARN -Tool 'Deps'
@@ -148,7 +141,7 @@ function Resolve-AtlasDependency {
 
 function Register-AtlasDependency {
     param(
-        [Parameter(Mandatory)] [string]$Name,
+        [Parameter(Mandatory)][ValidatePattern('^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$')][string]$Name,
         [Parameter(Mandatory)] [hashtable]$Definition
     )
     $script:AtlasDepsRegistry[$Name] = $Definition
