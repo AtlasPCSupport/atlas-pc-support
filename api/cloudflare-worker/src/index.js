@@ -80,13 +80,17 @@ async function route(request, env) {
   // repository protects source hosting, not anonymous access to this installer.
   // Never cache the private upstream or reflect the public Atlas ref into it.
   if (path === "/install.ps1" || path === "/install.ps1.sha256") {
-    if (!env.GITHUB_PAT) return response(503, "Atlas onboarding is not configured.\n");
-    const file = path.endsWith(".sha256") ? "install-rustdesk.ps1.sha256" : "install-rustdesk.ps1";
-    const upstream = await fetch(`https://api.github.com/repos/${PRIVATE_REPO}/contents/${file}?ref=main`, {
+    const commit = env.ATLAS_ONBOARDING_COMMIT;
+    const expected = env.ATLAS_ONBOARDING_SHA256;
+    if (!env.GITHUB_PAT || !/^[a-f0-9]{40}$/.test(commit || "") || !/^[a-f0-9]{64}$/.test(expected || "")) return response(503, "Atlas onboarding is not configured.\n");
+    const upstream = await fetch(`https://api.github.com/repos/${PRIVATE_REPO}/contents/install-rustdesk.ps1?ref=${commit}`, {
       headers: { Accept: "application/vnd.github.v3.raw", "User-Agent": "atlas-launcher-worker", Authorization: `Bearer ${env.GITHUB_PAT}`, "Cache-Control": "no-store" },
       cf: { cacheTtl: 0, cacheEverything: false }
     });
-    return response(200, await readLimited(upstream, 2 * 1024 * 1024));
+    const bytes = await readLimited(upstream, 2 * 1024 * 1024);
+    if (await sha256(bytes) !== expected) throw new HttpError(502, "Atlas onboarding failed verification.");
+    const headers = { "X-Atlas-Onboarding-Ref": commit, "X-Atlas-Onboarding-Sha256": expected };
+    return response(200, path.endsWith(".sha256") ? `${expected}  install-rustdesk.ps1\n` : bytes, headers);
   }
   if (!["/", "/get.ps1", "/release.json", "/release-manifest.json", "/launcher.sha256", "/tool-hashes.sha256", "/install.bat"].includes(path)) return response(404, "Atlas route not found.\n");
   const release = await publication(env, url.searchParams.get("ref"));

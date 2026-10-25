@@ -38,6 +38,7 @@ Describe 'A01 installer verification regressions' {
         $script:Msi = Join-Path $TestDrive ('fixture with spaces-' + [guid]::NewGuid().ToString('N') + '.msi')
         Set-Content -LiteralPath $script:Msi -Value 'Not an installer' -Encoding ASCII
         $script:Hash = (Get-FileHash -LiteralPath $script:Msi -Algorithm SHA256).Hash.ToLowerInvariant()
+        $script:AtlasDependencyCatalog.PowerShell7.DownloadSha256 = $script:Hash
         $script:L = @{ UsingLocalMsi='{0}'; Installing='install'; InstallOK='{0}'; DownloadFailed='{0}'; MsiExitCode='{0}'; Downloading='{0}'; FCInstOk='{0}'; FCDLFail='{0}'; PS7Exists='{0}'; PS7Fail='{0}' }
     }
 
@@ -49,6 +50,7 @@ Describe 'A01 installer verification regressions' {
         Should -Invoke Get-AuthenticodeSignature -Times 1 -Exactly
     }
     It 'refuses offline installation without a required expected hash' {
+        $script:AtlasDependencyCatalog.PowerShell7.DownloadSha256 = $null
         { Install-AtlasPS7 -OfflineSource $script:Msi } | Should -Throw '*SHA-256*'
         Should -Invoke Start-Process -Times 0 -Exactly
     }
@@ -71,12 +73,14 @@ Describe 'A01 installer verification regressions' {
         { Assert-AtlasInstaller -Path $script:Msi -ExpectedSha256 $script:Hash -MicrosoftSignature } | Should -Not -Throw
     }
     It 'launches a verified local MSI with a quoted path and checks its native exit' {
-        Set-Content -LiteralPath "$script:Msi.sha256" -Value $script:Hash
+        # A sidecar is not the authority; the verified release already pins bytes.
+        Set-Content -LiteralPath "$script:Msi.sha256" -Value ('0'*64)
         _Install-PS7 -OfflineSource $script:Msi -L $script:L -MsiName 'fixture.msi' | Should -Be 'mock-pwsh.exe'
         Should -Invoke Invoke-AtlasNativeProcess -Times 1 -Exactly -ParameterFilter { $FilePath -eq 'msiexec.exe' -and $Arguments.Contains(('"'+$script:Msi+'"')) -and $TimeoutSeconds -eq 1800 }
     }
     It 'does not swallow a mismatch in the standalone updater' {
-        Set-Content -LiteralPath "$script:Msi.sha256" -Value ('0'*64)
+        Set-Content -LiteralPath $script:Msi -Value 'Modified installer' -Encoding ASCII
+        Set-Content -LiteralPath "$script:Msi.sha256" -Value (Get-FileHash $script:Msi -Algorithm SHA256).Hash
         { _Install-PS7 -OfflineSource $script:Msi -L $script:L -MsiName 'fixture.msi' } | Should -Throw '*mismatch*'
         Should -Invoke Start-Process -Times 0 -Exactly
     }
@@ -86,7 +90,8 @@ Describe 'A01 installer verification regressions' {
         { _Install-PS7 -OfflineSource $script:Msi -L $script:L -MsiName 'fixture.msi' } | Should -Throw '*1603*'
     }
     It 'rejects an offline library MSI with a mismatching digest' {
-        Set-Content -LiteralPath "$script:Msi.sha256" -Value ('0'*64)
+        Set-Content -LiteralPath $script:Msi -Value 'Modified installer' -Encoding ASCII
+        Set-Content -LiteralPath "$script:Msi.sha256" -Value (Get-FileHash $script:Msi -Algorithm SHA256).Hash
         { Install-AtlasPS7 -OfflineSource $script:Msi } | Should -Throw '*SHA-256*'
         Should -Invoke Start-Process -Times 0 -Exactly
     }
@@ -124,7 +129,6 @@ Describe 'A01 installer verification regressions' {
         New-Item -ItemType Directory -Path $deps | Out-Null
         $file=Join-Path $deps 'PowerShell-test-win-x64.msi'
         Copy-Item -LiteralPath $script:Msi -Destination $file
-        Mock Get-AtlasReleaseFileHash { $script:Hash }
         Download-PS7 -DepsDir $deps | Should -BeTrue
         (Get-Content -LiteralPath "$file.sha256" -Raw).Trim() | Should -Be $script:Hash
         Should -Invoke Get-AuthenticodeSignature -Times 1 -Exactly

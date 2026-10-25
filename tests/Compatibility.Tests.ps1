@@ -56,6 +56,12 @@ Describe 'Windows client capability matrix' {
         { Assert-AtlasPackageRequest -Package @{Id='Microsoft.VCRedist.2015+.x64';Source='winget'} -Build 19045 } | Should -Not -Throw
         { Assert-AtlasPackageRequest -Package @{Id='Vendor.App';MinimumBuild=22000} -Build 19045 } | Should -Throw '*newer*'
     }
+    It 'does not let an imported package lower a known OS minimum' {
+        (Get-AtlasPackageMinimumBuild -Id Microsoft.WindowsTerminal) | Should -Be 19041
+        (Get-AtlasPackageMinimumBuild -Id Unknown.Package) | Should -BeNullOrEmpty
+        { Assert-AtlasPackageRequest -Package @{Id='Microsoft.WindowsTerminal';MinimumBuild=1} -Build 19045 } | Should -Not -Throw
+        { Assert-AtlasPackageRequest -Package @{Id='Microsoft.WindowsTerminal';MinimumBuild=22000} -Build 19045 } | Should -Throw '*newer*'
+    }
     It 'uses a native NetFx3 path without requiring WinGet' {
         $text=[IO.File]::ReadAllText((Join-Path $script:RepoRoot 'src/tools/Invoke-InstalarRuntimes.ps1'))
         $text.IndexOf("if (`$choice -eq '3')") | Should -BeLessThan $text.IndexOf('$winget=Get-AtlasWingetPath')

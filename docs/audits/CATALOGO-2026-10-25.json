@@ -1,0 +1,1018 @@
+{
+  "date": "2026-10-25",
+  "sourceCommit": "7ec80bf6b94e4649d03ac5cec5bb175efa175b1b",
+  "count": 58,
+  "entries": [
+    {
+      "id": "Google.Chrome",
+      "name": "Google Chrome",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "156.0.8078.48",
+      "architectures": [
+        "arm64",
+        "x64",
+        "x86"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "f1b06331d8ed4a4c5d83feeb9d3532f87687d4db",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/g/Google/Chrome/156.0.8078.48/Google.Chrome.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 2,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "Mozilla.Firefox",
+      "name": "Mozilla Firefox",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "157.0.1",
+      "architectures": [
+        "arm64",
+        "x64",
+        "x86"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "165aa8a4104730258202b99d90499c326149eb2d",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/m/Mozilla/Firefox/157.0.1/Mozilla.Firefox.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 2,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "Brave.Brave",
+      "name": "Brave Browser",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "155.1.97.56",
+      "architectures": [
+        "arm64",
+        "x64",
+        "x86"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "304aab02a95e84bc80786411b9efe1d3f07857e8",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/b/Brave/Brave/155.1.97.56/Brave.Brave.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 4,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "Opera.Opera",
+      "name": "Opera",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "137.0.6036.39",
+      "architectures": [
+        "arm64",
+        "x64",
+        "x86"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "4327a87a2acef5cda219729195dcadaea05ab0ff",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/o/Opera/Opera/137.0.6036.39/Opera.Opera.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 4,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "VideoLAN.VLC",
+      "name": "VLC Media Player",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "3.0.24",
+      "architectures": [
+        "arm64",
+        "x64",
+        "x86"
+      ],
+      "minimumOS": [
+        "6.1.7600.0"
+      ],
+      "manifestBlob": "28b74165c96ac2d7a79e8fe8a3b8da8bfcf0d4be",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/v/VideoLAN/VLC/3.0.24/VideoLAN.VLC.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 4,
+      "minimumOSState": "ExplicitMetadata"
+    },
+    {
+      "id": "Spotify.Spotify",
+      "name": "Spotify",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "1.3.6.1921.g7086c071a617",
+      "architectures": [
+        "arm64",
+        "x64"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "e8f84d9684c20c49a6bba68ee59239f030add21b",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/s/Spotify/Spotify/1.3.6.1921.g7086c071a617/Spotify.Spotify.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 1,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "OBSProject.OBSStudio",
+      "name": "OBS Studio",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "33.0.0",
+      "architectures": [
+        "arm64",
+        "x64"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "7827789cde1262363b9d8b6aee0e97f46ebbedd5",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/o/OBSProject/OBSStudio/33.0.0/OBSProject.OBSStudio.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 2,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "Audacity.Audacity",
+      "name": "Audacity",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "4.0.1.262721353",
+      "architectures": [
+        "arm64",
+        "x64"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "cfbd038ca8907531ff16e6f9bb33a1fc2896ee2d",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/a/Audacity/Audacity/4.0.1.262721353/Audacity.Audacity.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 1,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "SoftDeluxe.FreeDownloadManager",
+      "name": "Free Download Manager",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "6.35.2.7075",
+      "architectures": [
+        "x64"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "f51657bbe5df684d8df86babd97dc0f8d1d8a88e",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/s/SoftDeluxe/FreeDownloadManager/6.35.2.7075/SoftDeluxe.FreeDownloadManager.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 2,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "qBittorrent.qBittorrent",
+      "name": "qBittorrent",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "5.3.0",
+      "architectures": [
+        "x64"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "707ffc6173e06ea63013ce65c36bc93e59b18409",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/q/qBittorrent/qBittorrent/5.3.0/qBittorrent.qBittorrent.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 1,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "Microsoft.Office",
+      "name": "Microsoft 365",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "16.0.20228.20124",
+      "architectures": [
+        "x86"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "c16d0787cfcd45efe9eb682f7dc70cd49f163eca",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/m/Microsoft/Office/16.0.20228.20124/Microsoft.Office.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 1,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "TheDocumentFoundation.LibreOffice",
+      "name": "LibreOffice",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "26.8.1.1",
+      "architectures": [
+        "arm64",
+        "x64",
+        "x86"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "7fab0752ca301762c433c28a7901be3a3bb9cdca",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/t/TheDocumentFoundation/LibreOffice/26.8.1.1/TheDocumentFoundation.LibreOffice.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 2,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "ONLYOFFICE.DesktopEditors",
+      "name": "ONLYOFFICE Desktop Editors",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "10.0.0",
+      "architectures": [
+        "arm64",
+        "x64",
+        "x86"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "eea9f7039ebd228a60f8e61eb2dd7a0fb11f8a01",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/o/ONLYOFFICE/DesktopEditors/10.0.0/ONLYOFFICE.DesktopEditors.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 2,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "Adobe.Acrobat.Reader.64-bit",
+      "name": "Adobe Acrobat Reader",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "26.002.22031",
+      "architectures": [
+        "x64"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "d992b5018a7e57c840f1b12e5a690e2f8d7b0a04",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/a/Adobe/Acrobat/Reader/64-bit/26.002.22031/Adobe.Acrobat.Reader.64-bit.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 1,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "Notion.Notion",
+      "name": "Notion",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "7.40.1",
+      "architectures": [
+        "arm64",
+        "x64"
+      ],
+      "minimumOS": [
+        "10.0.19041.0"
+      ],
+      "manifestBlob": "9cf91778a951e91136fd823dad9717c4fa11870e",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/n/Notion/Notion/7.40.1/Notion.Notion.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 2,
+      "minimumOSState": "ExplicitMetadata"
+    },
+    {
+      "id": "Obsidian.Obsidian",
+      "name": "Obsidian",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "1.14.5",
+      "architectures": [
+        "arm64",
+        "x64",
+        "x86"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "6b2d2572335b2ba3c6d9e189bdfd9f797a69223b",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/o/Obsidian/Obsidian/1.14.5/Obsidian.Obsidian.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 4,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "Simnet.SimpleStickyNotes",
+      "name": "Simple Sticky Notes",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "6.9",
+      "architectures": [
+        "x86"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "2484684088db131ddb9b0a28c27e4993266d4647",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/s/Simnet/SimpleStickyNotes/6.9/Simnet.SimpleStickyNotes.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 1,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "Learneo.LanguageTool",
+      "name": "LanguageTool for Desktop",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "2.3.2.0",
+      "architectures": [
+        "x64"
+      ],
+      "minimumOS": [
+        "10.0.19041.0"
+      ],
+      "manifestBlob": "0ffaa9ae40c612b2c8841a9b322ae9581f01f55a",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/l/Learneo/LanguageTool/2.3.2.0/Learneo.LanguageTool.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 1,
+      "minimumOSState": "ExplicitMetadata"
+    },
+    {
+      "id": "Zoom.Zoom",
+      "name": "Zoom",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "7.2.48556",
+      "architectures": [
+        "arm64",
+        "x64"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "f6544a02d710b5a2580bd494466d18382ca4f287",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/z/Zoom/Zoom/7.2.48556/Zoom.Zoom.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 1,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "Microsoft.Teams",
+      "name": "Microsoft Teams",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "26225.1806.5074.1452",
+      "architectures": [
+        "arm64",
+        "x64",
+        "x86"
+      ],
+      "minimumOS": [
+        "10.0.17763.0"
+      ],
+      "manifestBlob": "86324bf874d71031c823c7bb08639098e5b49131",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/m/Microsoft/Teams/26225.1806.5074.1452/Microsoft.Teams.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 4,
+      "minimumOSState": "ExplicitMetadata"
+    },
+    {
+      "id": "Discord.Discord",
+      "name": "Discord",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "1.0.9265",
+      "architectures": [
+        "x64"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "1b613c56aa52e6f682ce69eb3b8d0ed8eabd443a",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/d/Discord/Discord/1.0.9265/Discord.Discord.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 1,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "OpenWhisperSystems.Signal",
+      "name": "Signal",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "8.32.0",
+      "architectures": [
+        "x64"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "e00a59cc0b5f642ae8ca7748a0c79451d0909bae",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/o/OpenWhisperSystems/Signal/8.32.0/OpenWhisperSystems.Signal.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 1,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "Telegram.TelegramDesktop",
+      "name": "Telegram Desktop",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "7.3.3",
+      "architectures": [
+        "arm64",
+        "x64",
+        "x86"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "0155d624c6d3ee41018eee370124b76f0283d055",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/t/Telegram/TelegramDesktop/7.3.3/Telegram.TelegramDesktop.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 4,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "9NKSQGP7F2NH",
+      "name": "WhatsApp Desktop",
+      "source": "msstore",
+      "status": "StoreMetadataRequired",
+      "minimumOS": null,
+      "qualification": "Not installed or qualified"
+    },
+    {
+      "id": "9WZDNCRFJ3B4",
+      "name": "JW Library",
+      "source": "msstore",
+      "status": "StoreMetadataRequired",
+      "minimumOS": null,
+      "qualification": "Not installed or qualified"
+    },
+    {
+      "id": "7zip.7zip",
+      "name": "7-Zip",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "26.05",
+      "architectures": [
+        "arm",
+        "arm64",
+        "x64",
+        "x86"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "24805cc5b0ff658be216d0950c1536b9e86403e2",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/7/7zip/7zip/26.05/7zip.7zip.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 4,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "RARLab.WinRAR",
+      "name": "WinRAR",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "7.23.0",
+      "architectures": [
+        "x64"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "95043ed0619630cfe5f0d173f28866de761cbef8",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/r/RARLab/WinRAR/7.23.0/RARLab.WinRAR.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 39,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "Microsoft.PowerToys",
+      "name": "PowerToys",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "0.101.2362.0",
+      "architectures": [
+        "arm64",
+        "x64"
+      ],
+      "minimumOS": [
+        "10.0.17134.0"
+      ],
+      "manifestBlob": "a494f327e6b691b9cd17278b56f22bfb8dd7c3d2",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/m/Microsoft/PowerToys/0.101.2362.0/Microsoft.PowerToys.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 2,
+      "minimumOSState": "ExplicitMetadata"
+    },
+    {
+      "id": "voidtools.Everything",
+      "name": "Everything (search)",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "1.4.1.1032",
+      "architectures": [
+        "arm",
+        "arm64",
+        "x64",
+        "x86"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "98f212c2c8847c42a6e712f7ccf19e2cd91d3ef2",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/v/voidtools/Everything/1.4.1.1032/voidtools.Everything.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 6,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "Greenshot.Greenshot",
+      "name": "Greenshot (screenshots)",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "1.3.328",
+      "architectures": [
+        "x86"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "204d1aef5d892c17556c0dd551d53dc04059504a",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/g/Greenshot/Greenshot/1.3.328/Greenshot.Greenshot.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 2,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "ShareX.ShareX",
+      "name": "ShareX",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "21.0.0",
+      "architectures": [
+        "x64"
+      ],
+      "minimumOS": [
+        "6.1.7601.0"
+      ],
+      "manifestBlob": "d1ad6f6f70eb40553df766cb144546d7fab91f54",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/s/ShareX/ShareX/21.0.0/ShareX.ShareX.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 2,
+      "minimumOSState": "ExplicitMetadata"
+    },
+    {
+      "id": "WinDirStat.WinDirStat",
+      "name": "WinDirStat",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "2.9.3",
+      "architectures": [
+        "arm64",
+        "x64",
+        "x86"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "a016eb2a5bc50047d19243a2ad573ebbcd5ab9a3",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/w/WinDirStat/WinDirStat/2.9.3/WinDirStat.WinDirStat.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 2,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "Rufus.Rufus",
+      "name": "Rufus (USB boot)",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "4.15",
+      "architectures": [
+        "arm64",
+        "x64",
+        "x86"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "0f0d30e6eb7b4430f296b2bf184151c257fc371f",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/r/Rufus/Rufus/4.15/Rufus.Rufus.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 2,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "CPUID.CPU-Z",
+      "name": "CPU-Z",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "3.01",
+      "architectures": [
+        "x64",
+        "x86"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "89a1b3654f2fd948c13b4de5273841a6b77c0417",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/c/CPUID/CPU-Z/3.01/CPUID.CPU-Z.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 4,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "TechPowerUp.GPU-Z",
+      "name": "GPU-Z",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "2.71.0",
+      "architectures": [
+        "x86"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "4e1e134cf5744868230dcc706ba592e8eb557b38",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/t/TechPowerUp/GPU-Z/2.71.0/TechPowerUp.GPU-Z.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 1,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "CrystalDewWorld.CrystalDiskInfo",
+      "name": "CrystalDiskInfo",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "9.9.3",
+      "architectures": [
+        "arm64",
+        "x64",
+        "x86"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "92b4fb0d1bc03040f78cedf0905946278a5b2ba9",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/c/CrystalDewWorld/CrystalDiskInfo/9.9.3/CrystalDewWorld.CrystalDiskInfo.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 2,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "Seafile.Seafile",
+      "name": "Seafile Client",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "9.0.22",
+      "architectures": [
+        "x64"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "0360e53ced78d6ba1e09eb293c4c286777f8ff63",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/s/Seafile/Seafile/9.0.22/Seafile.Seafile.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 1,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "w4po.ExplorerTabUtility",
+      "name": "Explorer Tab Utility",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "2.5.0",
+      "architectures": [
+        "x86"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "aafec6cc3d4937ef070c4f2c85e65053256caca1",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/w/w4po/ExplorerTabUtility/2.5.0/w4po.ExplorerTabUtility.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 1,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "Microsoft.VisualStudioCode",
+      "name": "Visual Studio Code",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "1.142.0",
+      "architectures": [
+        "arm64",
+        "x64"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "44ce8338c3c40e92797c481583317d5a3baaba9d",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/m/Microsoft/VisualStudioCode/1.142.0/Microsoft.VisualStudioCode.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 2,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "Git.Git",
+      "name": "Git",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "2.56.0.3",
+      "architectures": [
+        "arm64",
+        "x64"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "4681f82cdea65b037a95f47517ae8d3c9cd8570c",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/g/Git/Git/2.56.0.3/Git.Git.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 2,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "GitHub.GitHubDesktop",
+      "name": "GitHub Desktop",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "3.6.9",
+      "architectures": [
+        "arm64",
+        "x64"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "ec96c3934dd2ec5092f4edca5f6a6e012da227db",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/g/GitHub/GitHubDesktop/3.6.9/GitHub.GitHubDesktop.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 2,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "OpenJS.NodeJS.LTS",
+      "name": "Node.js LTS",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "24.22.1",
+      "architectures": [
+        "arm64",
+        "x64"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "a6cc13871c7d7ed850beae480baa29b2cb4ee0a9",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/o/OpenJS/NodeJS/LTS/24.22.1/OpenJS.NodeJS.LTS.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 1,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "Python.Python.3.12",
+      "name": "Python 3.12",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "3.12.10",
+      "architectures": [
+        "arm64",
+        "x64",
+        "x86"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "463db36d9e81943c8be021b1f49b6b1bc69dde9d",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/p/Python/Python/3/12/3.12.10/Python.Python.3.12.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 4,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "Microsoft.PowerShell",
+      "name": "PowerShell 7",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "7.6.8.0",
+      "architectures": [
+        "arm64",
+        "x64",
+        "x86"
+      ],
+      "minimumOS": [
+        "10.0.17763.0"
+      ],
+      "manifestBlob": "6a5651d2e5d923603f37eeeb7ffd147803eee974",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/m/Microsoft/PowerShell/7.6.8.0/Microsoft.PowerShell.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 4,
+      "minimumOSState": "ExplicitMetadata"
+    },
+    {
+      "id": "Microsoft.WindowsTerminal",
+      "name": "Windows Terminal",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "1.25.2733.0",
+      "architectures": [
+        "arm64",
+        "x64",
+        "x86"
+      ],
+      "minimumOS": [
+        "10.0.19041.0"
+      ],
+      "manifestBlob": "2b79e6ef416a7254bc6320a1e3613d76b3c63fca",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/m/Microsoft/WindowsTerminal/1.25.2733.0/Microsoft.WindowsTerminal.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 2,
+      "minimumOSState": "ExplicitMetadata"
+    },
+    {
+      "id": "Malwarebytes.Malwarebytes",
+      "name": "Malwarebytes",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "5.7.2.358",
+      "architectures": [
+        "x64",
+        "x86"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "6af5f0a72bf065fcaeaf5dbba255585227a6f7b3",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/m/Malwarebytes/Malwarebytes/5.7.2.358/Malwarebytes.Malwarebytes.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 2,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "Bitdefender.Bitdefender",
+      "name": "Bitdefender Antivirus Free",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "26.0.1.233",
+      "architectures": [
+        "x86"
+      ],
+      "minimumOS": [
+        "10.0.0.0"
+      ],
+      "manifestBlob": "c264b30a8434d1ee4083576a290841bac72899f6",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/b/Bitdefender/Bitdefender/26.0.1.233/Bitdefender.Bitdefender.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 1,
+      "minimumOSState": "ExplicitMetadata"
+    },
+    {
+      "id": "Bitwarden.Bitwarden",
+      "name": "Bitwarden",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "2026.10.1",
+      "architectures": [
+        "arm64",
+        "x64",
+        "x86"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "4e652bce69f5c0b070986583a89d31dbaa2f72cf",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/b/Bitwarden/Bitwarden/2026.10.1/Bitwarden.Bitwarden.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 6,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "KeePassXCTeam.KeePassXC",
+      "name": "KeePassXC",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "2.8.0",
+      "architectures": [
+        "x64"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "ef23cf261f448c11de66f915b41a226632ef865c",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/k/KeePassXCTeam/KeePassXC/2.8.0/KeePassXCTeam.KeePassXC.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 1,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "WireGuard.WireGuard",
+      "name": "WireGuard",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "1.1.1",
+      "architectures": [
+        "arm64",
+        "x64",
+        "x86"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "6b8f2f8ce9723edc6a42748610b620dec06383dc",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/w/WireGuard/WireGuard/1.1.1/WireGuard.WireGuard.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 2,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "Valve.Steam",
+      "name": "Steam",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "2.10.91.91",
+      "architectures": [
+        "x86"
+      ],
+      "minimumOS": [
+        "10.0.0.0"
+      ],
+      "manifestBlob": "fee50eef155ab34740760177aed9c84a3306f836",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/v/Valve/Steam/2.10.91.91/Valve.Steam.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 1,
+      "minimumOSState": "ExplicitMetadata"
+    },
+    {
+      "id": "EpicGames.EpicGamesLauncher",
+      "name": "Epic Games Launcher",
+      "source": "winget",
+      "status": "ManifestRead",
+      "version": "1.3.210.0",
+      "architectures": [
+        "x64"
+      ],
+      "minimumOS": [],
+      "manifestBlob": "e0bc0a57c7bbf01f918d79dd593df040f2fd49c5",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/e/EpicGames/EpicGamesLauncher/1.3.210.0/EpicGames.EpicGamesLauncher.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending",
+      "x64WindowsCandidateRows": 1,
+      "minimumOSState": "NotDeclared"
+    },
+    {
+      "id": "CrystalDewWorld.CrystalDiskMark",
+      "name": "CrystalDiskMark",
+      "source": "winget",
+      "dependency": "CrystalDiskMark",
+      "status": "ManifestRead",
+      "version": "9.0.3",
+      "architectures": [
+        "arm64",
+        "x64",
+        "x86"
+      ],
+      "x64WindowsCandidateRows": 2,
+      "minimumOS": [],
+      "minimumOSState": "NotDeclared",
+      "manifestBlob": "1438ccfdb81def24debf02fbf05c70a749d6fcf5",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/c/CrystalDewWorld/CrystalDiskMark/9.0.3/CrystalDewWorld.CrystalDiskMark.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending"
+    },
+    {
+      "id": "NirSoft.BlueScreenView",
+      "name": "NirSoft BlueScreenView",
+      "source": "winget",
+      "dependency": "BlueScreenView",
+      "status": "ManifestRead",
+      "version": "1.55",
+      "architectures": [
+        "x64",
+        "x86"
+      ],
+      "x64WindowsCandidateRows": 3,
+      "minimumOS": [],
+      "minimumOSState": "NotDeclared",
+      "manifestBlob": "a809cb75811e317d36bf27c477801d024e834d6e",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/n/NirSoft/BlueScreenView/1.55/NirSoft.BlueScreenView.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending"
+    },
+    {
+      "id": "REALiX.HWiNFO",
+      "name": "HWiNFO64",
+      "source": "winget",
+      "dependency": "HWiNFO",
+      "status": "ManifestRead",
+      "version": "8.54",
+      "architectures": [
+        "arm64",
+        "x64"
+      ],
+      "x64WindowsCandidateRows": 1,
+      "minimumOS": [],
+      "minimumOSState": "NotDeclared",
+      "manifestBlob": "770c3c29bd53624c0013fd2ddff118f4a9917845",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/r/REALiX/HWiNFO/8.54/REALiX.HWiNFO.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending"
+    },
+    {
+      "id": "Geeks3D.FurMark.2",
+      "name": "Geeks3D FurMark 2",
+      "source": "winget",
+      "dependency": "FurMark2",
+      "status": "ManifestRead",
+      "version": "2.10.2.0",
+      "architectures": [
+        "x64",
+        "x86"
+      ],
+      "x64WindowsCandidateRows": 3,
+      "minimumOS": [],
+      "minimumOSState": "NotDeclared",
+      "manifestBlob": "ff4f3ab677f9e061086d5294456ee7750e22fb8a",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/g/Geeks3D/FurMark/2/2.10.2.0/Geeks3D.FurMark.2.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending"
+    },
+    {
+      "id": "FastCopy.FastCopy",
+      "name": "FastCopy",
+      "source": "winget",
+      "dependency": "FastCopy",
+      "status": "ManifestRead",
+      "version": "5.12.0",
+      "architectures": [
+        "x64",
+        "x86"
+      ],
+      "x64WindowsCandidateRows": 2,
+      "minimumOS": [],
+      "minimumOSState": "NotDeclared",
+      "manifestBlob": "64e2c9f1106e50938cebf8f54ba0fbce80a76fe1",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/f/FastCopy/FastCopy/5.12.0/FastCopy.FastCopy.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending"
+    },
+    {
+      "id": "NirSoft.BatteryInfoView",
+      "name": "NirSoft BatteryInfoView",
+      "source": "winget",
+      "dependency": "BatteryInfoView",
+      "status": "ManifestRead",
+      "version": "1.27",
+      "architectures": [
+        "x64",
+        "x86"
+      ],
+      "x64WindowsCandidateRows": 2,
+      "minimumOS": [],
+      "minimumOSState": "NotDeclared",
+      "manifestBlob": "72f6a2865a484eda30ed02df8ed5ebf4faa9be9c",
+      "manifestURL": "https://github.com/microsoft/winget-pkgs/blob/7ec80bf6b94e4649d03ac5cec5bb175efa175b1b/manifests/n/NirSoft/BatteryInfoView/1.27/NirSoft.BatteryInfoView.installer.yaml",
+      "qualification": "Metadata only; x86 may run on x64 Windows; not installed; vendor support and Windows 10 qualification pending"
+    }
+  ],
+  "executablesDownloaded": true,
+  "applicationsInstalled": false,
+  "fastCopyDirectFallbackVerification": {
+    "version": "5.12.0",
+    "url": "https://fastcopy.jp/archive/FastCopy5.12.0_installer.exe",
+    "sha256": "14ccc9d2ebbdfbcbcf0c6e4004773d12bb98de197a572959473a2d9d3b000e3d",
+    "bytes": 5189304,
+    "manifestMatch": true,
+    "executed": false
+  },
+  "catalogApps": 52,
+  "downloadNote": "Only FastCopy direct-fallback bytes verified, never executed; no MSI download/installation."
+}

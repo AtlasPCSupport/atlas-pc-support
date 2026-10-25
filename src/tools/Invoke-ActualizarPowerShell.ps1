@@ -53,7 +53,7 @@ function Invoke-ActualizarPowerShell {
             AlreadyInstalled  = '[OK] PowerShell 7 already installed: {0}'
             AlreadyDetected   = '[OK] pwsh.exe detected: {0}'
             PathLabel         = '     Path: {0}'
-            ToolsRunInPS7     = 'Panel tools already launch in PS 7 automatically.'
+            ToolsRunInPS7     = 'Each panel tool uses its declared runtime; Windows PowerShell 5.1 remains the default.'
             ReinstallPrompt   = 'Press [R] to reinstall / upgrade. Any other key to exit.'
             Option            = 'Option'
             NeedAdmin         = '[!] Administrator is required to install PowerShell 7.'
@@ -88,7 +88,7 @@ function Invoke-ActualizarPowerShell {
             AlreadyInstalled  = '[OK] PowerShell 7 ya instalado: {0}'
             AlreadyDetected   = '[OK] pwsh.exe detectado: {0}'
             PathLabel         = '     Ruta: {0}'
-            ToolsRunInPS7     = 'Las tools del panel ya se lanzan en PS 7 automaticamente.'
+            ToolsRunInPS7     = 'Cada herramienta usa su runtime declarado; Windows PowerShell 5.1 sigue siendo el predeterminado.'
             ReinstallPrompt   = 'Pulsa [R] para reinstalar / actualizar. Cualquier otra tecla para salir.'
             Option            = 'Opcion'
             NeedAdmin         = '[!] Se requiere Administrador para instalar PowerShell 7.'
@@ -235,14 +235,11 @@ function Invoke-ActualizarPowerShell {
             throw 'Close and reopen the updated Atlas panel before installing PowerShell.'
         }
         $msi = $null
-        $expectedHash = $null
+        $expectedHash = (Get-AtlasDependencyDefinition -Name PowerShell7).DownloadSha256
+        if ($expectedHash -cnotmatch '^[a-f0-9]{64}$') { throw 'Missing pinned PowerShell SHA-256.' }
         if ($OfflineSource -and (Test-Path -LiteralPath $OfflineSource)) {
             $msi = (Resolve-Path -LiteralPath $OfflineSource).Path
             _Write-AtlasStepCompat ($L.UsingLocalMsi -f $msi)
-            $sidecar = "$msi.sha256"
-            if (-not (Test-Path -LiteralPath $sidecar)) { throw 'Offline MSI requires its SHA-256 sidecar.' }
-            $raw = Get-Content -LiteralPath $sidecar -Raw -Encoding UTF8 -ErrorAction Stop
-            $expectedHash = (($raw.Trim() -split '\s+')[0])
         }
         if (-not $msi) {
             $cacheDir = Join-Path $env:LOCALAPPDATA 'AtlasPC\deps'
@@ -252,8 +249,6 @@ function Invoke-ActualizarPowerShell {
             $msi = Join-Path $cacheDir $MsiName
             _Write-AtlasStepCompat ($L.Downloading -f $Version)
             try {
-                $hashesUrl = "https://github.com/PowerShell/PowerShell/releases/download/v$Version/hashes.sha256"
-                $expectedHash = Get-AtlasReleaseFileHash -HashesUrl $hashesUrl -FileName $MsiName
                 $ProgressPreference = 'SilentlyContinue'
                 Invoke-WebRequest -Uri $Url -OutFile $msi -UseBasicParsing -TimeoutSec 900 -ErrorAction Stop
             } catch {

@@ -133,12 +133,41 @@ test("onboarding without its existing private-source credential fails closed", a
 });
 test("private-source onboarding does not cache content or accept the public ref", async () => {
   env.GITHUB_PAT="fixture-token";
+  env.ATLAS_ONBOARDING_COMMIT="c".repeat(40);
+  env.ATLAS_ONBOARDING_SHA256=sha("# fixture private installer");
   globalThis.fetch=async(url,options)=>{calls.push({url,options});return new Response("# fixture private installer");};
   const result=await request("/install.ps1?ref=untrusted-branch");
   assert.equal(result.status,200);
   assert.equal(result.headers.get("Cache-Control"),"no-store");
-  assert.ok(calls[0].url.endsWith("?ref=main"));
+  assert.ok(calls[0].url.endsWith("?ref="+env.ATLAS_ONBOARDING_COMMIT));
+  assert.equal(result.headers.get("X-Atlas-Onboarding-Ref"),env.ATLAS_ONBOARDING_COMMIT);
   assert.equal(calls[0].options.cf.cacheEverything,false);
   assert.equal(calls[0].options.cf.cacheTtl,0);
   assert.ok(!(await result.text()).includes("fixture-token"));
+});
+test("onboarding requires its own independent commit and byte digest", async () => {
+  env.GITHUB_PAT="fixture-token";
+  env.ATLAS_ONBOARDING_COMMIT=commit;
+  assert.equal((await request("/install.ps1")).status,503);
+  assert.equal(calls.length,0);
+});
+test("a changed private installer is rejected for both installer and checksum routes", async () => {
+  env.GITHUB_PAT="fixture-token";
+  env.ATLAS_ONBOARDING_COMMIT="c".repeat(40);
+  env.ATLAS_ONBOARDING_SHA256=sha("approved");
+  globalThis.fetch=async()=>new Response("modified");
+  assert.equal((await request("/install.ps1")).status,502);
+  assert.equal((await request("/install.ps1.sha256")).status,502);
+});
+test("the onboarding checksum derives from the same verified raw bytes including BOM", async () => {
+  const bytes="\uFEFF# approved\r\n";
+  env.GITHUB_PAT="fixture-token";
+  env.ATLAS_ONBOARDING_COMMIT="c".repeat(40);
+  env.ATLAS_ONBOARDING_SHA256=sha(bytes);
+  globalThis.fetch=async(url,options)=>{calls.push({url,options});return new Response(bytes);};
+  const result=await request("/install.ps1.sha256");
+  assert.equal(result.status,200);
+  assert.equal(await result.text(),sha(bytes)+"  install-rustdesk.ps1\n");
+  assert.ok(calls[0].url.includes("contents/install-rustdesk.ps1?ref="));
+  assert.equal(result.headers.get("Cache-Control"),"no-store");
 });

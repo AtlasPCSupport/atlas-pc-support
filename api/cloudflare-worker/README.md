@@ -33,4 +33,8 @@ Node 22 is a development/CI requirement, not a requirement for Windows clients.
 `/install.ps1` and its checksum are intentionally public client-distribution routes
 backed by the existing private source repository. They use no shared cache and do
 not accept a public Atlas ref for the private source. Review of the private script
-content and client enrollment design remains separate work.
+content and client enrollment design remains separate work. `onboarding-release.json`
+pins the private source commit and exact byte digest independently. Promotion
+verifies those bytes using the existing gh credential and deploys the pins with
+the Worker. Both private routes fetch that commit and verify its digest; the
+checksum is derived from the same bytes, never a second mutable sidecar.

@@ -775,7 +775,9 @@ function Invoke-InstalarPaquetes {
                         $dispName = "$dispName ($licStr)"
                     }
                     $cb.Content = $dispName
-                    $cb.ToolTip = "Id: $($pkg.Id)"
+                    $minimum = Get-AtlasPackageMinimumBuild -Id $pkg.Id
+                    $osNote = if ($minimum) { "Manifest minimum build: $minimum (2026-10-25)." } else { 'Windows minimum not verified.' }
+                    $cb.ToolTip = "Id: $($pkg.Id) | $osNote Installation is resolved by the package source; Windows 10 qualification pending."
 
                     $pkgEntry = @{ Id = $pkg.Id; Name = $dispName; Category = $catName }
                     if ($pkg.Type)    { $pkgEntry.Type    = $pkg.Type }

@@ -76,12 +76,14 @@ function Find-AtlasPS7OfflineMsi {
 function Get-AtlasPS7ExpectedHash {
     <#
     .SYNOPSIS
-      Descarga el archivo oficial hashes.sha256 y extrae el hash del MSI x64.
+      Reads the independently pinned x64 MSI digest from the verified release.
     #>
     [CmdletBinding()]
     param()
 
-    return Get-AtlasReleaseFileHash -HashesUrl $script:AtlasPS7HashesUrl -FileName $script:AtlasPS7MsiName
+    $hash = (Get-AtlasDependencyDefinition -Name PowerShell7).DownloadSha256
+    if ($hash -cnotmatch '^[a-f0-9]{64}$') { throw 'Missing pinned PowerShell SHA-256.' }
+    return $hash
 }
 
 function Test-AtlasFileHash {
@@ -111,7 +113,7 @@ function Install-AtlasPS7 {
     )
 
     $msi = $null
-    $expectedHash = $null
+    $expectedHash = Get-AtlasPS7ExpectedHash
     $downloadedFromWeb = $false
 
     if ($OfflineSource -and (Test-Path -LiteralPath $OfflineSource)) {
@@ -143,20 +145,7 @@ function Install-AtlasPS7 {
         }
     }
 
-    # Validar integridad del MSI.
-    if (-not $expectedHash) {
-        $sidecar = "$msi.sha256"
-        if (Test-Path -LiteralPath $sidecar) {
-            try {
-                $raw = Get-Content -LiteralPath $sidecar -Raw -Encoding UTF8 -ErrorAction Stop
-                $parsed = (($raw -split '\s+') | Where-Object { $_ } | Select-Object -First 1).ToLowerInvariant()
-                if ($parsed -match '^[a-f0-9]{64}$') {
-                    $expectedHash = $parsed
-                }
-            } catch {}
-        }
-    }
-
+    # The release pin is authoritative. A USB sidecar cannot replace it.
     if ($expectedHash) {
         Write-Host "  [>] Verificando integridad SHA-256 del MSI..." -ForegroundColor Cyan
         if (-not (Test-AtlasFileHash -Path $msi -ExpectedHash $expectedHash)) {

@@ -50,7 +50,7 @@ Cada proveedor conserva su licencia. MIT de Atlas no autoriza redistribuir binar
 | FurMark2 |  / winget/source-managed | x64 | package-manager | Vendor terms; redistribution not approved by Atlas |
 | GPUZ |  / winget/source-managed | x64 | package-manager | Vendor terms; redistribution not approved by Atlas |
 | CrystalDiskInfo |  / winget/source-managed | x64 | package-manager | Vendor terms; redistribution not approved by Atlas |
-| FastCopy | 5.11.2 / pinned-direct-fallback; winget source may be newer | x64 | sha256-required | Workplace use requires vendor commercial/Pro licensing; review the exact installed version and redistribution rights. Not licensed by Atlas. |
+| FastCopy | 5.12.0 / pinned-direct-fallback; winget source may be newer | x64 | sha256-required | Workplace use requires vendor commercial/Pro licensing; review the exact installed version and redistribution rights. Not licensed by Atlas. |
 | winget |  / winget/source-managed | x64 | package-manager | Vendor terms; redistribution not approved by Atlas |
 | BatteryInfoView |  / winget/source-managed | x64 | package-manager | Vendor terms; redistribution not approved by Atlas |
-| PowerShell7 | 7.6.6 / pinned | x64 | sha256-and-microsoft-authenticode | MIT; third-party notices apply |
+| PowerShell7 | 7.6.8 / pinned | x64 | sha256-and-microsoft-authenticode | MIT; third-party notices apply |
