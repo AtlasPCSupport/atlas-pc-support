@@ -50,8 +50,9 @@ foreach($spec in @(@{Name='Pester';Version='5.8.0'},@{Name='PSScriptAnalyzer';Ve
 }
 $isoMetadata=@{}
 foreach($profile in $Profiles){
+    $configuration=Get-AtlasLabProfile -Profile $profile
     $vm=$null;$session=$null;$mountedByLab=$false;$iso=if($profile -eq 'LTSC'){$LtscIso}else{$Windows10Iso}
-    $entry=[ordered]@{Profile=$profile;Status='Preparing';ExpectedBuild=$(if($profile -eq 'LTSC'){19044}else{19045});ExpectedEdition=$(switch($profile){Home{'Core'}Pro{'Professional'}LTSC{'IoTEnterpriseS'}})}
+    $entry=[ordered]@{Profile=$profile;Status='Preparing';ExpectedBuild=$configuration.Build;ExpectedEdition=$configuration.Edition}
     $state.Profiles+=,$entry
     try{
         if((Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory*1KB -lt 3GB){throw 'Less than 3 GB host RAM free; close an application before starting a lab VM.'}
@@ -64,7 +65,7 @@ foreach($profile in $Profiles){
         if(-not $isoMetadata.ContainsKey($iso)){$isoMetadata[$iso]=[ordered]@{FileName=[IO.Path]::GetFileName($iso);Sha256=(Get-FileHash -LiteralPath $iso -Algorithm SHA256).Hash.ToLowerInvariant();SetupMicrosoftSignature='Valid'}}
         $entry.Media=$isoMetadata[$iso]
         $images=@(Get-WindowsImage -ImagePath (Join-Path $mediaRoot 'sources/install.wim') -ErrorAction Stop)
-        $image=@($images|Where-Object {$candidateImage=$_;switch($profile){Home{$candidateImage.ImageName -eq 'Windows 10 Home'}Pro{$candidateImage.ImageName -eq 'Windows 10 Pro'}LTSC{$candidateImage.ImageName -match '^Windows 10 IoT Enterprise LTSC'}}})
+        $image=@($images|Where-Object ImageName -eq $configuration.ImageName)
         if($image.Count -ne 1){throw 'The ISO does not contain one unambiguous target edition.'}
         $entry.ImageName=$image[0].ImageName
         if($mountedByLab){Dismount-DiskImage -ImagePath $iso -ErrorAction Stop|Out-Null;$mountedByLab=$false}

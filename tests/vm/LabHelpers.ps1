@@ -14,6 +14,17 @@ function Assert-AtlasLabLocation {
     }
 }
 
+function Get-AtlasLabProfile {
+    [CmdletBinding()]
+    param([ValidateSet('Home','Pro','LTSC')][string]$Profile)
+    $profiles=@{
+        Home=@{ImageName='Windows 10 Home';Edition='Core';Build=19045;Locale='es-MX';SetupKey='YTMG3-N6DKC-DKB77-7M9GH-8HVX7'}
+        Pro=@{ImageName='Windows 10 Pro';Edition='Professional';Build=19045;Locale='es-MX';SetupKey='VK7JG-NPHTM-C97JM-9MPGT-3V66T'}
+        LTSC=@{ImageName='Windows 10 Enterprise LTSC';Edition='EnterpriseS';Build=19044;Locale='en-US';SetupKey='M7XTQ-FN8P6-TTKYV-9D4CC-J462D'}
+    }
+    [pscustomobject]$profiles[$Profile]
+}
+
 function New-AtlasLabAnswer {
     [CmdletBinding()]
     param([ValidateSet('Home','Pro','LTSC')][string]$Profile,[Parameter(Mandatory)][string]$ImageName,
@@ -21,14 +32,11 @@ function New-AtlasLabAnswer {
     if($ComputerName -cnotmatch '^ATLAS-[A-Z0-9-]{1,9}$'){throw 'Unexpected lab computer name.'}
     if($Password.Length -lt 20){throw 'Lab password must be randomly generated and at least 20 characters.'}
     $image=[Security.SecurityElement]::Escape($ImageName);$secret=[Security.SecurityElement]::Escape($Password)
-    $locale=if($Profile -eq 'LTSC'){'en-US'}else{'es-MX'}
+    $configuration=Get-AtlasLabProfile -Profile $Profile
+    $locale=$configuration.Locale
     # Public edition-selection defaults. Setup selection does NOT activate Windows
     # or grant a license. Never use a personal/OEM host key in a test VM.
-    $setupKey=switch($Profile){
-        Home{'YTMG3-N6DKC-DKB77-7M9GH-8HVX7'}
-        Pro{'VK7JG-NPHTM-C97JM-9MPGT-3V66T'}
-        LTSC{'KBN8V-HFGQ4-MGXVD-347P6-PDQGT'}
-    }
+    $setupKey=$configuration.SetupKey
     # Only Windows Setup INSIDE the new VM receives this disk configuration.
     # The host script never attaches physical disks or invokes disk formatting.
     return @"
@@ -57,7 +65,7 @@ function New-AtlasLabAnswer {
   <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
    <OOBE><HideEULAPage>true</HideEULAPage><HideOnlineAccountScreens>true</HideOnlineAccountScreens><HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE><ProtectYourPC>1</ProtectYourPC></OOBE>
    <UserAccounts><LocalAccounts><LocalAccount wcm:action="add"><Password><Value>$secret</Value><PlainText>true</PlainText></Password><Group>Administrators</Group><Name>AtlasLab</Name><DisplayName>Atlas QA</DisplayName></LocalAccount></LocalAccounts></UserAccounts>
-   <AutoLogon><Password><Value>$secret</Value><PlainText>true</PlainText></Password><Username>AtlasLab</Username><Enabled>true</Enabled><LogonCount>1</LogonCount></AutoLogon>
+   <AutoLogon><Password><Value>$secret</Value><PlainText>true</PlainText></Password><Username>AtlasLab</Username><Enabled>true</Enabled><LogonCount>3</LogonCount></AutoLogon>
   </component>
  </settings>
 </unattend>
@@ -93,6 +101,28 @@ public static class AtlasLabIsoStream {
     }finally{[void][Runtime.InteropServices.Marshal]::ReleaseComObject($image)}
 }
 
+
+function New-AtlasLabModuleArchive {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][hashtable]$Modules,[Parameter(Mandatory)][string]$LabRoot)
+    if($Modules.Count -ne 2 -or @($Modules.Keys|Where-Object {$_ -notin @('Pester','PSScriptAnalyzer')}).Count){throw 'Only the two pinned test modules can be staged.'}
+    $staging=Join-Path $LabRoot ('test-modules-'+[guid]::NewGuid().ToString('N'))
+    $archive=$staging+'.zip'
+    Assert-AtlasLabLocation $LabRoot $staging;Assert-AtlasLabLocation $LabRoot $archive
+    New-Item -ItemType Directory -Path $staging|Out-Null
+    foreach($name in $Modules.Keys){
+        if($env:OS -eq 'Windows_NT'){
+            foreach($file in Get-ChildItem -LiteralPath $Modules[$name] -File -Recurse -Force){
+                if(@(Get-Item -LiteralPath $file.FullName -Force -Stream '*' -ErrorAction Stop|Where-Object Stream -eq 'Zone.Identifier').Count){throw 'Internet-marked test module files require an approved installation; marks are never stripped by this lab.'}
+            }
+        }
+        $folder=Join-Path $staging $name;New-Item -ItemType Directory -Path $folder|Out-Null
+        Copy-Item -LiteralPath $Modules[$name] -Destination $folder -Recurse -Force -ErrorAction Stop
+    }
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    [IO.Compression.ZipFile]::CreateFromDirectory($staging,$archive,[IO.Compression.CompressionLevel]::Optimal,$false)
+    [pscustomobject]@{Path=$archive;Sha256=(Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()}
+}
 
 function Wait-AtlasLabDesktop {
     [CmdletBinding()]
@@ -133,7 +163,7 @@ function Invoke-AtlasLabGuestQA {
     Invoke-Command -Session $session -ScriptBlock {
         param($expectedComputer)
         if($env:COMPUTERNAME -cne $expectedComputer -or (Get-CimInstance Win32_ComputerSystem).Model -notmatch 'Virtual Machine'){throw 'Guest bundle destination is not the owned lab VM.'}
-        foreach($folder in @('C:\AtlasQA','C:\AtlasQA\results')){
+        foreach($folder in @('C:\AtlasQA','C:\AtlasQA\results','C:\AtlasQA\modules','C:\AtlasQA\repo')){
             if((Test-Path -LiteralPath $folder) -and ((Get-Item -LiteralPath $folder -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)){throw 'Lab result path is redirected.'}
         }
         if(Test-Path -LiteralPath 'C:\AtlasQA\results'){
@@ -147,10 +177,20 @@ function Invoke-AtlasLabGuestQA {
     foreach($relative in @('src','config','onboarding','docs','tests','build.ps1','get.ps1','launcher.ps1','launcher.ps1.sha256','release-manifest.json','PSScriptAnalyzerSettings.psd1')){
         Copy-Item -LiteralPath (Join-Path $repo $relative) -Destination C:\AtlasQA\repo -ToSession $session -Recurse -Force
     }
-    foreach($moduleName in $modules.Keys){
-        Invoke-Command -Session $session -ScriptBlock {param($n)New-Item -ItemType Directory -Path (Join-Path C:\AtlasQA\modules $n) -Force|Out-Null} -ArgumentList $moduleName
-        Copy-Item -LiteralPath $modules[$moduleName] -Destination ("C:\AtlasQA\modules\$moduleName") -ToSession $session -Recurse -Force
-    }
+    # Compatibility profiles alone exceed 280 MB. Transfer one lossless archive,
+    # verify its digest in the VM, then expand the unchanged pinned modules there.
+    $moduleArchive=New-AtlasLabModuleArchive -Modules $modules -LabRoot $labFull
+    Copy-Item -LiteralPath $moduleArchive.Path -Destination C:\AtlasQA\test-modules.zip -ToSession $session -Force
+    Invoke-Command -Session $session -ScriptBlock {
+        param($expectedHash)
+        if((Get-FileHash -LiteralPath C:\AtlasQA\test-modules.zip -Algorithm SHA256).Hash.ToLowerInvariant() -cne $expectedHash){throw 'Test module archive transfer hash mismatch.'}
+        Expand-Archive -LiteralPath C:\AtlasQA\test-modules.zip -DestinationPath C:\AtlasQA\modules -Force -ErrorAction Stop
+        foreach($spec in @(@{Name='Pester';Version='5.8.0'},@{Name='PSScriptAnalyzer';Version='1.25.0'})){
+            $module=Test-ModuleManifest (Join-Path C:\AtlasQA\modules ("$($spec.Name)\$($spec.Version)\$($spec.Name).psd1"))
+            if($module.Version -ne [version]$spec.Version){throw 'Guest pinned test module version mismatch.'}
+        }
+    } -ArgumentList $moduleArchive.Sha256
+    $entry.TestModuleArchiveSha256=$moduleArchive.Sha256
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Invoke-GuestQA.ps1') -Destination C:\AtlasQA\Invoke-GuestQA.ps1 -ToSession $session -Force
     $labSource=[ordered]@{Commit=(& git -C $repo rev-parse HEAD|Out-String).Trim();Dirty=[bool](& git -C $repo status --porcelain|Out-String).Trim();Files=@{}}
     foreach($relative in @('tests/VmLab.Tests.ps1','tests/vm/LabHelpers.ps1','tests/vm/Invoke-Win10Lab.ps1','tests/vm/Resume-Win10Lab.ps1','tests/vm/Invoke-GuestQA.ps1')){

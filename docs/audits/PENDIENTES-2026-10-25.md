@@ -31,6 +31,22 @@ fotografía 1.4.1 sin confundirlos con código todavía sin implementar.
 5. Revisar heurísticas y deuda restante sin eliminar comprobaciones ni silenciar
    avisos para presentar una cifra cero.
 
+## Autonomía y dependencias
+
+Después de la base de VMs puedo continuar con cuentas ficticias, permisos locales,
+Hosts, DNS, servicios y colas virtuales, copias con fallos sobre discos desechables,
+informes y entrega ficticia. BitLocker con vTPM/volúmenes de prueba también se puede
+ensayar dentro del laboratorio; las claves de recuperación se conservan fuera de
+los informes públicos. Cada ensayo necesita su snapshot, reversión y evidencia.
+
+Quedan intervenciones externas concretas: aceptar los prompts UAC cuando Windows
+los exija; aportar USB/hardware físico representativo; escoger las aplicaciones
+prioritarias y sus condiciones de licencia; confirmar el escenario/servidor de
+RustDesk; definir identidad de firma, custodia y retención; revisar permisos del
+PAT con su propietario. No se inventan AD/Entra, licencias, hardware ni pruebas de
+consentimiento usando fixtures. El acceso a Hyper-V por sí solo no resuelve esas
+dependencias.
+
 El laboratorio guarda contraseñas aleatorias solo para sus cuentas desechables,
 en medios de instalación restringidos y credenciales DPAPI locales. Nunca se
 incluyen en Git, logs públicos, issues o evidencias compartidas. Los discos físicos,

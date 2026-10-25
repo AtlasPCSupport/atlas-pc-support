@@ -6,6 +6,10 @@ Usa Hyper-V existente y su Default Switch. Requiere Pester 5.8.0/PSScriptAnalyze
 1.25.0 ya disponibles, 85 GB libres y al menos 3 GB de RAM libres antes de cada VM.
 Cada VM usa dos CPU virtuales, 2 GB de RAM mínima/inicial y un máximo dinámico
 de 3 GB. Se evita reducir Windows x64 a 1 GB después del arranque.
+`LTSC` selecciona **Enterprise LTSC 2021 / EnterpriseS**, incluida en la ISO
+indicada en el ejemplo. IoT Enterprise LTSC queda como caso independiente: la
+imagen base de 2021 no acepta el selector KMS IoT que exige 19044.2905 o posterior
+según [Microsoft](https://learn.microsoft.com/en-us/windows/iot/iot-enterprise/deployment/volume-license).
 
 Ejemplo, desde la raíz del repositorio, en una consola elevada:
 
@@ -39,6 +43,11 @@ Se crea AtlasLab con contraseña aleatoria para cada VM, autologon de laboratori
 y credencial DPAPI para PowerShell Direct. XML e ISO de respuesta se guardan en
 `private/` con ACL de Administradores/SYSTEM y lectura del medio solo para su VM.
 No son artefactos de publicación y nunca se deben agregar a Git.
+El autologon nuevo contempla tres inicios para los reinicios de Setup. Los módulos
+de pruebas se comprimen sin pérdida, se verifica el SHA-256 recibido y se expanden
+en la VM. Se rechazan módulos con Zone.Identifier: el laboratorio no elimina la
+marca. Una prueba con los módulos reales comparó los 69 archivos después de
+expandirlos; 286,6 MiB se transportan como 14,3 MiB.
 
 La tarea interactiva del invitado comprueba build/edición/modelo, Defender,
 regresiones de la suite y WPF, capacidades/Store, entrada online/offline verificada,

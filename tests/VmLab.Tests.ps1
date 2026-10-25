@@ -11,7 +11,7 @@ Describe 'Windows 10 lab boundaries and unattended metadata' {
         $answer.SelectSingleNode('//u:MetaData/u:Value',$ns).InnerText|Should -Be 'Windows 10 <test>'
         $answer.SelectSingleNode('//u:LocalAccount/u:Password/u:Value',$ns).InnerText|Should -Be $password
         $answer.SelectSingleNode('//u:InstallTo/u:DiskID',$ns).InnerText|Should -Be '0'
-        $answer.SelectSingleNode('//u:AutoLogon/u:LogonCount',$ns).InnerText|Should -Be '1'
+        $answer.SelectSingleNode('//u:AutoLogon/u:LogonCount',$ns).InnerText|Should -Be '3'
         $answer.SelectNodes('//u:Key',$ns).Count|Should -Be 2
         $answer.SelectSingleNode('//u:UserData/u:ProductKey/u:Key',$ns).InnerText|Should -Match '^[A-Z0-9]{5}(?:-[A-Z0-9]{5}){4}$'
         $answer.SelectNodes('//u:component[@name="Microsoft-Windows-Shell-Setup"]/u:ProductKey',$ns).Count|Should -Be 0
@@ -19,6 +19,45 @@ Describe 'Windows 10 lab boundaries and unattended metadata' {
     It 'rejects weak credentials and arbitrary computer names' {
         {New-AtlasLabAnswer -Profile Home -ImageName Fixture -Password short -ComputerName $fixtureComputer}|Should -Throw '*20*'
         {New-AtlasLabAnswer -Profile Home -ImageName Fixture -Password ('x'*24) -ComputerName $invalidComputer}|Should -Throw '*computer*'
+    }
+    It 'selects the Enterprise LTSC image and selector supported by the base media' {
+        $configuration=Get-AtlasLabProfile -Profile LTSC
+        $configuration.ImageName|Should -Be 'Windows 10 Enterprise LTSC'
+        $configuration.Edition|Should -Be 'EnterpriseS'
+        $configuration.Build|Should -Be 19044
+        $configuration.SetupKey|Should -Be 'M7XTQ-FN8P6-TTKYV-9D4CC-J462D'
+    }
+    It 'preserves test module bytes including hidden files through the archive' {
+        $modules=@{}
+        foreach($name in @('Pester','PSScriptAnalyzer')){
+            $folder=Join-Path $TestDrive "source/$name/1.0.0"
+            New-Item -ItemType Directory -Path $folder -Force|Out-Null
+            [IO.File]::WriteAllBytes((Join-Path $folder '.fixture.bin'),[byte[]](0,255,128,13,10))
+            if($env:OS -eq 'Windows_NT'){[IO.File]::SetAttributes((Join-Path $folder '.fixture.bin'),[IO.FileAttributes]::Hidden)}
+            $modules[$name]=$folder
+        }
+        $archive=New-AtlasLabModuleArchive -Modules $modules -LabRoot $TestDrive
+        $archive.Sha256|Should -Be (Get-FileHash $archive.Path -Algorithm SHA256).Hash.ToLowerInvariant()
+        $expanded=Join-Path $TestDrive 'expanded'
+        [IO.Compression.ZipFile]::ExtractToDirectory($archive.Path,$expanded)
+        foreach($name in $modules.Keys){
+            (Get-FileHash (Join-Path $expanded "$name/1.0.0/.fixture.bin")).Hash|Should -Be (Get-FileHash (Join-Path $modules[$name] '.fixture.bin')).Hash
+        }
+    }
+    It 'rejects unexpected module archive names before creating paths' {
+        {New-AtlasLabModuleArchive -Modules @{Pester=$TestDrive;'../escape'=$TestDrive} -LabRoot $TestDrive}|Should -Throw '*two pinned*'
+    }
+    It 'rejects Internet-marked module files without removing their mark' -Skip:($env:OS -ne 'Windows_NT') {
+        $modules=@{}
+        foreach($name in @('Pester','PSScriptAnalyzer')){
+            $folder=Join-Path $TestDrive "marked/$name/1.0.0"
+            New-Item -ItemType Directory -Path $folder -Force|Out-Null
+            $file=Join-Path $folder 'fixture.bin';[IO.File]::WriteAllBytes($file,[byte[]](1,2,3))
+            Set-Content -LiteralPath $file -Stream Zone.Identifier -Value "[ZoneTransfer]`r`nZoneId=3"
+            $modules[$name]=$folder
+        }
+        {New-AtlasLabModuleArchive -Modules $modules -LabRoot $TestDrive}|Should -Throw '*marks are never stripped*'
+        foreach($folder in $modules.Values){Get-Content -LiteralPath (Join-Path $folder 'fixture.bin') -Stream Zone.Identifier|Should -Contain 'ZoneId=3'}
     }
     It 'does not format host disks or change host security/group/network settings' {
         foreach($file in @('Invoke-Win10Lab.ps1','Resume-Win10Lab.ps1','LabHelpers.ps1')){
