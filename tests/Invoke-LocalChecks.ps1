@@ -66,7 +66,8 @@ $testPaths = @(
     (Join-Path $PSScriptRoot 'Release.Tests.ps1'),
     (Join-Path $PSScriptRoot 'Compatibility.Tests.ps1'),
     (Join-Path $PSScriptRoot 'Quality.Tests.ps1'),
-    (Join-Path $PSScriptRoot 'Reports.Tests.ps1')
+    (Join-Path $PSScriptRoot 'Reports.Tests.ps1'),
+    (Join-Path $PSScriptRoot 'VmLab.Tests.ps1')
 )
 $knownIssuesPath = Join-Path $PSScriptRoot 'KnownIssues.Tests.ps1'
 if ($IncludeKnownIssues -and (Test-Path -LiteralPath $knownIssuesPath)) { $testPaths += $knownIssuesPath }
