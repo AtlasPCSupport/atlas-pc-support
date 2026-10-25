@@ -8,27 +8,72 @@ function Assert-AtlasCopyDestination {
         $target.StartsWith($origin+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw 'Copy destination cannot be the source or a child of the source.'}
 }
 
+function ConvertTo-AtlasNativeArgument {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][AllowEmptyString()][string]$Value)
+    if ($Value.IndexOf([char]0) -ge 0 -or $Value -match '[\r\n]') { throw 'Native arguments cannot contain NUL or newlines.' }
+    $escaped = [regex]::Replace($Value, '(\\*)"', '$1$1\"')
+    $escaped = [regex]::Replace($escaped, '(\\+)$', '$1$1')
+    return '"' + $escaped + '"'
+}
+
+function Stop-AtlasOwnedNativeProcess {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][Diagnostics.Process]$Process)
+    if ($Process.HasExited) { return }
+    if ($env:OS -eq 'Windows_NT') {
+        $info = [Diagnostics.ProcessStartInfo]::new()
+        $info.FileName = [IO.Path]::Combine($env:SystemRoot, 'System32\taskkill.exe')
+        $info.Arguments = "/PID $($Process.Id) /T /F"
+        $info.UseShellExecute = $false; $info.CreateNoWindow = $true
+        $info.RedirectStandardOutput = $true; $info.RedirectStandardError = $true
+        $stopper = [Diagnostics.Process]::Start($info)
+        try {
+            $output = $stopper.StandardOutput.ReadToEndAsync(); $errorOutput = $stopper.StandardError.ReadToEndAsync()
+            if (-not $stopper.WaitForExit(5000)) { $stopper.Kill(); throw 'Owned process tree termination timed out.' }
+            if ($stopper.ExitCode -ne 0 -and -not $Process.HasExited) { throw 'Owned process tree termination failed.' }
+            [void]$output.Wait(1000); [void]$errorOutput.Wait(1000)
+        } finally { $stopper.Dispose() }
+    } else { $Process.Kill($true) }
+    if (-not $Process.WaitForExit(5000)) { throw 'Owned process could not be stopped; inspect manually.' }
+}
+
 function Invoke-AtlasNativeProcess {
     [CmdletBinding()]
-    param([Parameter(Mandatory)][string]$FilePath,[string]$Arguments='', [ValidateRange(1,86400)][int]$TimeoutSeconds=600,[int[]]$SuccessCodes=@(0))
+    param([Parameter(Mandatory)][string]$FilePath,[string]$Arguments='',
+        [string[]]$ArgumentList, [string]$WorkingDirectory,
+        [ValidateRange(1,86400)][int]$TimeoutSeconds=600,[int[]]$SuccessCodes=@(0),
+        [Threading.CancellationToken]$CancellationToken = [Threading.CancellationToken]::None,
+        [switch]$NoCapture)
+    if ($PSBoundParameters.ContainsKey('ArgumentList') -and $PSBoundParameters.ContainsKey('Arguments')) { throw 'Choose ArgumentList or raw Arguments, not both.' }
+    if ($PSBoundParameters.ContainsKey('ArgumentList')) { $Arguments = (@($ArgumentList | ForEach-Object { ConvertTo-AtlasNativeArgument $_ }) -join ' ') }
+    if ($CancellationToken.IsCancellationRequested) {
+        return [pscustomobject]@{State='Cancelled';Started=$false;Completed=$false;Cancelled=$true;TimedOut=$false;ExitCode=$null;Stdout='';Stderr='';DurationSeconds=0;OutputCaptured=$false}
+    }
     $info=[Diagnostics.ProcessStartInfo]::new()
     $info.FileName=$FilePath; $info.Arguments=$Arguments
+    if ($WorkingDirectory) { $info.WorkingDirectory = $WorkingDirectory }
     $info.UseShellExecute=$false; $info.CreateNoWindow=$true
-    $info.RedirectStandardOutput=$true; $info.RedirectStandardError=$true
+    $info.RedirectStandardOutput=-not $NoCapture; $info.RedirectStandardError=-not $NoCapture
     $watch=[Diagnostics.Stopwatch]::StartNew(); $process=$null
     try {
         $process=[Diagnostics.Process]::Start($info)
-        $stdout=$process.StandardOutput.ReadToEndAsync(); $stderr=$process.StandardError.ReadToEndAsync()
-        $timedOut=-not $process.WaitForExit($TimeoutSeconds*1000)
-        if($timedOut){
-            if($env:OS -eq 'Windows_NT') { & "$env:SystemRoot\System32\taskkill.exe" /PID $process.Id /T /F 2>&1 | Out-Null }
-            else { $process.Kill() }
-            if(-not $process.WaitForExit(5000)){throw 'Timed-out process could not be stopped; inspect manually.'}
+        $stdout=$null; $stderr=$null; $cancelled=$false; $timedOut=$false
+        if (-not $NoCapture) { $stdout=$process.StandardOutput.ReadToEndAsync(); $stderr=$process.StandardError.ReadToEndAsync() }
+        while (-not $process.WaitForExit(100)) {
+            if ($CancellationToken.IsCancellationRequested) { $cancelled=$true; break }
+            if ($watch.Elapsed.TotalSeconds -ge $TimeoutSeconds) { $timedOut=$true; break }
         }
-        # Descendants may retain stdout handles. Never wait indefinitely for output.
-        $captured=$stdout.Wait(3000) -and $stderr.Wait(3000)
-        [pscustomobject]@{State=$(if($timedOut){'TimedOut'}elseif(-not $captured){'NotEvaluated'}elseif($SuccessCodes -contains $process.ExitCode){'Correct'}else{'Failed'});ExitCode=$process.ExitCode;TimedOut=$timedOut;Stdout=$(if($stdout.IsCompleted){$stdout.Result}else{''});Stderr=$(if($stderr.IsCompleted){$stderr.Result}else{''});DurationSeconds=$watch.Elapsed.TotalSeconds}
-    } finally { $watch.Stop(); if($process){$process.Dispose()} }
+        if ($cancelled -or $timedOut) { Stop-AtlasOwnedNativeProcess -Process $process }
+        $captured=$NoCapture -or ($stdout.Wait(3000) -and $stderr.Wait(3000))
+        [pscustomobject]@{State=$(if($cancelled){'Cancelled'}elseif($timedOut){'TimedOut'}elseif(-not $captured){'NotEvaluated'}elseif($SuccessCodes -contains $process.ExitCode){'Correct'}else{'Failed'});Started=$true;Completed=(-not($timedOut -or $cancelled));Cancelled=$cancelled;ExitCode=$process.ExitCode;TimedOut=$timedOut;Stdout=$(if($stdout -and $stdout.IsCompleted){$stdout.Result}else{''});Stderr=$(if($stderr -and $stderr.IsCompleted){$stderr.Result}else{''});DurationSeconds=$watch.Elapsed.TotalSeconds;OutputCaptured=([bool]$captured -and -not $NoCapture)}
+    } finally {
+        $watch.Stop()
+        if($process){
+            try { if (-not $process.HasExited) { Stop-AtlasOwnedNativeProcess -Process $process } }
+            finally { $process.Dispose() }
+        }
+    }
 }
 
 function Test-AtlasCopySample {

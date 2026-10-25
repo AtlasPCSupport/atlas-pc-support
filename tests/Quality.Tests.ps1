@@ -48,6 +48,40 @@ Describe 'Native outcomes and copy coverage' {
         $result=Invoke-AtlasNativeProcess -FilePath $engine -Arguments '-NoProfile -Command "Start-Sleep -Seconds 20"' -TimeoutSeconds 1
         $result.TimedOut|Should -BeTrue;$result.State|Should -Be 'TimedOut'
     }
+    It 'does not start a child when cancellation was already requested' {
+        $cancel=[Threading.CancellationTokenSource]::new();$cancel.Cancel()
+        try {
+            $result=Invoke-AtlasNativeProcess -FilePath 'does-not-exist' -CancellationToken $cancel.Token
+            $result.State|Should -Be Cancelled;$result.Started|Should -BeFalse;$result.Completed|Should -BeFalse
+        } finally { $cancel.Dispose() }
+    }
+    It 'cancels its own running child without reporting a timeout or success' {
+        $cancel=[Threading.CancellationTokenSource]::new();$cancel.CancelAfter(800)
+        try {
+            $result=Invoke-AtlasNativeProcess -FilePath (Get-Process -Id $PID).Path -ArgumentList @('-NoProfile','-Command','Start-Sleep -Seconds 20') -CancellationToken $cancel.Token -TimeoutSeconds 15
+            $result.State|Should -Be Cancelled;$result.Cancelled|Should -BeTrue;$result.TimedOut|Should -BeFalse
+        } finally { $cancel.Dispose() }
+    }
+    It 'passes spaces, quotes and trailing slashes as literal native arguments' {
+        $fixture=Join-Path $TestDrive 'argv fixture.ps1'
+        [IO.File]::WriteAllText($fixture,'[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes([Environment]::GetCommandLineArgs()[-1]))')
+        $value='literal space & ; quote"slash\ and trailing\'
+        $result=Invoke-AtlasNativeProcess -FilePath (Get-Process -Id $PID).Path -ArgumentList @('-NoProfile','-File',$fixture,$value)
+        $result.State|Should -Be Correct
+        [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($result.Stdout.Trim()))|Should -Be $value
+    }
+    It 'rejects ambiguous or control-containing native arguments before launch' {
+        {Invoke-AtlasNativeProcess -FilePath 'not-started' -Arguments 'raw' -ArgumentList token}|Should -Throw '*Choose*'
+        {Invoke-AtlasNativeProcess -FilePath 'not-started' -ArgumentList "bad`nargument"}|Should -Throw '*newlines*'
+    }
+    It 'uses a specified working directory without invoking a shell' {
+        $result=Invoke-AtlasNativeProcess -FilePath (Get-Process -Id $PID).Path -ArgumentList @('-NoProfile','-Command','[IO.Directory]::GetCurrentDirectory()') -WorkingDirectory $TestDrive
+        $result.State|Should -Be Correct;$result.Stdout.Trim()|Should -Be $TestDrive
+    }
+    It 'supports documented nonzero success codes without converting every error to success' {
+        $result=Invoke-AtlasNativeProcess -FilePath (Get-Process -Id $PID).Path -ArgumentList @('-NoProfile','-Command','exit 7') -SuccessCodes @(0,7)
+        $result.State|Should -Be Correct;$result.ExitCode|Should -Be 7
+    }
 }
 
 Describe 'Service restoration and dependent protection' {

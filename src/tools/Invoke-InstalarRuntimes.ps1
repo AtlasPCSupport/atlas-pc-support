@@ -29,11 +29,11 @@ function Invoke-InstalarRuntimes {
     if (-not $winget) { throw 'WinGet unavailable. Check App Installer separately using the Store/App Installer tool.' }
     $ids=if($choice -eq '1'){@('Microsoft.VCRedist.2015+.x64','Microsoft.VCRedist.2015+.x86')}else{@('Microsoft.VCRedist.2013.x64','Microsoft.VCRedist.2013.x86','Microsoft.DirectX','Microsoft.XNARedist','OpenAL.OpenAL')}
     foreach ($id in $ids) {
-        & $winget install --id $id --exact --source winget --silent --accept-source-agreements --accept-package-agreements
-        $code=$LASTEXITCODE
-        if ($code -notin @(0,-1978335189,-1978335135)) { Write-Warning "$id failed with native code $code"; continue }
-        $verification=& $winget list --id $id --exact --accept-source-agreements 2>&1 | Out-String
-        if ($LASTEXITCODE -ne 0 -or $verification -notmatch [regex]::Escape($id)) { Write-Warning "${id}: operation returned $code but presence could not be verified." }
+        $install = Invoke-AtlasNativeProcess -FilePath $winget -ArgumentList @('install','--id',$id,'--exact','--source','winget','--silent','--accept-source-agreements','--accept-package-agreements') -TimeoutSeconds 1800 -SuccessCodes @(0,-1978335189,-1978335135)
+        $code=$install.ExitCode
+        if ($install.State -ne 'Correct') { Write-Warning "$id $($install.State), native code $code. Inspect any partial installation before retrying."; continue }
+        $verification = Invoke-AtlasNativeProcess -FilePath $winget -ArgumentList @('list','--id',$id,'--exact','--source','winget','--accept-source-agreements') -TimeoutSeconds 60
+        if ($verification.State -ne 'Correct' -or $verification.Stdout -notmatch [regex]::Escape($id)) { Write-Warning "${id}: operation returned $code but presence could not be verified." }
         else { Write-Host "$id present; native result $code. Review version/support for the requesting application." }
     }
     Wait-AtlasExit

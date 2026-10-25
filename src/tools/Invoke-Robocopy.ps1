@@ -467,23 +467,10 @@ function Start-SmartCopy {
 
     $argString = $roboArgs -join " "
 
-    $preSize = 0
-    if (Test-Path $Destino) {
-        try { $preSize = (Get-ChildItem $Destino -Recurse -File -ErrorAction SilentlyContinue | Measure-Object Length -Sum).Sum } catch {}
-        if (-not $preSize) { $preSize = 0 }
-    }
-
-    $process = Start-Process -FilePath "robocopy" -ArgumentList $argString -NoNewWindow -PassThru -Wait
+    $process = Invoke-AtlasNativeProcess -FilePath 'robocopy.exe' -Arguments $argString -TimeoutSeconds 86400 -SuccessCodes @(0,1,2,3) -NoCapture
+    if ($process.State -notin @('Correct','Failed')) { throw "Robocopy $($process.State). Copy may be partial; inspect the log before retrying." }
     $exitCode = $process.ExitCode
     $sw.Stop(); $elapsed = $sw.Elapsed
-
-    $postSize = 0
-    if (Test-Path $Destino) {
-        try { $postSize = (Get-ChildItem $Destino -Recurse -File -ErrorAction SilentlyContinue | Measure-Object Length -Sum).Sum } catch {}
-        if (-not $postSize) { $postSize = 0 }
-    }
-    $bytesCopied = [math]::Max(0, $postSize - $preSize)
-    $speedMBps = if ($elapsed.TotalSeconds -gt 0) { [math]::Round(($bytesCopied / 1MB) / $elapsed.TotalSeconds, 1) } else { 0 }
 
     Write-Host ""
     Write-Host "    ========================================================" -ForegroundColor White
@@ -502,13 +489,13 @@ function Start-SmartCopy {
     Write-Host "    ========================================================" -ForegroundColor White
     Write-Host ""
     Write-Host ($L.TimeLine    -f (Format-Duration $elapsed)) -ForegroundColor Gray
-    Write-Host ($L.CopiedLine  -f (Format-Size $bytesCopied)) -ForegroundColor Gray
-    Write-Host ($L.SpeedLine   -f $speedMBps) -ForegroundColor Gray
+    Write-Host "    Bytes escritos: no medidos aqui; consultar resumen del log nativo." -ForegroundColor Gray
+    Write-Host "    Rendimiento: no medido; el crecimiento del destino no equivale a bytes copiados." -ForegroundColor Gray
     Write-Host ($L.LogLine     -f (Split-Path $logFile -Leaf)) -ForegroundColor DarkGray
 
     return @{
         ExitCode = $exitCode; OK = ($exitCode -ge 0 -and $exitCode -le 3); Elapsed = $elapsed
-        BytesCopied = $bytesCopied; SpeedMBps = $speedMBps; LogFile = $logFile
+        BytesCopied = $null; SpeedMBps = $null; MeasurementBasis = 'Native log; not measured by Atlas'; LogFile = $logFile
     }
 }
 

@@ -81,14 +81,14 @@ function Invoke-RespaldoControladores {
     if (-not $exportSuccess) {
         try {
             $dismArgs = @('/Online', '/Export-Driver', ('/Destination:"{0}"' -f $DestinationPath))
-            $proc = Start-Process -FilePath 'dism.exe' -ArgumentList $dismArgs -Wait -PassThru -NoNewWindow
-            if ($proc.ExitCode -eq 0) {
+            $proc = Invoke-AtlasNativeProcess -FilePath 'dism.exe' -Arguments ($dismArgs -join ' ') -TimeoutSeconds 3600
+            if ($proc.State -eq 'Correct') {
                 $exportSuccess = $true
                 $infFiles = Get-ChildItem -Path $DestinationPath -Filter '*.inf' -Recurse -ErrorAction SilentlyContinue
                 $exportedCount = $infFiles.Count
                 Write-Host "[+] DISM.exe completed successfully. Found $exportedCount driver INF file(s)." -ForegroundColor Green
             } else {
-                Write-Host "[X] DISM.exe failed with exit code $($proc.ExitCode)." -ForegroundColor Red
+                Write-Host "[X] DISM.exe $($proc.State), exit $($proc.ExitCode). Inspect any partial export before retrying." -ForegroundColor Red
             }
         } catch {
             Write-Host "[X] Failed to launch DISM.exe: $($_.Exception.Message)" -ForegroundColor Red

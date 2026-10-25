@@ -543,6 +543,7 @@ table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6p
         Export-Csv -LiteralPath $gpuCsv -NoTypeInformation -Encoding UTF8
     $inventory = Import-Csv -LiteralPath $gpuCsv
 
+    $notes = New-Object System.Collections.Generic.List[string]
     $isNvidia = $false
     foreach ($g in @($inventory)) {
         if (($g.Name -match '(?i)NVIDIA') -or ($g.PNPDeviceID -match '(?i)VEN_10DE')) { $isNvidia = $true; break }
@@ -550,8 +551,9 @@ table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6p
 
     try {
         Write-Host ("[GPU Check] " + $L.DxdiagStep) -ForegroundColor Gray
-        Start-Process -FilePath 'dxdiag.exe' -ArgumentList "/whql:off /t `"$dxdiagTxt`"" -Wait
-    } catch {}
+        $dxdiag = Invoke-AtlasNativeProcess -FilePath 'dxdiag.exe' -ArgumentList @('/whql:off','/t',$dxdiagTxt) -TimeoutSeconds 90
+        if ($dxdiag.State -ne 'Correct') { $notes.Add("dxdiag not evaluated: $($dxdiag.State)") | Out-Null }
+    } catch { $notes.Add("dxdiag not evaluated: $($_.Exception.Message)") | Out-Null }
 
     $pG = $null
     $pS = $null
@@ -595,7 +597,6 @@ table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6p
     $events | ForEach-Object { Protect-AtlasReportObject $_ } | Export-Csv -LiteralPath $eventsCsv -NoTypeInformation -Encoding UTF8
 
     Write-Host ("[GPU Check] " + $L.AnalyzeStep) -ForegroundColor Gray
-    $notes = New-Object System.Collections.Generic.List[string]
 
     $gpuzScore = 0
     $gpuzMaxT = $null

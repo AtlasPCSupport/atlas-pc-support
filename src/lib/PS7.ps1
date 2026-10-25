@@ -180,10 +180,9 @@ function Install-AtlasPS7 {
         'REGISTER_MANIFEST=1'
     )
     Write-Host "  [>] Instalando MSI (msiexec silencioso)..." -ForegroundColor Cyan
-    $p = Start-Process -FilePath 'msiexec.exe' -ArgumentList $msiArgs -Wait -PassThru
-    if ($p.ExitCode -ne 0 -and $p.ExitCode -ne 3010) {
-        throw "msiexec salio con codigo $($p.ExitCode)"
-    }
+    $p = Invoke-AtlasNativeProcess -FilePath 'msiexec.exe' -Arguments ($msiArgs -join ' ') -TimeoutSeconds 1800 -SuccessCodes @(0,3010)
+    if ($p.State -ne 'Correct') { throw "msiexec: $($p.State), exit $($p.ExitCode). Inspect installation state before retrying." }
+    if ($p.ExitCode -eq 3010) { Write-Warning 'PowerShell installation requires a Windows restart.' }
 
     $path = Get-AtlasPS7Path
     if (-not $path) {
