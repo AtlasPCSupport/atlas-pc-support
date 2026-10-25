@@ -103,7 +103,20 @@ function Invoke-AtlasLabGuestQA {
         [Parameter(Mandatory)][scriptblock]$SaveState)
     $profileName=[string]$Entry.Profile
     $entry.Status='Copying test bundle';& $SaveState
-    Invoke-Command -Session $session -ScriptBlock {New-Item -ItemType Directory -Path C:\AtlasQA\repo,C:\AtlasQA\modules,C:\AtlasQA\results -Force|Out-Null}
+    Invoke-Command -Session $session -ScriptBlock {
+        param($expectedComputer)
+        if($env:COMPUTERNAME -cne $expectedComputer -or (Get-CimInstance Win32_ComputerSystem).Model -notmatch 'Virtual Machine'){throw 'Guest bundle destination is not the owned lab VM.'}
+        foreach($folder in @('C:\AtlasQA','C:\AtlasQA\results')){
+            if((Test-Path -LiteralPath $folder) -and ((Get-Item -LiteralPath $folder -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)){throw 'Lab result path is redirected.'}
+        }
+        if(Test-Path -LiteralPath 'C:\AtlasQA\results'){
+            # Keep earlier attempts, but never accept their summary as a fresh result.
+            $previous=[IO.Path]::GetFullPath(('C:\AtlasQA\results-previous-'+[guid]::NewGuid().ToString('N')))
+            if(-not $previous.StartsWith('C:\AtlasQA\',[StringComparison]::OrdinalIgnoreCase) -or (Test-Path -LiteralPath $previous)){throw 'Invalid result archive destination.'}
+            Move-Item -LiteralPath 'C:\AtlasQA\results' -Destination $previous -ErrorAction Stop
+        }
+        New-Item -ItemType Directory -Path C:\AtlasQA\repo,C:\AtlasQA\modules,C:\AtlasQA\results -Force|Out-Null
+    } -ArgumentList $entry.ComputerName
     foreach($relative in @('src','config','onboarding','docs','tests','build.ps1','get.ps1','launcher.ps1','launcher.ps1.sha256','release-manifest.json','PSScriptAnalyzerSettings.psd1')){
         Copy-Item -LiteralPath (Join-Path $repo $relative) -Destination C:\AtlasQA\repo -ToSession $session -Recurse -Force
     }

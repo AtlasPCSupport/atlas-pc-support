@@ -9,6 +9,7 @@ fotografía 1.4.1 sin confundirlos con código todavía sin implementar.
 | Prioridad | Pendiente | Qué falta demostrar | Cómo se puede cerrar |
 |---|---|---|---|
 | 1 | Windows 10 real | Home/Pro 19045 y LTSC 19044; WPF, capacidades y entrada verificada con Defender activo | Laboratorio Hyper-V secuencial, con ISOs locales y logs por edición. La elevación UAC normal permite administrar Hyper-V sin cambiar grupos. En ejecución; los resultados se registrarán por escenario, no como certificación universal. |
+| 1 | Base parcheada y edición exacta | Repetir sobre la revisión acumulativa vigente y distinguir Enterprise LTSC de IoT Enterprise LTSC | Registrar build + UBR, canal, activación observada y cobertura de actualizaciones. Una ISO antigua o una VM IoT no certifican automáticamente otro nivel de parche ni Enterprise LTSC. No se inscriben cuentas ni compran licencias/ESU automáticamente. |
 | 1 | Cuentas y UAC | Otra identidad durante elevación, administrador de recuperación realmente utilizable, fallos de grupo/permisos | VM con snapshot y cuentas ficticias; fixtures ya aprobados no sustituyen inicio de sesión/recuperación. |
 | 1 | BitLocker | vTPM, reinicio, recuperación desde otro disco, datos/OS, fallo de respaldo y políticas/escrow | VM Pro con vTPM y volumen de prueba; recuperación probada y evidencia redactada. No cifrar el host ni discos de cliente. |
 | 1 | Restauraciones del sistema | DNS IPv4/IPv6 DHCP/estático, dependientes de servicios, Hosts multialias, cola/Spooler y fallos parciales | Ensayos en snapshot y reversión observada. Impresoras físicas y configuraciones AD/Entra requieren su propio entorno. |
@@ -40,3 +41,11 @@ activadores ni se inventan derechos de licencia.
 Referencias: [PowerShell Direct](https://learn.microsoft.com/en-us/windows-server/virtualization/hyper-v/powershell-direct),
 [AutoLogon de despliegue](https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/unattend/microsoft-windows-shell-setup-autologon),
 [matriz objetivo](../SUPPORT-MATRIX.md).
+
+Consulta del 25/10/2026: Microsoft publica 19045.7807 y 19044.7807 como revisiones
+de octubre de 2026 en su [historial de Windows 10](https://learn.microsoft.com/en-us/windows/release-health/release-information).
+Su página actual de [ESU de consumo](https://www.microsoft.com/en-us/windows/extended-security-updates)
+indica cobertura hasta el 12/10/2027 para equipos inscritos elegibles y excluye
+escenarios comerciales. Para un cliente empresarial corresponde revisar el canal
+y programa aplicables. La ejecución de Atlas y la protección de Defender no
+demuestran por sí solas esa cobertura del sistema operativo.

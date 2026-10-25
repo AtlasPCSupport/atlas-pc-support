@@ -4,6 +4,8 @@
 UAC**. No necesita agregar la cuenta a grupos ni reiniciar Codex como administrador.
 Usa Hyper-V existente y su Default Switch. Requiere Pester 5.8.0/PSScriptAnalyzer
 1.25.0 ya disponibles, 85 GB libres y al menos 3 GB de RAM libres antes de cada VM.
+Cada VM usa dos CPU virtuales, 2 GB de RAM mínima/inicial y un máximo dinámico
+de 3 GB. Se evita reducir Windows x64 a 1 GB después del arranque.
 
 Ejemplo, desde la raíz del repositorio, en una consola elevada:
 

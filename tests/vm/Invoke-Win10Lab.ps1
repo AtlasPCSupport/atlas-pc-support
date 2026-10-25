@@ -95,7 +95,7 @@ foreach($profile in $Profiles){
         $vm=New-VM -Name $name -Generation 2 -MemoryStartupBytes 2GB -NewVHDPath $vhd -NewVHDSizeBytes 64GB -Path $vmRoot -SwitchName $switch.Name -ErrorAction Stop
         $entry.VMId=[string]$vm.Id
         Set-VM -VM $vm -ProcessorCount 2 -AutomaticCheckpointsEnabled $false -CheckpointType Standard -AutomaticStartAction Nothing -AutomaticStopAction ShutDown
-        Set-VMMemory -VM $vm -DynamicMemoryEnabled $true -MinimumBytes 1GB -StartupBytes 2GB -MaximumBytes 2560MB
+        Set-VMMemory -VM $vm -DynamicMemoryEnabled $true -MinimumBytes 2GB -StartupBytes 2GB -MaximumBytes 3GB
         Set-VMFirmware -VM $vm -EnableSecureBoot On -SecureBootTemplate MicrosoftWindows
         Set-VMKeyProtector -VM $vm -NewLocalKeyProtector;Enable-VMTPM -VM $vm
         $vmSid=([Security.Principal.NTAccount]::new("NT VIRTUAL MACHINE\$($vm.Id)")).Translate([Security.Principal.SecurityIdentifier])
