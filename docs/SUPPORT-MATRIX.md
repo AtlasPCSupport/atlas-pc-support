@@ -1,6 +1,6 @@
 # Compatibilidad y homologación
 
-Versión candidata 1.4.1, 24 de octubre de 2026. «Objetivo» describe el contrato del
+Versión candidata 1.5.2, 25 de octubre de 2026. «Objetivo» describe el contrato del
 código, no una prueba ejecutada en ese sistema. La compatibilidad de Atlas tampoco
 extiende el ciclo de soporte de Microsoft ni sustituye la licencia de Windows.
 
@@ -25,6 +25,9 @@ CI `windows-latest` comprueba WPF y PowerShell 5.1; no es un runner Windows 10.
   no se fuerza Store en LTSC ni se eluden políticas. App Installer es independiente.
 - El catálogo WinGet valida IDs/fuentes, pero el mínimo OS y la disponibilidad final
   de cada aplicación dependen de su manifiesto vigente y se deben comprobar en VM.
+  La [instantánea del catálogo](audits/CATALOGO-2026-10-25.json) registra versiones,
+  arquitecturas, mínimos declarados y fuentes inmutables; ausencia de mínimo queda
+  como no verificada. La presencia de una app x86 no la excluye de Windows x64.
 - Las tarjetas no disponibles explican el motivo antes de ejecutar; el proceso hijo
   repite la comprobación, incluida la identidad posterior a UAC.
 
@@ -32,7 +35,9 @@ CI `windows-latest` comprueba WPF y PowerShell 5.1; no es un runner Windows 10.
 
 - Deduplicador/conversor: backend ausente, tarjeta deshabilitada.
 - FastCopy: mover/sincronizar restringido; la muestra SHA-256 se identifica como
-  parcial. Revisar licencia laboral y actualización de la versión fijada.
+  parcial. Respaldo fijado a 5.12.0 con hash comprobado; requiere licencia laboral
+  del fabricante. Robocopy es alternativa nativa. Se rechazan rutas redirigidas y
+  enlaces no evaluados no producen un resultado de muestra verificada.
 - Fase 0: inspección; presets de hardening/reset sin snapshot restringidos.
 - Servicios: lista acotada, un servicio por operación y dependientes protegidos.
 - Personalización: ajustes nativos, sin presets de registro ni marca de agua.

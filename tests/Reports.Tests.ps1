@@ -18,6 +18,11 @@ Describe 'Shareable report privacy and trace' {
         $result=Protect-AtlasReportText 'SN123 SN456 A&amp;BCD' -SensitiveValues @('SN123','SN456','A&BCD')
         $result|Should -Not -Match 'SN123|SN456|BCD'
     }
+    It 'redacts client fields without a length exception' {
+        $result=Protect-AtlasReportObject ([pscustomobject]@{Cliente='XY';Client='AB';Customer='CD';State='NotEvaluated'})
+        $result.Cliente|Should -Be '[REDACTED]';$result.Client|Should -Be '[REDACTED]';$result.Customer|Should -Be '[REDACTED]'
+        $result.State|Should -Be NotEvaluated
+    }
     It 'preserves evidence fields and types while masking nested identity fields' {
         $input=[pscustomobject]@{Score=0;Evaluated=$false;SerialNumber='SN-FIXTURE';Items=@([pscustomobject]@{Owner='Other User';Document='private.pdf';State='NotEvaluated'});Missing=$null}
         $result=Protect-AtlasReportObject $input
@@ -40,6 +45,14 @@ Describe 'Shareable report privacy and trace' {
         $result=[IO.File]::ReadAllText($path)
         $result|Should -Not -Match 'BCD';$result|Should -Match '<body>\[REDACTED\]</body>'
         $result|Should -Match 'GeneratedUtc'
+    }
+    It 'redacts JSON string values without corrupting booleans, nulls or property names' {
+        $path=Join-Path $TestDrive 'typed report.json'
+        Write-AtlasShareableReport -Path $path -Content '{"Flag":false,"Null":null,"Items":["false ABC",{"ABC":"ABC"}]}' -Tool Fixture -SensitiveValues @('false','null','ABC')
+        $result=[IO.File]::ReadAllText($path)|ConvertFrom-Json -ErrorAction Stop
+        $result.Flag|Should -BeFalse;$result.Null|Should -BeNullOrEmpty
+        $result.Items[0]|Should -Be '[REDACTED] [REDACTED]'
+        $result.Items[1].ABC|Should -Be '[REDACTED]'
     }
 }
 

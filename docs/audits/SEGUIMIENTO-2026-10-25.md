@@ -37,8 +37,6 @@ La evidencia final del bloque se guarda en FASE-6-EVIDENCIA-2026-10-25.json.
 La publicación exige CI sobre el SHA completo y comprobación posterior del dominio.
 Volver a 1.4.1 no corrige el desajuste de bibliotecas: para ese defecto usar 1.5.0+.
 
-## Trabajo siguiente, sin depender de VMs
-
 ## Bloque 2 — Catálogo y publicación privada (1.5.1)
 
 - Instantánea completa en CATALOGO-2026-10-25.json: 52 aplicaciones y seis
@@ -73,17 +71,53 @@ Fuentes: [PowerShell 7.6.8](https://github.com/PowerShell/PowerShell/releases/ta
 [FastCopy: versión y licencia](https://fastcopy.jp/help/fastcopy_eng.htm),
 [Web Crypto del Worker](https://developers.cloudflare.com/workers/runtime-apis/web-crypto/).
 
-## Pendientes después del bloque 2
+## Bloque 3 — Copias, informes y onboarding (1.5.2)
 
-1. Consultar manifiestos actuales de las aplicaciones y registrar versiones,
-   fuentes, arquitectura y mínimo OS explícito. Un manifiesto no sustituye el
-   soporte del fabricante ni una instalación en Windows 10.
-2. Revisar dependencias existentes, versiones y licencia de FastCopy; sin compras
-   automáticas ni inventar derechos comerciales o garantías de autenticidad.
-3. Revisar el onboarding privado accesible y su autoridad de publicación; conservar
-   los endpoints y no imprimir tokens ni secretos.
-4. Completar fallos de interpretación/privacidad que se puedan reproducir sin
-   hardware, y reducir advertencias de mayor impacto.
+- El muestreo recorre directorios planos explícitamente, incluye archivos ocultos
+  y no sigue junctions. Los enlaces omitidos impiden declarar éxito; los enlaces
+  del destino no se hashean como si fueran archivos planos. Se contemplan archivos
+  individuales, muestra de tamaño inválido y destino redirigido aún inexistente.
+  No elimina carreras de cambios simultáneos ni certifica una copia completa.
+  Mover/sincronizar FastCopy siguen restringidos.
+- Los campos Client/Cliente/Customer se redactan independientemente de su longitud.
+  FastCopy escribe el campo de cliente ya redactado y usa nombre de reporte sin
+  datos del cliente. La redacción JSON opera sobre textos antes de serializar:
+  valores sensibles como false/null no alteran booleanos, nulos o propiedades.
+  El texto libre y los logs externos siguen requiriendo revisión.
+- Diagnóstico ya no deduce HDD de tamaño/bus SATA cuando el tipo es desconocido.
+  Un estado ausente se muestra neutro; se conservan estados con valor cero. Las
+  cadenas de disco se escapan en HTML. Capacidad/ciclos de batería no constituyen
+  una conclusión de fraude, edad o autenticidad.
+- Fuente privada corregida: RustDesk 1.5.0 fijado, SHA-256 y firma del editor
+  PURSLANE antes de ejecutar o parar servicios; descarga exclusiva bajo ACL
+  restringida, sin reparse points; comandos CLI acotados; cierres solo de la ruta
+  instalada; fallo de ACL aborta la escritura de credenciales. El archivo de
+  recuperación sigue siendo texto plano restringido a Administradores/SYSTEM,
+  sin custodia externa inferida. Se conservan configuración y criterio histórico
+  de instalación. No se supone que el paquete y el binario instalado sean iguales.
+- Commit privado aprobado: 2d12d4dabea6c2dd2f25c29e5256a8545bdba205.
+  SHA-256: c00d40b08857423c237d756573189cf169eb9261472c15c6fa7716ccf06c6391.
+  Sus 14 pruebas aisladas pasaron en ambos runtimes y CI Windows. El Worker
+  promueve esos bytes conjuntamente con esta fase, conservando los endpoints.
+- Defender consultado sin modificarlo: antivirus, tiempo real, servicio y
+  protección contra alteraciones activos en este host. No se ejecutó RustDesk.
+
+## Trabajo que requiere aceptación externa
+
+1. Ejecutar Windows 10 Home/Pro 19045 y LTSC 19044 con Defender activo. El
+   hipervisor existe, pero esta sesión recibe acceso denegado al inventario
+   Hyper-V. No se instalaron ISOs ni compraron licencias para inventar evidencia.
+2. Ensayar UAC con otra identidad, BitLocker/vTPM/recuperación, DNS dual y
+   restauración de servicios/colas; copias interrumpidas y USB física con snapshots.
+3. Homologar las aplicaciones realmente usadas, reinicios y mínimos OS; decidir
+   licencias profesionales y redistribución por proveedor. Metadata no es QA real.
+4. Instalar/reinstalar RustDesk en VM, confirmar servidor y revisar permisos del
+   PAT con su propietario. Una lectura correcta no demuestra el alcance del token;
+   no se imprimieron sus valores ni se rotó a ciegas.
+5. Elegir identidad/certificado confiable de Atlas y política de confianza offline.
+   Decidir retirar o proporcionar el backend ausente del deduplicador.
+6. Continuar revisión humana de heurísticas, texto libre y avisos del analizador
+   por impacto; no se suprimen warnings para anunciar una cifra cero.
 
 Permanecen externas: acceso a VMs Windows 10, recuperación BitLocker real, hardware,
 credenciales/permisos no disponibles y una identidad/certificado confiable para

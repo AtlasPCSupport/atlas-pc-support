@@ -1,0 +1,38 @@
+{
+  "phase": 8,
+  "date": "2026-10-25",
+  "version": "1.5.2",
+  "manifestSha256": "071635c3d51c55735c6d19b4b0c6a4e649de2eef2f173c518b7080fa90044150",
+  "payloadMembersVerified": 33,
+  "toolScriptsVerified": 27,
+  "localRuns": [
+    {
+      "Runtime": "7.6.6",
+      "OSVersion": "10.0.26100.0",
+      "Windows10Validated": false,
+      "IncludeKnownIssues": false,
+      "Passed": 216,
+      "Failed": 0,
+      "Skipped": 0,
+      "AnalyzerErrors": 0,
+      "DistributionArtifactsUnchanged": true,
+      "AnalyzerWarnings": 329
+    },
+    {
+      "Runtime": "5.1.26100.9711",
+      "OSVersion": "10.0.26100.0",
+      "Windows10Validated": false,
+      "IncludeKnownIssues": false,
+      "Passed": 216,
+      "Failed": 0,
+      "Skipped": 0,
+      "AnalyzerErrors": 0,
+      "DistributionArtifactsUnchanged": true,
+      "AnalyzerWarnings": 310
+    }
+  ],
+  "realToolMutationsExecuted": false,
+  "Windows10VmValidated": false,
+  "defenderConfigurationChanged": false,
+  "publicVerification": "Required after CI and promotion; delivered with PR and user report."
+}

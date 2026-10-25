@@ -4,6 +4,7 @@ Describe 'Native outcomes and copy coverage' {
         $script:RepoRoot=Split-Path -Parent $PSScriptRoot
         . (Join-Path $script:RepoRoot 'src/lib/Release.ps1')
         . (Join-Path $script:RepoRoot 'src/lib/Operations.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Reports.ps1')
         . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
     }
     It 'does not treat an empty copy sample as successful verification' {
@@ -36,6 +37,45 @@ Describe 'Native outcomes and copy coverage' {
         $source=Join-Path $TestDrive 'missing-src';New-Item -ItemType Directory -Path $source|Out-Null
         [IO.File]::WriteAllText((Join-Path $source 'one'),'source')
         (Test-AtlasCopySample -Source $source -Destination $TestDrive).Missing|Should -Be 1
+    }
+    It 'handles a single file without enumerating its siblings' {
+        $source=Join-Path $TestDrive 'single source';$destination=Join-Path $TestDrive 'single dest'
+        New-Item -ItemType Directory -Path $source,$destination|Out-Null
+        [IO.File]::WriteAllText((Join-Path $source 'selected.txt'),'selected')
+        [IO.File]::WriteAllText((Join-Path $source 'sibling.txt'),'not copied')
+        [IO.File]::WriteAllText((Join-Path $destination 'selected.txt'),'selected')
+        $result=Test-AtlasCopySample -Source (Join-Path $source 'selected.txt') -Destination $destination
+        $result.OK|Should -BeTrue;$result.Checked|Should -Be 1
+        {Assert-AtlasCopyDestination -Source (Join-Path $source 'selected.txt') -Destination $source}|Should -Throw '*source file*'
+    }
+    It 'rejects an empty requested sample before reporting success' {
+        {Test-AtlasCopySample -Source $TestDrive -Destination $TestDrive -SampleSize 0}|Should -Throw
+    }
+    It 'does not follow a source junction or certify an incomplete sample' -Skip:($env:OS -ne 'Windows_NT') {
+        $source=Join-Path $TestDrive 'junction src';$outside=Join-Path $TestDrive 'outside';$destination=Join-Path $TestDrive 'junction dest'
+        New-Item -ItemType Directory -Path $source,$outside,$destination|Out-Null
+        [IO.File]::WriteAllText((Join-Path $outside 'outside.txt'),'not traversed')
+        New-Item -ItemType Junction -Path (Join-Path $source 'link') -Target $outside|Out-Null
+        [IO.File]::WriteAllText((Join-Path $source 'plain.txt'),'copied')
+        [IO.File]::WriteAllText((Join-Path $destination 'plain.txt'),'copied')
+        $result=Test-AtlasCopySample -Source $source -Destination $destination
+        $result.OK|Should -BeFalse;$result.State|Should -Be NotEvaluated
+        $result.Checked|Should -Be 1;$result.UnverifiedLinks|Should -Be 1
+    }
+    It 'rejects a redirected destination even when its final directory does not exist' -Skip:($env:OS -ne 'Windows_NT') {
+        $source=Join-Path $TestDrive 'plain src';$outside=Join-Path $TestDrive 'redirected';$link=Join-Path $TestDrive 'dest link'
+        New-Item -ItemType Directory -Path $source,$outside|Out-Null
+        New-Item -ItemType Junction -Path $link -Target $outside|Out-Null
+        {Assert-AtlasCopyDestination -Source $source -Destination (Join-Path $link 'new-child')}|Should -Throw '*reparse*'
+    }
+    It 'does not hash files through a destination junction' -Skip:($env:OS -ne 'Windows_NT') {
+        $source=Join-Path $TestDrive 'target src';$destination=Join-Path $TestDrive 'target dest';$outside=Join-Path $TestDrive 'target outside'
+        New-Item -ItemType Directory -Path (Join-Path $source 'sub'),$destination,$outside|Out-Null
+        [IO.File]::WriteAllText((Join-Path $source 'sub/plain.txt'),'same')
+        [IO.File]::WriteAllText((Join-Path $outside 'plain.txt'),'same')
+        New-Item -ItemType Junction -Path (Join-Path $destination 'sub') -Target $outside|Out-Null
+        $result=Test-AtlasCopySample -Source $source -Destination $destination
+        $result.OK|Should -BeFalse;$result.Failed|Should -Be 1
     }
     It 'captures native stdout, stderr and nonzero status' {
         $engine=(Get-Process -Id $PID).Path
@@ -164,6 +204,30 @@ Describe 'Diagnostic interpretation stays within evidence' {
         $text=[IO.File]::ReadAllText((Join-Path $script:RepoRoot 'src/tools/Invoke-KeyboardDoctor.ps1'))
         $text|Should -Not -Match 'GetAsyncKeyState'
         $text|Should -Match 'CapturedText=\$false'
+    }
+}
+
+Describe 'Storage evidence without bus/size guesses' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-DiagnosticoMaster.ps1' 'Get-StorageAnalysis')
+        function Get-PhysicalDisk {[CmdletBinding()]param() throw 'Real inventory blocked'}
+        function Get-CimInstance {[CmdletBinding()]param($ClassName) throw 'Real inventory blocked'}
+        $script:L=@{UnknownLbl='Unknown';StUnclass='Not classified'}
+    }
+    It 'does not label an unspecified large SATA disk as an HDD or unhealthy' {
+        Mock Get-PhysicalDisk {[pscustomobject]@{FriendlyName='<script>fixture</script>';MediaType='Unspecified';BusType='SATA';Size=1TB;HealthStatus=$null}}
+        Mock Get-CimInstance { }
+        $result=Get-StorageAnalysis
+        $result.HasHDD|Should -BeFalse;$result.Disks[0].Health|Should -Be Unknown
+        $result.HtmlSection|Should -Not -Match '<script>'; $result.HtmlSection|Should -Match '&lt;script&gt;'
+    }
+    It 'keeps an explicit HDD type and preserves a zero-valued status' {
+        Mock Get-PhysicalDisk {[pscustomobject]@{FriendlyName='Fixture';MediaType='HDD';BusType='SATA';Size=1TB;HealthStatus=0}}
+        Mock Get-CimInstance { }
+        $result=Get-StorageAnalysis
+        $result.HasHDD|Should -BeTrue;$result.Disks[0].Health|Should -Be '0'
     }
 }
 

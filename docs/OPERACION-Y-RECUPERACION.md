@@ -14,6 +14,12 @@ verificado. El procedimiento para promover y revertir código está en
 promoción de Worker conservando variables/secretos y comprobación del dominio.
 No se promueve únicamente porque el push o el build local hayan terminado.
 
+El onboarding tiene autoridad separada en `api/cloudflare-worker/onboarding-release.json`:
+commit y hash exacto de su fuente privada. Hacer push a ese repositorio no altera
+el endpoint hasta promover los nuevos pins. Ambos endpoints verifican los mismos
+bytes y no usan caché compartida. Un fallo de credenciales o integridad aborta;
+no se desactivan controles de Windows para continuar.
+
 Defender/AMSI permanecen activos; no se añaden exclusiones, `Unblock-File`, comandos
 codificados ni cambios permanentes de ExecutionPolicy. La reputación de SmartScreen
 y una detección futura no se pueden garantizar con una prueba de descarga.

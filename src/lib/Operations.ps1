@@ -6,6 +6,18 @@ function Assert-AtlasCopyDestination {
     $target=[IO.Path]::GetFullPath($Destination).TrimEnd([char[]]'\/')
     if($target.Equals($origin,[StringComparison]::OrdinalIgnoreCase) -or
         $target.StartsWith($origin+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw 'Copy destination cannot be the source or a child of the source.'}
+    $item=Get-Item -LiteralPath ([IO.Path]::GetFullPath($Source)) -Force -ErrorAction Stop
+    if ($item.PSIsContainer) { Assert-AtlasPlainDirectory $item.FullName }
+    else {
+        Assert-AtlasPlainFile $item.FullName
+        if ((Join-Path ([IO.Path]::GetFullPath($Destination)) $item.Name).Equals($item.FullName,[StringComparison]::OrdinalIgnoreCase)) { throw 'Copy destination would overwrite the source file itself.' }
+    }
+    $parent=[IO.Path]::GetFullPath($Destination)
+    while (-not (Test-Path -LiteralPath $parent)) {
+        $parent=[IO.Path]::GetDirectoryName($parent)
+        if (-not $parent) { throw 'Copy destination has no existing parent directory.' }
+    }
+    Assert-AtlasPlainDirectory $parent
 }
 
 function ConvertTo-AtlasNativeArgument {
@@ -78,28 +90,38 @@ function Invoke-AtlasNativeProcess {
 
 function Test-AtlasCopySample {
     [CmdletBinding()]
-    param([string]$Source,[string]$Destination,[int]$SampleSize=15,[string[]]$ExcludeFiles=@(),[string[]]$ExcludeDirs=@())
-    $sourceRoot=[IO.Path]::GetFullPath($Source).TrimEnd([char[]]'\/')
-    $files=@(Get-ChildItem -LiteralPath $sourceRoot -File -Recurse -ErrorAction Stop)
-    $files=@($files | Where-Object {
-        $file=$_; $excluded=$false
-        foreach($pattern in $ExcludeFiles){if($file.Name -like $pattern){$excluded=$true}}
-        $relative=$file.FullName.Substring($sourceRoot.Length).TrimStart([char[]]'\/')
-        $parts=@($relative -split '[\\/]')
-        if($parts.Count -gt 1){foreach($directory in $parts[0..($parts.Count-2)]){foreach($pattern in $ExcludeDirs){if($directory -like $pattern){$excluded=$true}}}}
-        -not $excluded
-    })
-    if($files.Count -eq 0){return @{OK=$false;State='NotEvaluated';Coverage='No source files';Checked=0;Passed=0;Failed=0;Missing=0}}
-    $sample=@($files | Sort-Object FullName | Select-Object -First $SampleSize)
+    param([string]$Source,[string]$Destination,[ValidateRange(1,1000)][int]$SampleSize=15,[string[]]$ExcludeFiles=@(),[string[]]$ExcludeDirs=@())
+    $sourceItem=Get-Item -LiteralPath $Source -Force -ErrorAction Stop
+    $sourceRoot=if($sourceItem.PSIsContainer){$sourceItem.FullName}else{$sourceItem.DirectoryName}
+    Assert-AtlasPlainDirectory $sourceRoot
+    $files=[Collections.Generic.List[IO.FileInfo]]::new(); $links=0
+    $pending=[Collections.Generic.Stack[IO.FileSystemInfo]]::new();$pending.Push($sourceItem)
+    while ($pending.Count) {
+        $item=$pending.Pop()
+        $isDirectory=$item -is [IO.DirectoryInfo]
+        $patterns=if($isDirectory -and $item.FullName -ne $sourceItem.FullName){$ExcludeDirs}elseif(-not $isDirectory){$ExcludeFiles}else{@()}
+        $excluded=$false
+        foreach($pattern in $patterns){if($item.Name -like $pattern){$excluded=$true;break}}
+        if($excluded){continue}
+        if($item.Attributes -band [IO.FileAttributes]::ReparsePoint){$links++;continue}
+        if($isDirectory){
+            Assert-AtlasPlainDirectory $item.FullName
+            foreach($child in @(Get-ChildItem -LiteralPath $item.FullName -Force -ErrorAction Stop)){$pending.Push($child)}
+        }else{$files.Add($item)}
+    }
+    if($files.Count -eq 0){return @{OK=$false;State='NotEvaluated';Coverage='No eligible plain source files';Checked=0;Passed=0;Failed=0;Missing=0;UnverifiedLinks=$links}}
+    $sample=@($files.ToArray() | Sort-Object FullName | Select-Object -First $SampleSize)
     $passed=0;$failed=0;$missing=0
     foreach($file in $sample){
-        Assert-AtlasPlainDirectory $file.DirectoryName
         $relative=$file.FullName.Substring($sourceRoot.Length).TrimStart([char[]]'\/')
         $target=Join-Path $Destination $relative
         if(-not(Test-Path -LiteralPath $target -PathType Leaf)){$missing++;continue}
-        try{if((Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256 -ErrorAction Stop).Hash -eq (Get-FileHash -LiteralPath $target -Algorithm SHA256 -ErrorAction Stop).Hash){$passed++}else{$failed++}}catch{$failed++}
+        try{
+            Assert-AtlasPlainFile $file.FullName; Assert-AtlasPlainFile $target
+            if((Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256 -ErrorAction Stop).Hash -eq (Get-FileHash -LiteralPath $target -Algorithm SHA256 -ErrorAction Stop).Hash){$passed++}else{$failed++}
+        }catch{$failed++}
     }
-    @{OK=($failed -eq 0 -and $missing -eq 0);State=$(if($failed -or $missing){'Failed'}else{'SampleVerified'});Coverage="SHA256 sample $($sample.Count)/$($files.Count) eligible files, not full copy certification";Checked=$sample.Count;Passed=$passed;Failed=$failed;Missing=$missing}
+    @{OK=($failed -eq 0 -and $missing -eq 0 -and $links -eq 0);State=$(if($failed -or $missing){'Failed'}elseif($links){'NotEvaluated'}else{'SampleVerified'});Coverage="SHA256 sample $($sample.Count)/$($files.Count) eligible plain files; $links links not evaluated; not full copy certification";Checked=$sample.Count;Passed=$passed;Failed=$failed;Missing=$missing;UnverifiedLinks=$links}
 }
 
 function Remove-AtlasHostsAlias {
