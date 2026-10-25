@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-25",
+  "rulesetId": 15496177,
+  "before": [
+    "build"
+  ],
+  "after": [
+    {
+      "context": "build",
+      "integration_id": 15368
+    },
+    {
+      "context": "windows-compat",
+      "integration_id": 15368
+    },
+    {
+      "context": "worker",
+      "integration_id": 15368
+    }
+  ],
+  "otherPolicyFieldsPreserved": true
+}

@@ -39,6 +39,42 @@ Volver a 1.4.1 no corrige el desajuste de bibliotecas: para ese defecto usar 1.5
 
 ## Trabajo siguiente, sin depender de VMs
 
+## Bloque 2 — Catálogo y publicación privada (1.5.1)
+
+- Instantánea completa en CATALOGO-2026-10-25.json: 52 aplicaciones y seis
+  dependencias adicionales, 56 manifiestos WinGet y dos fichas Store pendientes.
+  Las referencias y los blobs pertenecen al mismo commit de winget-pkgs.
+  Los instaladores x86 se consideran candidatos para Windows x64; no se descartan
+  por no tener una fila x64. Un mínimo OS ausente queda como no declarado.
+- El panel muestra esa incertidumbre; los mínimos explícitos de Windows 10 se
+  consultan por ID y los perfiles no pueden sustituirlos por un valor inferior.
+  WinGet continúa resolviendo la versión disponible: esta instantánea no fija
+  las 52 versiones ni garantiza soporte futuro del fabricante.
+- PowerShell opcional pasa a 7.6.8, publicación oficial del 22/10/2026. Su MSI
+  x64 tiene SHA-256 fijado en el catálogo verificado y exige además una firma
+  Microsoft válida. La copia USB y sus sidecars no pueden cambiar esa autoridad.
+  La aplicación conserva PowerShell 5.1 como runtime predeterminado.
+- FastCopy de respaldo pasa a 5.12.0. Se descargaron sus bytes sin ejecutarlos:
+  coinciden con el manifiesto WinGet y la firma Authenticode de FastCopy Lab es
+  válida en este host. No se compraron ni concedieron licencias. Robocopy es la
+  alternativa nativa; la página del fabricante exige licencia Pro en el trabajo.
+- El onboarding conserva sus endpoints y exactamente los bytes previamente
+  publicados. Ahora usa un commit y hash independientes; el Worker verifica
+  el script antes de servirlo y deriva su checksum de esos mismos bytes. Ya no
+  sigue main ni acepta una suma mutable como autoridad. El publicador comprueba
+  también la fuente privada sin imprimir su contenido ni la credencial.
+- Revisión privada, sin ejecutar el instalador: descarga la última release de
+  RustDesk sin verificar todavía el digest/firma del ejecutable. Esta protección
+  debe completarse en su fuente privada; fijar el script no certifica ese binario.
+- La regla protect-main 15496177 exige ahora build, windows-compat y worker,
+  conservando el resto de políticas; evidencia en PROTECCION-MAIN-2026-10-25.json.
+
+Fuentes: [PowerShell 7.6.8](https://github.com/PowerShell/PowerShell/releases/tag/v7.6.8),
+[FastCopy: versión y licencia](https://fastcopy.jp/help/fastcopy_eng.htm),
+[Web Crypto del Worker](https://developers.cloudflare.com/workers/runtime-apis/web-crypto/).
+
+## Pendientes después del bloque 2
+
 1. Consultar manifiestos actuales de las aplicaciones y registrar versiones,
    fuentes, arquitectura y mínimo OS explícito. Un manifiesto no sustituye el
    soporte del fabricante ni una instalación en Windows 10.

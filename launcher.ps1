@@ -20,7 +20,7 @@ if ($PSVersionTable.PSEdition -eq 'Desktop') {
 }
 
 
-$script:AtlasVersion = '1.5.0'
+$script:AtlasVersion = '1.5.1'
 $script:AtlasBuildDate = '2026-10-24'
 $script:AtlasToolsManifest = '{
   "$comment": "Tool manifest. Each entry describes one tool. The launcher uses this to render the panel''s tool tiles.",
@@ -873,7 +873,7 @@ $script:AtlasToolsManifest = '{
   ]
 }
 '
-$script:AtlasToolHashesJson = '{"generatedAt":"2026-10-24","algorithm":"SHA256","files":{"Invoke-AIReadiness.ps1":"62d6388cf643f1d5ca6bc8217929a2299cb6accae2c574f1f694ff9ceff5e248","Invoke-ActualizarPowerShell.ps1":"8c158942a37b2ec4cca0c8c0b23b7e922e6b334d706ee57d90f3f72739079b41","Invoke-AuditoriaRouter.ps1":"c60b60203f6a7627d91a13d64bc592e36ea2fd5d552d0a83b4f6a9394d1119bb","Invoke-Deduplicador.ps1":"2147b9d475f36f93c2908bb3c1701b35c5e4a144eb1b5356653e90af322c1a01","Invoke-DiagnosticoEventos.ps1":"6e3b3763abcfe0e8f975c23f69d2bcdc716f6cd478e03b372f4602123552ccf3","Invoke-DiagnosticoMaster.ps1":"a32e590a631ecc57480508c2fd1f02a640b792e385181be207510c4c33642131","Invoke-EntregaPC.ps1":"b6a7326be8dc1d7edf9c556e5ebaaaae5d43efb2c9936d111ac803f72a5c9ac8","Invoke-ExtraerLicencias.ps1":"bd8436451e725c872ac155aa948a1af5e3fb0734a9f479fac220b3ba52f43871","Invoke-Fase0.ps1":"14e7d9f9498853c4dc98d392cb022e21681064208cb208a88baff5f15d1e1966","Invoke-FastCopy.ps1":"a04f7b24e1683c61108a544001f2e6ef4bc6bc24851ad1b18a2ee463597c9119","Invoke-GPUCheck.ps1":"31c10a8e7800714a7ff53ddf1bb01b6fa4de9a6bea049c439c5db3a8bb36faca","Invoke-GestorBitLocker.ps1":"93969ccbf4b2810c7e8f480c58de5af4e0d96d6c979eda8a1ac44bf14bd453a9","Invoke-HostsManager.ps1":"21bb6ec2607f7b35f4651c0fb061b6ac0f45db8c1d4683bd4ca96cf85f2d8dc2","Invoke-InstalarMicrosoftStore.ps1":"d2d73a1a359585c13e09cf2eafe89fe588d5cdb9a89872730ab7a4e9de5a09de","Invoke-InstalarPaquetes.ps1":"0507dbb0d1ce9e13e3fb27f2b0b3bb9f11a1833b4aab1189f32af7679e897c90","Invoke-InstalarRuntimes.ps1":"0d973d2105d0468ad15e05543d10cf24d168beb4363df3dd261444a067812ef5","Invoke-KeyboardDoctor.ps1":"ee6b0d31e41874aa98e427e6d3adadc89490f1c900bb41568a023689e3b6d28b","Invoke-MantenimientoPRO.ps1":"226545d07cf4f201e958670f8c49168785b838320ddbc8959d2fc65751582931","Invoke-MenorPrivilegio.ps1":"93d6d30992dc2abb8cc9b044c2c9f457feff87011431238a9d47ecf683da435c","Invoke-PartsUpgrade.ps1":"ac447e5450c8cdee9c00f6bdcd739d0f720422da24fd6ca847d9ec75845fff90","Invoke-Personalizacion.ps1":"57f979ffe953aaed57632b004b687d5651cb41b21e0313ea3d23c423a6dcf1c4","Invoke-PrepararUSB.ps1":"fd449b67ae250164d92e80c0e62c46d8ef03139143eccd16b0072d928891b009","Invoke-PrinterDoctor.ps1":"f27fbed8ff8725a0a460a6a78964b4c5f6ccd374f59486596ef18abb5f5841a4","Invoke-RespaldoControladores.ps1":"c5817dc1e4b03b751bed7ff6b029a6a6e4a3b08da8fad8e2aba549dc4e30435d","Invoke-Robocopy.ps1":"d08cdc873f722652d94a64b1582ac3425d74e18b190c8588c2cbd461c6b6c60d","Invoke-SelectorDNS.ps1":"1dee53c8a288e5b76eacd96241771052ee05478c840795deebdd9907c3a89cae","Invoke-StopServices.ps1":"9cb88839b1e350bcee6ce63b5809ccc7c4ff4d11ee773ca3715b2d5386f1212b"}}'
+$script:AtlasToolHashesJson = '{"generatedAt":"2026-10-24","algorithm":"SHA256","files":{"Invoke-AIReadiness.ps1":"62d6388cf643f1d5ca6bc8217929a2299cb6accae2c574f1f694ff9ceff5e248","Invoke-ActualizarPowerShell.ps1":"47e5d2a7c74d52191d9deacbc29360766b0120e1ecc50fde74ed94a9c089031e","Invoke-AuditoriaRouter.ps1":"c60b60203f6a7627d91a13d64bc592e36ea2fd5d552d0a83b4f6a9394d1119bb","Invoke-Deduplicador.ps1":"2147b9d475f36f93c2908bb3c1701b35c5e4a144eb1b5356653e90af322c1a01","Invoke-DiagnosticoEventos.ps1":"6e3b3763abcfe0e8f975c23f69d2bcdc716f6cd478e03b372f4602123552ccf3","Invoke-DiagnosticoMaster.ps1":"a32e590a631ecc57480508c2fd1f02a640b792e385181be207510c4c33642131","Invoke-EntregaPC.ps1":"b6a7326be8dc1d7edf9c556e5ebaaaae5d43efb2c9936d111ac803f72a5c9ac8","Invoke-ExtraerLicencias.ps1":"bd8436451e725c872ac155aa948a1af5e3fb0734a9f479fac220b3ba52f43871","Invoke-Fase0.ps1":"14e7d9f9498853c4dc98d392cb022e21681064208cb208a88baff5f15d1e1966","Invoke-FastCopy.ps1":"a04f7b24e1683c61108a544001f2e6ef4bc6bc24851ad1b18a2ee463597c9119","Invoke-GPUCheck.ps1":"31c10a8e7800714a7ff53ddf1bb01b6fa4de9a6bea049c439c5db3a8bb36faca","Invoke-GestorBitLocker.ps1":"93969ccbf4b2810c7e8f480c58de5af4e0d96d6c979eda8a1ac44bf14bd453a9","Invoke-HostsManager.ps1":"21bb6ec2607f7b35f4651c0fb061b6ac0f45db8c1d4683bd4ca96cf85f2d8dc2","Invoke-InstalarMicrosoftStore.ps1":"d2d73a1a359585c13e09cf2eafe89fe588d5cdb9a89872730ab7a4e9de5a09de","Invoke-InstalarPaquetes.ps1":"7e0a5fbcccf7ab35aad2263103d51597ed6e55d37d656cf3cb79766913b30c6f","Invoke-InstalarRuntimes.ps1":"0d973d2105d0468ad15e05543d10cf24d168beb4363df3dd261444a067812ef5","Invoke-KeyboardDoctor.ps1":"ee6b0d31e41874aa98e427e6d3adadc89490f1c900bb41568a023689e3b6d28b","Invoke-MantenimientoPRO.ps1":"226545d07cf4f201e958670f8c49168785b838320ddbc8959d2fc65751582931","Invoke-MenorPrivilegio.ps1":"93d6d30992dc2abb8cc9b044c2c9f457feff87011431238a9d47ecf683da435c","Invoke-PartsUpgrade.ps1":"ac447e5450c8cdee9c00f6bdcd739d0f720422da24fd6ca847d9ec75845fff90","Invoke-Personalizacion.ps1":"57f979ffe953aaed57632b004b687d5651cb41b21e0313ea3d23c423a6dcf1c4","Invoke-PrepararUSB.ps1":"fb33ccab4b790756ec9889308a9223b6580a98ec8cd62addd5220babad9e71d3","Invoke-PrinterDoctor.ps1":"f27fbed8ff8725a0a460a6a78964b4c5f6ccd374f59486596ef18abb5f5841a4","Invoke-RespaldoControladores.ps1":"c5817dc1e4b03b751bed7ff6b029a6a6e4a3b08da8fad8e2aba549dc4e30435d","Invoke-Robocopy.ps1":"d08cdc873f722652d94a64b1582ac3425d74e18b190c8588c2cbd461c6b6c60d","Invoke-SelectorDNS.ps1":"1dee53c8a288e5b76eacd96241771052ee05478c840795deebdd9907c3a89cae","Invoke-StopServices.ps1":"9cb88839b1e350bcee6ce63b5809ccc7c4ff4d11ee773ca3715b2d5386f1212b"}}'
 $script:AtlasXamlTemplate = '<Window
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -1650,11 +1650,11 @@ $script:AtlasDependencyCatalog = '{
     ],
     "WingetId": "FastCopy.FastCopy",
     "ExecutableName": "FastCopy.exe",
-    "DownloadSha256": "70b273dd08c15d40fac59a217b93be195bacfa47acabd031463a6df800d29fea",
+    "DownloadSha256": "14ccc9d2ebbdfbcbcf0c6e4004773d12bb98de197a572959473a2d9d3b000e3d",
     "DisplayName": "FastCopy",
-    "DownloadUrl": "https://fastcopy.jp/archive/FastCopy5.11.2_installer.exe",
+    "DownloadUrl": "https://fastcopy.jp/archive/FastCopy5.12.0_installer.exe",
     "Architecture": "x64",
-    "Version": "5.11.2",
+    "Version": "5.12.0",
     "VersionSource": "pinned-direct-fallback; winget source may be newer",
     "SignaturePolicy": "sha256-required",
     "License": "Workplace use requires vendor commercial/Pro licensing; review the exact installed version and redistribution rights. Not licensed by Atlas."
@@ -1689,15 +1689,16 @@ $script:AtlasDependencyCatalog = '{
   },
   "PowerShell7": {
     "DisplayName": "PowerShell 7 LTS",
-    "Version": "7.6.6",
+    "Version": "7.6.8",
     "Architecture": "x64",
     "InstallerType": "msi",
-    "MsiName": "PowerShell-7.6.6-win-x64.msi",
-    "DownloadUrl": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.6/PowerShell-7.6.6-win-x64.msi",
-    "HashesUrl": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.6/hashes.sha256",
+    "MsiName": "PowerShell-7.6.8-win-x64.msi",
+    "DownloadUrl": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.8/PowerShell-7.6.8-win-x64.msi",
+    "HashesUrl": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.8/hashes.sha256",
     "SignaturePolicy": "sha256-and-microsoft-authenticode",
     "License": "MIT; third-party notices apply",
-    "VersionSource": "pinned"
+    "VersionSource": "pinned",
+    "DownloadSha256": "079e7cecedd1e87fa7b4676e5c33ddfbe66859a44a97fbcd1db797245cbb93d2"
   }
 }
 ' | ConvertFrom-Json
@@ -1845,11 +1846,11 @@ $script:AtlasDependencyCatalog = ''{
     ],
     "WingetId": "FastCopy.FastCopy",
     "ExecutableName": "FastCopy.exe",
-    "DownloadSha256": "70b273dd08c15d40fac59a217b93be195bacfa47acabd031463a6df800d29fea",
+    "DownloadSha256": "14ccc9d2ebbdfbcbcf0c6e4004773d12bb98de197a572959473a2d9d3b000e3d",
     "DisplayName": "FastCopy",
-    "DownloadUrl": "https://fastcopy.jp/archive/FastCopy5.11.2_installer.exe",
+    "DownloadUrl": "https://fastcopy.jp/archive/FastCopy5.12.0_installer.exe",
     "Architecture": "x64",
-    "Version": "5.11.2",
+    "Version": "5.12.0",
     "VersionSource": "pinned-direct-fallback; winget source may be newer",
     "SignaturePolicy": "sha256-required",
     "License": "Workplace use requires vendor commercial/Pro licensing; review the exact installed version and redistribution rights. Not licensed by Atlas."
@@ -1884,15 +1885,16 @@ $script:AtlasDependencyCatalog = ''{
   },
   "PowerShell7": {
     "DisplayName": "PowerShell 7 LTS",
-    "Version": "7.6.6",
+    "Version": "7.6.8",
     "Architecture": "x64",
     "InstallerType": "msi",
-    "MsiName": "PowerShell-7.6.6-win-x64.msi",
-    "DownloadUrl": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.6/PowerShell-7.6.6-win-x64.msi",
-    "HashesUrl": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.6/hashes.sha256",
+    "MsiName": "PowerShell-7.6.8-win-x64.msi",
+    "DownloadUrl": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.8/PowerShell-7.6.8-win-x64.msi",
+    "HashesUrl": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.8/hashes.sha256",
     "SignaturePolicy": "sha256-and-microsoft-authenticode",
     "License": "MIT; third-party notices apply",
-    "VersionSource": "pinned"
+    "VersionSource": "pinned",
+    "DownloadSha256": "079e7cecedd1e87fa7b4676e5c33ddfbe66859a44a97fbcd1db797245cbb93d2"
   }
 }
 '' | ConvertFrom-Json
@@ -3365,12 +3367,14 @@ function Find-AtlasPS7OfflineMsi {
 function Get-AtlasPS7ExpectedHash {
     <#
     .SYNOPSIS
-      Descarga el archivo oficial hashes.sha256 y extrae el hash del MSI x64.
+      Reads the independently pinned x64 MSI digest from the verified release.
     #>
     [CmdletBinding()]
     param()
 
-    return Get-AtlasReleaseFileHash -HashesUrl $script:AtlasPS7HashesUrl -FileName $script:AtlasPS7MsiName
+    $hash = (Get-AtlasDependencyDefinition -Name PowerShell7).DownloadSha256
+    if ($hash -cnotmatch ''^[a-f0-9]{64}$'') { throw ''Missing pinned PowerShell SHA-256.'' }
+    return $hash
 }
 
 function Test-AtlasFileHash {
@@ -3400,7 +3404,7 @@ function Install-AtlasPS7 {
     )
 
     $msi = $null
-    $expectedHash = $null
+    $expectedHash = Get-AtlasPS7ExpectedHash
     $downloadedFromWeb = $false
 
     if ($OfflineSource -and (Test-Path -LiteralPath $OfflineSource)) {
@@ -3432,20 +3436,7 @@ function Install-AtlasPS7 {
         }
     }
 
-    # Validar integridad del MSI.
-    if (-not $expectedHash) {
-        $sidecar = "$msi.sha256"
-        if (Test-Path -LiteralPath $sidecar) {
-            try {
-                $raw = Get-Content -LiteralPath $sidecar -Raw -Encoding UTF8 -ErrorAction Stop
-                $parsed = (($raw -split ''\s+'') | Where-Object { $_ } | Select-Object -First 1).ToLowerInvariant()
-                if ($parsed -match ''^[a-f0-9]{64}$'') {
-                    $expectedHash = $parsed
-                }
-            } catch {}
-        }
-    }
-
+    # The release pin is authoritative. A USB sidecar cannot replace it.
     if ($expectedHash) {
         Write-Host "  [>] Verificando integridad SHA-256 del MSI..." -ForegroundColor Cyan
         if (-not (Test-AtlasFileHash -Path $msi -ExpectedHash $expectedHash)) {
@@ -3787,6 +3778,23 @@ function Test-AtlasToolAvailability {
     [pscustomobject]@{ Available=($reasons.Count -eq 0); Reason=($reasons -join '' ''); Profile=$Capabilities.SupportProfile }
 }
 
+function Get-AtlasPackageMinimumBuild {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Id)
+    # Explicit MinimumOSVersion values in the 2026-10-25 manifest snapshot.
+    # A missing value is unknown, not a claim of Windows 10 vendor support.
+    switch ($Id) {
+        ''Notion.Notion'' { return 19041 }
+        ''Learneo.LanguageTool'' { return 19041 }
+        ''LanguageToolGmbH.LanguageToolForDesktop'' { return 19041 }
+        ''Microsoft.Teams'' { return 17763 }
+        ''Microsoft.PowerToys'' { return 17134 }
+        ''Microsoft.PowerShell'' { return 17763 }
+        ''Microsoft.WindowsTerminal'' { return 19041 }
+        default { return $null }
+    }
+}
+
 function Assert-AtlasPackageRequest {
     [CmdletBinding()]
     param([Parameter(Mandatory)]$Package, [int]$Build)
@@ -3794,7 +3802,9 @@ function Assert-AtlasPackageRequest {
     if ([string]$Package.Id -cnotmatch ''^[A-Za-z0-9][A-Za-z0-9._+-]{0,199}$'') { throw ''Invalid package identifier; options and whitespace are not allowed.'' }
     if ($Package.Source -and $Package.Source -cnotin @(''winget'',''msstore'')) { throw ''Unsupported package source.'' }
     if ($Build -lt 19044) { throw ''Package installation is outside the supported Windows baseline.'' }
-    if ($Package.MinimumBuild -and $Build -lt [int]$Package.MinimumBuild) { throw ''Package requires a newer Windows build.'' }
+    $knownMinimum = Get-AtlasPackageMinimumBuild -Id ([string]$Package.Id)
+    $minimum = [Math]::Max([int]$knownMinimum, [int]$Package.MinimumBuild)
+    if ($Build -lt $minimum) { throw ''Package requires a newer Windows build.'' }
 }
 
 function Get-AtlasStoreState {
@@ -5673,12 +5683,14 @@ function Find-AtlasPS7OfflineMsi {
 function Get-AtlasPS7ExpectedHash {
     <#
     .SYNOPSIS
-      Descarga el archivo oficial hashes.sha256 y extrae el hash del MSI x64.
+      Reads the independently pinned x64 MSI digest from the verified release.
     #>
     [CmdletBinding()]
     param()
 
-    return Get-AtlasReleaseFileHash -HashesUrl $script:AtlasPS7HashesUrl -FileName $script:AtlasPS7MsiName
+    $hash = (Get-AtlasDependencyDefinition -Name PowerShell7).DownloadSha256
+    if ($hash -cnotmatch '^[a-f0-9]{64}$') { throw 'Missing pinned PowerShell SHA-256.' }
+    return $hash
 }
 
 function Test-AtlasFileHash {
@@ -5708,7 +5720,7 @@ function Install-AtlasPS7 {
     )
 
     $msi = $null
-    $expectedHash = $null
+    $expectedHash = Get-AtlasPS7ExpectedHash
     $downloadedFromWeb = $false
 
     if ($OfflineSource -and (Test-Path -LiteralPath $OfflineSource)) {
@@ -5740,20 +5752,7 @@ function Install-AtlasPS7 {
         }
     }
 
-    # Validar integridad del MSI.
-    if (-not $expectedHash) {
-        $sidecar = "$msi.sha256"
-        if (Test-Path -LiteralPath $sidecar) {
-            try {
-                $raw = Get-Content -LiteralPath $sidecar -Raw -Encoding UTF8 -ErrorAction Stop
-                $parsed = (($raw -split '\s+') | Where-Object { $_ } | Select-Object -First 1).ToLowerInvariant()
-                if ($parsed -match '^[a-f0-9]{64}$') {
-                    $expectedHash = $parsed
-                }
-            } catch {}
-        }
-    }
-
+    # The release pin is authoritative. A USB sidecar cannot replace it.
     if ($expectedHash) {
         Write-Host "  [>] Verificando integridad SHA-256 del MSI..." -ForegroundColor Cyan
         if (-not (Test-AtlasFileHash -Path $msi -ExpectedHash $expectedHash)) {
@@ -6095,6 +6094,23 @@ function Test-AtlasToolAvailability {
     [pscustomobject]@{ Available=($reasons.Count -eq 0); Reason=($reasons -join ' '); Profile=$Capabilities.SupportProfile }
 }
 
+function Get-AtlasPackageMinimumBuild {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Id)
+    # Explicit MinimumOSVersion values in the 2026-10-25 manifest snapshot.
+    # A missing value is unknown, not a claim of Windows 10 vendor support.
+    switch ($Id) {
+        'Notion.Notion' { return 19041 }
+        'Learneo.LanguageTool' { return 19041 }
+        'LanguageToolGmbH.LanguageToolForDesktop' { return 19041 }
+        'Microsoft.Teams' { return 17763 }
+        'Microsoft.PowerToys' { return 17134 }
+        'Microsoft.PowerShell' { return 17763 }
+        'Microsoft.WindowsTerminal' { return 19041 }
+        default { return $null }
+    }
+}
+
 function Assert-AtlasPackageRequest {
     [CmdletBinding()]
     param([Parameter(Mandatory)]$Package, [int]$Build)
@@ -6102,7 +6118,9 @@ function Assert-AtlasPackageRequest {
     if ([string]$Package.Id -cnotmatch '^[A-Za-z0-9][A-Za-z0-9._+-]{0,199}$') { throw 'Invalid package identifier; options and whitespace are not allowed.' }
     if ($Package.Source -and $Package.Source -cnotin @('winget','msstore')) { throw 'Unsupported package source.' }
     if ($Build -lt 19044) { throw 'Package installation is outside the supported Windows baseline.' }
-    if ($Package.MinimumBuild -and $Build -lt [int]$Package.MinimumBuild) { throw 'Package requires a newer Windows build.' }
+    $knownMinimum = Get-AtlasPackageMinimumBuild -Id ([string]$Package.Id)
+    $minimum = [Math]::Max([int]$knownMinimum, [int]$Package.MinimumBuild)
+    if ($Build -lt $minimum) { throw 'Package requires a newer Windows build.' }
 }
 
 function Get-AtlasStoreState {

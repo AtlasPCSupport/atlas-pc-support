@@ -133,11 +133,11 @@
     ],
     "WingetId": "FastCopy.FastCopy",
     "ExecutableName": "FastCopy.exe",
-    "DownloadSha256": "70b273dd08c15d40fac59a217b93be195bacfa47acabd031463a6df800d29fea",
+    "DownloadSha256": "14ccc9d2ebbdfbcbcf0c6e4004773d12bb98de197a572959473a2d9d3b000e3d",
     "DisplayName": "FastCopy",
-    "DownloadUrl": "https://fastcopy.jp/archive/FastCopy5.11.2_installer.exe",
+    "DownloadUrl": "https://fastcopy.jp/archive/FastCopy5.12.0_installer.exe",
     "Architecture": "x64",
-    "Version": "5.11.2",
+    "Version": "5.12.0",
     "VersionSource": "pinned-direct-fallback; winget source may be newer",
     "SignaturePolicy": "sha256-required",
     "License": "Workplace use requires vendor commercial/Pro licensing; review the exact installed version and redistribution rights. Not licensed by Atlas."
@@ -172,14 +172,15 @@
   },
   "PowerShell7": {
     "DisplayName": "PowerShell 7 LTS",
-    "Version": "7.6.6",
+    "Version": "7.6.8",
     "Architecture": "x64",
     "InstallerType": "msi",
-    "MsiName": "PowerShell-7.6.6-win-x64.msi",
-    "DownloadUrl": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.6/PowerShell-7.6.6-win-x64.msi",
-    "HashesUrl": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.6/hashes.sha256",
+    "MsiName": "PowerShell-7.6.8-win-x64.msi",
+    "DownloadUrl": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.8/PowerShell-7.6.8-win-x64.msi",
+    "HashesUrl": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.8/hashes.sha256",
     "SignaturePolicy": "sha256-and-microsoft-authenticode",
     "License": "MIT; third-party notices apply",
-    "VersionSource": "pinned"
+    "VersionSource": "pinned",
+    "DownloadSha256": "079e7cecedd1e87fa7b4676e5c33ddfbe66859a44a97fbcd1db797245cbb93d2"
   }
 }

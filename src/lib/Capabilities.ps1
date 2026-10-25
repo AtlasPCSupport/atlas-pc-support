@@ -45,6 +45,23 @@ function Test-AtlasToolAvailability {
     [pscustomobject]@{ Available=($reasons.Count -eq 0); Reason=($reasons -join ' '); Profile=$Capabilities.SupportProfile }
 }
 
+function Get-AtlasPackageMinimumBuild {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Id)
+    # Explicit MinimumOSVersion values in the 2026-10-25 manifest snapshot.
+    # A missing value is unknown, not a claim of Windows 10 vendor support.
+    switch ($Id) {
+        'Notion.Notion' { return 19041 }
+        'Learneo.LanguageTool' { return 19041 }
+        'LanguageToolGmbH.LanguageToolForDesktop' { return 19041 }
+        'Microsoft.Teams' { return 17763 }
+        'Microsoft.PowerToys' { return 17134 }
+        'Microsoft.PowerShell' { return 17763 }
+        'Microsoft.WindowsTerminal' { return 19041 }
+        default { return $null }
+    }
+}
+
 function Assert-AtlasPackageRequest {
     [CmdletBinding()]
     param([Parameter(Mandatory)]$Package, [int]$Build)
@@ -52,7 +69,9 @@ function Assert-AtlasPackageRequest {
     if ([string]$Package.Id -cnotmatch '^[A-Za-z0-9][A-Za-z0-9._+-]{0,199}$') { throw 'Invalid package identifier; options and whitespace are not allowed.' }
     if ($Package.Source -and $Package.Source -cnotin @('winget','msstore')) { throw 'Unsupported package source.' }
     if ($Build -lt 19044) { throw 'Package installation is outside the supported Windows baseline.' }
-    if ($Package.MinimumBuild -and $Build -lt [int]$Package.MinimumBuild) { throw 'Package requires a newer Windows build.' }
+    $knownMinimum = Get-AtlasPackageMinimumBuild -Id ([string]$Package.Id)
+    $minimum = [Math]::Max([int]$knownMinimum, [int]$Package.MinimumBuild)
+    if ($Build -lt $minimum) { throw 'Package requires a newer Windows build.' }
 }
 
 function Get-AtlasStoreState {

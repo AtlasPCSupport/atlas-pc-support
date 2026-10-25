@@ -564,8 +564,8 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
             if (-not (Get-Command Assert-AtlasInstaller -ErrorAction SilentlyContinue)) {
                 throw 'Close and reopen the updated Atlas panel before preparing installers.'
             }
-            $hashesUrl = "https://github.com/PowerShell/PowerShell/releases/download/v$PS7_VERSION/hashes.sha256"
-            $expectedHash = Get-AtlasReleaseFileHash -HashesUrl $hashesUrl -FileName ([IO.Path]::GetFileName($msiFile))
+            $expectedHash = (Get-AtlasDependencyDefinition -Name PowerShell7).DownloadSha256
+            if ($expectedHash -cnotmatch '^[a-f0-9]{64}$') { throw 'Missing pinned PowerShell SHA-256.' }
             if (-not $ForceRedownload -and (Test-Path -LiteralPath $msiFile)) {
                 Assert-AtlasInstaller -Path $msiFile -ExpectedSha256 $expectedHash -MicrosoftSignature
                 [IO.File]::WriteAllText("$msiFile.sha256", $expectedHash, [Text.UTF8Encoding]::new($false))
