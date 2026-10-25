@@ -49,7 +49,35 @@
     "Profile": "Home",
     "Stage": "After checkpoint, before guest suite",
     "Windows10SuiteExecuted": false,
-    "Reason": "Home and Pro lost their old Direct channel after checkpointing. The corrected controller closes the old session before checkpointing and opens a fresh one afterwards; readiness requires the AtlasLab-owned interactive shell. Real VM retests remain pending."
+    "Reason": "Home and Pro lost their old Direct channel after checkpointing. The corrected controller closes the old session before checkpointing and opens a fresh one afterwards; readiness requires the AtlasLab-owned interactive shell. A later Home attempt reached the guest suite; its completed results and the other profiles remain pending."
+  },
+  "realVmAttempt": {
+    "ObservedUtc": "2026-10-25T21:36:17.7553027Z",
+    "Profile": "Home",
+    "ExpectedBuild": 19045,
+    "ExpectedEdition": "Core",
+    "OwnedInteractiveDesktopReady": true,
+    "SystemSetupInProgress": 0,
+    "OOBEInProgress": 0,
+    "InteractiveShellOwner": "AtlasLab",
+    "FreshDirectAfterCheckpointReachedGuestTask": true,
+    "GuestSuiteStarted": true,
+    "GuestStage": "Local checks and WPF",
+    "DefenderGatePassedBeforeLocalChecks": true,
+    "CompletedSuiteResultAvailable": false,
+    "PanelVisuallyVerified": false,
+    "FullWindows10Qualification": false
+  },
+  "labRecoveryNotes": {
+    "HomeDisposableAutologonRearmedUtc": "2026-10-25T21:19:02.5722939Z",
+    "CredentialExported": false,
+    "SequentialGuardStoppedOverlappingVmAttempts": true,
+    "TemporaryControllerOpensVmConsolesAutomatically": false,
+    "TargetMaximumConcurrentRunningVms": 1,
+    "ObservedConcurrentRunningVmsBeforeRecovery": 2,
+    "GuestMinimumGiB": 2,
+    "GuestMaximumGiB": 3,
+    "NativeDirectConnectionHardTimeoutVerified": false
   },
   "panelEvidencePolicy": "Window handle/title and normal process exit are recorded separately from external visual verification in the VM console. Neither implies the panel was visually verified.",
   "defenderConfigurationChanged": false,
