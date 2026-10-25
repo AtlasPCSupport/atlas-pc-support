@@ -8,6 +8,7 @@ New-Item -ItemType Directory -Path $results -Force|Out-Null
 function Write-LabStage {param($Stage);[ordered]@{Stage=$Stage;Utc=[datetime]::UtcNow.ToString('o')}|ConvertTo-Json|Set-Content (Join-Path $results 'status.json') -Encoding UTF8}
 $summary=[ordered]@{SchemaVersion=1;Windows10SuiteExecuted=$false;FullWindows10Qualification=$false;Passed=$false;RepairsExecuted=$false}
 try{
+    $summary.GuestRunnerSha256=(Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256).Hash.ToLowerInvariant()
     $marker=Get-Content (Join-Path $root 'marker.json') -Raw -Encoding UTF8|ConvertFrom-Json
     $computer=Get-CimInstance Win32_ComputerSystem
     if($computer.Model -notmatch 'Virtual Machine' -or $env:COMPUTERNAME -cne $marker.ComputerName){throw 'Guest-only guard failed.'}
@@ -19,6 +20,15 @@ try{
     $summary.UBR=$version.UBR;$summary.LabSource=$marker.LabSource
     if($summary.Build -ne $marker.ExpectedBuild -or $edition -cne $marker.ExpectedEdition){throw 'Installed edition/build does not match the target profile.'}
     $env:PSModulePath=(Join-Path $root 'modules')+';'+$env:PSModulePath
+    Write-LabStage 'Waiting for completed OOBE and interactive desktop'
+    $desktopDeadline=[datetime]::UtcNow.AddMinutes(15);$desktopReady=$false
+    while([datetime]::UtcNow -lt $desktopDeadline -and -not $desktopReady){
+        $setup=Get-ItemProperty 'HKLM:\SYSTEM\Setup' -ErrorAction Stop
+        $sessionId=(Get-Process -Id $PID).SessionId
+        $desktopReady=$setup.SystemSetupInProgress -eq 0 -and $setup.OOBEInProgress -eq 0 -and @((Get-Process explorer -ErrorAction SilentlyContinue)|Where-Object SessionId -eq $sessionId).Count -gt 0
+        if(-not $desktopReady){Start-Sleep -Seconds 10}
+    }
+    if(-not $desktopReady){throw 'OOBE/interactive desktop did not become ready; no UI qualification claimed.'}
     Write-LabStage 'Defender'
     $defender=Get-MpComputerStatus -ErrorAction Stop
     $summary.Defender=[ordered]@{AntivirusEnabled=$defender.AntivirusEnabled;RealTimeProtectionEnabled=$defender.RealTimeProtectionEnabled;AMServiceEnabled=$defender.AMServiceEnabled;SignatureUpdated=$defender.AntivirusSignatureLastUpdated.ToUniversalTime().ToString('o')}

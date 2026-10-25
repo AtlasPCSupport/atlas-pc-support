@@ -9,7 +9,7 @@
 param([Parameter(Mandatory)][string]$Windows10Iso,[Parameter(Mandatory)][string]$LtscIso,
     [Parameter(Mandatory)][string]$LabRoot,[ValidateSet('Home','Pro','LTSC')][string[]]$Profiles=@('Home','Pro','LTSC'),
     [string]$TestModuleRoot=(Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'PowerShell\Modules'),
-    [ValidateRange(1,120)][int]$InstallTimeoutMinutes=45,[ValidateRange(1,60)][int]$TestTimeoutMinutes=25)
+    [ValidateRange(1,120)][int]$InstallTimeoutMinutes=75,[ValidateRange(1,60)][int]$TestTimeoutMinutes=25)
 $ErrorActionPreference='Stop'
 $identity=[Security.Principal.WindowsIdentity]::GetCurrent()
 if(-not ([Security.Principal.WindowsPrincipal]::new($identity)).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)){throw 'Hyper-V lab requires Windows UAC elevation. Do not bypass UAC or change group permissions.'}
@@ -116,16 +116,7 @@ foreach($profile in $Profiles){
             $keyboard=$system|Get-CimAssociatedInstance -ResultClassName Msvm_Keyboard
             if($keyboard){$key=Invoke-CimMethod -InputObject $keyboard -MethodName TypeKey -Arguments @{KeyCode=[uint32]32};if($key.ReturnValue -notin @(0,4096)){throw 'Initial guest keyboard request failed.'}}
         }
-        $deadline=[datetime]::UtcNow.AddMinutes($InstallTimeoutMinutes)
-        while([datetime]::UtcNow -lt $deadline -and -not $session){
-            try{
-                $candidate=New-PSSession -VMId $vm.Id -Credential $credential -ErrorAction Stop
-                $ready=Invoke-Command -Session $candidate -ScriptBlock {Test-Path "C:\Users\AtlasLab\NTUSER.DAT"} -ErrorAction Stop
-                if($ready){$session=$candidate}else{Remove-PSSession $candidate}
-            }catch{if($candidate){Remove-PSSession $candidate -ErrorAction SilentlyContinue};$candidate=$null}
-            if(-not $session){Start-Sleep -Seconds 15;Save-LabState}
-        }
-        if(-not $session){throw 'Windows installation/first logon timed out. VM retained for inspection.'}
+        $session=Wait-AtlasLabDesktop -VMId $vm.Id -Credential $credential -ExpectedComputer $entry.ComputerName -TimeoutMinutes $InstallTimeoutMinutes
         Invoke-AtlasLabGuestQA -Session $session -VM $vm -Entry $entry -Modules $modules -Repo $repo -LabFull $labFull -Publication $publication -TestTimeoutMinutes $TestTimeoutMinutes -SaveState { $state.Stage="$($entry.Status) $($entry.Profile)"; Save-LabState }
 
     }catch{$entry.Status='Failed';$entry.Error=$_.Exception.Message}

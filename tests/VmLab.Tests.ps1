@@ -32,3 +32,34 @@ Describe 'Windows 10 lab boundaries and unattended metadata' {
         }
     }
 }
+
+Describe 'Guest readiness before file transfer' {
+    BeforeAll {
+        . (Join-Path $PSScriptRoot 'vm/LabHelpers.ps1')
+        $assignment=(Get-Command Wait-AtlasLabDesktop).ScriptBlock.Ast.Find({
+            param($node)
+            $node -is [Management.Automation.Language.AssignmentStatementAst] -and $node.Left.VariablePath.UserPath -eq 'readyScript'
+        },$true)
+        $desktopPredicate=$assignment.Right.Find({param($node)$node -is [Management.Automation.Language.ScriptBlockExpressionAst]},$true).ScriptBlock.GetScriptBlock()
+    }
+    BeforeEach {
+        $previousComputer=$env:COMPUTERNAME;$env:COMPUTERNAME='ATLAS-QA'
+        Mock Get-CimInstance {[pscustomobject]@{Model=$fixtureModel}}
+        Mock Get-ItemProperty {[pscustomobject]@{SystemSetupInProgress=$systemSetup;OOBEInProgress=$oobe}}
+        Mock Test-Path {$profileExists}
+        Mock Get-Process {if($explorerExists){[pscustomobject]@{ProcessName='explorer'}}}
+    }
+    AfterEach {$env:COMPUTERNAME=$previousComputer}
+    It '<case>' -ForEach @(
+        @{case='does not accept a profile created while OOBE is running';systemSetup=0;oobe=1;profileExists=$true;explorerExists=$true;fixtureModel='Virtual Machine';expectedComputer='ATLAS-QA';ready=$false},
+        @{case='does not accept system setup';systemSetup=1;oobe=0;profileExists=$true;explorerExists=$true;fixtureModel='Virtual Machine';expectedComputer='ATLAS-QA';ready=$false},
+        @{case='does not accept unknown setup state';systemSetup=$null;oobe=$null;profileExists=$true;explorerExists=$true;fixtureModel='Virtual Machine';expectedComputer='ATLAS-QA';ready=$false},
+        @{case='requires the interactive shell';systemSetup=0;oobe=0;profileExists=$true;explorerExists=$false;fixtureModel='Virtual Machine';expectedComputer='ATLAS-QA';ready=$false},
+        @{case='requires the lab user profile';systemSetup=0;oobe=0;profileExists=$false;explorerExists=$true;fixtureModel='Virtual Machine';expectedComputer='ATLAS-QA';ready=$false},
+        @{case='rejects another computer';systemSetup=0;oobe=0;profileExists=$true;explorerExists=$true;fixtureModel='Virtual Machine';expectedComputer='ATLAS-OTHER';ready=$false},
+        @{case='rejects a physical computer';systemSetup=0;oobe=0;profileExists=$true;explorerExists=$true;fixtureModel='Physical Computer';expectedComputer='ATLAS-QA';ready=$false},
+        @{case='accepts the completed owned VM desktop';systemSetup=0;oobe=0;profileExists=$true;explorerExists=$true;fixtureModel='Virtual Machine';expectedComputer='ATLAS-QA';ready=$true}
+    ) {
+        (& $desktopPredicate $expectedComputer)|Should -Be $ready
+    }
+}

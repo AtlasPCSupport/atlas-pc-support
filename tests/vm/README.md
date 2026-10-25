@@ -43,7 +43,9 @@ No son artefactos de publicación y nunca se deben agregar a Git.
 La tarea interactiva del invitado comprueba build/edición/modelo, Defender,
 regresiones de la suite y WPF, capacidades/Store, entrada online/offline verificada,
 visibilidad y cierre del panel, sin pulsar herramientas ni ejecutar reparaciones.
-`results-<perfil>/summary.json`, logs y panel.png contienen evidencia real. El
+`results-<perfil>-<intento>/summary.json`, logs y panel.png contienen evidencia real;
+`status.json` indica el directorio del intento. Las primeras ejecuciones del
+controlador usaban `results-<perfil>`. El
 campo `Windows10SuiteExecuted` no equivale a `FullWindows10Qualification`: faltan
 operaciones sensibles, hardware/USB y homologación por aplicación.
 
@@ -53,7 +55,12 @@ instalación conserva la VM para inspección; corregir la plantilla antes de rep
 en otra carpeta, evitando reutilizar datos parciales como si fueran una base limpia.
 
 Si se interrumpe el controlador, `Resume-Win10Lab.ps1 -LabRoot <carpeta> -VMId
-<guid> -TestModuleRoot <módulos>` retoma una VM de un laboratorio de un solo perfil.
+<guid> -TestModuleRoot <módulos>` retoma una VM específica del laboratorio.
 Comprueba nombre/ID, carpeta, único disco virtual y publicación antes de usar la
 credencial DPAPI ya existente. No reconstruye el disco ni reanuda un conjunto
-arbitrario de VMs. Registrar la interrupción junto al resultado de la prueba.
+arbitrario de VMs. Una matriz debe haber terminado antes de repetir uno de sus
+perfiles y se rechaza arrancar mientras otra VM Atlas está encendida. Se conservan
+el estado anterior y los resultados de intentos anteriores. La copia y el inicio
+de pruebas esperan a OOBE completo y Explorer; la mera existencia de NTUSER.DAT
+durante Setup no demuestra que el escritorio esté listo. Registrar las
+interrupciones junto al resultado de la prueba.

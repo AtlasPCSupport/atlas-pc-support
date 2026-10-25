@@ -94,6 +94,33 @@ public static class AtlasLabIsoStream {
 }
 
 
+function Wait-AtlasLabDesktop {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][guid]$VMId,[Parameter(Mandatory)][pscredential]$Credential,
+        [Parameter(Mandatory)][string]$ExpectedComputer,[ValidateRange(1,120)][int]$TimeoutMinutes=75)
+    $readyScript={
+        param($expected)
+        $setup=Get-ItemProperty 'HKLM:\SYSTEM\Setup' -ErrorAction Stop
+        $env:COMPUTERNAME -ceq $expected -and (Get-CimInstance Win32_ComputerSystem).Model -match 'Virtual Machine' -and
+            (Test-Path 'C:\Users\AtlasLab\NTUSER.DAT') -and $setup.SystemSetupInProgress -eq 0 -and
+            $setup.OOBEInProgress -eq 0 -and @(Get-Process explorer -ErrorAction SilentlyContinue).Count -gt 0
+    }
+    $deadline=[datetime]::UtcNow.AddMinutes($TimeoutMinutes)
+    while([datetime]::UtcNow -lt $deadline){
+        $candidate=$null
+        try{
+            $candidate=New-PSSession -VMId $VMId -Credential $Credential -ErrorAction Stop
+            if(Invoke-Command -Session $candidate -ScriptBlock $readyScript -ArgumentList $ExpectedComputer){
+                Start-Sleep -Seconds 5
+                if(Invoke-Command -Session $candidate -ScriptBlock $readyScript -ArgumentList $ExpectedComputer){return $candidate}
+            }
+        }catch{Write-Verbose ("Guest desktop not ready: "+$_.Exception.Message)}
+        if($candidate){Remove-PSSession $candidate -ErrorAction SilentlyContinue}
+        Start-Sleep -Seconds 15
+    }
+    throw 'Windows installation/OOBE/interactive desktop timed out. VM retained; no qualification claimed.'
+}
+
 function Invoke-AtlasLabGuestQA {
     [CmdletBinding()]
     param([Parameter(Mandatory)]$Session,[Parameter(Mandatory)]$VM,
@@ -150,8 +177,10 @@ function Invoke-AtlasLabGuestQA {
             $entry.GuestStage=$stage;& $SaveState
         }
     }
-    $out=Join-Path $labFull ("results-$profileName")
+    $out=Join-Path $labFull ("results-$profileName-"+[guid]::NewGuid().ToString('N'))
+    Assert-AtlasLabLocation $labFull $out
     Copy-Item -LiteralPath C:\AtlasQA\results -Destination $out -FromSession $session -Recurse -Force
     if(-not $guestSummary){throw 'Guest tests timed out. Logs retained.'}
+    $entry.ResultDirectory=Split-Path $out -Leaf
     $entry.Result=$guestSummary;$entry.Status=if($guestSummary.Passed){'Passed'}else{'Failed'}
 }

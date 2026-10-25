@@ -77,4 +77,6 @@ de requisitos diferente no hereda confirmaciones anteriores silenciosamente.
 
 Antes de probar reparaciones, utilizar una VM con snapshot y datos ficticios.
 Los casos de aceptación pendientes y sus responsables de evidencia se enumeran en
-el [cierre del plan](audits/CIERRE-PLAN-2026-10-24.md).
+la [lista actual de pendientes](audits/PENDIENTES-2026-10-25.md). El
+[cierre de implementación](audits/CIERRE-PLAN-2026-10-24.md) conserva la fotografía
+histórica de la versión 1.4.1.
