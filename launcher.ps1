@@ -20,7 +20,7 @@ if ($PSVersionTable.PSEdition -eq 'Desktop') {
 }
 
 
-$script:AtlasVersion = '1.5.1'
+$script:AtlasVersion = '1.5.2'
 $script:AtlasBuildDate = '2026-10-24'
 $script:AtlasToolsManifest = '{
   "$comment": "Tool manifest. Each entry describes one tool. The launcher uses this to render the panel''s tool tiles.",
@@ -873,7 +873,7 @@ $script:AtlasToolsManifest = '{
   ]
 }
 '
-$script:AtlasToolHashesJson = '{"generatedAt":"2026-10-24","algorithm":"SHA256","files":{"Invoke-AIReadiness.ps1":"62d6388cf643f1d5ca6bc8217929a2299cb6accae2c574f1f694ff9ceff5e248","Invoke-ActualizarPowerShell.ps1":"47e5d2a7c74d52191d9deacbc29360766b0120e1ecc50fde74ed94a9c089031e","Invoke-AuditoriaRouter.ps1":"c60b60203f6a7627d91a13d64bc592e36ea2fd5d552d0a83b4f6a9394d1119bb","Invoke-Deduplicador.ps1":"2147b9d475f36f93c2908bb3c1701b35c5e4a144eb1b5356653e90af322c1a01","Invoke-DiagnosticoEventos.ps1":"6e3b3763abcfe0e8f975c23f69d2bcdc716f6cd478e03b372f4602123552ccf3","Invoke-DiagnosticoMaster.ps1":"a32e590a631ecc57480508c2fd1f02a640b792e385181be207510c4c33642131","Invoke-EntregaPC.ps1":"b6a7326be8dc1d7edf9c556e5ebaaaae5d43efb2c9936d111ac803f72a5c9ac8","Invoke-ExtraerLicencias.ps1":"bd8436451e725c872ac155aa948a1af5e3fb0734a9f479fac220b3ba52f43871","Invoke-Fase0.ps1":"14e7d9f9498853c4dc98d392cb022e21681064208cb208a88baff5f15d1e1966","Invoke-FastCopy.ps1":"a04f7b24e1683c61108a544001f2e6ef4bc6bc24851ad1b18a2ee463597c9119","Invoke-GPUCheck.ps1":"31c10a8e7800714a7ff53ddf1bb01b6fa4de9a6bea049c439c5db3a8bb36faca","Invoke-GestorBitLocker.ps1":"93969ccbf4b2810c7e8f480c58de5af4e0d96d6c979eda8a1ac44bf14bd453a9","Invoke-HostsManager.ps1":"21bb6ec2607f7b35f4651c0fb061b6ac0f45db8c1d4683bd4ca96cf85f2d8dc2","Invoke-InstalarMicrosoftStore.ps1":"d2d73a1a359585c13e09cf2eafe89fe588d5cdb9a89872730ab7a4e9de5a09de","Invoke-InstalarPaquetes.ps1":"7e0a5fbcccf7ab35aad2263103d51597ed6e55d37d656cf3cb79766913b30c6f","Invoke-InstalarRuntimes.ps1":"0d973d2105d0468ad15e05543d10cf24d168beb4363df3dd261444a067812ef5","Invoke-KeyboardDoctor.ps1":"ee6b0d31e41874aa98e427e6d3adadc89490f1c900bb41568a023689e3b6d28b","Invoke-MantenimientoPRO.ps1":"226545d07cf4f201e958670f8c49168785b838320ddbc8959d2fc65751582931","Invoke-MenorPrivilegio.ps1":"93d6d30992dc2abb8cc9b044c2c9f457feff87011431238a9d47ecf683da435c","Invoke-PartsUpgrade.ps1":"ac447e5450c8cdee9c00f6bdcd739d0f720422da24fd6ca847d9ec75845fff90","Invoke-Personalizacion.ps1":"57f979ffe953aaed57632b004b687d5651cb41b21e0313ea3d23c423a6dcf1c4","Invoke-PrepararUSB.ps1":"fb33ccab4b790756ec9889308a9223b6580a98ec8cd62addd5220babad9e71d3","Invoke-PrinterDoctor.ps1":"f27fbed8ff8725a0a460a6a78964b4c5f6ccd374f59486596ef18abb5f5841a4","Invoke-RespaldoControladores.ps1":"c5817dc1e4b03b751bed7ff6b029a6a6e4a3b08da8fad8e2aba549dc4e30435d","Invoke-Robocopy.ps1":"d08cdc873f722652d94a64b1582ac3425d74e18b190c8588c2cbd461c6b6c60d","Invoke-SelectorDNS.ps1":"1dee53c8a288e5b76eacd96241771052ee05478c840795deebdd9907c3a89cae","Invoke-StopServices.ps1":"9cb88839b1e350bcee6ce63b5809ccc7c4ff4d11ee773ca3715b2d5386f1212b"}}'
+$script:AtlasToolHashesJson = '{"generatedAt":"2026-10-24","algorithm":"SHA256","files":{"Invoke-AIReadiness.ps1":"62d6388cf643f1d5ca6bc8217929a2299cb6accae2c574f1f694ff9ceff5e248","Invoke-ActualizarPowerShell.ps1":"47e5d2a7c74d52191d9deacbc29360766b0120e1ecc50fde74ed94a9c089031e","Invoke-AuditoriaRouter.ps1":"c60b60203f6a7627d91a13d64bc592e36ea2fd5d552d0a83b4f6a9394d1119bb","Invoke-Deduplicador.ps1":"2147b9d475f36f93c2908bb3c1701b35c5e4a144eb1b5356653e90af322c1a01","Invoke-DiagnosticoEventos.ps1":"6e3b3763abcfe0e8f975c23f69d2bcdc716f6cd478e03b372f4602123552ccf3","Invoke-DiagnosticoMaster.ps1":"7a8fd30731f66e69de0f2bf4debbb4f25d5f2fec6f17697e6639bf241d8c7612","Invoke-EntregaPC.ps1":"b6a7326be8dc1d7edf9c556e5ebaaaae5d43efb2c9936d111ac803f72a5c9ac8","Invoke-ExtraerLicencias.ps1":"bd8436451e725c872ac155aa948a1af5e3fb0734a9f479fac220b3ba52f43871","Invoke-Fase0.ps1":"14e7d9f9498853c4dc98d392cb022e21681064208cb208a88baff5f15d1e1966","Invoke-FastCopy.ps1":"af30d5dc46ac9f4e69592729d2f5f663cef6fbbf532a86d354694efc98a27e9f","Invoke-GPUCheck.ps1":"31c10a8e7800714a7ff53ddf1bb01b6fa4de9a6bea049c439c5db3a8bb36faca","Invoke-GestorBitLocker.ps1":"93969ccbf4b2810c7e8f480c58de5af4e0d96d6c979eda8a1ac44bf14bd453a9","Invoke-HostsManager.ps1":"21bb6ec2607f7b35f4651c0fb061b6ac0f45db8c1d4683bd4ca96cf85f2d8dc2","Invoke-InstalarMicrosoftStore.ps1":"d2d73a1a359585c13e09cf2eafe89fe588d5cdb9a89872730ab7a4e9de5a09de","Invoke-InstalarPaquetes.ps1":"7e0a5fbcccf7ab35aad2263103d51597ed6e55d37d656cf3cb79766913b30c6f","Invoke-InstalarRuntimes.ps1":"0d973d2105d0468ad15e05543d10cf24d168beb4363df3dd261444a067812ef5","Invoke-KeyboardDoctor.ps1":"ee6b0d31e41874aa98e427e6d3adadc89490f1c900bb41568a023689e3b6d28b","Invoke-MantenimientoPRO.ps1":"226545d07cf4f201e958670f8c49168785b838320ddbc8959d2fc65751582931","Invoke-MenorPrivilegio.ps1":"93d6d30992dc2abb8cc9b044c2c9f457feff87011431238a9d47ecf683da435c","Invoke-PartsUpgrade.ps1":"ac447e5450c8cdee9c00f6bdcd739d0f720422da24fd6ca847d9ec75845fff90","Invoke-Personalizacion.ps1":"57f979ffe953aaed57632b004b687d5651cb41b21e0313ea3d23c423a6dcf1c4","Invoke-PrepararUSB.ps1":"fb33ccab4b790756ec9889308a9223b6580a98ec8cd62addd5220babad9e71d3","Invoke-PrinterDoctor.ps1":"f27fbed8ff8725a0a460a6a78964b4c5f6ccd374f59486596ef18abb5f5841a4","Invoke-RespaldoControladores.ps1":"c5817dc1e4b03b751bed7ff6b029a6a6e4a3b08da8fad8e2aba549dc4e30435d","Invoke-Robocopy.ps1":"d08cdc873f722652d94a64b1582ac3425d74e18b190c8588c2cbd461c6b6c60d","Invoke-SelectorDNS.ps1":"1dee53c8a288e5b76eacd96241771052ee05478c840795deebdd9907c3a89cae","Invoke-StopServices.ps1":"9cb88839b1e350bcee6ce63b5809ccc7c4ff4d11ee773ca3715b2d5386f1212b"}}'
 $script:AtlasXamlTemplate = '<Window
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -3844,6 +3844,18 @@ function Assert-AtlasCopyDestination {
     $target=[IO.Path]::GetFullPath($Destination).TrimEnd([char[]]''\/'')
     if($target.Equals($origin,[StringComparison]::OrdinalIgnoreCase) -or
         $target.StartsWith($origin+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw ''Copy destination cannot be the source or a child of the source.''}
+    $item=Get-Item -LiteralPath ([IO.Path]::GetFullPath($Source)) -Force -ErrorAction Stop
+    if ($item.PSIsContainer) { Assert-AtlasPlainDirectory $item.FullName }
+    else {
+        Assert-AtlasPlainFile $item.FullName
+        if ((Join-Path ([IO.Path]::GetFullPath($Destination)) $item.Name).Equals($item.FullName,[StringComparison]::OrdinalIgnoreCase)) { throw ''Copy destination would overwrite the source file itself.'' }
+    }
+    $parent=[IO.Path]::GetFullPath($Destination)
+    while (-not (Test-Path -LiteralPath $parent)) {
+        $parent=[IO.Path]::GetDirectoryName($parent)
+        if (-not $parent) { throw ''Copy destination has no existing parent directory.'' }
+    }
+    Assert-AtlasPlainDirectory $parent
 }
 
 function ConvertTo-AtlasNativeArgument {
@@ -3916,28 +3928,38 @@ function Invoke-AtlasNativeProcess {
 
 function Test-AtlasCopySample {
     [CmdletBinding()]
-    param([string]$Source,[string]$Destination,[int]$SampleSize=15,[string[]]$ExcludeFiles=@(),[string[]]$ExcludeDirs=@())
-    $sourceRoot=[IO.Path]::GetFullPath($Source).TrimEnd([char[]]''\/'')
-    $files=@(Get-ChildItem -LiteralPath $sourceRoot -File -Recurse -ErrorAction Stop)
-    $files=@($files | Where-Object {
-        $file=$_; $excluded=$false
-        foreach($pattern in $ExcludeFiles){if($file.Name -like $pattern){$excluded=$true}}
-        $relative=$file.FullName.Substring($sourceRoot.Length).TrimStart([char[]]''\/'')
-        $parts=@($relative -split ''[\\/]'')
-        if($parts.Count -gt 1){foreach($directory in $parts[0..($parts.Count-2)]){foreach($pattern in $ExcludeDirs){if($directory -like $pattern){$excluded=$true}}}}
-        -not $excluded
-    })
-    if($files.Count -eq 0){return @{OK=$false;State=''NotEvaluated'';Coverage=''No source files'';Checked=0;Passed=0;Failed=0;Missing=0}}
-    $sample=@($files | Sort-Object FullName | Select-Object -First $SampleSize)
+    param([string]$Source,[string]$Destination,[ValidateRange(1,1000)][int]$SampleSize=15,[string[]]$ExcludeFiles=@(),[string[]]$ExcludeDirs=@())
+    $sourceItem=Get-Item -LiteralPath $Source -Force -ErrorAction Stop
+    $sourceRoot=if($sourceItem.PSIsContainer){$sourceItem.FullName}else{$sourceItem.DirectoryName}
+    Assert-AtlasPlainDirectory $sourceRoot
+    $files=[Collections.Generic.List[IO.FileInfo]]::new(); $links=0
+    $pending=[Collections.Generic.Stack[IO.FileSystemInfo]]::new();$pending.Push($sourceItem)
+    while ($pending.Count) {
+        $item=$pending.Pop()
+        $isDirectory=$item -is [IO.DirectoryInfo]
+        $patterns=if($isDirectory -and $item.FullName -ne $sourceItem.FullName){$ExcludeDirs}elseif(-not $isDirectory){$ExcludeFiles}else{@()}
+        $excluded=$false
+        foreach($pattern in $patterns){if($item.Name -like $pattern){$excluded=$true;break}}
+        if($excluded){continue}
+        if($item.Attributes -band [IO.FileAttributes]::ReparsePoint){$links++;continue}
+        if($isDirectory){
+            Assert-AtlasPlainDirectory $item.FullName
+            foreach($child in @(Get-ChildItem -LiteralPath $item.FullName -Force -ErrorAction Stop)){$pending.Push($child)}
+        }else{$files.Add($item)}
+    }
+    if($files.Count -eq 0){return @{OK=$false;State=''NotEvaluated'';Coverage=''No eligible plain source files'';Checked=0;Passed=0;Failed=0;Missing=0;UnverifiedLinks=$links}}
+    $sample=@($files.ToArray() | Sort-Object FullName | Select-Object -First $SampleSize)
     $passed=0;$failed=0;$missing=0
     foreach($file in $sample){
-        Assert-AtlasPlainDirectory $file.DirectoryName
         $relative=$file.FullName.Substring($sourceRoot.Length).TrimStart([char[]]''\/'')
         $target=Join-Path $Destination $relative
         if(-not(Test-Path -LiteralPath $target -PathType Leaf)){$missing++;continue}
-        try{if((Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256 -ErrorAction Stop).Hash -eq (Get-FileHash -LiteralPath $target -Algorithm SHA256 -ErrorAction Stop).Hash){$passed++}else{$failed++}}catch{$failed++}
+        try{
+            Assert-AtlasPlainFile $file.FullName; Assert-AtlasPlainFile $target
+            if((Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256 -ErrorAction Stop).Hash -eq (Get-FileHash -LiteralPath $target -Algorithm SHA256 -ErrorAction Stop).Hash){$passed++}else{$failed++}
+        }catch{$failed++}
     }
-    @{OK=($failed -eq 0 -and $missing -eq 0);State=$(if($failed -or $missing){''Failed''}else{''SampleVerified''});Coverage="SHA256 sample $($sample.Count)/$($files.Count) eligible files, not full copy certification";Checked=$sample.Count;Passed=$passed;Failed=$failed;Missing=$missing}
+    @{OK=($failed -eq 0 -and $missing -eq 0 -and $links -eq 0);State=$(if($failed -or $missing){''Failed''}elseif($links){''NotEvaluated''}else{''SampleVerified''});Coverage="SHA256 sample $($sample.Count)/$($files.Count) eligible plain files; $links links not evaluated; not full copy certification";Checked=$sample.Count;Passed=$passed;Failed=$failed;Missing=$missing;UnverifiedLinks=$links}
 }
 
 function Remove-AtlasHostsAlias {
@@ -4117,25 +4139,25 @@ function Protect-AtlasReportText {
 
 function Protect-AtlasReportObject {
     [CmdletBinding()]
-    param([AllowNull()][object]$InputObject)
+    param([AllowNull()][object]$InputObject, [string[]]$SensitiveValues = @())
     if ($null -eq $InputObject) { return $null }
-    if ($InputObject -is [string]) { return (Protect-AtlasReportText $InputObject) }
+    if ($InputObject -is [string]) { return (Protect-AtlasReportText $InputObject -SensitiveValues $SensitiveValues) }
     if ($InputObject -is [ValueType]) { return $InputObject }
     if ($InputObject -is [Collections.IDictionary] -or $InputObject -is [pscustomobject]) {
         $result = [ordered]@{}
         $names = if ($InputObject -is [Collections.IDictionary]) { @($InputObject.Keys) } else { @($InputObject.PSObject.Properties.Name) }
         foreach ($name in $names) {
-            if ($name -match ''^(?i:Serial(?:Number)?|UUID|ProcessorId|MachineGuid|MacAddress|IpAddress(?:es)?|UserName|ComputerName|Computer|HostName|Owner|Document|SSID|BSSID|RecoveryPassword|ProductKey|KeyProtectorId|FullName|FileSystemLabel|PNPDeviceId|DeviceId|InstanceId|DeviceInstanceId)$'') {
+            if ($name -match ''^(?i:Serial(?:Number)?|UUID|ProcessorId|MachineGuid|MacAddress|IpAddress(?:es)?|UserName|ComputerName|Computer|HostName|Owner|Client|Cliente|Customer|Document|SSID|BSSID|RecoveryPassword|ProductKey|KeyProtectorId|FullName|FileSystemLabel|PNPDeviceId|DeviceId|InstanceId|DeviceInstanceId)$'') {
                 $result[$name] = ''[REDACTED]''
-            } else { $result[$name] = Protect-AtlasReportObject $InputObject.$name }
+            } else { $result[$name] = Protect-AtlasReportObject $InputObject.$name -SensitiveValues $SensitiveValues }
         }
         return [pscustomobject]$result
     }
     if ($InputObject -is [Collections.IEnumerable]) {
-        $items = @($InputObject | ForEach-Object { Protect-AtlasReportObject $_ })
+        $items = @($InputObject | ForEach-Object { Protect-AtlasReportObject $_ -SensitiveValues $SensitiveValues })
         return ,$items
     }
-    return (Protect-AtlasReportText ([string]$InputObject))
+    return (Protect-AtlasReportText ([string]$InputObject) -SensitiveValues $SensitiveValues)
 }
 
 function Write-AtlasShareableReport {
@@ -4146,15 +4168,15 @@ function Write-AtlasShareableReport {
     if (Test-Path -LiteralPath $Path) { Assert-AtlasPlainFile $Path }
     $trace = Get-AtlasReportTrace -Tool $Tool
     if ([IO.Path]::GetExtension($Path) -eq ''.json'') {
-        $report = Protect-AtlasReportObject ($Content | ConvertFrom-Json -ErrorAction Stop)
+        $report = $Content | ConvertFrom-Json -ErrorAction Stop
         $report | Add-Member -NotePropertyName Trace -NotePropertyValue $trace -Force
+        $report = Protect-AtlasReportObject $report -SensitiveValues $SensitiveValues
         $contentToSave = $report | ConvertTo-Json -Depth 20
     } else {
         $traceText = $trace | ConvertTo-Json -Compress
         $suffix = if ([IO.Path]::GetExtension($Path) -eq ''.html'') { "`n<!-- " + [Net.WebUtility]::HtmlEncode($traceText) + " -->" } else { "`n`n$traceText" }
-        $contentToSave = $Content + $suffix
+        $contentToSave = Protect-AtlasReportText -Text ($Content + $suffix) -SensitiveValues $SensitiveValues
     }
-    $contentToSave = Protect-AtlasReportText -Text $contentToSave -SensitiveValues $SensitiveValues
     [IO.File]::WriteAllText($Path, $contentToSave, [Text.UTF8Encoding]::new($false))
 }
 
@@ -6160,6 +6182,18 @@ function Assert-AtlasCopyDestination {
     $target=[IO.Path]::GetFullPath($Destination).TrimEnd([char[]]'\/')
     if($target.Equals($origin,[StringComparison]::OrdinalIgnoreCase) -or
         $target.StartsWith($origin+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw 'Copy destination cannot be the source or a child of the source.'}
+    $item=Get-Item -LiteralPath ([IO.Path]::GetFullPath($Source)) -Force -ErrorAction Stop
+    if ($item.PSIsContainer) { Assert-AtlasPlainDirectory $item.FullName }
+    else {
+        Assert-AtlasPlainFile $item.FullName
+        if ((Join-Path ([IO.Path]::GetFullPath($Destination)) $item.Name).Equals($item.FullName,[StringComparison]::OrdinalIgnoreCase)) { throw 'Copy destination would overwrite the source file itself.' }
+    }
+    $parent=[IO.Path]::GetFullPath($Destination)
+    while (-not (Test-Path -LiteralPath $parent)) {
+        $parent=[IO.Path]::GetDirectoryName($parent)
+        if (-not $parent) { throw 'Copy destination has no existing parent directory.' }
+    }
+    Assert-AtlasPlainDirectory $parent
 }
 
 function ConvertTo-AtlasNativeArgument {
@@ -6232,28 +6266,38 @@ function Invoke-AtlasNativeProcess {
 
 function Test-AtlasCopySample {
     [CmdletBinding()]
-    param([string]$Source,[string]$Destination,[int]$SampleSize=15,[string[]]$ExcludeFiles=@(),[string[]]$ExcludeDirs=@())
-    $sourceRoot=[IO.Path]::GetFullPath($Source).TrimEnd([char[]]'\/')
-    $files=@(Get-ChildItem -LiteralPath $sourceRoot -File -Recurse -ErrorAction Stop)
-    $files=@($files | Where-Object {
-        $file=$_; $excluded=$false
-        foreach($pattern in $ExcludeFiles){if($file.Name -like $pattern){$excluded=$true}}
-        $relative=$file.FullName.Substring($sourceRoot.Length).TrimStart([char[]]'\/')
-        $parts=@($relative -split '[\\/]')
-        if($parts.Count -gt 1){foreach($directory in $parts[0..($parts.Count-2)]){foreach($pattern in $ExcludeDirs){if($directory -like $pattern){$excluded=$true}}}}
-        -not $excluded
-    })
-    if($files.Count -eq 0){return @{OK=$false;State='NotEvaluated';Coverage='No source files';Checked=0;Passed=0;Failed=0;Missing=0}}
-    $sample=@($files | Sort-Object FullName | Select-Object -First $SampleSize)
+    param([string]$Source,[string]$Destination,[ValidateRange(1,1000)][int]$SampleSize=15,[string[]]$ExcludeFiles=@(),[string[]]$ExcludeDirs=@())
+    $sourceItem=Get-Item -LiteralPath $Source -Force -ErrorAction Stop
+    $sourceRoot=if($sourceItem.PSIsContainer){$sourceItem.FullName}else{$sourceItem.DirectoryName}
+    Assert-AtlasPlainDirectory $sourceRoot
+    $files=[Collections.Generic.List[IO.FileInfo]]::new(); $links=0
+    $pending=[Collections.Generic.Stack[IO.FileSystemInfo]]::new();$pending.Push($sourceItem)
+    while ($pending.Count) {
+        $item=$pending.Pop()
+        $isDirectory=$item -is [IO.DirectoryInfo]
+        $patterns=if($isDirectory -and $item.FullName -ne $sourceItem.FullName){$ExcludeDirs}elseif(-not $isDirectory){$ExcludeFiles}else{@()}
+        $excluded=$false
+        foreach($pattern in $patterns){if($item.Name -like $pattern){$excluded=$true;break}}
+        if($excluded){continue}
+        if($item.Attributes -band [IO.FileAttributes]::ReparsePoint){$links++;continue}
+        if($isDirectory){
+            Assert-AtlasPlainDirectory $item.FullName
+            foreach($child in @(Get-ChildItem -LiteralPath $item.FullName -Force -ErrorAction Stop)){$pending.Push($child)}
+        }else{$files.Add($item)}
+    }
+    if($files.Count -eq 0){return @{OK=$false;State='NotEvaluated';Coverage='No eligible plain source files';Checked=0;Passed=0;Failed=0;Missing=0;UnverifiedLinks=$links}}
+    $sample=@($files.ToArray() | Sort-Object FullName | Select-Object -First $SampleSize)
     $passed=0;$failed=0;$missing=0
     foreach($file in $sample){
-        Assert-AtlasPlainDirectory $file.DirectoryName
         $relative=$file.FullName.Substring($sourceRoot.Length).TrimStart([char[]]'\/')
         $target=Join-Path $Destination $relative
         if(-not(Test-Path -LiteralPath $target -PathType Leaf)){$missing++;continue}
-        try{if((Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256 -ErrorAction Stop).Hash -eq (Get-FileHash -LiteralPath $target -Algorithm SHA256 -ErrorAction Stop).Hash){$passed++}else{$failed++}}catch{$failed++}
+        try{
+            Assert-AtlasPlainFile $file.FullName; Assert-AtlasPlainFile $target
+            if((Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256 -ErrorAction Stop).Hash -eq (Get-FileHash -LiteralPath $target -Algorithm SHA256 -ErrorAction Stop).Hash){$passed++}else{$failed++}
+        }catch{$failed++}
     }
-    @{OK=($failed -eq 0 -and $missing -eq 0);State=$(if($failed -or $missing){'Failed'}else{'SampleVerified'});Coverage="SHA256 sample $($sample.Count)/$($files.Count) eligible files, not full copy certification";Checked=$sample.Count;Passed=$passed;Failed=$failed;Missing=$missing}
+    @{OK=($failed -eq 0 -and $missing -eq 0 -and $links -eq 0);State=$(if($failed -or $missing){'Failed'}elseif($links){'NotEvaluated'}else{'SampleVerified'});Coverage="SHA256 sample $($sample.Count)/$($files.Count) eligible plain files; $links links not evaluated; not full copy certification";Checked=$sample.Count;Passed=$passed;Failed=$failed;Missing=$missing;UnverifiedLinks=$links}
 }
 
 function Remove-AtlasHostsAlias {
@@ -6433,25 +6477,25 @@ function Protect-AtlasReportText {
 
 function Protect-AtlasReportObject {
     [CmdletBinding()]
-    param([AllowNull()][object]$InputObject)
+    param([AllowNull()][object]$InputObject, [string[]]$SensitiveValues = @())
     if ($null -eq $InputObject) { return $null }
-    if ($InputObject -is [string]) { return (Protect-AtlasReportText $InputObject) }
+    if ($InputObject -is [string]) { return (Protect-AtlasReportText $InputObject -SensitiveValues $SensitiveValues) }
     if ($InputObject -is [ValueType]) { return $InputObject }
     if ($InputObject -is [Collections.IDictionary] -or $InputObject -is [pscustomobject]) {
         $result = [ordered]@{}
         $names = if ($InputObject -is [Collections.IDictionary]) { @($InputObject.Keys) } else { @($InputObject.PSObject.Properties.Name) }
         foreach ($name in $names) {
-            if ($name -match '^(?i:Serial(?:Number)?|UUID|ProcessorId|MachineGuid|MacAddress|IpAddress(?:es)?|UserName|ComputerName|Computer|HostName|Owner|Document|SSID|BSSID|RecoveryPassword|ProductKey|KeyProtectorId|FullName|FileSystemLabel|PNPDeviceId|DeviceId|InstanceId|DeviceInstanceId)$') {
+            if ($name -match '^(?i:Serial(?:Number)?|UUID|ProcessorId|MachineGuid|MacAddress|IpAddress(?:es)?|UserName|ComputerName|Computer|HostName|Owner|Client|Cliente|Customer|Document|SSID|BSSID|RecoveryPassword|ProductKey|KeyProtectorId|FullName|FileSystemLabel|PNPDeviceId|DeviceId|InstanceId|DeviceInstanceId)$') {
                 $result[$name] = '[REDACTED]'
-            } else { $result[$name] = Protect-AtlasReportObject $InputObject.$name }
+            } else { $result[$name] = Protect-AtlasReportObject $InputObject.$name -SensitiveValues $SensitiveValues }
         }
         return [pscustomobject]$result
     }
     if ($InputObject -is [Collections.IEnumerable]) {
-        $items = @($InputObject | ForEach-Object { Protect-AtlasReportObject $_ })
+        $items = @($InputObject | ForEach-Object { Protect-AtlasReportObject $_ -SensitiveValues $SensitiveValues })
         return ,$items
     }
-    return (Protect-AtlasReportText ([string]$InputObject))
+    return (Protect-AtlasReportText ([string]$InputObject) -SensitiveValues $SensitiveValues)
 }
 
 function Write-AtlasShareableReport {
@@ -6462,15 +6506,15 @@ function Write-AtlasShareableReport {
     if (Test-Path -LiteralPath $Path) { Assert-AtlasPlainFile $Path }
     $trace = Get-AtlasReportTrace -Tool $Tool
     if ([IO.Path]::GetExtension($Path) -eq '.json') {
-        $report = Protect-AtlasReportObject ($Content | ConvertFrom-Json -ErrorAction Stop)
+        $report = $Content | ConvertFrom-Json -ErrorAction Stop
         $report | Add-Member -NotePropertyName Trace -NotePropertyValue $trace -Force
+        $report = Protect-AtlasReportObject $report -SensitiveValues $SensitiveValues
         $contentToSave = $report | ConvertTo-Json -Depth 20
     } else {
         $traceText = $trace | ConvertTo-Json -Compress
         $suffix = if ([IO.Path]::GetExtension($Path) -eq '.html') { "`n<!-- " + [Net.WebUtility]::HtmlEncode($traceText) + " -->" } else { "`n`n$traceText" }
-        $contentToSave = $Content + $suffix
+        $contentToSave = Protect-AtlasReportText -Text ($Content + $suffix) -SensitiveValues $SensitiveValues
     }
-    $contentToSave = Protect-AtlasReportText -Text $contentToSave -SensitiveValues $SensitiveValues
     [IO.File]::WriteAllText($Path, $contentToSave, [Text.UTF8Encoding]::new($false))
 }
 

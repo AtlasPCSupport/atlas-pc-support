@@ -410,7 +410,12 @@
       "source": "msstore",
       "status": "StoreMetadataRequired",
       "minimumOS": null,
-      "qualification": "Not installed or qualified"
+      "qualification": "Not installed or qualified",
+      "vendorSupportNote": {
+        "minimumOSStatement": "Windows 10.1 64-bit 1903 or later (wording from vendor)",
+        "url": "https://faq.whatsapp.com/1513589699119080/?cms_platform=windows-desktop",
+        "evidence": "Official help search result, retrieved 2026-10-25; page body unavailable to crawler, Store package requirements not verified"
+      }
     },
     {
       "id": "9WZDNCRFJ3B4",
@@ -418,7 +423,12 @@
       "source": "msstore",
       "status": "StoreMetadataRequired",
       "minimumOS": null,
-      "qualification": "Not installed or qualified"
+      "qualification": "Not installed or qualified",
+      "vendorSupportNote": {
+        "minimumOSStatement": "Windows 10 Version 2004 or later",
+        "url": "https://www.jw.org/en/online-help/jw-library/windows/",
+        "evidence": "Official vendor page, retrieved 2026-10-25; does not certify the currently delivered Store package"
+      }
     },
     {
       "id": "7zip.7zip",

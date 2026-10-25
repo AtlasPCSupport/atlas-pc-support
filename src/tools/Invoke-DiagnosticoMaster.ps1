@@ -178,7 +178,7 @@ function Invoke-DiagnosticoMaster {
             BatStLow      = 'Low'
             BatStCrit     = 'Critical'
             BatStInUse    = 'In use'
-            BatFraud      = 'WARNING: 100% health with 0 cycles is unusual. Verify with a discharge test.'
+            BatFraud      = 'Reported capacity and cycles do not establish battery age or authenticity. Validate capacity with a controlled discharge test.'
             UpgGood       = 'COMPUTER IN GOOD SHAPE'
             UpgNoCrit     = 'No critical areas detected.'
             UpgState      = 'OVERALL STATE: {0} ({1}/100)'
@@ -450,7 +450,7 @@ function Invoke-DiagnosticoMaster {
             BatStLow      = 'Bajo'
             BatStCrit     = 'Critico'
             BatStInUse    = 'En uso'
-            BatFraud      = 'ALERTA: Salud 100% con 0 ciclos es inusual. Verificar con prueba de descarga.'
+            BatFraud      = 'La capacidad y los ciclos reportados no establecen edad ni autenticidad de la bateria. Validar capacidad con una descarga controlada.'
             UpgGood       = 'EQUIPO EN BUEN ESTADO'
             UpgNoCrit     = 'No se detectaron areas criticas.'
             UpgState      = 'ESTADO GENERAL: {0} ({1}/100)'
@@ -879,10 +879,10 @@ function Get-StorageAnalysis {
             $media = if ($pd.MediaType) { $pd.MediaType.ToString() } else { $L.UnknownLbl }
             $bus = if ($pd.BusType) { $pd.BusType.ToString() } else { $L.UnknownLbl }
             $sizeGB = if ($pd.Size) { [math]::Round($pd.Size / 1GB, 0) } else { 0 }
-            $health = if ($pd.HealthStatus) { $pd.HealthStatus.ToString() } else { $L.UnknownLbl }
-            $healthColor = if ($health -eq "Healthy") { "#28a745" } else { "#dc3545" }
+            $health = if ($null -ne $pd.HealthStatus) { $pd.HealthStatus.ToString() } else { $L.UnknownLbl }
+            $healthColor = if ($health -eq "Healthy") { "#28a745" } elseif ($health -in @('Warning','Unhealthy')) { "#dc3545" } else { "#888" }
             $classification = ""; $classColor = ""
-            if ($media -match "HDD" -or ($media -match "Unspecified" -and $sizeGB -gt 500 -and $bus -match "SATA|ATA" -and $bus -notmatch "NVMe")) {
+            if ($media -match "HDD") {
                 $result.HasHDD = $true; $classification = "&#9888; $($L.StHddSlow)"; $classColor = "#dc3545"
             } elseif ($media -match "SSD" -and $bus -match "SATA|ATA" -and $bus -notmatch "NVMe") {
                 $result.HasSATASSD = $true; $classification = "&#9432; $($L.StSataMid)"; $classColor = "#ffc107"
@@ -893,7 +893,8 @@ function Get-StorageAnalysis {
                 if ($media -match "SSD") { $classification = $L.StSsdUnk; $classColor = "#888" }
                 else { $classification = $L.StUnclass; $classColor = "#888" }
             }
-            $htmlTable += "<tr><td>${name}</td><td>${media}</td><td>${bus}</td><td>${sizeGB} GB</td><td style='color:${healthColor}'>${health}</td><td style='color:${classColor};font-weight:bold'>${classification}</td></tr>"
+            $safeName=[Net.WebUtility]::HtmlEncode($name);$safeMedia=[Net.WebUtility]::HtmlEncode($media);$safeBus=[Net.WebUtility]::HtmlEncode($bus);$safeHealth=[Net.WebUtility]::HtmlEncode($health)
+            $htmlTable += "<tr><td>${safeName}</td><td>${safeMedia}</td><td>${safeBus}</td><td>${sizeGB} GB</td><td style='color:${healthColor}'>${safeHealth}</td><td style='color:${classColor};font-weight:bold'>${classification}</td></tr>"
             $result.Disks += @{ Name=$name; Media=$media; Bus=$bus; SizeGB=$sizeGB; Health=$health; Class=$classification }
         }
     }

@@ -485,7 +485,7 @@ function Export-CopyReport {
         [string]$ExclusionLabel, [string]$Cliente
     )
     
-    $reportFile = Join-Path ([Environment]::GetFolderPath("Desktop")) "Summary_Atlas_${Cliente}_$(Get-Date -Format 'yyyy-MM-dd_HHmm').txt"
+    $reportFile = Join-Path ([Environment]::GetFolderPath("Desktop")) ("Summary_Atlas_$(Get-Date -Format 'yyyy-MM-dd_HHmm')_" + [guid]::NewGuid().ToString('N') + '.txt')
     
     $r = @()
     $r += "================================================================"
@@ -495,7 +495,7 @@ function Export-CopyReport {
     $r += "DATE:        $(Get-Date -Format 'dd/MM/yyyy HH:mm:ss')"
     $r += "COMPUTER:    $env:COMPUTERNAME"
     $r += "USER:        $env:USERNAME"
-    $r += "PROJECT:     ${Cliente}"
+    $r += 'PROJECT:     [REDACTED]'
     $r += ""
     $r += "--- CONFIGURATION ---"
     $r += "ENGINE:      FastCopy"
@@ -546,7 +546,7 @@ function Export-CopyReport {
     return $reportFile
 }
 
-# ==================== VERIFICACIÓN MD5 ====================
+# ==================== MUESTREO SHA-256 ====================
 
 function Test-CopyIntegrity {
     param([string]$Origen,[string]$Destino,[int]$SampleSize=15,[string[]]$ExcludeFiles=@(),[string[]]$ExcludeDirs=@())

@@ -38,25 +38,25 @@ function Protect-AtlasReportText {
 
 function Protect-AtlasReportObject {
     [CmdletBinding()]
-    param([AllowNull()][object]$InputObject)
+    param([AllowNull()][object]$InputObject, [string[]]$SensitiveValues = @())
     if ($null -eq $InputObject) { return $null }
-    if ($InputObject -is [string]) { return (Protect-AtlasReportText $InputObject) }
+    if ($InputObject -is [string]) { return (Protect-AtlasReportText $InputObject -SensitiveValues $SensitiveValues) }
     if ($InputObject -is [ValueType]) { return $InputObject }
     if ($InputObject -is [Collections.IDictionary] -or $InputObject -is [pscustomobject]) {
         $result = [ordered]@{}
         $names = if ($InputObject -is [Collections.IDictionary]) { @($InputObject.Keys) } else { @($InputObject.PSObject.Properties.Name) }
         foreach ($name in $names) {
-            if ($name -match '^(?i:Serial(?:Number)?|UUID|ProcessorId|MachineGuid|MacAddress|IpAddress(?:es)?|UserName|ComputerName|Computer|HostName|Owner|Document|SSID|BSSID|RecoveryPassword|ProductKey|KeyProtectorId|FullName|FileSystemLabel|PNPDeviceId|DeviceId|InstanceId|DeviceInstanceId)$') {
+            if ($name -match '^(?i:Serial(?:Number)?|UUID|ProcessorId|MachineGuid|MacAddress|IpAddress(?:es)?|UserName|ComputerName|Computer|HostName|Owner|Client|Cliente|Customer|Document|SSID|BSSID|RecoveryPassword|ProductKey|KeyProtectorId|FullName|FileSystemLabel|PNPDeviceId|DeviceId|InstanceId|DeviceInstanceId)$') {
                 $result[$name] = '[REDACTED]'
-            } else { $result[$name] = Protect-AtlasReportObject $InputObject.$name }
+            } else { $result[$name] = Protect-AtlasReportObject $InputObject.$name -SensitiveValues $SensitiveValues }
         }
         return [pscustomobject]$result
     }
     if ($InputObject -is [Collections.IEnumerable]) {
-        $items = @($InputObject | ForEach-Object { Protect-AtlasReportObject $_ })
+        $items = @($InputObject | ForEach-Object { Protect-AtlasReportObject $_ -SensitiveValues $SensitiveValues })
         return ,$items
     }
-    return (Protect-AtlasReportText ([string]$InputObject))
+    return (Protect-AtlasReportText ([string]$InputObject) -SensitiveValues $SensitiveValues)
 }
 
 function Write-AtlasShareableReport {
@@ -67,15 +67,15 @@ function Write-AtlasShareableReport {
     if (Test-Path -LiteralPath $Path) { Assert-AtlasPlainFile $Path }
     $trace = Get-AtlasReportTrace -Tool $Tool
     if ([IO.Path]::GetExtension($Path) -eq '.json') {
-        $report = Protect-AtlasReportObject ($Content | ConvertFrom-Json -ErrorAction Stop)
+        $report = $Content | ConvertFrom-Json -ErrorAction Stop
         $report | Add-Member -NotePropertyName Trace -NotePropertyValue $trace -Force
+        $report = Protect-AtlasReportObject $report -SensitiveValues $SensitiveValues
         $contentToSave = $report | ConvertTo-Json -Depth 20
     } else {
         $traceText = $trace | ConvertTo-Json -Compress
         $suffix = if ([IO.Path]::GetExtension($Path) -eq '.html') { "`n<!-- " + [Net.WebUtility]::HtmlEncode($traceText) + " -->" } else { "`n`n$traceText" }
-        $contentToSave = $Content + $suffix
+        $contentToSave = Protect-AtlasReportText -Text ($Content + $suffix) -SensitiveValues $SensitiveValues
     }
-    $contentToSave = Protect-AtlasReportText -Text $contentToSave -SensitiveValues $SensitiveValues
     [IO.File]::WriteAllText($Path, $contentToSave, [Text.UTF8Encoding]::new($false))
 }
 
