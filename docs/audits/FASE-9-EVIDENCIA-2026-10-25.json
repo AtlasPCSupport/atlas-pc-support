@@ -1,0 +1,113 @@
+{
+  "phase": 9,
+  "date": "2026-10-25",
+  "version": "1.5.2",
+  "manifestSha256": "071635c3d51c55735c6d19b4b0c6a4e649de2eef2f173c518b7080fa90044150",
+  "payloadMembersVerified": 33,
+  "toolScriptsVerified": 27,
+  "localRuns": [
+    {
+      "Runtime": "7.6.6",
+      "OSVersion": "10.0.26100.0",
+      "Windows10Validated": false,
+      "IncludeKnownIssues": false,
+      "Passed": 240,
+      "Failed": 0,
+      "Skipped": 0,
+      "AnalyzerErrors": 0,
+      "DistributionArtifactsUnchanged": true,
+      "AnalyzerWarnings": 329
+    },
+    {
+      "Runtime": "5.1.26100.9711",
+      "OSVersion": "10.0.26100.0",
+      "Windows10Validated": false,
+      "IncludeKnownIssues": false,
+      "Passed": 240,
+      "Failed": 0,
+      "Skipped": 0,
+      "AnalyzerErrors": 0,
+      "DistributionArtifactsUnchanged": true,
+      "AnalyzerWarnings": 310
+    }
+  ],
+  "realToolMutationsExecuted": false,
+  "Windows10VmValidated": false,
+  "Windows10BaselineMatrixPassed": false,
+  "FullWindows10Qualification": false,
+  "labRegressionTests": 24,
+  "correctedLtscProfile": "Windows 10 Enterprise LTSC / EnterpriseS; IoT is a separate blocked media case, never inferred from Enterprise.",
+  "moduleArchiveVerification": {
+    "FilesCompared": 69,
+    "OriginalMiB": 286.6,
+    "ArchiveMiB": 14.3,
+    "AllFileHashesMatched": true,
+    "InternetMarksRemoved": false
+  },
+  "initialHyperVPermissionFailureResolved": "Normal Windows UAC elevation; no host group membership or security settings changed.",
+  "retainedFailedAttempt": {
+    "Profile": "Home",
+    "Stage": "After checkpoint, before guest suite",
+    "Windows10SuiteExecuted": false,
+    "Reason": "Home and Pro lost their old Direct channel after checkpointing. The corrected controller closes the old session before checkpointing and opens a fresh one afterwards; readiness requires the AtlasLab-owned interactive shell. A later Home attempt reached the guest suite; its completed results and the other profiles remain pending."
+  },
+  "realVmAttempt": {
+    "ObservedUtc": "2026-10-25T21:50:36.0619100Z",
+    "Profile": "Home",
+    "ExpectedBuild": 19045,
+    "ExpectedEdition": "Core",
+    "Build": 19045,
+    "UBR": 2965,
+    "Edition": "Core",
+    "Runtime": "5.1.19041.2673",
+    "OwnedInteractiveDesktopReady": true,
+    "SystemSetupInProgress": 0,
+    "OOBEInProgress": 0,
+    "InteractiveShellOwner": "AtlasLab",
+    "FreshDirectAfterCheckpointReachedGuestTask": true,
+    "GuestSuiteStarted": true,
+    "GuestStage": "Failed during WPF test fixture setup",
+    "DefenderGatePassedBeforeLocalChecks": true,
+    "CompletedSuiteResultAvailable": true,
+    "Passed": false,
+    "PesterPassedFromLog": 233,
+    "PesterFailedFromLog": 4,
+    "PesterSkippedFromLog": 0,
+    "FailureCause": "The copied QA bundle omitted branding.example.json required by Platform.Tests.ps1 BeforeAll. No WPF rendering failure has been demonstrated by this attempt.",
+    "DefenderSignatureUpdatedUtc": "2019-09-24T05:12:58.0000000Z",
+    "DefenderSignatureRefreshStillRequired": true,
+    "OriginalPesterXmlCopiedToHost": false,
+    "BundleFixtureAndFailedReportCollectionFixed": true,
+    "CorrectedVmRetestPending": true,
+    "PanelVisuallyVerified": false,
+    "FullWindows10Qualification": false
+  },
+  "labRecoveryNotes": {
+    "HomeDisposableAutologonRearmedUtc": "2026-10-25T21:19:02.5722939Z",
+    "CredentialExported": false,
+    "SequentialGuardStoppedOverlappingVmAttempts": true,
+    "TemporaryControllerOpensVmConsolesAutomatically": false,
+    "TargetMaximumConcurrentRunningVms": 1,
+    "ObservedConcurrentRunningVmsBeforeRecovery": 2,
+    "GuestMinimumGiB": 2,
+    "GuestMaximumGiB": 3,
+    "NativeDirectConnectionHardTimeoutVerified": false
+  },
+  "panelEvidencePolicy": "Window handle/title and normal process exit are recorded separately from external visual verification in the VM console. Neither implies the panel was visually verified.",
+  "defenderConfigurationChanged": false,
+  "evidenceScope": "Preflight checks executed on host build 26100; real VM outcomes are recorded separately, never inferred from these runs.",
+  "publicVerification": {
+    "Utc": "2026-10-25T17:58:41.5118330Z",
+    "HttpStatus": 200,
+    "Commit": "7014aa23409675653c0c1c10d1a0a046655b6fe6",
+    "ManifestSha256": "071635c3d51c55735c6d19b4b0c6a4e649de2eef2f173c518b7080fa90044150",
+    "BootstrapCanonicalSha256": "7b5472371bbd5feeaa9be203889eb68b49982873ad709d428b5efb87e27e9070",
+    "WorkerTemplateSubstitutionsVerified": true,
+    "HostDefender": {
+      "AntivirusEnabled": true,
+      "RealTimeProtectionEnabled": true,
+      "AMServiceEnabled": true,
+      "IsTamperProtected": true
+    }
+  }
+}

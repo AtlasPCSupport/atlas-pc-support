@@ -104,9 +104,10 @@ Fuentes: [PowerShell 7.6.8](https://github.com/PowerShell/PowerShell/releases/ta
 
 ## Trabajo que requiere aceptación externa
 
-1. Ejecutar Windows 10 Home/Pro 19045 y LTSC 19044 con Defender activo. El
-   hipervisor existe, pero esta sesión recibe acceso denegado al inventario
-   Hyper-V. No se instalaron ISOs ni compraron licencias para inventar evidencia.
+1. Ejecutar Windows 10 Home/Pro 19045 y LTSC 19044 con Defender activo. El acceso
+   denegado inicial se resolvió mediante elevación UAC normal, sin modificar
+   grupos. Se inició un laboratorio secuencial con ISOs locales existentes;
+   sus resultados se registran por escenario, sin inferir una homologación total.
 2. Ensayar UAC con otra identidad, BitLocker/vTPM/recuperación, DNS dual y
    restauración de servicios/colas; copias interrumpidas y USB física con snapshots.
 3. Homologar las aplicaciones realmente usadas, reinicios y mínimos OS; decidir

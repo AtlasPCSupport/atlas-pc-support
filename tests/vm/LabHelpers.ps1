@@ -1,0 +1,261 @@
+# Lab-only helpers. Loading this file does not create VMs, disks or accounts.
+function Assert-AtlasLabLocation {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Root,[Parameter(Mandatory)][string]$Path)
+    $base=[IO.Path]::GetFullPath($Root).TrimEnd([char[]]'\/')+[IO.Path]::DirectorySeparatorChar
+    $full=[IO.Path]::GetFullPath($Path)
+    if(-not $full.StartsWith($base,[StringComparison]::OrdinalIgnoreCase)){throw 'Lab path escapes the dedicated root.'}
+    $parent=$full
+    while(-not (Test-Path -LiteralPath $parent)){$parent=[IO.Path]::GetDirectoryName($parent);if(-not $parent){throw 'Lab parent not found.'}}
+    $item=Get-Item -LiteralPath $parent -Force -ErrorAction Stop
+    while($item){
+        if($item.Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Lab paths cannot cross reparse points.'}
+        $item=if($item.PSIsContainer){$item.Parent}else{$item.Directory}
+    }
+}
+
+function Get-AtlasLabProfile {
+    [CmdletBinding()]
+    param([ValidateSet('Home','Pro','LTSC')][string]$Profile)
+    $profiles=@{
+        Home=@{ImageName='Windows 10 Home';Edition='Core';Build=19045;Locale='es-MX';SetupKey='YTMG3-N6DKC-DKB77-7M9GH-8HVX7'}
+        Pro=@{ImageName='Windows 10 Pro';Edition='Professional';Build=19045;Locale='es-MX';SetupKey='VK7JG-NPHTM-C97JM-9MPGT-3V66T'}
+        LTSC=@{ImageName='Windows 10 Enterprise LTSC';Edition='EnterpriseS';Build=19044;Locale='en-US';SetupKey='M7XTQ-FN8P6-TTKYV-9D4CC-J462D'}
+    }
+    [pscustomobject]$profiles[$Profile]
+}
+
+function New-AtlasLabAnswer {
+    [CmdletBinding()]
+    param([ValidateSet('Home','Pro','LTSC')][string]$Profile,[Parameter(Mandatory)][string]$ImageName,
+        [Parameter(Mandatory)][string]$Password,[Parameter(Mandatory)][string]$ComputerName)
+    if($ComputerName -cnotmatch '^ATLAS-[A-Z0-9-]{1,9}$'){throw 'Unexpected lab computer name.'}
+    if($Password.Length -lt 20){throw 'Lab password must be randomly generated and at least 20 characters.'}
+    $image=[Security.SecurityElement]::Escape($ImageName);$secret=[Security.SecurityElement]::Escape($Password)
+    $configuration=Get-AtlasLabProfile -Profile $Profile
+    $locale=$configuration.Locale
+    # Public edition-selection defaults. Setup selection does NOT activate Windows
+    # or grant a license. Never use a personal/OEM host key in a test VM.
+    $setupKey=$configuration.SetupKey
+    # Only Windows Setup INSIDE the new VM receives this disk configuration.
+    # The host script never attaches physical disks or invokes disk formatting.
+    return @"
+<?xml version="1.0" encoding="utf-8"?>
+<unattend xmlns="urn:schemas-microsoft-com:unattend" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
+ <settings pass="windowsPE">
+  <component name="Microsoft-Windows-International-Core-WinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+   <SetupUILanguage><UILanguage>$locale</UILanguage></SetupUILanguage><InputLocale>$locale</InputLocale><SystemLocale>$locale</SystemLocale><UILanguage>$locale</UILanguage><UserLocale>$locale</UserLocale>
+  </component>
+  <component name="Microsoft-Windows-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+   <DiskConfiguration><Disk wcm:action="add"><DiskID>0</DiskID><WillWipeDisk>true</WillWipeDisk><CreatePartitions>
+    <CreatePartition wcm:action="add"><Order>1</Order><Type>EFI</Type><Size>260</Size></CreatePartition>
+    <CreatePartition wcm:action="add"><Order>2</Order><Type>MSR</Type><Size>16</Size></CreatePartition>
+    <CreatePartition wcm:action="add"><Order>3</Order><Type>Primary</Type><Extend>true</Extend></CreatePartition>
+   </CreatePartitions><ModifyPartitions>
+    <ModifyPartition wcm:action="add"><Order>1</Order><PartitionID>1</PartitionID><Format>FAT32</Format><Label>System</Label></ModifyPartition>
+    <ModifyPartition wcm:action="add"><Order>2</Order><PartitionID>3</PartitionID><Format>NTFS</Format><Label>AtlasLab</Label><Letter>C</Letter></ModifyPartition>
+   </ModifyPartitions></Disk><WillShowUI>OnError</WillShowUI></DiskConfiguration>
+   <ImageInstall><OSImage><InstallFrom><MetaData wcm:action="add"><Key>/IMAGE/NAME</Key><Value>$image</Value></MetaData></InstallFrom><InstallTo><DiskID>0</DiskID><PartitionID>3</PartitionID></InstallTo><WillShowUI>OnError</WillShowUI></OSImage></ImageInstall>
+   <UserData><AcceptEula>true</AcceptEula><FullName>Atlas QA</FullName><Organization>Atlas Lab</Organization><ProductKey><Key>$setupKey</Key><WillShowUI>Never</WillShowUI></ProductKey></UserData>
+  </component>
+ </settings>
+ <settings pass="specialize"><component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS"><ComputerName>$ComputerName</ComputerName><TimeZone>SA Pacific Standard Time</TimeZone></component></settings>
+ <settings pass="oobeSystem">
+  <component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS"><InputLocale>$locale</InputLocale><SystemLocale>$locale</SystemLocale><UILanguage>$locale</UILanguage><UserLocale>$locale</UserLocale></component>
+  <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+   <OOBE><HideEULAPage>true</HideEULAPage><HideOnlineAccountScreens>true</HideOnlineAccountScreens><HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE><ProtectYourPC>1</ProtectYourPC></OOBE>
+   <UserAccounts><LocalAccounts><LocalAccount wcm:action="add"><Password><Value>$secret</Value><PlainText>true</PlainText></Password><Group>Administrators</Group><Name>AtlasLab</Name><DisplayName>Atlas QA</DisplayName></LocalAccount></LocalAccounts></UserAccounts>
+   <AutoLogon><Password><Value>$secret</Value><PlainText>true</PlainText></Password><Domain>$ComputerName</Domain><Username>AtlasLab</Username><Enabled>true</Enabled><LogonCount>3</LogonCount></AutoLogon>
+  </component>
+ </settings>
+</unattend>
+"@
+}
+
+function New-AtlasLabIso {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Directory,[Parameter(Mandatory)][string]$Destination)
+    if(Test-Path -LiteralPath $Destination){throw 'Refusing to overwrite existing lab ISO.'}
+    if(-not ('AtlasLabIsoStream' -as [type])){
+        Add-Type -TypeDefinition @'
+using System;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
+public static class AtlasLabIsoStream {
+ public static void Save(object source, string destination) {
+  var stream=(IStream)source; var buffer=new byte[1048576]; var count=Marshal.AllocHGlobal(4);
+  try { using(var file=new FileStream(destination,FileMode.CreateNew,FileAccess.Write)) {
+   for(;;){stream.Read(buffer,buffer.Length,count);var read=Marshal.ReadInt32(count);if(read==0)break;file.Write(buffer,0,read);}
+  }} finally {Marshal.FreeHGlobal(count);}
+ }
+}
+'@
+    }
+    $image=New-Object -ComObject IMAPI2FS.MsftFileSystemImage
+    try{
+        $image.FileSystemsToCreate=3;$image.VolumeName='ATLAS_AUTOINSTALL'
+        $image.Root.AddTree($Directory,$false)
+        $result=$image.CreateResultImage()
+        [AtlasLabIsoStream]::Save($result.ImageStream,$Destination)
+    }finally{[void][Runtime.InteropServices.Marshal]::ReleaseComObject($image)}
+}
+
+
+function New-AtlasLabModuleArchive {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][hashtable]$Modules,[Parameter(Mandatory)][string]$LabRoot)
+    if($Modules.Count -ne 2 -or @($Modules.Keys|Where-Object {$_ -notin @('Pester','PSScriptAnalyzer')}).Count){throw 'Only the two pinned test modules can be staged.'}
+    $staging=Join-Path $LabRoot ('test-modules-'+[guid]::NewGuid().ToString('N'))
+    $archive=$staging+'.zip'
+    Assert-AtlasLabLocation $LabRoot $staging;Assert-AtlasLabLocation $LabRoot $archive
+    New-Item -ItemType Directory -Path $staging|Out-Null
+    foreach($name in $Modules.Keys){
+        if($env:OS -eq 'Windows_NT'){
+            foreach($file in Get-ChildItem -LiteralPath $Modules[$name] -File -Recurse -Force){
+                if(@(Get-Item -LiteralPath $file.FullName -Force -Stream '*' -ErrorAction Stop|Where-Object Stream -eq 'Zone.Identifier').Count){throw 'Internet-marked test module files require an approved installation; marks are never stripped by this lab.'}
+            }
+        }
+        $folder=Join-Path $staging $name;New-Item -ItemType Directory -Path $folder|Out-Null
+        Copy-Item -LiteralPath $Modules[$name] -Destination $folder -Recurse -Force -ErrorAction Stop
+    }
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    [IO.Compression.ZipFile]::CreateFromDirectory($staging,$archive,[IO.Compression.CompressionLevel]::Optimal,$false)
+    [pscustomobject]@{Path=$archive;Sha256=(Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()}
+}
+
+function Wait-AtlasLabDesktop {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][guid]$VMId,[Parameter(Mandatory)][pscredential]$Credential,
+        [Parameter(Mandatory)][string]$ExpectedComputer,[ValidateRange(1,120)][int]$TimeoutMinutes=75,
+        [scriptblock]$OnProgress)
+    $readyScript={
+        param($expected)
+        $setup=Get-ItemProperty 'HKLM:\SYSTEM\Setup' -ErrorAction Stop
+        $model=(Get-CimInstance Win32_ComputerSystem).Model
+        $owners=@(foreach($shell in @(Get-CimInstance Win32_Process -Filter "Name='explorer.exe'" -ErrorAction Stop)){
+            if($shell.SessionId -gt 0){
+                $owner=Invoke-CimMethod -InputObject $shell -MethodName GetOwner -ErrorAction Stop
+                if($owner.ReturnValue -eq 0){[pscustomobject]@{User=$owner.User;Domain=$owner.Domain;SessionId=$shell.SessionId}}
+            }
+        })
+        $ownedShells=@($owners|Where-Object {$_.User -ieq 'AtlasLab' -and $_.Domain -ieq $expected})
+        [pscustomobject]@{
+            Ready=($env:COMPUTERNAME -ceq $expected -and $model -match 'Virtual Machine' -and
+                (Test-Path 'C:\Users\AtlasLab\NTUSER.DAT') -and $setup.SystemSetupInProgress -eq 0 -and
+                $setup.OOBEInProgress -eq 0 -and $ownedShells.Count -gt 0)
+            ComputerName=$env:COMPUTERNAME;Model=$model;SystemSetupInProgress=$setup.SystemSetupInProgress
+            OOBEInProgress=$setup.OOBEInProgress;ShellOwners=$owners
+        }
+    }
+    $deadline=[datetime]::UtcNow.AddMinutes($TimeoutMinutes)
+    while([datetime]::UtcNow -lt $deadline){
+        $candidate=$null
+        try{
+            $candidate=New-PSSession -VMId $VMId -Credential $Credential -ErrorAction Stop
+            $facts=Invoke-Command -Session $candidate -ScriptBlock $readyScript -ArgumentList $ExpectedComputer
+            if($OnProgress){& $OnProgress $facts}
+            if($facts.Ready){
+                Start-Sleep -Seconds 5
+                $facts=Invoke-Command -Session $candidate -ScriptBlock $readyScript -ArgumentList $ExpectedComputer
+                if($OnProgress){& $OnProgress $facts}
+                if($facts.Ready){return $candidate}
+            }
+        }catch{
+            Write-Verbose ("Guest desktop not ready: "+$_.Exception.Message)
+            if($OnProgress){& $OnProgress ([pscustomobject]@{Ready=$false;ConnectionError=$_.Exception.Message})}
+        }
+        if($candidate){Remove-PSSession $candidate -ErrorAction SilentlyContinue}
+        Start-Sleep -Seconds 15
+    }
+    throw 'Windows installation/OOBE/interactive desktop timed out. VM retained; no qualification claimed.'
+}
+
+function New-AtlasLabCheckpointSession {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)]$Session,[Parameter(Mandatory)]$VM,
+        [Parameter(Mandatory)][pscredential]$Credential,[Parameter(Mandatory)][string]$ExpectedComputer,
+        [string]$SnapshotName='Before Atlas QA',[scriptblock]$OnProgress)
+    # A standard checkpoint saves VM memory. Never reuse its old Direct channel.
+    Remove-PSSession -Session $Session -ErrorAction Stop
+    Checkpoint-VM -VM $VM -SnapshotName $SnapshotName -ErrorAction Stop|Out-Null
+    Wait-AtlasLabDesktop -VMId $VM.Id -Credential $Credential -ExpectedComputer $ExpectedComputer -TimeoutMinutes 5 -OnProgress $OnProgress
+}
+
+function Invoke-AtlasLabGuestQA {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)]$Session,[Parameter(Mandatory)]$VM,[Parameter(Mandatory)][pscredential]$Credential,
+        [Parameter(Mandatory)]$Entry,[Parameter(Mandatory)][hashtable]$Modules,
+        [Parameter(Mandatory)][string]$Repo,[Parameter(Mandatory)][string]$LabFull,
+        [Parameter(Mandatory)]$Publication,[int]$TestTimeoutMinutes=25,
+        [Parameter(Mandatory)][scriptblock]$SaveState)
+    $profileName=[string]$Entry.Profile
+    $entry.Status='Copying test bundle';& $SaveState
+    Invoke-Command -Session $session -ScriptBlock {
+        param($expectedComputer)
+        if($env:COMPUTERNAME -cne $expectedComputer -or (Get-CimInstance Win32_ComputerSystem).Model -notmatch 'Virtual Machine'){throw 'Guest bundle destination is not the owned lab VM.'}
+        foreach($folder in @('C:\AtlasQA','C:\AtlasQA\results','C:\AtlasQA\modules','C:\AtlasQA\repo')){
+            if((Test-Path -LiteralPath $folder) -and ((Get-Item -LiteralPath $folder -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)){throw 'Lab result path is redirected.'}
+        }
+        if(Test-Path -LiteralPath 'C:\AtlasQA\results'){
+            # Keep earlier attempts, but never accept their summary as a fresh result.
+            $previous=[IO.Path]::GetFullPath(('C:\AtlasQA\results-previous-'+[guid]::NewGuid().ToString('N')))
+            if(-not $previous.StartsWith('C:\AtlasQA\',[StringComparison]::OrdinalIgnoreCase) -or (Test-Path -LiteralPath $previous)){throw 'Invalid result archive destination.'}
+            Move-Item -LiteralPath 'C:\AtlasQA\results' -Destination $previous -ErrorAction Stop
+        }
+        New-Item -ItemType Directory -Path C:\AtlasQA\repo,C:\AtlasQA\modules,C:\AtlasQA\results -Force|Out-Null
+    } -ArgumentList $entry.ComputerName
+    foreach($relative in @('src','config','onboarding','docs','tests','branding.example.json','build.ps1','get.ps1','launcher.ps1','launcher.ps1.sha256','release-manifest.json','PSScriptAnalyzerSettings.psd1')){
+        Copy-Item -LiteralPath (Join-Path $repo $relative) -Destination C:\AtlasQA\repo -ToSession $session -Recurse -Force
+    }
+    # Compatibility profiles alone exceed 280 MB. Transfer one lossless archive,
+    # verify its digest in the VM, then expand the unchanged pinned modules there.
+    $moduleArchive=New-AtlasLabModuleArchive -Modules $modules -LabRoot $labFull
+    Copy-Item -LiteralPath $moduleArchive.Path -Destination C:\AtlasQA\test-modules.zip -ToSession $session -Force
+    Invoke-Command -Session $session -ScriptBlock {
+        param($expectedHash)
+        if((Get-FileHash -LiteralPath C:\AtlasQA\test-modules.zip -Algorithm SHA256).Hash.ToLowerInvariant() -cne $expectedHash){throw 'Test module archive transfer hash mismatch.'}
+        Expand-Archive -LiteralPath C:\AtlasQA\test-modules.zip -DestinationPath C:\AtlasQA\modules -Force -ErrorAction Stop
+        foreach($spec in @(@{Name='Pester';Version='5.8.0'},@{Name='PSScriptAnalyzer';Version='1.25.0'})){
+            $module=Test-ModuleManifest (Join-Path C:\AtlasQA\modules ("$($spec.Name)\$($spec.Version)\$($spec.Name).psd1"))
+            if($module.Version -ne [version]$spec.Version){throw 'Guest pinned test module version mismatch.'}
+        }
+    } -ArgumentList $moduleArchive.Sha256
+    $entry.TestModuleArchiveSha256=$moduleArchive.Sha256
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Invoke-GuestQA.ps1') -Destination C:\AtlasQA\Invoke-GuestQA.ps1 -ToSession $session -Force
+    $labSource=[ordered]@{Commit=(& git -C $repo rev-parse HEAD|Out-String).Trim();Dirty=[bool](& git -C $repo status --porcelain|Out-String).Trim();Files=@{}}
+    foreach($relative in @('tests/VmLab.Tests.ps1','tests/vm/LabHelpers.ps1','tests/vm/Invoke-Win10Lab.ps1','tests/vm/Resume-Win10Lab.ps1','tests/vm/Invoke-GuestQA.ps1')){
+        $labSource.Files[$relative]=(Get-FileHash -LiteralPath (Join-Path $repo $relative) -Algorithm SHA256).Hash.ToLowerInvariant()
+    }
+    $marker=[pscustomobject]@{Profile=$profileName;ComputerName=$entry.ComputerName;ExpectedBuild=$entry.ExpectedBuild;ExpectedEdition=$entry.ExpectedEdition;ReleaseCommit=$publication.commit;ManifestSha256=$publication.manifestSha256;LabSource=$labSource}
+    Invoke-Command -Session $session -ScriptBlock {param($json)$json|Set-Content C:\AtlasQA\marker.json -Encoding UTF8} -ArgumentList ($marker|ConvertTo-Json -Depth 6)
+    $entry.Status='Checkpoint and fresh Direct session';& $SaveState
+    $entry.CheckpointName='Before Atlas QA '+[guid]::NewGuid().ToString('N').Substring(0,8)
+    $session=New-AtlasLabCheckpointSession -Session $session -VM $vm -Credential $Credential -ExpectedComputer $entry.ComputerName -SnapshotName $entry.CheckpointName -OnProgress {param($facts)$entry.Readiness=$facts;& $SaveState}
+    try{
+    Invoke-Command -Session $session -ScriptBlock {
+        $principal=New-ScheduledTaskPrincipal -UserId "$env:COMPUTERNAME\AtlasLab" -LogonType Interactive -RunLevel Highest
+        $action=New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument '-NoProfile -STA -ExecutionPolicy RemoteSigned -File C:\AtlasQA\Invoke-GuestQA.ps1'
+        Register-ScheduledTask -TaskName AtlasQA -Principal $principal -Action $action -Force|Out-Null
+        Start-ScheduledTask -TaskName AtlasQA
+    }
+    $entry.Status='Testing';& $SaveState
+    $deadline=[datetime]::UtcNow.AddMinutes($TestTimeoutMinutes);$guestSummary=$null
+    while([datetime]::UtcNow -lt $deadline -and -not $guestSummary){
+        Start-Sleep -Seconds 20
+        $guest=Invoke-Command -Session $session -ScriptBlock {
+            if(Test-Path C:\AtlasQA\results\summary.json){Get-Content C:\AtlasQA\results\summary.json -Raw -Encoding UTF8}
+        }
+        if($guest){$guestSummary=$guest|ConvertFrom-Json}else{
+            $stage=Invoke-Command -Session $session -ScriptBlock {if(Test-Path C:\AtlasQA\results\status.json){(Get-Content C:\AtlasQA\results\status.json -Raw|ConvertFrom-Json).Stage}}
+            $entry.GuestStage=$stage;& $SaveState
+        }
+    }
+    $out=Join-Path $labFull ("results-$profileName-"+[guid]::NewGuid().ToString('N'))
+    Assert-AtlasLabLocation $labFull $out
+    Copy-Item -LiteralPath C:\AtlasQA\results -Destination $out -FromSession $session -Recurse -Force
+    $entry.ResultDirectory=Split-Path $out -Leaf
+    if(-not $guestSummary){throw 'Guest tests timed out. Logs retained.'}
+    $entry.Result=$guestSummary;$entry.Status=if($guestSummary.Passed){'Passed'}else{'Failed'}
+    }finally{Remove-PSSession -Session $session -ErrorAction SilentlyContinue}
+}
