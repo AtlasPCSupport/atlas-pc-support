@@ -72,7 +72,36 @@ Describe 'WPF local smoke tests' -Tag 'Windows' {
             $xaml = New-AtlasToolCard -Tool $tool -Branding $script:Branding -Palette $script:Palette
             $card = [Windows.Markup.XamlReader]::Parse($xaml)
             $card.FindName('BtnRun') | Should -Not -BeNullOrEmpty -Because $entry.id
+            [Windows.Automation.AutomationProperties]::GetName($card.FindName('BtnRun')) | Should -Match ([regex]::Escape($entry.name))
         }
+    }
+    It 'fits initial bounds to a small logical desktop without showing the window' -Skip:($env:OS -ne 'Windows_NT') -ForEach @(
+        @{Width=1024;Height=720}, @{Width=800;Height=560}, @{Width=1600;Height=900}
+    ) {
+        $window=[Windows.Window]::new()
+        try {
+            $window.MinWidth=900; $window.MinHeight=600; $window.Width=1100; $window.Height=720
+            Set-AtlasInitialWindowBounds -Window $window -WorkArea ([Windows.Rect]::new(0,0,$Width,$Height))
+            $window.Width | Should -BeLessOrEqual $Width
+            $window.Height | Should -BeLessOrEqual $Height
+            $window.MinWidth | Should -BeLessOrEqual $window.Width
+            $window.MinHeight | Should -BeLessOrEqual $window.Height
+            $window.IsVisible | Should -BeFalse
+        } finally { $window.Close() }
+    }
+    It 'exposes named controls and a keyboard-operable footer action' -Skip:($env:OS -ne 'Windows_NT') {
+        $template=[IO.File]::ReadAllText((Join-Path $script:RepoRoot 'src/gui/MainWindow.xaml'))
+        $window=[Windows.Markup.XamlReader]::Parse((Expand-AtlasXaml -Xaml $template -Branding $script:Branding -Palette $script:Palette))
+        try {
+            foreach($name in @('SearchBox','LanguageCombo','BtnRestart','BtnDashRefresh')) {
+                [Windows.Automation.AutomationProperties]::GetName($window.FindName($name)) | Should -Not -BeNullOrEmpty
+            }
+            $action=$window.FindName('CoffeeLink')
+            $action | Should -BeOfType ([Windows.Controls.Button])
+            $action.IsTabStop | Should -BeTrue
+            $action.Focusable | Should -BeTrue
+            $window.FindName('CategoryBar').Parent.HorizontalScrollBarVisibility.ToString() | Should -Be Auto
+        } finally { $window.Close() }
     }
     It 'renders an unavailable capability as disabled with an explanation' -Skip:($env:OS -ne 'Windows_NT') {
         $tool=@{id='fixture';name='Fixture';description='Capability test';category='software';_availability=[pscustomobject]@{Available=$false;Reason='Needs edition & module'}}
