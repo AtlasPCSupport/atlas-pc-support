@@ -72,6 +72,28 @@ requieren su revision y la aceptacion con hardware real. Los ensayos de cuentas,
 UAC, BitLocker, restauracion e instalaciones siguen en el entorno desechable
 pendiente; las VMs estan pausadas. Windows 10 no queda homologado.
 
+## Publicacion y USB
+
+CI 40402441946 aprobo build, windows-compat y worker en el commit exacto
+`8c0c899fd3f808604d072c8c5cfff4082d163b3e`. Manifiesto
+`3c34ab517bf2693075aacbfc16f4e98b1dc7416cb7f822ed44bcf08ecd2dec55`;
+Worker `b08dcba4-061f-4572-85e8-2caf2ba1dad2`. Los siete endpoints se
+comprobaron con 5.1/7; bootstrap, manifiesto, sidecars, 33 miembros, probes
+negativos y entrada offline sin lanzar herramientas aprobaron. Defender activo.
+Evidencia local `atlas-public-check-456f875029674c93a9488e8ffeab83f7` en Temp.
+El enlace publico conserva su direccion y la promocion retiene 1.5.8 anterior.
+
+La carpeta QA de la misma USB NTFS autorizada se actualizo de 1.5.7 a 1.5.9,
+se comprobo con NoLaunch en 5.1/7, se volvio a 1.5.7 y se restauro 1.5.9.
+Evidencia publicable: [USB 1.5.9](USB-1.5.9-2026-10-26.json).
+El primer intento fallo por seleccion multiple de rutas del helper, despues
+de pasar 5.1. No se conto como aprobado. Se verificaron ambos pointers antes
+de retomar, se selecciono un solo ejecutable existente y la repeticion aprobo.
+Log final local `atlas-usb-latest-37ea2c6c8f8248218c42f344f80e1d65` en Temp.
+No se formatea ni se modifica la particion auxiliar; no se ensaya desconexion
+durante escritura ni perdida de alimentacion. La reconexion anterior de 1.5.7
+conserva su evidencia separada.
+
 Referencia: [Win32_Processor](https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-processor)
 documenta inventario, una instancia por procesador y UpgradeMethod como
 enumeracion SMBIOS. La aplicacion conserva el dato reportado sin presentarlo

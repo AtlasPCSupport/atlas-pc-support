@@ -56,6 +56,10 @@ inferidas, notas globales sin medicion y compras automaticas por CPU. Conserva
 inventario multiprocesador, codifica CPU/red en HTML y distingue fallo de red
 de ausencia de adaptadores. Windows 10 requiere revisar edicion/canal/parches,
 sin inferir cobertura por su nombre. No cierra los ensayos fisicos restantes.
+La carpeta QA USB ya contiene 1.5.9 y conserva 1.5.7 anterior: actualizacion,
+NoLaunch 5.1/7, rollback y restauracion final aprobados. Evidencia:
+[USB 1.5.9](USB-1.5.9-2026-10-26.json). Esto no actualiza automaticamente
+otras copias offline ni sustituye una nueva prueba de reconexion de esta version.
 
 1. Corregir problemas reproducibles sin VMs: detección de dependencias, errores
    ocultos y conclusiones que exceden la evidencia del diagnóstico.
