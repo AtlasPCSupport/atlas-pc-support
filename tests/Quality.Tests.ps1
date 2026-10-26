@@ -1,4 +1,128 @@
 #Requires -Modules Pester
+Describe 'Diagnostic HTML text boundaries' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        $ast=Get-TestAst $script:RepoRoot 'src/tools/Invoke-DiagnosticoMaster.ps1'
+        $translations=$ast.Find({param($n) $n -is [System.Management.Automation.Language.AssignmentStatementAst] -and $n.Left.Extent.Text -eq '$T'},$true)
+        . ([scriptblock]::Create($translations.Extent.Text))
+        $script:L=$T.en
+        . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-DiagnosticoMaster.ps1' 'Fmt-Line')
+        $script:CpuzKeywords=[scriptblock]::Create(($ast.Find({param($n) $n -is [System.Management.Automation.Language.AssignmentStatementAst] -and $n.Left.Extent.Text -eq '$keywords'},$true)).Extent.Text)
+        $script:CpuzLoop=[scriptblock]::Create(($ast.Find({param($n) $n -is [System.Management.Automation.Language.ForEachStatementAst] -and $n.Variable.Extent.Text -eq '$line' -and $n.Condition.Extent.Text -eq '$lines'},$true)).Extent.Text)
+        $script:BatteryHtml=[scriptblock]::Create(($ast.Find({param($n) $n -is [System.Management.Automation.Language.AssignmentStatementAst] -and $n.Left.Extent.Text -eq '$htmlBat' -and $n.Right.Extent.Text -match '\$L.BatMan'},$true)).Extent.Text)
+        $script:HeaderParts=foreach($var in @('$reportTitle','$htmlHead','$html')) {
+            $node=$ast.Find({param($n) $n -is [System.Management.Automation.Language.AssignmentStatementAst] -and $n.Left.Extent.Text -eq $var -and ($var -ne '$html' -or $n.Right.Extent.Text -match '^\$htmlHead')},$true)
+            [scriptblock]::Create($node.Extent.Text)
+        }
+    }
+    It 'encodes native inventory labels and values while preserving the owned span' {
+        $html=Fmt-Line '<script>label</script>' '<img src=x> A&B'
+        $html|Should -Not -Match '<script>|<img '
+        $html|Should -Match '<span class='; $html|Should -Match '&amp;'
+    }
+    It 'encodes CPU-Z text and temperature lines without losing section formatting' {
+        $lines=@('Processors Information','Name <script>cpu</script>','Temperature 90 degC <img src=x>','Chipset','Manufacturer A&B')
+        $cleanText='';$currentSection='';$startLog=$false;$isStorageSection=$false;$isGraphicsSection=$false
+        . $script:CpuzKeywords
+        . $script:CpuzLoop
+        $cleanText|Should -Not -Match '<script>|<img '
+        $cleanText|Should -Match '&lt;script&gt;|A&amp;B'
+        $cleanText|Should -Match 'color:#dc3545'
+        $cleanText|Should -Match 'categoria-resaltada'
+    }
+    It 'encodes battery identity in the real report fragment' {
+        $manufactureName='<script>battery</script>';$chemistry='A&B'
+        $batStatus='fixture';$batPercent='50%';$saludStr='fixture';$saludColor='#666';$cycleCount=5;$designCap=100;$fullCap=80;$notaFraude=''
+        . $script:BatteryHtml
+        $htmlBat|Should -Not -Match '<script>'
+        $htmlBat|Should -Match '&lt;script&gt;|A&amp;B'
+    }
+    It 'encodes title, identity and system text while retaining owned HTML sections' {
+        $aliasPC='<script>client</script>';$pc='<img src=x>';$txtSys='A&B <script>system</script>'
+        $css='';$fechaReporte='fixture';$yearReporte='2026'
+        $htmlHardware='<p>Owned fixture</p>'
+        foreach($name in @('htmlCPU','htmlRAM','htmlStorage','htmlNet','htmlBsod','htmlBat','htmlGpuTriage','htmlUpgrade')) {Set-Variable -Name $name -Value ''}
+        foreach($part in $script:HeaderParts){. $part}
+        $html|Should -Not -Match '<script>|<img '
+        $html|Should -Match 'A&amp;B'
+        $html|Should -Match '<p>Owned fixture</p>'
+    }
+}
+
+Describe 'CPU and network inventory without performance or upgrade guesses' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        $ast=Get-TestAst $script:RepoRoot 'src/tools/Invoke-DiagnosticoMaster.ps1'
+        $translations=$ast.Find({param($n) $n -is [System.Management.Automation.Language.AssignmentStatementAst] -and $n.Left.Extent.Text -eq '$T'},$true)
+        . ([scriptblock]::Create($translations.Extent.Text))
+        $script:L=$T.en
+        foreach($name in @('Get-CPUUpgradeInfo','Get-UpgradeAdvisor','Get-NetworkProfile')) {
+            . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-DiagnosticoMaster.ps1' $name)
+        }
+        function Get-CimInstance {[CmdletBinding()]param($ClassName,$OperationTimeoutSec) throw 'Real inventory blocked'}
+    }
+    It 'does not derive measured performance or a generation from <CpuName>' -ForEach @(@{CpuName='Fixture Unknown CPU'},@{CpuName='Intel Core i7-8700'},@{CpuName='AMD Ryzen 7 5800X'}) {
+        Mock Get-CimInstance {[pscustomobject]@{Name=$CpuName;NumberOfCores=8;NumberOfLogicalProcessors=16;UpgradeMethod=2;SocketDesignation='Unknown'}}
+        $cpu=Get-CPUUpgradeInfo
+        $cpu.Generation|Should -BeNullOrEmpty
+        $cpu.IsSoldered|Should -BeNullOrEmpty
+        $cpu.ScoreLabel|Should -Be $L.CpuUnmeasured
+        $advice=Get-UpgradeAdvisor -RAMData @{TotalGB=16} -CPUData $cpu -StorageData @{HasNVMe=$true} -OSCaption 'Windows 11'
+        $advice.Score|Should -BeNullOrEmpty
+        @($advice.Recommendations|Where-Object Area -eq CPU).Count|Should -Be 0
+        $advice.HtmlSection|Should -Not -Match 'COMPUTER IN GOOD SHAPE'
+    }
+    It 'does not equate a mobile suffix or UpgradeMethod None with proven BGA' -ForEach @(@{Code=2},@{Code=6},@{Code=64}) {
+        Mock Get-CimInstance {
+            if($ClassName -eq 'Win32_Processor'){[pscustomobject]@{Name='Fixture 1234U';UpgradeMethod=$Code;SocketDesignation='Unknown'}}
+            else{[pscustomobject]@{ChassisTypes=@(9)}}
+        }
+        $cpu=Get-CPUUpgradeInfo
+        $cpu.IsSoldered|Should -BeNullOrEmpty
+        $cpu.HtmlSection|Should -Match ([regex]::Escape($L.CpuServiceManual))
+        $cpu.HtmlSection|Should -Not -Match 'LGA1700|None/BGA|Not replaceable|SOCKETED - Replaceable'
+        Should -Invoke Get-CimInstance -Times 1 -Exactly -ParameterFilter {$ClassName -eq 'Win32_Processor' -and $OperationTimeoutSec -eq 10}
+    }
+    It 'marks denied or empty CPU inventory as not evaluated' -ForEach @(@{Denied=$true},@{Denied=$false}) {
+        Mock Get-CimInstance {if($Denied){throw 'Access denied'}}
+        $cpu=Get-CPUUpgradeInfo
+        $cpu.State|Should -Be NotEvaluated
+        $cpu.Summary|Should -Be $L.NoCpuInfo
+        $cpu.IsSoldered|Should -BeNullOrEmpty
+    }
+    It 'keeps all reported processor rows and encodes firmware strings' {
+        Mock Get-CimInstance {@([pscustomobject]@{Name='<script>fixture</script>';SocketDesignation='<img src=x>';UpgradeMethod=2},[pscustomobject]@{Name='Second CPU';SocketDesignation='A&B';UpgradeMethod=6})}
+        $cpu=Get-CPUUpgradeInfo
+        $cpu.ProcessorCount|Should -Be 2
+        $cpu.HtmlSection|Should -Match 'Second CPU|&lt;script&gt;|A&amp;B'
+        $cpu.HtmlSection|Should -Not -Match '<script>|<img '
+    }
+    It 'distinguishes denied networking inventory from no enabled adapters' {
+        Mock Get-CimInstance {throw 'Access denied'}
+        (Get-NetworkProfile).State|Should -Be NotEvaluated
+        Mock Get-CimInstance { }
+        (Get-NetworkProfile).State|Should -Be Observed
+    }
+    It 'retains both IP families and encodes every network value for HTML' {
+        Mock Get-CimInstance {[pscustomobject]@{IPEnabled=$true;Description='<script>adapter</script>';IPAddress=@('2001:db8::1','192.0.2.1');MACAddress='<img src=x>';DefaultIPGateway=@('2001:db8::2','192.0.2.2');DNSServerSearchOrder=@('A&B')}}
+        $network=Get-NetworkProfile
+        $network.HtmlSection|Should -Not -Match '<script>|<img '
+        $network.HtmlSection|Should -Match '2001:db8::1, 192.0.2.1'
+        $network.HtmlSection|Should -Match '2001:db8::2, 192.0.2.2'
+        $network.HtmlSection|Should -Match 'A&amp;B'
+        $network.TextSummary|Should -Match '<script>adapter</script>'
+    }
+    It 'does not declare all Windows 10 editions out of support from their caption' -ForEach @(@{Caption='Windows 10 Home'},@{Caption='Windows 10 Enterprise LTSC'}) {
+        $advice=Get-UpgradeAdvisor -RAMData @{TotalGB=16} -CPUData @{} -StorageData @{HasNVMe=$true} -OSCaption $Caption
+        $advice.Score|Should -BeNullOrEmpty
+        $advice.HtmlSection|Should -Not -Match 'End of support Oct 2025|good shape'
+        $advice.Recommendations.Action|Should -Contain $L.OsActWin10
+        $advice.HtmlSection|Should -Match 'edition|Edition'
+    }
+}
+
 Describe 'RAM evidence and cautious upgrade advice' {
     BeforeAll {
         $script:RepoRoot=Split-Path -Parent $PSScriptRoot
@@ -11,7 +135,7 @@ Describe 'RAM evidence and cautious upgrade advice' {
             . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-DiagnosticoMaster.ps1' $name)
         }
         function Get-CimInstance {[CmdletBinding()]param($ClassName,$OperationTimeoutSec) throw 'Real inventory blocked'}
-        $script:CpuFixture=@{Generation=12;IsBasic=$false;IsSoldered=$false;SocketType='Fixture'}
+        $script:CpuFixture=@{State='Observed'}
         $script:DiskFixture=@{HasNVMe=$true;HasHDD=$false;HasSATASSD=$false;CriticalSpace=$false}
     }
     BeforeEach {
@@ -30,7 +154,7 @@ Describe 'RAM evidence and cautious upgrade advice' {
         $ram.ChannelLabel|Should -Be $L.RamChannelUnknown
         $ram.TextSummary|Should -Not -Match 'Single Channel|Dual Channel'
         $advice=Get-UpgradeAdvisor -RAMData $ram -CPUData $script:CpuFixture -StorageData $script:DiskFixture -OSCaption 'Windows 11'
-        $advice.Recommendations.Title|Should -Not -Contain $L.RecRamSC
+        @($advice.Recommendations|Where-Object Area -eq RAM).Count|Should -Be 0
     }
     It 'does not call an unknown laptop form factor soldered or removable' {
         Mock Get-CimInstance {[pscustomobject]@{Capacity=8GB;FormFactor=0}} -ParameterFilter {$ClassName -eq 'Win32_PhysicalMemory'}
@@ -74,7 +198,7 @@ Describe 'RAM evidence and cautious upgrade advice' {
         Mock Get-CimInstance {[pscustomobject]@{Capacity=2GB;FormFactor=12}} -ParameterFilter {$ClassName -eq 'Win32_PhysicalMemory'}
         $ram=Get-RAMDiagnostic
         $advice=Get-UpgradeAdvisor -RAMData $ram -CPUData $script:CpuFixture -StorageData $script:DiskFixture -OSCaption 'Windows 11'
-        $advice.Score|Should -Not -BeNullOrEmpty
+        $advice.Score|Should -BeNullOrEmpty
         $finding=@($advice.Recommendations|Where-Object Area -eq RAM)
         $finding.Count|Should -Be 1
         $finding[0].Action|Should -Match 'Verify'
@@ -691,10 +815,11 @@ Describe 'Storage evidence without bus/size guesses' {
     }
     It 'does not label an unspecified large SATA disk as an HDD or unhealthy' {
         Mock Get-PhysicalDisk {[pscustomobject]@{FriendlyName='<script>fixture</script>';MediaType='Unspecified';BusType='SATA';Size=1TB;HealthStatus=$null}}
-        Mock Get-CimInstance { }
+        Mock Get-CimInstance {[pscustomobject]@{DeviceID='<img src=fixture>';DriveType=3;Size=1TB;FreeSpace=500GB}}
         $result=Get-StorageAnalysis
         $result.HasHDD|Should -BeFalse;$result.Disks[0].Health|Should -Be Unknown
         $result.HtmlSection|Should -Not -Match '<script>'; $result.HtmlSection|Should -Match '&lt;script&gt;'
+        $result.HtmlSection|Should -Not -Match '<img '; $result.HtmlSection|Should -Match '&lt;img '
     }
     It 'keeps an explicit HDD type and preserves a zero-valued status' {
         Mock Get-PhysicalDisk {[pscustomobject]@{FriendlyName='Fixture';MediaType='HDD';BusType='SATA';Size=1TB;HealthStatus=0}}
