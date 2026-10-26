@@ -111,18 +111,21 @@ function Invoke-DiagnosticoMaster {
             NoCpuInfo     = 'Could not get processor information.'
             NoNetAdapt    = 'No active network adapters.'
             NoBattery     = 'Battery capacity not evaluated: battery may be absent or its data unavailable.'
-            RamSummary    = 'Slots: {0}/{1} | Max: {2} | Channel: {3}'
+            RamSummary    = 'Memory devices reported: {0}/{1} | Max: {2} | Channel: {3}'
+            RamChannelUnknown = 'Not verified (SMBIOS inventory)'
+            RamXmpUnknown = 'Not verified'
+            RamIncomplete = 'RAM capacity unavailable or incomplete. Overall upgrade score not evaluated; verify hardware before purchasing.'
             DualCh        = 'Dual Channel'
             SingleCh      = 'Single Channel'
-            UnreportedMax = 'Not reported (Legacy BIOS)'
+            UnreportedMax = 'Not reported'
             UnknownLbl    = 'Unknown'
             FormUnk       = 'Unknown'
             FormSoldered  = 'Soldered'
             FormRemov     = 'Removable'
-            RamNoExp      = 'NOT UPGRADABLE: All modules ({0}) are soldered. Memory cannot be upgraded.'
+            RamNoExp      = 'Firmware indicates soldered memory ({0} devices). Check the service manual for expansion options.'
             RamMixed      = 'MIXED: {0} soldered + {1} removable. {2}'
-            RamFreeSlots  = '{0} free slot(s).'
-            RamUpgradable = 'UPGRADABLE: {0} removable. {1} free slot(s).'
+            RamFreeSlots  = '{0} unpopulated device position(s) reported; verify physical sockets in the service manual.'
+            RamUpgradable = 'Firmware reports {0} removable device(s), {1} unpopulated position(s). Verify sockets and compatibility before purchasing.'
             RamColSlot    = 'Slot'
             RamColMan     = 'Manufacturer'
             RamColCap     = 'Capacity'
@@ -201,18 +204,18 @@ function Invoke-DiagnosticoMaster {
             RecDiskCrit   = 'Critical disk space (>90%)'
             RecWin10Eol   = 'Windows 10 - End of support Oct 2025'
             RecOsObs      = 'Outdated operating system'
-            RamActSold    = 'RAM is soldered. Replacing the computer with one with at least 8GB is recommended.'
-            RamActFree    = 'Add a module in the free slot. {0} slot(s) available.'
-            RamActReplace = 'Replace existing module(s) with higher capacity.'
-            RamCostNew    = 'New computer: from S/1,200'
-            RamCost8      = '8GB DDR4 module: S/80-120 | DDR5: S/120-180'
-            RamCostKit    = '2x8GB DDR4 kit: S/150-200'
-            RamImpactLow  = 'Below 4GB the system freezes frequently. Windows needs at least 4GB just to boot.'
+            RamActSold    = 'Firmware indicates soldered memory. Verify expansion options in the service manual.'
+            RamActFree    = 'Firmware reports {0} unpopulated position(s). Verify physical sockets and supported modules before purchasing.'
+            RamActReplace = 'Verify module removability, supported capacity and compatibility in the service manual.'
+            RamCostNew    = 'Quote after model and compatibility verification'
+            RamCost8      = 'Quote after model and compatibility verification'
+            RamCostKit    = 'Quote after model and compatibility verification'
+            RamImpactLow  = 'Limited capacity can constrain multitasking; this inventory does not measure application performance.'
             RamImpactMed  = 'With 8GB you improve multitasking, browsing with many tabs and Office apps.'
-            RamActSoldOk  = 'Soldered RAM - cannot upgrade. Functional but limited.'
-            RamActFreeMed = 'Add module in free slot ({0} available). Target: 16GB.'
-            RamActReplaceMed = 'Replace with higher-capacity modules. Target: 16GB.'
-            RamCostNa     = 'N/A (soldered)'
+            RamActSoldOk  = 'Firmware indicates soldered memory. Verify expansion options in the service manual.'
+            RamActFreeMed = 'Firmware reports {0} unpopulated position(s). Verify sockets, compatibility and workload needs.'
+            RamActReplaceMed = 'Verify removable modules, supported capacity and workload needs before purchasing.'
+            RamCostNa     = 'Quote after model and compatibility verification'
             RamSCAct      = 'Add a second identical module for Dual Channel. Improves 10-20%.'
             RamSCCost     = 'Identical module: S/80-180'
             RamSCImpact   = 'Dual channel improves gaming, editing and graphics tasks.'
@@ -386,18 +389,21 @@ function Invoke-DiagnosticoMaster {
             NoCpuInfo     = 'No se pudo obtener info del procesador.'
             NoNetAdapt    = 'Sin adaptadores de red activos.'
             NoBattery     = 'Capacidad de bateria no evaluada: puede no existir o sus datos no estar disponibles.'
-            RamSummary    = 'Slots: {0}/{1} | Max: {2} | Canal: {3}'
+            RamSummary    = 'Dispositivos de memoria reportados: {0}/{1} | Max: {2} | Canal: {3}'
+            RamChannelUnknown = 'No verificado (inventario SMBIOS)'
+            RamXmpUnknown = 'No verificado'
+            RamIncomplete = 'Capacidad de RAM no disponible o incompleta. Puntuacion global de ampliacion no evaluada; verificar hardware antes de comprar.'
             DualCh        = 'Dual Channel'
             SingleCh      = 'Single Channel'
-            UnreportedMax = 'No reportado (BIOS Legacy)'
+            UnreportedMax = 'No reportado'
             UnknownLbl    = 'Desconocido'
             FormUnk       = 'Desconocido'
             FormSoldered  = 'Soldada'
             FormRemov     = 'Removible'
-            RamNoExp      = 'RAM NO AMPLIABLE: Todos los modulos ({0}) estan soldados. No es posible ampliar la memoria.'
+            RamNoExp      = 'El firmware indica memoria soldada ({0} dispositivos). Consultar opciones de ampliacion en el manual de servicio.'
             RamMixed      = 'MIXTA: {0} soldado(s) + {1} removible(s). {2}'
-            RamFreeSlots  = '{0} slot(s) libre(s).'
-            RamUpgradable = 'AMPLIABLE: {0} removible(s). {1} slot(s) libre(s).'
+            RamFreeSlots  = '{0} posicion(es) sin poblar reportadas; verificar sockets fisicos en el manual de servicio.'
+            RamUpgradable = 'Firmware: {0} dispositivo(s) removible(s), {1} posicion(es) sin poblar. Verificar sockets y compatibilidad antes de comprar.'
             RamColSlot    = 'Slot'
             RamColMan     = 'Fabricante'
             RamColCap     = 'Capacidad'
@@ -476,18 +482,18 @@ function Invoke-DiagnosticoMaster {
             RecDiskCrit   = 'Espacio en Disco Critico (>90%)'
             RecWin10Eol   = 'Windows 10 - Fin de Soporte Oct 2025'
             RecOsObs      = 'Sistema Operativo Obsoleto'
-            RamActSold    = 'RAM soldada. Se recomienda reemplazar el equipo por uno con minimo 8GB.'
-            RamActFree    = 'Agregar modulo en slot libre. Hay {0} slot(s) disponible(s).'
-            RamActReplace = 'Reemplazar modulo(s) existente(s) por mayor capacidad.'
-            RamCostNew    = 'Equipo nuevo: desde S/1,200'
-            RamCost8      = 'Modulo 8GB DDR4: S/80-120 | DDR5: S/120-180'
-            RamCostKit    = 'Kit 2x8GB DDR4: S/150-200'
-            RamImpactLow  = 'Con menos de 4GB el sistema se congela frecuentemente. Windows necesita minimo 4GB solo para arrancar.'
+            RamActSold    = 'El firmware indica memoria soldada. Verificar opciones de ampliacion en el manual de servicio.'
+            RamActFree    = 'El firmware reporta {0} posicion(es) sin poblar. Verificar sockets fisicos y modulos compatibles antes de comprar.'
+            RamActReplace = 'Verificar que los modulos sean removibles, capacidad admitida y compatibilidad en el manual de servicio.'
+            RamCostNew    = 'Cotizar tras verificar modelo y compatibilidad'
+            RamCost8      = 'Cotizar tras verificar modelo y compatibilidad'
+            RamCostKit    = 'Cotizar tras verificar modelo y compatibilidad'
+            RamImpactLow  = 'La capacidad limitada puede restringir la multitarea; este inventario no mide el rendimiento de las aplicaciones.'
             RamImpactMed  = 'Con 8GB se mejora multitarea, navegacion con muchas pestanas y apps de Office.'
-            RamActSoldOk  = 'RAM soldada - no ampliable. Funcional pero limitado.'
-            RamActFreeMed = 'Agregar modulo en slot libre ({0} disponible). Objetivo: 16GB.'
-            RamActReplaceMed = 'Reemplazar por modulos de mayor capacidad. Objetivo: 16GB.'
-            RamCostNa     = 'N/A (soldada)'
+            RamActSoldOk  = 'El firmware indica memoria soldada. Verificar opciones de ampliacion en el manual de servicio.'
+            RamActFreeMed = 'Firmware: {0} posicion(es) sin poblar. Verificar sockets, compatibilidad y necesidades de uso.'
+            RamActReplaceMed = 'Verificar modulos removibles, capacidad admitida y necesidades de uso antes de comprar.'
+            RamCostNa     = 'Cotizar tras verificar modelo y compatibilidad'
             RamSCAct      = 'Agregar segundo modulo identico para Dual Channel. Mejora 10-20%.'
             RamSCCost     = 'Modulo identico: S/80-180'
             RamSCImpact   = 'Dual channel mejora rendimiento en juegos, edicion y tareas graficas.'
@@ -637,38 +643,47 @@ function Get-RAMDiagnostic {
         HtmlSection = ""; TextSummary = ""; MaxCapGB = 0
         SlotsTotal = 0; SlotsUsed = 0; SlotsLibres = 0
         Modules = @(); SolderedWarning = ""
-        TotalGB = 0; AllSoldered = $false; HasFreeSlots = $false
-        IsDualChannel = $false
+        TotalGB = $null; AllSoldered = $false; HasFreeSlots = $false
+        IsDualChannel = $null; ChannelLabel = $L.RamChannelUnknown
     }
 
     try {
-        $placa = Get-CimInstance Win32_PhysicalMemoryArray -ErrorAction Stop | Select-Object -First 1
-        $modulos = Get-CimInstance Win32_PhysicalMemory -ErrorAction Stop
+        $modulos = @(Get-CimInstance Win32_PhysicalMemory -OperationTimeoutSec 10 -ErrorAction Stop)
     } catch {
         $result.HtmlSection = "<h2>$($L.H4Ram)</h2><pre>$($L.NoMemHw)</pre>"
+        $result.TextSummary = $L.NoMemHw
         return $result
     }
-
-    if ($placa.MaxCapacity -and $placa.MaxCapacity -gt 0) {
-        $result.MaxCapGB = [math]::Round(($placa.MaxCapacity / 1024 / 1024), 0)
+    if (-not $modulos.Count) {
+        $result.HtmlSection = "<pre>$($L.NoMemHw)</pre>"
+        $result.TextSummary = $L.NoMemHw
+        return $result
     }
-
-    $result.SlotsTotal = if ($placa.MemoryDevices) { $placa.MemoryDevices } else { 0 }
+    # Array metadata may fail independently of populated memory devices.
+    $arrays = @()
+    try {
+        $arrays = @(Get-CimInstance Win32_PhysicalMemoryArray -OperationTimeoutSec 10 -ErrorAction Stop |
+            Where-Object { -not $_.Use -or $_.Use -eq 3 })
+    } catch { Write-Verbose "Memory array metadata unavailable: $_" }
+    $maxima = @($arrays | ForEach-Object {
+        if ($_.MaxCapacityEx -gt 0) { [double]$_.MaxCapacityEx }
+        elseif ($_.MaxCapacity -gt 0 -and $_.MaxCapacity -ne 2147483648) { [double]$_.MaxCapacity }
+    })
+    if ($arrays.Count -gt 0 -and $maxima.Count -eq $arrays.Count) {
+        $result.MaxCapGB = [math]::Round(($maxima | Measure-Object -Sum).Sum / 1MB, 2)
+    }
+    if ($arrays.Count -gt 0 -and @($arrays | Where-Object { $_.MemoryDevices -gt 0 }).Count -eq $arrays.Count) {
+        $result.SlotsTotal = ($arrays | Measure-Object MemoryDevices -Sum).Sum
+    }
     $result.SlotsUsed = @($modulos).Count
     $result.SlotsLibres = [math]::Max(0, $result.SlotsTotal - $result.SlotsUsed)
     $result.HasFreeSlots = ($result.SlotsLibres -gt 0)
-    $result.TotalGB = [math]::Round(($modulos | Measure-Object Capacity -Sum).Sum / 1GB, 0)
-    $allSameCap = ($modulos | Select-Object -ExpandProperty Capacity -Unique | Measure-Object).Count -eq 1
-    $result.IsDualChannel = ($result.SlotsUsed -ge 2 -and $allSameCap)
+    if (@($modulos | Where-Object { $_.Capacity -gt 0 }).Count -eq $modulos.Count) {
+        $result.TotalGB = [math]::Round(($modulos | Measure-Object Capacity -Sum).Sum / 1GB, 2)
+    }
+    # Device count/capacity do not establish the active channel mode or XMP state.
 
     $maxCapDisplay = if ($result.MaxCapGB -gt 0) { "$($result.MaxCapGB) GB" } else { $L.UnreportedMax }
-
-    $chassis = Get-CimInstance Win32_SystemEnclosure -ErrorAction SilentlyContinue
-    $isLaptop = $false
-    if ($chassis) {
-        $laptopTypes = @(9, 10, 14, 31, 32)
-        foreach ($ct in $chassis.ChassisTypes) { if ($ct -in $laptopTypes) { $isLaptop = $true; break } }
-    }
 
     $formFactorNames = @{
         0=$L.FormUnk; 1="Other"; 2="SIP"; 3="DIP"; 4="ZIP"; 5="SOJ"; 6="Proprietary"
@@ -681,10 +696,12 @@ function Get-RAMDiagnostic {
 
     $htmlTable = "<table class='info-table'>"
     $htmlTable += "<tr><th>$($L.RamColSlot)</th><th>$($L.RamColMan)</th><th>$($L.RamColCap)</th><th>$($L.RamColSpeed)</th><th>$($L.RamColXmp)</th><th>$($L.RamColVolt)</th><th>$($L.RamColType)</th><th>$($L.RamColPart)</th></tr>"
-    $textDetail = ($L.RamSummary -f $result.SlotsUsed, $result.SlotsTotal, $maxCapDisplay, $(if($result.IsDualChannel){$L.DualCh}else{$L.SingleCh})) + "`n"
+    $slotsDisplay = if ($result.SlotsTotal -gt 0) { $result.SlotsTotal } else { $L.UnknownLbl }
+    $textDetail = ($L.RamSummary -f $result.SlotsUsed, $slotsDisplay, $maxCapDisplay, $result.ChannelLabel) + "`n"
 
     foreach ($ram in $modulos) {
-        $capGB = [math]::Round($ram.Capacity / 1GB, 0)
+        $capGB = if ($ram.Capacity -gt 0) { [math]::Round($ram.Capacity / 1GB, 2) } else { $null }
+        $capDisplay = if ($null -ne $capGB) { "${capGB} GB" } else { $L.UnknownLbl }
         $fab = if ($ram.Manufacturer) { $ram.Manufacturer.Trim() } else { "N/A" }
         $part = if ($ram.PartNumber) { $ram.PartNumber.Trim() } else { "N/A" }
         $slot = if ($ram.DeviceLocator) { $ram.DeviceLocator } else { "N/A" }
@@ -702,22 +719,15 @@ function Get-RAMDiagnostic {
         $nativeSpeed = if ($ram.Speed) { $ram.Speed } else { 0 }
         $speedDisplay = if ($configSpeed -gt 0) { "${configSpeed} MHz" } elseif ($nativeSpeed -gt 0) { "${nativeSpeed} MHz (Nat)" } else { "N/A" }
 
-        $xmpStatus = "OK"; $xmpColor = "#5cb85c"; $xmpIcon = "&#10004;"
-        if ($configSpeed -gt 0 -and $nativeSpeed -gt 0 -and $configSpeed -lt $nativeSpeed) {
-            $xmpStatus = "LOW (${configSpeed} vs ${nativeSpeed} MHz) - XMP off?"
-            if ($lang -eq 'es') { $xmpStatus = "BAJA (${configSpeed} vs ${nativeSpeed} MHz) - XMP Apagado?" }
-            $xmpColor = "#d9534f"; $xmpIcon = "&#9888;"
-        } elseif ($configSpeed -eq 0 -or $nativeSpeed -eq 0) {
-            $xmpStatus = if ($lang -eq 'es') { "No verificable" } else { "Not verifiable" }
-            $xmpColor = "#888"; $xmpIcon = "?"
-        }
+        $xmpStatus = $L.RamXmpUnknown; $xmpColor = "#888"; $xmpIcon = "?"
 
-        $thisIsSoldered = ($devLoc -match "Solder|Onboard|On Board|Integrad") -or
-                          ($bankLabel -match "Solder|Onboard") -or
-                          ($ff -eq 0 -and $isLaptop) -or
-                          ($ff -in @(14, 21, 22))
+        $thisIsSoldered = $null
+        if (($devLoc -match "Solder|Onboard|On Board|Integrad") -or
+            ($bankLabel -match "Solder|Onboard") -or ($ff -in @(14, 21, 22))) { $thisIsSoldered = $true }
+        elseif ($ff -in @(8, 12, 24)) { $thisIsSoldered = $false }
 
-        if ($thisIsSoldered) { $solderedCount++ } else { $removableCount++ }
+        if ($thisIsSoldered -eq $true) { $solderedCount++ }
+        elseif ($thisIsSoldered -eq $false) { $removableCount++ }
 
         $typeDisplay = $ffName; $typeStyle = ""
         if ($thisIsSoldered) {
@@ -726,12 +736,15 @@ function Get-RAMDiagnostic {
             $typeDisplay = "&#128280; ${ffName} ($($L.FormRemov))"; $typeStyle = "color:#28a745"
         }
 
-        $htmlTable += "<tr><td>${slot}</td><td>${fab}</td><td>${capGB} GB</td><td>${speedDisplay}</td>"
+        $safeSlot = [System.Net.WebUtility]::HtmlEncode($slot)
+        $safeFab = [System.Net.WebUtility]::HtmlEncode($fab)
+        $safePart = [System.Net.WebUtility]::HtmlEncode($part)
+        $htmlTable += "<tr><td>${safeSlot}</td><td>${safeFab}</td><td>${capDisplay}</td><td>${speedDisplay}</td>"
         $htmlTable += "<td style='color:${xmpColor};font-weight:bold'>${xmpIcon} ${xmpStatus}</td>"
         $htmlTable += "<td>${voltaje}</td><td style='${typeStyle};font-size:12px'>${typeDisplay}</td>"
-        $htmlTable += "<td style='font-size:10px'>${part}</td></tr>"
+        $htmlTable += "<td style='font-size:10px'>${safePart}</td></tr>"
 
-        $textDetail += "  ${slot}: ${capGB}GB ${fab} @ ${speedDisplay} (${xmpStatus}) [${ffName}]`n"
+        $textDetail += "  ${slot}: ${capDisplay} ${fab} @ ${speedDisplay} (${xmpStatus}) [${ffName}]`n"
 
         $result.Modules += @{
             Slot = $slot; Manufacturer = $fab; CapacityGB = $capGB
@@ -762,9 +775,9 @@ function Get-RAMDiagnostic {
         $solderHtml += "</div>"
     }
 
-    $channelLbl = if ($result.IsDualChannel) { $L.DualCh } else { $L.SingleCh }
+    $channelLbl = $result.ChannelLabel
     $htmlSummary = "<div style='background:#f0f4f8;padding:10px 15px;border-radius:4px;margin-bottom:10px;font-size:13px'>"
-    $htmlSummary += "<strong>$($L.RamColSlot):</strong> $($result.SlotsUsed)/$($result.SlotsTotal) | "
+    $htmlSummary += "<strong>$($L.RamColSlot) (SMBIOS):</strong> $($result.SlotsUsed)/${slotsDisplay} | "
     $htmlSummary += "<strong>Max:</strong> ${maxCapDisplay} | "
     $htmlSummary += "<strong>$(if($lang -eq 'es'){'Canal'}else{'Channel'}):</strong> ${channelLbl}"
     $htmlSummary += "</div>"
@@ -939,23 +952,20 @@ function Get-UpgradeAdvisor {
     $recommendations = @(); $overallScore = 0; $maxScore = 0
 
     $maxScore += 25; $ramGB = $RAMData.TotalGB
-    if ($ramGB -lt 4) {
+    $ramKnown = ($null -ne $ramGB -and $ramGB -gt 0)
+    if ($ramKnown -and $ramGB -lt 4) {
         $overallScore += 0
         if ($RAMData.AllSoldered) { $ramAction=$L.RamActSold; $ramCost=$L.RamCostNew }
         elseif ($RAMData.HasFreeSlots) { $ramAction=($L.RamActFree -f $RAMData.SlotsLibres); $ramCost=$L.RamCost8 }
         else { $ramAction=$L.RamActReplace; $ramCost=$L.RamCost8 }
         $recommendations += @{ Area="RAM"; Level=$L.LvlCritical; Color="#dc3545"; Icon="&#9888;"; Title=($L.RecRamLow -f $ramGB); Action=$ramAction; Cost=$ramCost; Impact=$L.RamImpactLow; Score=0 }
-    } elseif ($ramGB -lt 8) {
+    } elseif ($ramKnown -and $ramGB -lt 8) {
         $overallScore += 10
         if ($RAMData.AllSoldered) { $ramAction=$L.RamActSoldOk; $ramCost=$L.RamCostNa }
         elseif ($RAMData.HasFreeSlots) { $ramAction=($L.RamActFreeMed -f $RAMData.SlotsLibres); $ramCost=$L.RamCost8 }
         else { $ramAction=$L.RamActReplaceMed; $ramCost=$L.RamCostKit }
         $recommendations += @{ Area="RAM"; Level=$L.LvlLow; Color="#fd7e14"; Icon="&#9432;"; Title=($L.RecRamLim -f $ramGB); Action=$ramAction; Cost=$ramCost; Impact=$L.RamImpactMed; Score=10 }
-    } else { $overallScore += 25 }
-
-    if (-not $RAMData.IsDualChannel -and $ramGB -ge 8 -and -not $RAMData.AllSoldered) {
-        $recommendations += @{ Area="RAM"; Level=$L.LvlNotice; Color="#ffc107"; Icon="&#9432;"; Title=$L.RecRamSC; Action=$L.RamSCAct; Cost=$L.RamSCCost; Impact=$L.RamSCImpact; Score=0 }
-    }
+    } elseif ($ramKnown) { $overallScore += 25 }
 
     $maxScore += 25
     if ($CPUData.IsBasic -or $CPUData.Generation -le 3) {
@@ -1000,12 +1010,15 @@ function Get-UpgradeAdvisor {
     elseif ($globalPct -ge 60) { $globalLabel=$L.ScoreOk; $globalColor="#ffc107"; $globalIcon="&#9432;" }
     elseif ($globalPct -ge 35) { $globalLabel=$L.LvlLow; $globalColor="#fd7e14"; $globalIcon="&#9888;" }
     else { $globalLabel=$L.LvlCritical; $globalColor="#dc3545"; $globalIcon="&#9888;" }
+    if (-not $ramKnown) { $globalPct=$null; $globalLabel=$L.GpuNotEvaluated; $globalColor="#666666" }
 
     $html = ""
-    if ($recommendations.Count -eq 0) {
+    if ($recommendations.Count -eq 0 -and $ramKnown) {
         $html = "<div style='background:#d4edda;color:#155724;padding:20px;border-radius:6px;text-align:center;font-size:16px'><strong>&#10004; $($L.UpgGood)</strong><br>$($L.UpgNoCrit)</div>"
     } else {
-        $html += "<div style='text-align:center;margin-bottom:20px'><div style='display:inline-block;background:${globalColor};color:#fff;padding:15px 30px;border-radius:50px;font-size:20px;font-weight:bold'>${globalIcon} $($L.UpgState -f $globalLabel, $globalPct)</div></div>"
+        if ($ramKnown) {
+            $html += "<div style='text-align:center;margin-bottom:20px'><div style='display:inline-block;background:${globalColor};color:#fff;padding:15px 30px;border-radius:50px;font-size:20px;font-weight:bold'>${globalIcon} $($L.UpgState -f $globalLabel, $globalPct)</div></div>"
+        } else { $html += "<p>$($L.RamIncomplete)</p>" }
         $html += "<table class='info-table' style='margin-top:15px'><tr><th style='width:70px'>$($L.UpgArea)</th><th style='width:80px'>$($L.UpgLevel)</th><th>$($L.UpgDiag)</th><th>$($L.UpgAction)</th><th style='width:180px'>$($L.UpgCost)</th></tr>"
         $sorted = $recommendations | Sort-Object {
             $lvl = $_.Level
@@ -1752,8 +1765,7 @@ do {
         Escribir-Centrado $L.Step4 "Cyan"
         $ramDiag = Get-RAMDiagnostic
         $htmlRAM = "<h2>$($L.H4Ram)</h2>" + $ramDiag.HtmlSection
-        $ch = if($ramDiag.IsDualChannel){'Dual'}else{'Single'}
-        Write-Host "    Slots: $($ramDiag.SlotsUsed)/$($ramDiag.SlotsTotal) | Total: $($ramDiag.TotalGB)GB | Channel: ${ch}" -ForegroundColor Gray
+        Write-Host "    $($ramDiag.TextSummary)" -ForegroundColor Gray
         if ($ramDiag.SolderedWarning) { Write-Host "    $($ramDiag.SolderedWarning)" -ForegroundColor Yellow }
 
         Escribir-Centrado $L.Step5 "Cyan"
@@ -1838,10 +1850,11 @@ do {
         $htmlUpgrade = "<h2 style='background:#FF5500'>$($L.H9Upgrade)</h2>" + $upgradeResult.HtmlSection
         $scoreLbl = $upgradeResult.ScoreLabel
         if ($scoreLbl -eq $L.LvlCritical -or $scoreLbl -eq $L.LvlLow) { $scoreCol = 'Red' }
-        elseif ($scoreLbl -eq $L.ScoreOk) { $scoreCol = 'Yellow' }
+        elseif ($scoreLbl -eq $L.ScoreOk -or $null -eq $upgradeResult.Score) { $scoreCol = 'Yellow' }
         else { $scoreCol = 'Green' }
         Write-Host ""; Write-Host "    ========================================" -ForegroundColor $scoreCol
-        Write-Host "    $($L.ScoreLine -f $upgradeResult.Score, $upgradeResult.ScoreLabel)" -ForegroundColor $scoreCol
+        $scoreDisplay = if ($null -eq $upgradeResult.Score) { '--' } else { $upgradeResult.Score }
+        Write-Host "    $($L.ScoreLine -f $scoreDisplay, $upgradeResult.ScoreLabel)" -ForegroundColor $scoreCol
         Write-Host "    ========================================" -ForegroundColor $scoreCol
         if ($upgradeResult.Recommendations.Count -gt 0) {
             foreach ($rec in $upgradeResult.Recommendations) {
@@ -1849,6 +1862,7 @@ do {
                 Write-Host "    [$($rec.Level)] $($rec.Title)" -ForegroundColor $rcCol
             }
         }
+        elseif ($null -eq $upgradeResult.Score) { Write-Host $L.RamIncomplete -ForegroundColor Yellow }
         else { Write-Host $L.NoRecs -ForegroundColor Green }
 
         Escribir-Centrado $L.Step10 "Green"

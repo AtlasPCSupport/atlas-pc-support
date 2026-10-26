@@ -46,6 +46,11 @@ no verificado en carpetas de recursos del preparador, exige hashes de todos sus
 archivos y bloquea destinos recursivos/enlaces. No sustituye pruebas de los
 instaladores, de rendimiento de los discos o recuperacion de datos reales.
 
+La revision [RAM](RAM-2026-10-26.md) de 1.5.8 retira inferencias de canal/XMP
+y de memoria soldada por formato desconocido. Distingue capacidad no evaluada
+de cero GB, consulta limites extendidos y codifica cadenas del dispositivo en
+HTML. No demuestra ampliacion fisica ni cierra las heuristicas CPU/OS restantes.
+
 1. Corregir problemas reproducibles sin VMs: detección de dependencias, errores
    ocultos y conclusiones que exceden la evidencia del diagnóstico.
 2. Ejecutar regresiones aisladas en PowerShell 5.1/7 y comprobaciones de
