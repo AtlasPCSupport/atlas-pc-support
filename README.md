@@ -41,6 +41,8 @@ The manifest retains **27 entries**. The deduplicator is unavailable; selected r
 
 See the [generated tool/dependency inventory](docs/INVENTARIO.md), [support matrix and restrictions](docs/SUPPORT-MATRIX.md), and [plan closure with pending QA](docs/audits/CIERRE-PLAN-2026-10-24.md). CI checks inventory freshness against the manifest.
 
+Current acceptance work and owner decisions: [autonomous work and remaining real-world checks](docs/TRABAJO-AUTONOMO-Y-ACEPTACION.md) (Spanish).
+
 Dashboard/system reads run on demand in a background PowerShell runspace. Shareable reports redact recognizable sensitive values and include release trace. Review free text before sharing; explicit BitLocker recovery backups contain secrets and must be stored separately.
 
 ---
