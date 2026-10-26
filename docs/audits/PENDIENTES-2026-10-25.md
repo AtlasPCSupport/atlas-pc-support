@@ -9,6 +9,8 @@ fotografía 1.4.1 sin confundirlos con código todavía sin implementar.
 La continuación sin VMs está detallada en [SIN-VM](SIN-VM-2026-10-25.md): se
 corrigieron detección WinGet, límites de dependencias, cobertura/HTML del triaje
 GPU, consultas heredadas de IA, accesibilidad básica y el checker público.
+Los exportadores auxiliares de Diagnóstico exigen evidencia nueva por intento;
+datos ausentes de batería/BSOD ya no se presentan como ausencia de fallos.
 Dos ensayos de Robocopy real sobre archivos ficticios comprobaron copia incremental
 y fallo de archivo bloqueado. Estos resultados no cierran la aceptación de
 hardware, recuperación, USB ni instalaciones reales de terceros.
@@ -25,7 +27,7 @@ hardware, recuperación, USB ni instalaciones reales de terceros.
 | 1 | Aplicaciones | Instalar las aplicaciones usadas, fuentes/Store, versión instalada, reinicios y requisitos OS del paquete entregado | Pruebas por paquete y edición. La instantánea contiene 56 manifiestos WinGet y dos entradas Store; no garantiza las versiones futuras ni licencias. |
 | 2 | Identidad y confianza de Atlas | Authenticode y confianza offline frente a sustitución de toda la USB | Certificado/identidad confiable y política de distribución. Un certificado autofirmado sin confianza previa no resuelve el problema. |
 | 2 | Licencias y permisos externos | Uso laboral/redistribución de terceros, custodia/retención de informes y alcance efectivo del PAT privado | Decisión del propietario y revisión por proveedor. No comprar ni rotar credenciales a ciegas. FastCopy de respaldo ya está actualizado a 5.12.0. |
-| 2 | Diagnósticos, UI y deuda | Sensores/CPU/GPU/batería reales, interpretación de eventos, lector de pantalla/DPI/monitores y otras invocaciones heredadas | Equipos representativos y revisión por impacto. Tras los cambios quedan 294/320 avisos en 5.1/7.6.9 y 124 catches vacíos; requieren distinguir tolerancia intencional de fallo ocultado. Se eliminó el fallback Get-WmiObject sin suprimir reglas. |
+| 2 | Diagnósticos, UI y deuda | Sensores/CPU/GPU/batería reales, interpretación de eventos, lector de pantalla/DPI/monitores y otras invocaciones heredadas | Equipos representativos y revisión por impacto. Tras los cambios quedan 293/319 avisos en 5.1/7.6.9 y 123 catches vacíos; requieren distinguir tolerancia intencional de fallo ocultado. Se eliminó el fallback Get-WmiObject sin suprimir reglas. |
 | 2 | Deduplicador | Backend y borrado reversible, si se decide ofrecer esa capacidad | La tarjeta ya está deshabilitada y explica la ausencia. Integrarlo es alcance adicional; no existe un motor verificado que pueda activarse sin más. |
 
 ## Orden práctico

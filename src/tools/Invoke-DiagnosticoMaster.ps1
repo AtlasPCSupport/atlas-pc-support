@@ -86,7 +86,7 @@ function Invoke-DiagnosticoMaster {
             H8Battery     = '8. Power analysis'
             H9Upgrade     = '10. ⚡ UPGRADE RECOMMENDATIONS - ATLAS ADVISOR'
             H10GpuTriage  = '9. GPU / display-driver slowness triage'
-            BsodNone      = 'No recent errors.'
+            BsodNone      = 'No usable BlueScreenView records. This does not certify absence of crashes.'
             HtmlFooter1   = 'This report was generated automatically by ATLAS PC SUPPORT v82'
             HtmlFooter2   = 'ATLAS PC SUPPORT &copy; {0} - Huanuco, Peru'
             CatProc       = 'Processor'
@@ -110,7 +110,7 @@ function Invoke-DiagnosticoMaster {
             NoMemHw       = 'Could not access memory hardware.'
             NoCpuInfo     = 'Could not get processor information.'
             NoNetAdapt    = 'No active network adapters.'
-            NoBattery     = 'No battery detected (Desktop PC).'
+            NoBattery     = 'Battery capacity not evaluated: battery may be absent or its data unavailable.'
             RamSummary    = 'Slots: {0}/{1} | Max: {2} | Channel: {3}'
             DualCh        = 'Dual Channel'
             SingleCh      = 'Single Channel'
@@ -361,7 +361,7 @@ function Invoke-DiagnosticoMaster {
             H8Battery     = '8. Analisis de Energia'
             H9Upgrade     = '10. ⚡ RECOMENDACIONES DE UPGRADE - ATLAS ADVISOR'
             H10GpuTriage  = '9. Triaje de lentitud por GPU / driver de video'
-            BsodNone      = 'Sin errores recientes.'
+            BsodNone      = 'Sin registros utilizables de BlueScreenView. No certifica ausencia de fallos.'
             HtmlFooter1   = 'Este informe fue generado automaticamente por ATLAS PC SUPPORT v82'
             HtmlFooter2   = 'ATLAS PC SUPPORT &copy; {0} - Huanuco, Peru'
             CatProc       = 'Procesador'
@@ -385,7 +385,7 @@ function Invoke-DiagnosticoMaster {
             NoMemHw       = 'No se pudo acceder al hardware de memoria.'
             NoCpuInfo     = 'No se pudo obtener info del procesador.'
             NoNetAdapt    = 'Sin adaptadores de red activos.'
-            NoBattery     = 'No se detecto bateria (PC de Escritorio).'
+            NoBattery     = 'Capacidad de bateria no evaluada: puede no existir o sus datos no estar disponibles.'
             RamSummary    = 'Slots: {0}/{1} | Max: {2} | Canal: {3}'
             DualCh        = 'Dual Channel'
             SingleCh      = 'Single Channel'
@@ -618,9 +618,17 @@ function Dibujar-Header {
 }
 
 function Start-ProcessWithTimeout {
-    param([string]$FilePath,[string]$Arguments='', [int]$TimeoutSeconds=60,[string]$WindowStyle='Hidden')
+    param([string]$FilePath,[string]$Arguments='', [int]$TimeoutSeconds=60,[string]$WindowStyle='Hidden',[string]$ExpectedOutput)
+    if ($ExpectedOutput -and (Test-Path -LiteralPath $ExpectedOutput -ErrorAction Stop)) {
+        Write-Warning 'Diagnostic output already exists. Refusing to reuse previous evidence.'
+        return $false
+    }
     $result=Invoke-AtlasNativeProcess -FilePath $FilePath -Arguments $Arguments -TimeoutSeconds $TimeoutSeconds
     if($result.State -ne 'Correct'){Write-Warning "Diagnostic process ${FilePath}: $($result.State), exit $($result.ExitCode)";return $false}
+    if ($ExpectedOutput) {
+        try { Assert-AtlasPlainFile $ExpectedOutput }
+        catch { Write-Warning 'Diagnostic output was not generated as a new plain file.'; return $false }
+    }
     return $true
 }
 
@@ -1672,10 +1680,10 @@ do {
 
             if ($exeCpuz) {
                 Escribir-Centrado $L.Step2Detail "Cyan"
-                $tempReportPath = Join-Path $env:TEMP "cpuz_report_$(Get-Date -Format 'HHmmss')"
-                $arg = "-txt=${tempReportPath}"
-                $cpuzOk = Start-ProcessWithTimeout -FilePath $exeCpuz.FullName -Arguments $arg -TimeoutSeconds 30 -WindowStyle "Normal"
+                $tempReportPath = Join-Path $env:TEMP ('cpuz_report_' + [guid]::NewGuid().ToString('N'))
+                $arg = '-txt="' + $tempReportPath + '"'
                 $reportFile = "${tempReportPath}.txt"
+                $cpuzOk = Start-ProcessWithTimeout -FilePath $exeCpuz.FullName -Arguments $arg -TimeoutSeconds 30 -WindowStyle "Normal" -ExpectedOutput $reportFile
                 if ($cpuzOk -and (Test-Path $reportFile)) {
                     try { $lines = Get-Content $reportFile -ErrorAction Stop } catch { $lines = Get-Content $reportFile -Encoding Default }
                     $cleanText=""; $currentSection=""; $startLog=$false; $isStorageSection=$false; $isGraphicsSection=$false
@@ -1761,9 +1769,9 @@ do {
         $htmlBsod = "<h2>$($L.H7Bsod)</h2><pre>$($L.BsodNone)</pre>"
         $exeBsod = $diagDeps.BlueScreenView
         if (-not $exeBsod) { $exeBsod = Join-Path $appsLegacy "BlueScreenView.exe" }
-        $tmpBsod = Join-Path $env:TEMP "atlas_diag_bsod.txt"
+        $tmpBsod = Join-Path $env:TEMP ('atlas_diag_bsod_' + [guid]::NewGuid().ToString('N') + '.txt')
         if (Test-Path $exeBsod) {
-            $bsodOk = Start-ProcessWithTimeout -FilePath $exeBsod -Arguments "/stext `"${tmpBsod}`"" -TimeoutSeconds 15
+            $bsodOk = Start-ProcessWithTimeout -FilePath $exeBsod -Arguments "/stext `"${tmpBsod}`"" -TimeoutSeconds 15 -ExpectedOutput $tmpBsod
             if ($bsodOk -and (Test-Path $tmpBsod)) { $c=Get-Content $tmpBsod -Raw -ErrorAction SilentlyContinue; if($c -and $c.Length -gt 10){$safeC=[System.Net.WebUtility]::HtmlEncode($c);$htmlBsod="<h2>$($L.H7Bsod)</h2><pre>${safeC}</pre>"}; Remove-Item $tmpBsod -ErrorAction SilentlyContinue }
         }
 
@@ -1773,12 +1781,28 @@ do {
         if (-not $exeBatView) { $exeBatView = Join-Path $appsLegacy "BatteryInfoView.exe" }
         $designCap=0;$fullCap=0;$cycleCount=0;$chemistry="N/A";$voltage="N/A";$manufactureName="N/A"
         if (Test-Path $exeBatView) {
-            $tmpBatInfo=Join-Path $env:TEMP "atlas_diag_bat_info.txt"
-            $batOk=Start-ProcessWithTimeout -FilePath $exeBatView -Arguments "/stext `"${tmpBatInfo}`"" -TimeoutSeconds 15
+            $tmpBatInfo=Join-Path $env:TEMP ('atlas_diag_bat_info_' + [guid]::NewGuid().ToString('N') + '.txt')
+            $batOk=Start-ProcessWithTimeout -FilePath $exeBatView -Arguments "/stext `"${tmpBatInfo}`"" -TimeoutSeconds 15 -ExpectedOutput $tmpBatInfo
             if($batOk -and (Test-Path $tmpBatInfo)){try{$linesBat=$null;foreach($enc in @("Unicode","UTF8","Default")){try{$linesBat=Get-Content $tmpBatInfo -Encoding $enc -ErrorAction Stop;if($linesBat -and $linesBat.Count -gt 3){break}}catch{$linesBat=$null}};if($linesBat){foreach($batLine in $linesBat){if($batLine -match "Designed Capacity\s+:\s+([0-9]+)"){$designCap=[int64]$matches[1]};if($batLine -match "Full Charged Capacity\s+:\s+([0-9]+)"){$fullCap=[int64]$matches[1]};if($batLine -match "Number of charge/discharge cycles\s+:\s+([0-9]+)"){$cycleCount=[int]$matches[1]};if($batLine -match "Battery Manufacturer\s+:\s+(.*)"){$manufactureName=$matches[1].Trim()};if($batLine -match "Chemistry\s+:\s+(.*)"){$chemistry=$matches[1].Trim()};if($batLine -match "Voltage\s+:\s+(.*)"){$voltage=$matches[1].Trim()}}}}catch{};Remove-Item $tmpBatInfo -ErrorAction SilentlyContinue}
         }
-        if($designCap -eq 0){$tmpBatXML=Join-Path $env:TEMP "atlas_diag_battery_report.xml";Start-ProcessWithTimeout -FilePath "powercfg" -Arguments "/batteryreport /output `"${tmpBatXML}`" /xml" -TimeoutSeconds 15|Out-Null;if(Test-Path $tmpBatXML){try{[xml]$xmlBat=Get-Content $tmpBatXML -ErrorAction Stop;$batInfo=$xmlBat.BatteryReport.Batteries.Battery;if($batInfo){if($batInfo -is [array]){$designCap=0;$fullCap=0;$cycleCount=0;foreach($b in $batInfo){if($b.DesignCapacity){$designCap+=[int64]$b.DesignCapacity};if($b.FullChargeCapacity){$fullCap+=[int64]$b.FullChargeCapacity};if($b.CycleCount){$cycleCount=[math]::Max($cycleCount,[int]$b.CycleCount)}}}else{if($batInfo.DesignCapacity){$designCap=[int64]$batInfo.DesignCapacity};if($batInfo.FullChargeCapacity){$fullCap=[int64]$batInfo.FullChargeCapacity};if($batInfo.CycleCount){$cycleCount=[int]$batInfo.CycleCount}}}}catch{};Remove-Item $tmpBatXML -ErrorAction SilentlyContinue}}
-        if($designCap -gt 0){
+        if($designCap -eq 0){
+            $tmpBatXML=Join-Path $env:TEMP ('atlas_diag_battery_report_' + [guid]::NewGuid().ToString('N') + '.xml')
+            $batteryReportOk=Start-ProcessWithTimeout -FilePath (Join-Path $env:SystemRoot 'System32/powercfg.exe') -Arguments "/batteryreport /output `"${tmpBatXML}`" /xml" -TimeoutSeconds 15 -ExpectedOutput $tmpBatXML
+            if($batteryReportOk){
+                try{
+                    [xml]$xmlBat=Get-Content -LiteralPath $tmpBatXML -Raw -ErrorAction Stop
+                    $batInfo=@($xmlBat.BatteryReport.Batteries.Battery)
+                    $designCap=0;$fullCap=0;$cycleCount=0
+                    foreach($b in $batInfo){
+                        if($b.DesignCapacity){$designCap+=[int64]$b.DesignCapacity}
+                        if($b.FullChargeCapacity){$fullCap+=[int64]$b.FullChargeCapacity}
+                        if($b.CycleCount){$cycleCount=[math]::Max($cycleCount,[int]$b.CycleCount)}
+                    }
+                }catch{$designCap=0;$fullCap=0;Write-Warning 'Battery XML could not be evaluated.'}
+                finally{Remove-Item -LiteralPath $tmpBatXML -ErrorAction SilentlyContinue}
+            }
+        }
+        if($designCap -gt 0 -and $fullCap -gt 0){
             $healthPct=($fullCap/$designCap)*100;$saludStr="{0:N1}%" -f $healthPct
             if($healthPct -lt 50){$saludColor="#d9534f"}elseif($healthPct -lt 80){$saludColor="#f0ad4e"}else{$saludColor="#5cb85c"}
             $notaFraude=""

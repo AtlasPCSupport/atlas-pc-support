@@ -162,6 +162,47 @@ Describe 'Real Robocopy integration confined to TestDrive' -Tag 'LocalFileIO' {
     }
 }
 
+Describe 'Fresh diagnostic export evidence' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $script:RepoRoot 'src/lib/Release.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Reports.ps1')
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-DiagnosticoMaster.ps1' 'Start-ProcessWithTimeout')
+        function Invoke-AtlasNativeProcess { [CmdletBinding()]param($FilePath,$Arguments,$TimeoutSeconds) throw 'Real diagnostic process blocked' }
+    }
+    BeforeEach {
+        $script:Output=Join-Path $TestDrive ([guid]::NewGuid().ToString('N')+'.txt')
+        Mock Invoke-AtlasNativeProcess { [pscustomobject]@{State='Correct';ExitCode=0} }
+    }
+    It 'rejects old output before starting a new diagnostic process' {
+        [IO.File]::WriteAllText($script:Output,'stale fixture')
+        Start-ProcessWithTimeout -FilePath fixture.exe -ExpectedOutput $script:Output | Should -BeFalse
+        Should -Invoke Invoke-AtlasNativeProcess -Times 0 -Exactly
+        [IO.File]::ReadAllText($script:Output) | Should -Be 'stale fixture'
+    }
+    It 'does not treat exit zero with no report as successful evidence' {
+        Start-ProcessWithTimeout -FilePath fixture.exe -ExpectedOutput $script:Output | Should -BeFalse
+    }
+    It 'rejects output left by a timed out process even when a file exists' {
+        Mock Invoke-AtlasNativeProcess { [IO.File]::WriteAllText($script:Output,'partial');[pscustomobject]@{State='TimedOut';ExitCode=0} }
+        Start-ProcessWithTimeout -FilePath fixture.exe -ExpectedOutput $script:Output | Should -BeFalse
+        Test-Path -LiteralPath $script:Output | Should -BeTrue
+    }
+    It 'accepts only a successful process and a newly created plain report' {
+        Mock Invoke-AtlasNativeProcess { [IO.File]::WriteAllText($script:Output,'fresh fixture');[pscustomobject]@{State='Correct';ExitCode=0} }
+        Start-ProcessWithTimeout -FilePath fixture.exe -ExpectedOutput $script:Output | Should -BeTrue
+    }
+    It 'requires fresh output at all four diagnostic export call sites' {
+        $ast=Get-TestAst $script:RepoRoot 'src/tools/Invoke-DiagnosticoMaster.ps1'
+        $calls=@($ast.FindAll({param($node) $node -is [Management.Automation.Language.CommandAst] -and $node.GetCommandName() -eq 'Start-ProcessWithTimeout'},$true))
+        $calls.Count | Should -Be 4
+        foreach($call in $calls) {
+            @($call.CommandElements | Where-Object {$_ -is [Management.Automation.Language.CommandParameterAst]}).ParameterName | Should -Contain ExpectedOutput
+        }
+    }
+}
+
 Describe 'Diagnostic dependency installation boundaries' {
     BeforeAll {
         $script:RepoRoot=Split-Path -Parent $PSScriptRoot
