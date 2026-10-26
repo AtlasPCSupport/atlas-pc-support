@@ -727,67 +727,46 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
                 [Parameter(Mandatory)][string]$DestinationDir
             )
 
-            if (-not (Test-Path -LiteralPath $SourceDir)) { return $false }
-
-            if (-not (Test-Path -LiteralPath $DestinationDir)) {
-                New-Item -ItemType Directory -Path $DestinationDir -Force | Out-Null
-            }
-
-            $copyOk = $false
-            $robo = Get-Command robocopy.exe -ErrorAction SilentlyContinue
-            if ($robo) {
-                # Delta sync (size/date) to avoid recopying unchanged trees.
-                # /XJ avoids junction loops and /FFT improves compatibility across filesystems.
-                $result = Invoke-AtlasNativeProcess -FilePath $robo.Source -ArgumentList @($SourceDir,$DestinationDir,'/E','/R:1','/W:1','/NFL','/NDL','/NJH','/NJS','/NP','/XJ','/FFT','/COPY:DAT','/DCOPY:DAT') -TimeoutSeconds 86400 -SuccessCodes @(0,1,2,3)
-                if ($result.State -in @('TimedOut','Cancelled','NotEvaluated')) { throw "USB copy $($result.State); inspect partial destination before retrying." }
-                if ($result.State -eq 'Correct') {
-                    $copyOk = $true
-                }
-            }
-
-            if (-not $copyOk) {
-                try {
-                    # Fallback delta sync using date/size, and SHA256 only when needed.
-                    $sourceRoot = (Resolve-Path -LiteralPath $SourceDir -ErrorAction Stop).Path
-                    $destRoot = (Resolve-Path -LiteralPath $DestinationDir -ErrorAction Stop).Path
-                    $sourceFiles = Get-ChildItem -LiteralPath $sourceRoot -Recurse -File -Force -ErrorAction Stop
-
-                    foreach ($srcFile in $sourceFiles) {
-                        $relative = $srcFile.FullName.Substring($sourceRoot.Length).TrimStart('\')
-                        $dstPath = Join-Path $destRoot $relative
-                        $dstDir = Split-Path -Parent $dstPath
-                        if (-not (Test-Path -LiteralPath $dstDir)) {
-                            New-Item -ItemType Directory -Path $dstDir -Force | Out-Null
-                        }
-
-                        $needsCopy = $true
-                        if (Test-Path -LiteralPath $dstPath) {
-                            $dstFile = Get-Item -LiteralPath $dstPath -ErrorAction SilentlyContinue
-                            if ($dstFile -and $dstFile.Length -eq $srcFile.Length) {
-                                if ($dstFile.LastWriteTimeUtc -eq $srcFile.LastWriteTimeUtc) {
-                                    $needsCopy = $false
-                                } else {
-                                    $srcHash = (Get-FileHash -LiteralPath $srcFile.FullName -Algorithm SHA256 -ErrorAction SilentlyContinue).Hash
-                                    $dstHash = (Get-FileHash -LiteralPath $dstFile.FullName -Algorithm SHA256 -ErrorAction SilentlyContinue).Hash
-                                    if ($srcHash -and $dstHash -and $srcHash -eq $dstHash) {
-                                        $needsCopy = $false
-                                    }
-                                }
-                            }
-                        }
-
-                        if ($needsCopy) {
-                            Copy-Item -LiteralPath $srcFile.FullName -Destination $dstPath -Force -ErrorAction Stop
-                            try { (Get-Item -LiteralPath $dstPath -ErrorAction SilentlyContinue).LastWriteTimeUtc = $srcFile.LastWriteTimeUtc } catch {}
-                        }
+            if (-not (Test-Path -LiteralPath $SourceDir -PathType Container)) { return $false }
+            Assert-AtlasCopyDestination -Source $SourceDir -Destination $DestinationDir
+            $sourceRoot=[IO.Path]::GetFullPath($SourceDir).TrimEnd([char[]]'\/')
+            $destRoot=[IO.Path]::GetFullPath($DestinationDir)
+            $sourceFiles=[Collections.Generic.List[IO.FileInfo]]::new()
+            $pending=[Collections.Generic.Stack[string]]::new();$pending.Push($sourceRoot)
+            # Preflight every selected path before any write. Never recurse through links.
+            while($pending.Count) {
+                $directory=$pending.Pop()
+                Assert-AtlasPlainDirectory $directory
+                foreach($item in @(Get-ChildItem -LiteralPath $directory -Force -ErrorAction Stop)) {
+                    if($item.Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'USB dependency paths cannot cross reparse points.'}
+                    $relative=$item.FullName.Substring($sourceRoot.Length).TrimStart([char[]]'\/')
+                    $target=Join-Path $destRoot $relative
+                    if($item.PSIsContainer) {
+                        Assert-AtlasCopyDestination -Source $item.FullName -Destination $target
+                        $pending.Push($item.FullName)
+                    } else {
+                        Assert-AtlasCopyDestination -Source $item.FullName -Destination (Split-Path -Parent $target)
+                        if(Test-Path -LiteralPath $target){Assert-AtlasPlainFile $target}
+                        $sourceFiles.Add($item)
                     }
-                    $copyOk = $true
-                } catch {
-                    $copyOk = $false
                 }
             }
-
-            return $copyOk
+            if($sourceFiles.Count -eq 0){return $false}
+            $robo=Get-Command robocopy.exe -CommandType Application -ErrorAction Stop
+            if(-not $robo){throw 'Robocopy is required for USB dependency copies.'}
+            if(-not (Test-Path -LiteralPath $destRoot)){New-Item -ItemType Directory -Path $destRoot -ErrorAction Stop | Out-Null}
+            $result=Invoke-AtlasNativeProcess -FilePath $robo.Source -ArgumentList @($sourceRoot,$destRoot,'/E','/R:1','/W:1','/NFL','/NDL','/NJH','/NJS','/NP','/XJ','/FFT','/COPY:DAT','/DCOPY:DAT') -TimeoutSeconds 86400 -SuccessCodes @(0,1,2,3)
+            if($result.State -ne 'Correct'){throw "USB copy $($result.State), exit $($result.ExitCode); inspect partial destination before retrying."}
+            # Delta metadata may skip damaged same-size/same-date files. Verify every resource.
+            foreach($file in $sourceFiles) {
+                $relative=$file.FullName.Substring($sourceRoot.Length).TrimStart([char[]]'\/')
+                $target=Join-Path $destRoot $relative
+                try {
+                    Assert-AtlasPlainFile $file.FullName;Assert-AtlasPlainFile $target
+                    if((Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256 -ErrorAction Stop).Hash -cne (Get-FileHash -LiteralPath $target -Algorithm SHA256 -ErrorAction Stop).Hash){throw 'Resource digest mismatch.'}
+                } catch {throw "USB dependency verification failed: $relative. Existing files were not removed; inspect before retrying."}
+            }
+            return $true
         }
 
         $copiedCount = 0

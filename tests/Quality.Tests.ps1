@@ -162,6 +162,73 @@ Describe 'Real Robocopy integration confined to TestDrive' -Tag 'LocalFileIO' {
     }
 }
 
+Describe 'USB dependency tree copy integrity' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $script:RepoRoot 'src/lib/Release.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Reports.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Operations.ps1')
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-PrepararUSB.ps1' 'Copy-TreeSafely')
+    }
+    BeforeEach {
+        $script:Source=Join-Path $TestDrive ([guid]::NewGuid().ToString('N')+' source')
+        $script:Destination=Join-Path $TestDrive ([guid]::NewGuid().ToString('N')+' destination')
+        New-Item -ItemType Directory -Path $script:Source | Out-Null
+        [IO.File]::WriteAllText((Join-Path $script:Source 'resource.dat'),'original')
+        Mock Get-Command { [pscustomobject]@{Source='fixture-robocopy.exe'} } -ParameterFilter {$Name -eq 'robocopy.exe'}
+        Mock Invoke-AtlasNativeProcess { [pscustomobject]@{State='Correct';ExitCode=0} }
+    }
+    It 'does not accept exit zero when no resource files were copied' {
+        {Copy-TreeSafely -SourceDir $script:Source -DestinationDir $script:Destination} | Should -Throw '*verification*'
+    }
+    It 'rejects same-size same-date corruption instead of trusting delta metadata' {
+        New-Item -ItemType Directory -Path $script:Destination | Out-Null
+        $sourceFile=Join-Path $script:Source 'resource.dat';$destFile=Join-Path $script:Destination 'resource.dat'
+        [IO.File]::WriteAllText($destFile,'corrupt!')
+        [IO.File]::SetLastWriteTimeUtc($destFile,[IO.File]::GetLastWriteTimeUtc($sourceFile))
+        {Copy-TreeSafely -SourceDir $script:Source -DestinationDir $script:Destination} | Should -Throw '*verification*'
+    }
+    It 'does not retry an installer resource copy with an unverified fallback after native failure' {
+        Mock Invoke-AtlasNativeProcess { [pscustomobject]@{State='Failed';ExitCode=8} }
+        Mock Copy-Item { throw 'Fallback must not run' }
+        {Copy-TreeSafely -SourceDir $script:Source -DestinationDir $script:Destination} | Should -Throw '*Failed*'
+        Should -Invoke Copy-Item -Times 0 -Exactly
+    }
+    It 'rejects a recursive copy destination before creating it' {
+        $child=Join-Path $script:Source 'child'
+        {Copy-TreeSafely -SourceDir $script:Source -DestinationDir $child} | Should -Throw '*destination*'
+        Test-Path -LiteralPath $child | Should -BeFalse
+        Should -Invoke Invoke-AtlasNativeProcess -Times 0 -Exactly
+    }
+    It 'rejects source junctions before the native copy' -Skip:($env:OS -ne 'Windows_NT') {
+        $outside=Join-Path $TestDrive ([guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Path $outside | Out-Null
+        New-Item -ItemType Junction -Path (Join-Path $script:Source 'link') -Target $outside | Out-Null
+        {Copy-TreeSafely -SourceDir $script:Source -DestinationDir $script:Destination} | Should -Throw '*reparse*'
+        Should -Invoke Invoke-AtlasNativeProcess -Times 0 -Exactly
+    }
+    It 'rejects redirected destination descendants before the native copy' -Skip:($env:OS -ne 'Windows_NT') {
+        $sub=Join-Path $script:Source 'sub';$outside=Join-Path $TestDrive ([guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Path $sub,$outside,$script:Destination | Out-Null
+        [IO.File]::WriteAllText((Join-Path $sub 'data.txt'),'fixture')
+        New-Item -ItemType Junction -Path (Join-Path $script:Destination 'sub') -Target $outside | Out-Null
+        {Copy-TreeSafely -SourceDir $script:Source -DestinationDir $script:Destination} | Should -Throw '*reparse*'
+        Should -Invoke Invoke-AtlasNativeProcess -Times 0 -Exactly
+        @(Get-ChildItem -LiteralPath $outside).Count | Should -Be 0
+    }
+    It 'accepts a complete byte-verified fixture and retains unrelated destination files' {
+        Mock Invoke-AtlasNativeProcess {
+            Copy-Item -LiteralPath (Join-Path $script:Source 'resource.dat') -Destination (Join-Path $script:Destination 'resource.dat')
+            [pscustomobject]@{State='Correct';ExitCode=1}
+        }
+        New-Item -ItemType Directory -Path $script:Destination | Out-Null
+        [IO.File]::WriteAllText((Join-Path $script:Destination 'keep.txt'),'retained')
+        Copy-TreeSafely -SourceDir $script:Source -DestinationDir $script:Destination | Should -BeTrue
+        [IO.File]::ReadAllText((Join-Path $script:Destination 'keep.txt')) | Should -Be retained
+    }
+}
+
 Describe 'Opt-in physical USB acceptance guards' {
     BeforeAll {
         $script:RepoRoot=Split-Path -Parent $PSScriptRoot
