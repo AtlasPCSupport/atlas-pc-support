@@ -9,7 +9,7 @@
 # de reportes y el armado de HTML que hoy cada tool reimplementa.
 #
 # REGLAS para este archivo:
-#   - Debe ser 100% autonomo (no depende de otras funciones de lib/).
+#   - El runner aporta Operations para ejecutar consultas nativas con limite.
 #   - Nunca debe lanzar al cargarse (solo define funciones).
 #   - Cambios aqui afectan a TODAS las tools: mantener minimo y robusto.
 # ============================================================
@@ -254,12 +254,14 @@ function Get-AtlasWingetPath {
 
     # 3) Elevado: buscar en Program Files\WindowsApps (si corre como admin diferente)
     try {
-        $candidates = Get-ChildItem -Path 'C:\Program Files\WindowsApps' `
-                                    -Filter 'winget.exe' -Recurse -ErrorAction SilentlyContinue |
-                      Where-Object { $_.DirectoryName -like '*Microsoft.DesktopAppInstaller*' } |
-                      Sort-Object -Property FullName -Descending
-
-        if ($candidates) { return $candidates[0].FullName }
+        $candidates = Get-ChildItem -LiteralPath 'C:\Program Files\WindowsApps' `
+                                    -Filter 'Microsoft.DesktopAppInstaller_*' -Directory -ErrorAction SilentlyContinue |
+                      Where-Object { $_.Name -match '^Microsoft\.DesktopAppInstaller_\d+\.\d+\.\d+\.\d+_x64__8wekyb3d8bbwe$' } |
+                      Sort-Object { [version]($_.Name -split '_')[1] } -Descending
+        foreach ($candidate in $candidates) {
+            $exe = Join-Path $candidate.FullName 'winget.exe'
+            if (Test-Path -LiteralPath $exe -PathType Leaf) { return $exe }
+        }
     } catch {}
 
     return $null
@@ -274,25 +276,30 @@ function Get-AtlasWingetCapabilities {
         Version            = $null
         SupportsNoInteract = $false
         SupportsMsStore    = $false
+        ProbeState         = 'Missing'
     }
 
     if (-not $WingetPath -or -not (Test-Path -LiteralPath $WingetPath)) { return $caps }
 
-    $caps.Available = $true
-
-    $raw = try { (& $WingetPath --version 2>$null | Select-Object -First 1) } catch { $null }
-    if (-not $raw) { return $caps }
-
-    $text = ([string]$raw).Trim().TrimStart('v')
-    $caps.Version = $text
-
-    $parsed = $null
-    if ([version]::TryParse(($text -split '-')[0], [ref]$parsed)) {
-        $caps.SupportsNoInteract = ($parsed -ge [version]'1.3')
-        $caps.SupportsMsStore    = ($parsed -ge [version]'1.2')
-    } else {
-        $caps.SupportsNoInteract = $true
-        $caps.SupportsMsStore    = $true
+    $caps.ProbeState = 'NotEvaluated'
+    try {
+        $probe = Invoke-AtlasNativeProcess -FilePath $WingetPath -ArgumentList @('--version') -TimeoutSeconds 10
+        $caps.ProbeState = $probe.State
+        if ($probe.State -ne 'Correct') { return $caps }
+        # Accept only WinGet's version response, never an error/banner or exit failure.
+        $text = ([string]$probe.Stdout).Trim()
+        $parsed = $null
+        if ($text -notmatch '^v?(\d+\.\d+(?:\.\d+){0,2})(?:-[A-Za-z0-9.-]+)?$' -or
+            -not [version]::TryParse($Matches[1], [ref]$parsed)) {
+            $caps.ProbeState = 'NotEvaluated'
+            return $caps
+        }
+        $caps.Available = $true
+        $caps.Version = $text.TrimStart('v')
+        $caps.SupportsNoInteract = ($parsed -ge [version]'1.4')
+        $caps.SupportsMsStore = ($parsed -ge [version]'1.2')
+    } catch {
+        $caps.ProbeState = 'Failed'
     }
 
     return $caps

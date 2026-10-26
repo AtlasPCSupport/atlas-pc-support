@@ -11,6 +11,7 @@ Describe 'ToolKit Unit Tests' {
         $script:Root      = Split-Path -Parent $PSScriptRoot
         $script:ToolKit   = Join-Path $script:Root 'src/lib/ToolKit.ps1'
         . $script:ToolKit
+        . (Join-Path $script:Root 'src/lib/Operations.ps1')
     }
 
     Context 'ToolKit - helpers de consola' {
@@ -90,12 +91,40 @@ Describe 'ToolKit Unit Tests' {
             $caps.SupportsMsStore | Should -BeFalse
         }
 
-        It 'Get-AtlasWingetCapabilities evalua capacidades si winget esta instalado' {
-            $path = Get-AtlasWingetPath
-            if ($path) {
-                $caps = Get-AtlasWingetCapabilities -WingetPath $path
-                $caps.Available | Should -BeTrue
-            }
+        It 'enables only supported flags for the detected WinGet version' -ForEach @(
+            @{Version='v1.1.0';NoInteract=$false;Store=$false},
+            @{Version='v1.3.2091';NoInteract=$false;Store=$true},
+            @{Version='v1.4.10173';NoInteract=$true;Store=$true},
+            @{Version='v1.12.460-preview';NoInteract=$true;Store=$true}
+        ) {
+            Mock Test-Path { $true }
+            Mock Invoke-AtlasNativeProcess { [pscustomobject]@{State='Correct';Stdout=$Version} }
+            $caps=Get-AtlasWingetCapabilities -WingetPath 'fixture.exe'
+            $caps.Available | Should -BeTrue
+            $caps.SupportsNoInteract | Should -Be $NoInteract
+            $caps.SupportsMsStore | Should -Be $Store
+            Should -Invoke Invoke-AtlasNativeProcess -Times 1 -Exactly -ParameterFilter {$ArgumentList[0] -eq '--version' -and $TimeoutSeconds -eq 10}
+        }
+        It 'never enables installation after timeout, failure, or an unknown version' -ForEach @(
+            @{State='TimedOut';Text='v1.12.0'},
+            @{State='Failed';Text='v1.12.0'},
+            @{State='Correct';Text='error: package not registered'},
+            @{State='Correct';Text=''},
+            @{State='Correct';Text="v1.4.0`nUnexpected output"}
+        ) {
+            Mock Test-Path { $true }
+            Mock Invoke-AtlasNativeProcess { [pscustomobject]@{State=$State;Stdout=$Text} }
+            $caps=Get-AtlasWingetCapabilities -WingetPath 'fixture.exe'
+            $caps.Available | Should -BeFalse
+            $caps.SupportsNoInteract | Should -BeFalse
+            $caps.SupportsMsStore | Should -BeFalse
+        }
+        It 'reports a launch failure without leaking an exception into the panel' {
+            Mock Test-Path { $true }
+            Mock Invoke-AtlasNativeProcess { throw 'Cannot launch' }
+            $caps=Get-AtlasWingetCapabilities -WingetPath 'fixture.exe'
+            $caps.Available | Should -BeFalse
+            $caps.ProbeState | Should -Be Failed
         }
     }
 
