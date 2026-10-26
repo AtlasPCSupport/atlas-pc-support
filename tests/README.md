@@ -1,5 +1,17 @@
 # Comprobaciones locales de Atlas
 
+## USB fisica (solo con un medio identificado y autorizado)
+
+`Invoke-UsbAcceptance.ps1` es una prueba opt-in separada de CI. Requiere letra,
+numero e identidad SHA-256 del disco/volumen USB observados previamente; no
+selecciona automaticamente discos ni permite el volumen de sistema. Crea una
+carpeta GUID nueva y fixtures locales, no formatea ni llena el medio, conserva
+logs y evidencia. Usa la publicacion aprobada y entradas offline con `-NoLaunch`.
+No prueba desconexion, perdida electrica ni Windows 10. Consultar la
+[evidencia y limites](../docs/audits/USB-2026-10-26.md) antes de ejecutarlo.
+
+## Suite local
+
 El runner no instala dependencias, no descarga el panel ni ejecuta sus herramientas.
 Necesita **Pester 5.8.0** y **PSScriptAnalyzer 1.25.0** ya disponibles para el runtime usado.
 Ejecutar desde Windows PowerShell 5.1 x64 o PowerShell 7 en Windows, en STA:

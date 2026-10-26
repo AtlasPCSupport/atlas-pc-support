@@ -1,0 +1,151 @@
+﻿{
+    "SchemaVersion":  1,
+    "StartedUtc":  "2026-10-26T19:35:55.6895964Z",
+    "CompletedUtc":  "2026-10-26T19:36:22.9110083Z",
+    "Runtime":  "5.1.26100.9711",
+    "HostBuild":  "10.0.26100.0",
+    "FileSystem":  "NTFS",
+    "Passed":  true,
+    "Windows10Qualified":  false,
+    "PowerLossTested":  false,
+    "HotRemovalTested":  false,
+    "AclRecoveryTested":  false,
+    "FreeSpaceFailureTested":  false,
+    "NoFormatOrPartitionChanges":  true,
+    "Checks":  [
+                   {
+                       "Name":  "USB full fixture hashes",
+                       "Passed":  true,
+                       "Details":  {
+                                       "UnverifiedLinks":  0,
+                                       "Passed":  25,
+                                       "State":  "SampleVerified",
+                                       "Coverage":  "SHA256 sample 25/25 eligible plain files; 0 links not evaluated; not full copy certification",
+                                       "OK":  true,
+                                       "Missing":  0,
+                                       "Checked":  25,
+                                       "Failed":  0
+                                   }
+                   },
+                   {
+                       "Name":  "Empty directory and hidden file preserved",
+                       "Passed":  true,
+                       "Details":  null
+                   },
+                   {
+                       "Name":  "Existing destination fixture retained",
+                       "Passed":  true,
+                       "Details":  null
+                   },
+                   {
+                       "Name":  "Unchanged copy skips fixture data",
+                       "Passed":  true,
+                       "Details":  {
+                                       "ExtraFixtureExpected":  true,
+                                       "ExitCode":  2
+                                   }
+                   },
+                   {
+                       "Name":  "Incremental changes verified",
+                       "Passed":  true,
+                       "Details":  {
+                                       "UnverifiedLinks":  0,
+                                       "Passed":  26,
+                                       "State":  "SampleVerified",
+                                       "Coverage":  "SHA256 sample 26/26 eligible plain files; 0 links not evaluated; not full copy certification",
+                                       "OK":  true,
+                                       "Missing":  0,
+                                       "Checked":  26,
+                                       "Failed":  0
+                                   }
+                   },
+                   {
+                       "Name":  "USB round trip full fixture hashes",
+                       "Passed":  true,
+                       "Details":  {
+                                       "UnverifiedLinks":  0,
+                                       "Passed":  27,
+                                       "State":  "SampleVerified",
+                                       "Coverage":  "SHA256 sample 27/27 eligible plain files; 0 links not evaluated; not full copy certification",
+                                       "OK":  true,
+                                       "Missing":  0,
+                                       "Checked":  27,
+                                       "Failed":  0
+                                   }
+                   },
+                   {
+                       "Name":  "Corruption is detected",
+                       "Passed":  true,
+                       "Details":  {
+                                       "State":  "Failed",
+                                       "Failed":  1
+                                   }
+                   },
+                   {
+                       "Name":  "Copy repairs changed fixture",
+                       "Passed":  true,
+                       "Details":  null
+                   },
+                   {
+                       "Name":  "Locked source fails explicitly",
+                       "Passed":  true,
+                       "Details":  {
+                                       "State":  "Failed",
+                                       "ExitCode":  8
+                                   }
+                   },
+                   {
+                       "Name":  "Approved bundle on physical USB",
+                       "Passed":  true,
+                       "Details":  {
+                                       "Members":  33,
+                                       "Commit":  "fc096f84fbff5f8884bd8d99f51c3099ade28b15",
+                                       "Manifest":  "dc8305fceedb968162bee539ef05b71ea3769744ab3cfe61fc379a1e087aa346",
+                                       "Version":  "1.5.6"
+                                   }
+                   },
+                   {
+                       "Name":  "Offline entry PS5.1 NoLaunch",
+                       "Passed":  true,
+                       "Details":  {
+                                       "State":  "Correct",
+                                       "ExitCode":  0
+                                   }
+                   },
+                   {
+                       "Name":  "Offline entry PS7 NoLaunch",
+                       "Passed":  true,
+                       "Details":  {
+                                       "State":  "Correct",
+                                       "ExitCode":  0
+                                   }
+                   },
+                   {
+                       "Name":  "Offline entry rejects altered USB bundle",
+                       "Passed":  true,
+                       "Details":  {
+                                       "State":  "Failed",
+                                       "ExitCode":  1
+                                   }
+                   },
+                   {
+                       "Name":  "Publication unchanged during USB checks",
+                       "Passed":  true,
+                       "Details":  {
+                                       "Commit":  "fc096f84fbff5f8884bd8d99f51c3099ade28b15"
+                                   }
+                   },
+                   {
+                       "Name":  "Defender remains active",
+                       "Passed":  true,
+                       "Details":  null
+                   },
+                   {
+                       "Name":  "Existing USB root metadata unchanged",
+                       "Passed":  true,
+                       "Details":  {
+                                       "Scope":  "Top-level pre-existing entries only; no claim about all payload bytes"
+                                   }
+                   }
+               ]
+}

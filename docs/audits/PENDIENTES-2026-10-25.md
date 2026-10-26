@@ -32,6 +32,12 @@ hardware, recuperación, USB ni instalaciones reales de terceros.
 
 ## Orden práctico
 
+Actualizacion 26/10/2026: [USB fisica NTFS](USB-2026-10-26.md) con 16 controles
+aprobados en dos ejecuciones: copia incremental, hashes completos de los fixtures,
+ida/vuelta, bloqueo y rechazo de bundle alterado. Las entradas offline 5.1/7 se
+validaron con `-NoLaunch`. Persistencia tras expulsar/reconectar, otros sistemas
+de archivos y fallos de alimentacion/espacio siguen pendientes.
+
 1. Corregir problemas reproducibles sin VMs: detección de dependencias, errores
    ocultos y conclusiones que exceden la evidencia del diagnóstico.
 2. Ejecutar regresiones aisladas en PowerShell 5.1/7 y comprobaciones de
