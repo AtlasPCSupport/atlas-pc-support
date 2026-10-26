@@ -242,7 +242,7 @@ function Invoke-DiagnosticoMaster {
             OsCostObs     = 'Windows license: S/50-150'
             OsImpactObs   = 'Unpatched system = vulnerable to malware and ransomware.'
             GpuStep       = '8B. GPU slowness triage...'
-            GpuVerdictOk  = 'PASS'
+            GpuVerdictOk  = 'NO STRONG SIGNALS'
             GpuVerdictObs = 'OBSERVATION'
             GpuVerdictRisk= 'GPU/DRIVER RISK'
             GpuAdviceOk   = 'No strong GPU/driver failure signal was found. It is reasonable to continue with normal maintenance, while still checking SSD/RAM/CPU/software.'
@@ -250,6 +250,9 @@ function Invoke-DiagnosticoMaster {
             GpuAdviceRisk = 'Do not promise that thermal paste or a Windows reinstall will fix the slowness. Validate GPU/driver/hardware first and protect customer data.'
             GpuNoFindings = 'No strong GPU/driver red flags found.'
             GpuLimits     = 'Safe triage only: no stress test. It may not catch intermittent thermal GPU failures.'
+            GpuNotEvaluated = 'NOT EVALUATED'
+            GpuIncomplete = 'Some sources could not be evaluated. Findings below are partial; no health verdict is available.'
+            GpuEventScope = 'Up to 200 newest matching events per query in the last 30 days; not an exhaustive history.'
             GpuInv        = 'GPU inventory'
             GpuSignals    = 'Risk signals'
             GpuRecentEv   = 'Relevant recent events'
@@ -514,7 +517,7 @@ function Invoke-DiagnosticoMaster {
             OsCostObs     = 'Licencia Windows: S/50-150'
             OsImpactObs   = 'Sistema sin parches = vulnerable a malware y ransomware.'
             GpuStep       = '8B. Triaje de lentitud por GPU...'
-            GpuVerdictOk  = 'APTO'
+            GpuVerdictOk  = 'SIN SEÑALES FUERTES'
             GpuVerdictObs = 'OBSERVACION'
             GpuVerdictRisk= 'RIESGO GPU/DRIVER'
             GpuAdviceOk   = 'No se encontraron senales fuertes de fallo GPU/driver. Es razonable seguir con mantenimiento normal, revisando tambien SSD/RAM/CPU/software.'
@@ -522,6 +525,9 @@ function Invoke-DiagnosticoMaster {
             GpuAdviceRisk = 'No prometas que pasta termica o reinstalar Windows va a resolver la lentitud. Valida GPU/driver/hardware primero y protege los datos del cliente.'
             GpuNoFindings = 'No se encontraron alertas fuertes de GPU/driver.'
             GpuLimits     = 'Triaje seguro solamente: sin stress test. Puede no capturar fallos termicos intermitentes de GPU.'
+            GpuNotEvaluated = 'NO EVALUADO'
+            GpuIncomplete = 'No se pudieron evaluar algunas fuentes. Los hallazgos son parciales; no hay dictamen de salud.'
+            GpuEventScope = 'Hasta 200 eventos coincidentes más recientes por consulta en los últimos 30 días; historial no exhaustivo.'
             GpuInv        = 'Inventario GPU'
             GpuSignals    = 'Senales de riesgo'
             GpuRecentEv   = 'Eventos recientes relevantes'
@@ -1079,26 +1085,34 @@ function Get-GpuTargetedEvents {
     )
     foreach ($provider in $providers) {
         try {
-            foreach ($ev in @(Get-WinEvent -FilterHashtable @{ LogName = 'System'; ProviderName = $provider; StartTime = $Since } -ErrorAction Stop)) {
+            foreach ($ev in @(Get-WinEvent -FilterHashtable @{ LogName = 'System'; ProviderName = $provider; StartTime = $Since } -MaxEvents 200 -ErrorAction Stop)) {
                 [void]$events.Add($ev)
             }
-        } catch {}
+        } catch {
+            if ($_.FullyQualifiedErrorId -notlike 'NoMatchingEventsFound*' -and $_.FullyQualifiedErrorId -notlike 'NoMatchingProvidersFound*') {
+                throw 'GPU System events could not be evaluated.'
+            }
+        }
     }
     foreach ($id in 4101, 14, 13, 117, 141, 144, 1001) {
         try {
-            $found = @(Get-WinEvent -FilterHashtable @{ LogName = 'System'; Id = $id; StartTime = $Since } -ErrorAction Stop | Where-Object {
+            $found = @(Get-WinEvent -FilterHashtable @{ LogName = 'System'; Id = $id; StartTime = $Since } -MaxEvents 200 -ErrorAction Stop | Where-Object {
                 $_.ProviderName -match 'Display|nvlddmkm|amdkmdag|amdwddmg|igfx|dxg|WHEA|BugCheck'
             })
             foreach ($ev in $found) { [void]$events.Add($ev) }
-        } catch {}
+        } catch {
+            if ($_.FullyQualifiedErrorId -notlike 'NoMatchingEventsFound*') { throw 'GPU System events could not be evaluated.' }
+        }
     }
     try {
-        $wer = @(Get-WinEvent -FilterHashtable @{ LogName = 'Application'; Id = 1001; StartTime = $Since } -ErrorAction Stop | Where-Object {
+        $wer = @(Get-WinEvent -FilterHashtable @{ LogName = 'Application'; Id = 1001; StartTime = $Since } -MaxEvents 200 -ErrorAction Stop | Where-Object {
             $_.ProviderName -match 'Windows Error Reporting' -and $_.Message -match 'LiveKernelEvent|117|141|144|VIDEO_TDR|Display|graphics|hardware error'
         })
         foreach ($ev in $wer) { [void]$events.Add($ev) }
-    } catch {}
-    return @($events | Sort-Object RecordId -Unique | Sort-Object TimeCreated -Descending)
+    } catch {
+        if ($_.FullyQualifiedErrorId -notlike 'NoMatchingEventsFound*') { throw 'GPU Application events could not be evaluated.' }
+    }
+    return @($events | Sort-Object LogName,RecordId -Unique | Sort-Object TimeCreated -Descending)
 }
 
 function Get-GpuLiveKernelFiles {
@@ -1106,12 +1120,10 @@ function Get-GpuLiveKernelFiles {
     $roots = @("$env:SystemRoot\LiveKernelReports", "$env:SystemRoot\Minidump")
     $files = @()
     foreach ($root in $roots) {
-        if (-not $root -or -not (Test-Path -LiteralPath $root)) { continue }
-        try {
-            $files += @(Get-ChildItem -LiteralPath $root -Recurse -File -ErrorAction SilentlyContinue | Where-Object {
+        if (-not $root -or -not (Test-Path -LiteralPath $root -ErrorAction Stop)) { continue }
+        $files += @(Get-ChildItem -LiteralPath $root -Recurse -File -ErrorAction Stop | Where-Object {
                 $_.LastWriteTime -ge $Since -and ($_.FullName -match 'WATCHDOG|WHEA|VIDEO|GRAPHICS|GPU|\.dmp$')
             } | Select-Object FullName, LastWriteTime, Length)
-        } catch {}
     }
     return @($files | Sort-Object LastWriteTime -Descending)
 }
@@ -1119,7 +1131,10 @@ function Get-GpuLiveKernelFiles {
 function Get-GPUSlownessTriageForReport {
     $since = (Get-Date).AddDays(-30)
     $findings = New-Object System.Collections.ArrayList
-    $gpus = @(Get-CimInstance Win32_VideoController -ErrorAction SilentlyContinue | ForEach-Object {
+    $unavailable = [Collections.Generic.List[string]]::new()
+    $gpus = @()
+    try {
+    $gpus = @(Get-CimInstance Win32_VideoController -OperationTimeoutSec 10 -ErrorAction Stop | ForEach-Object {
         $driverDate = Convert-GpuDriverDate $_.DriverDate
         $adapterGb = $null
         try {
@@ -1135,6 +1150,8 @@ function Get-GPUSlownessTriageForReport {
             ConfigManagerErrorCode = $_.ConfigManagerErrorCode
         }
     })
+    } catch { $unavailable.Add('GPU inventory') }
+    if ($gpus.Count -eq 0 -and $unavailable.Count -eq 0) { $unavailable.Add('GPU inventory') }
 
     foreach ($gpu in $gpus) {
         if ([string]$gpu.Name -match 'Microsoft Basic Display|Basic Render|Basic Video') {
@@ -1148,12 +1165,16 @@ function Get-GPUSlownessTriageForReport {
         }
     }
 
-    $events = @(Get-GpuTargetedEvents -Since $since)
+    $events = @()
+    try { $events = @(Get-GpuTargetedEvents -Since $since) }
+    catch { $unavailable.Add('System/Application events') }
     $tdrEvents = @($events | Where-Object { $_.Id -in 4101, 117, 141, 144 -or $_.Message -match 'TDR|LiveKernelEvent|VIDEO_TDR|Display driver stopped responding' })
     $driverEvents = @($events | Where-Object { $_.ProviderName -match 'nvlddmkm|amdkmdag|amdwddmg|igfx|dxg' })
     $wheaEvents = @($events | Where-Object { $_.ProviderName -match 'WHEA' })
     $bugCheckTdr = @($events | Where-Object { $_.Message -match '0x00000116|0x00000117|VIDEO_TDR_FAILURE|VIDEO_SCHEDULER_INTERNAL_ERROR' })
-    $lkFiles = @(Get-GpuLiveKernelFiles -Since $since)
+    $lkFiles = @()
+    try { $lkFiles = @(Get-GpuLiveKernelFiles -Since $since) }
+    catch { $unavailable.Add('LiveKernelReports/Minidump') }
 
     if ($tdrEvents.Count -ge 3) {
         Add-GpuFinding $findings 35 $L.SevHigh $L.GpuTdrRep ($L.GpuTdrEv -f $tdrEvents.Count) $L.GpuTdrAct
@@ -1186,16 +1207,25 @@ function Get-GPUSlownessTriageForReport {
         $verdict = $L.GpuVerdictOk; $color = '#28a745'; $advice = $L.GpuAdviceOk
     }
 
-    $html = "<div style='border-left:5px solid ${color};background:#fff;padding:12px;margin:10px 0'><strong style='color:${color};font-size:18px'>${verdict} (${score}/100)</strong><br>${advice}<br><span style='font-size:12px;color:#666'>$($L.GpuLimits)</span></div>"
+    $state = 'Observed'
+    $scoreText = "$score/100"
+    if ($unavailable.Count -gt 0) {
+        $state = 'NotEvaluated'; $verdict = $L.GpuNotEvaluated; $color = '#666666'
+        $advice = $L.GpuIncomplete + ' (' + ($unavailable -join ', ') + ')'
+        $scoreText = '--/100'
+    }
+    $html = "<div style='border-left:5px solid ${color};background:#fff;padding:12px;margin:10px 0'><strong style='color:${color};font-size:18px'>${verdict} (${scoreText})</strong><br>${advice}<br><span style='font-size:12px;color:#666'>$($L.GpuLimits) $($L.GpuEventScope)</span></div>"
     $html += "<h3>$($L.GpuInv)</h3><table class='info-table'><tr><th>GPU</th><th>Driver</th><th>$($L.GpuTblDriverDate)</th><th>VRAM GB</th><th>$($L.GpuTblStatus)</th><th>$($L.GpuTblPnp)</th></tr>"
     foreach ($gpu in $gpus) {
-        $html += "<tr><td>$($gpu.Name)</td><td>$($gpu.DriverVersion)</td><td>$($gpu.DriverDateText)</td><td>$($gpu.AdapterRAMGB)</td><td>$($gpu.Status)</td><td>$($gpu.ConfigManagerErrorCode)</td></tr>"
+        $cells = @($gpu.Name,$gpu.DriverVersion,$gpu.DriverDateText,$gpu.AdapterRAMGB,$gpu.Status,$gpu.ConfigManagerErrorCode) | ForEach-Object { '<td>' + [Net.WebUtility]::HtmlEncode([string]$_) + '</td>' }
+        $html += '<tr>' + ($cells -join '') + '</tr>'
     }
     $html += "</table>"
     $html += "<h3>$($L.GpuSignals)</h3><table class='info-table'><tr><th>$($L.GpuSeverity)</th><th>$($L.GpuSignal)</th><th>$($L.GpuEvidence)</th><th>$($L.GpuAction)</th><th>$($L.GpuPoints)</th></tr>"
     if ($findings.Count -gt 0) {
         foreach ($f in $findings) {
-            $html += "<tr><td>$($f.Severity)</td><td>$($f.Signal)</td><td>$($f.Evidence)</td><td>$($f.Action)</td><td>$($f.Points)</td></tr>"
+            $cells = @($f.Severity,$f.Signal,$f.Evidence,$f.Action,$f.Points) | ForEach-Object { '<td>' + [Net.WebUtility]::HtmlEncode([string]$_) + '</td>' }
+            $html += '<tr>' + ($cells -join '') + '</tr>'
         }
     } else {
         $html += "<tr><td colspan='5'>$($L.GpuNoFindings)</td></tr>"
@@ -1204,14 +1234,15 @@ function Get-GPUSlownessTriageForReport {
     $html += "<h3>$($L.GpuRecentEv)</h3><table class='info-table'><tr><th>$($L.GpuTblTime)</th><th>$($L.GpuTblProvider)</th><th>ID</th><th>$($L.GpuTblLevel)</th></tr>"
     if ($events.Count -gt 0) {
         foreach ($ev in @($events | Select-Object -First 15)) {
-            $html += "<tr><td>$($ev.TimeCreated)</td><td>$($ev.ProviderName)</td><td>$($ev.Id)</td><td>$($ev.LevelDisplayName)</td></tr>"
+            $cells = @($ev.TimeCreated,$ev.ProviderName,$ev.Id,$ev.LevelDisplayName) | ForEach-Object { '<td>' + [Net.WebUtility]::HtmlEncode([string]$_) + '</td>' }
+            $html += '<tr>' + ($cells -join '') + '</tr>'
         }
     } else {
         $html += "<tr><td colspan='4'>$($L.GpuNoEvents)</td></tr>"
     }
     $html += "</table>"
 
-    return @{ HtmlSection = $html; Score = $score; Verdict = $verdict; Color = $color; Findings = @($findings) }
+    return @{ HtmlSection = $html; State = $state; Score = $(if ($state -eq 'Observed') { $score } else { $null }); Verdict = $verdict; Color = $color; Findings = @($findings); UnavailableSources = @($unavailable.ToArray()) }
 }
 
 function Ensure-Dir {
@@ -1774,8 +1805,9 @@ do {
         Escribir-Centrado $L.GpuStep "Cyan"
         $gpuTriage = Get-GPUSlownessTriageForReport
         $htmlGpuTriage = "<h2>$($L.H10GpuTriage)</h2>" + $gpuTriage.HtmlSection
-        $gpuCol = if ($gpuTriage.Score -ge 70) { 'Red' } elseif ($gpuTriage.Score -ge 40) { 'Yellow' } else { 'Green' }
-        Write-Host "    $($L.GpuRiskLine -f $gpuTriage.Verdict, $gpuTriage.Score)" -ForegroundColor $gpuCol
+        $gpuCol = if ($gpuTriage.State -eq 'NotEvaluated') { 'Yellow' } elseif ($gpuTriage.Score -ge 70) { 'Red' } elseif ($gpuTriage.Score -ge 40) { 'Yellow' } else { 'Green' }
+        $gpuScore = if ($null -eq $gpuTriage.Score) { '--' } else { $gpuTriage.Score }
+        Write-Host "    $($L.GpuRiskLine -f $gpuTriage.Verdict, $gpuScore)" -ForegroundColor $gpuCol
 
         Escribir-Centrado $L.Step9 "Magenta"
         $upgradeResult = Get-UpgradeAdvisor -RAMData $ramDiag -CPUData $cpuInfo -StorageData $storageData -OSCaption $os.Caption

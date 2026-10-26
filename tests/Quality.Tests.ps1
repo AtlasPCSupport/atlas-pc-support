@@ -241,6 +241,78 @@ Describe 'Diagnostic interpretation stays within evidence' {
     }
 }
 
+Describe 'GPU evidence and unavailable sources' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        foreach ($name in @('Convert-GpuDriverDate','Add-GpuFinding','Get-GpuTargetedEvents','Get-GpuLiveKernelFiles','Get-GPUSlownessTriageForReport')) {
+            . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-DiagnosticoMaster.ps1' $name)
+        }
+        function Get-CimInstance { [CmdletBinding()]param($ClassName,$OperationTimeoutSec) throw 'Real inventory blocked' }
+        function Get-WinEvent { [CmdletBinding()]param($FilterHashtable,$MaxEvents) throw 'Real event read blocked' }
+        $script:L=@{
+            GpuVerdictOk='NO STRONG SIGNALS';GpuVerdictObs='OBSERVATION';GpuVerdictRisk='RISK'
+            GpuAdviceOk='Limited triage';GpuNotEvaluated='NOT EVALUATED';GpuIncomplete='Partial sources'
+            GpuEventScope='200 newest per query';GpuNoFindings='No findings';GpuNoEvents='No matching events'
+            SevMed='Medium';GpuBasicDrv='Basic driver';GpuBasicAct='Review driver'
+        }
+    }
+    It 'distinguishes denied access from a genuinely empty event query' {
+        Mock Get-WinEvent { throw 'Access denied' }
+        {Get-GpuTargetedEvents -Since (Get-Date).AddDays(-30)} | Should -Throw '*could not be evaluated*'
+    }
+    It 'accepts the no-matching-events condition and limits each query' {
+        Mock Get-WinEvent { Write-Error 'No events' -ErrorId NoMatchingEventsFound -ErrorAction Stop }
+        @(Get-GpuTargetedEvents -Since (Get-Date).AddDays(-30)).Count | Should -Be 0
+        Should -Invoke Get-WinEvent -Times 17 -Exactly -ParameterFilter {$MaxEvents -eq 200}
+    }
+    It 'deduplicates within a log without losing a colliding record in another log' {
+        Mock Get-WinEvent {
+            if ($FilterHashtable.LogName -eq 'Application') {
+                [pscustomobject]@{LogName='Application';RecordId=17;Id=1001;ProviderName='Windows Error Reporting';Message='LiveKernelEvent';TimeCreated=(Get-Date)}
+            } elseif ($FilterHashtable.ProviderName -eq 'Display' -or $FilterHashtable.Id -eq 4101) {
+                [pscustomobject]@{LogName='System';RecordId=17;Id=4101;ProviderName='Display';Message='TDR';TimeCreated=(Get-Date)}
+            }
+        }
+        $events=@(Get-GpuTargetedEvents -Since (Get-Date).AddDays(-30))
+        $events.Count | Should -Be 2
+        @($events.LogName | Sort-Object -Unique).Count | Should -Be 2
+    }
+    Context 'Report conclusions' {
+        BeforeEach {
+            Mock Get-CimInstance { [pscustomobject]@{Name='Fixture GPU';DriverVersion='1.0';DriverDate=(Get-Date);Status='OK';ConfigManagerErrorCode=0} }
+            Mock Get-GpuTargetedEvents { }
+            Mock Get-GpuLiveKernelFiles { }
+        }
+        It 'does not score a failed or missing GPU inventory as healthy' -ForEach @(@{Missing=$true},@{Missing=$false}) {
+            Mock Get-CimInstance { if (-not $Missing) { throw 'CIM denied' } }
+            $result=Get-GPUSlownessTriageForReport
+            $result.State | Should -Be NotEvaluated
+            $result.Score | Should -BeNullOrEmpty
+            $result.Verdict | Should -Be 'NOT EVALUATED'
+            $result.UnavailableSources | Should -Contain 'GPU inventory'
+        }
+        It 'marks event and dump read failures explicitly without dropping device findings' {
+            Mock Get-CimInstance { [pscustomobject]@{Name='Microsoft Basic Display';DriverVersion='1';Status='OK';ConfigManagerErrorCode=0} }
+            Mock Get-GpuTargetedEvents { throw 'Event read denied' }
+            Mock Get-GpuLiveKernelFiles { throw 'Dump access denied' }
+            $result=Get-GPUSlownessTriageForReport
+            $result.State | Should -Be NotEvaluated
+            $result.Findings.Count | Should -Be 1
+            $result.UnavailableSources.Count | Should -Be 2
+            $result.HtmlSection | Should -Match '--/100'
+        }
+        It 'encodes device-provided strings and labels an observation as limited triage' {
+            Mock Get-CimInstance { [pscustomobject]@{Name='Microsoft Basic Display <script>x</script>';DriverVersion='1<2';DriverDate=(Get-Date);Status='OK';ConfigManagerErrorCode=0} }
+            $result=Get-GPUSlownessTriageForReport
+            $result.State | Should -Be Observed
+            $result.HtmlSection | Should -Not -Match '<script>'
+            $result.HtmlSection | Should -Match '&lt;script&gt;'
+            $result.HtmlSection | Should -Match '200 newest per query'
+        }
+    }
+}
+
 Describe 'Storage evidence without bus/size guesses' {
     BeforeAll {
         $script:RepoRoot=Split-Path -Parent $PSScriptRoot
