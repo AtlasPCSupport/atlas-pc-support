@@ -44,6 +44,9 @@ hardware, recuperación, USB ni instalaciones reales de terceros.
 
 ## Autonomía y dependencias
 
+Los ensayos de esta sección que requieren VMs están aplazados por decisión del
+usuario. No se trasladan al host para darlos por completados.
+
 Después de la base de VMs puedo continuar con cuentas ficticias, permisos locales,
 Hosts, DNS, servicios y colas virtuales, copias con fallos sobre discos desechables,
 informes y entrega ficticia. BitLocker con vTPM/volúmenes de prueba también se puede
