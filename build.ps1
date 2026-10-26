@@ -16,8 +16,8 @@ function ConvertTo-PowerShellLiteral {
     param([string]$Text)
     return "'" + $Text.Replace("'", "''") + "'"
 }
-$version = '1.5.6'
-$buildDate = '2026-10-25' # Release metadata, deliberately reproducible across hosts.
+$version = '1.5.7'
+$buildDate = '2026-10-26' # Release metadata, deliberately reproducible across hosts.
 $manifest = Get-EmbeddedContent (Join-Path $PSScriptRoot 'config/tools.json')
 $dependencies = Get-EmbeddedContent (Join-Path $PSScriptRoot 'config/dependencies.json')
 $runtimeHeader = Get-EmbeddedContent (Join-Path $PSScriptRoot 'src/bootstrap/Runtime.ps1')

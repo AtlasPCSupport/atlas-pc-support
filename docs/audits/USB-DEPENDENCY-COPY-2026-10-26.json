@@ -1,0 +1,14 @@
+﻿{
+    "SchemaVersion":  1,
+    "VerifiedUtc":  "2026-10-26T19:42:52.0989029Z",
+    "Runtime":  "5.1.26100.9711",
+    "HostBuild":  "10.0.26100.0",
+    "FileSystem":  "NTFS",
+    "ProductionFunction":  "Copy-TreeSafely",
+    "RealNativeCopyPassed":  true,
+    "AllFixtureHashesPassed":  true,
+    "SameSizeDateCorruptionRejected":  true,
+    "ExtraFixtureRetained":  true,
+    "NoFormatOrPartitionChanges":  true,
+    "Windows10Qualified":  false
+}

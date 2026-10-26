@@ -38,6 +38,11 @@ ida/vuelta, bloqueo y rechazo de bundle alterado. Las entradas offline 5.1/7 se
 validaron con `-NoLaunch`. Persistencia tras expulsar/reconectar, otros sistemas
 de archivos y fallos de alimentacion/espacio siguen pendientes.
 
+La revision adicional [USB-COPIAS](USB-COPIAS-2026-10-26.md) elimina el fallback
+no verificado en carpetas de recursos del preparador, exige hashes de todos sus
+archivos y bloquea destinos recursivos/enlaces. No sustituye pruebas de los
+instaladores, de rendimiento de los discos o recuperacion de datos reales.
+
 1. Corregir problemas reproducibles sin VMs: detección de dependencias, errores
    ocultos y conclusiones que exceden la evidencia del diagnóstico.
 2. Ejecutar regresiones aisladas en PowerShell 5.1/7 y comprobaciones de
