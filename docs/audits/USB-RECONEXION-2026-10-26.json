@@ -1,0 +1,37 @@
+﻿{
+    "SchemaVersion":  1,
+    "VerifiedUtc":  "2026-10-26T20:28:45.0807312Z",
+    "HostBuild":  "10.0.26100.0",
+    "FileSystem":  "NTFS",
+    "SameUsbIdentityVerified":  true,
+    "UserReportedReconnection":  true,
+    "VerifiedSourceFixtureFiles":  26,
+    "VerifiedRoundTripFixtureFiles":  27,
+    "Version":  "1.5.7",
+    "Commit":  "4b58914a804760c8737706322795516655067ae7",
+    "ManifestSha256":  "43392ed360d06c3a28f0a89ed58ab318f0ae8ed35dce7c96e64f63da8f54cbe7",
+    "Members":  33,
+    "PreviousCommit":  "fc096f84fbff5f8884bd8d99f51c3099ade28b15",
+    "PreviousMembers":  33,
+    "OfflineEntries":  [
+                           {
+                               "Engine":  "powershell.exe",
+                               "Passed":  true,
+                               "ExitCode":  0
+                           },
+                           {
+                               "Engine":  "pwsh.exe",
+                               "Passed":  true,
+                               "ExitCode":  0
+                           }
+                       ],
+    "OfflinePointersUnchanged":  true,
+    "CorruptFixtureRejected":  true,
+    "PublicReleaseMatches":  true,
+    "DefenderActive":  true,
+    "UsbWritesPerformed":  false,
+    "LocalLogsCreated":  true,
+    "PowerLossTested":  false,
+    "Windows10Qualified":  false,
+    "Passed":  true
+}
