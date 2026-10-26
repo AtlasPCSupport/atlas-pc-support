@@ -6,6 +6,13 @@ con clientes reales. El seguimiento de cambios está en
 [SEGUIMIENTO](SEGUIMIENTO-2026-10-25.md); esta lista actualiza los pendientes de la
 fotografía 1.4.1 sin confundirlos con código todavía sin implementar.
 
+La continuación sin VMs está detallada en [SIN-VM](SIN-VM-2026-10-25.md): se
+corrigieron detección WinGet, límites de dependencias, cobertura/HTML del triaje
+GPU, consultas heredadas de IA, accesibilidad básica y el checker público.
+Dos ensayos de Robocopy real sobre archivos ficticios comprobaron copia incremental
+y fallo de archivo bloqueado. Estos resultados no cierran la aceptación de
+hardware, recuperación, USB ni instalaciones reales de terceros.
+
 | Prioridad | Pendiente | Qué falta demostrar | Cómo se puede cerrar |
 |---|---|---|---|
 | Pausado | Windows 10 real | Home/Pro 19045 y LTSC 19044; WPF, capacidades y entrada verificada con Defender activo | El usuario pausó expresamente las VMs. Home mostró 240 pruebas locales aprobadas en una captura aportada por el usuario; el resumen general no se generó y la tarea terminó con 0xC000013A. No equivale a homologar Home, Pro, Enterprise LTSC ni IoT. No reanudar controladores ni consolas automáticamente. |
@@ -18,7 +25,7 @@ fotografía 1.4.1 sin confundirlos con código todavía sin implementar.
 | 1 | Aplicaciones | Instalar las aplicaciones usadas, fuentes/Store, versión instalada, reinicios y requisitos OS del paquete entregado | Pruebas por paquete y edición. La instantánea contiene 56 manifiestos WinGet y dos entradas Store; no garantiza las versiones futuras ni licencias. |
 | 2 | Identidad y confianza de Atlas | Authenticode y confianza offline frente a sustitución de toda la USB | Certificado/identidad confiable y política de distribución. Un certificado autofirmado sin confianza previa no resuelve el problema. |
 | 2 | Licencias y permisos externos | Uso laboral/redistribución de terceros, custodia/retención de informes y alcance efectivo del PAT privado | Decisión del propietario y revisión por proveedor. No comprar ni rotar credenciales a ciegas. FastCopy de respaldo ya está actualizado a 5.12.0. |
-| 2 | Diagnósticos, UI y deuda | Sensores/CPU/GPU/batería reales, interpretación de eventos, accesibilidad/DPI/teclado y otras invocaciones heredadas | Equipos representativos y revisión por impacto. Persisten 310/329 avisos del analizador en 5.1/7; 131 catches vacíos y nombres de verbos son grupos que requieren distinguir tolerancia intencional de fallo ocultado. |
+| 2 | Diagnósticos, UI y deuda | Sensores/CPU/GPU/batería reales, interpretación de eventos, lector de pantalla/DPI/monitores y otras invocaciones heredadas | Equipos representativos y revisión por impacto. Tras los cambios quedan 294/320 avisos en 5.1/7.6.9 y 124 catches vacíos; requieren distinguir tolerancia intencional de fallo ocultado. Se eliminó el fallback Get-WmiObject sin suprimir reglas. |
 | 2 | Deduplicador | Backend y borrado reversible, si se decide ofrecer esa capacidad | La tarjeta ya está deshabilitada y explica la ausencia. Integrarlo es alcance adicional; no existe un motor verificado que pueda activarse sin más. |
 
 ## Orden práctico

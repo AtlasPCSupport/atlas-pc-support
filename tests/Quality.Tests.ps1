@@ -124,6 +124,44 @@ Describe 'Native outcomes and copy coverage' {
     }
 }
 
+Describe 'Real Robocopy integration confined to TestDrive' -Tag 'LocalFileIO' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $script:RepoRoot 'src/lib/Release.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Reports.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Operations.ps1')
+    }
+    It 'copies real fixture bytes and preserves unrelated existing destination files' -Skip:($env:OS -ne 'Windows_NT') {
+        $source=Join-Path $TestDrive 'native source & apostrophe''s'
+        $destination=Join-Path $TestDrive 'native destination'
+        New-Item -ItemType Directory -Path $source,$destination | Out-Null
+        [IO.File]::WriteAllText((Join-Path $source 'one.txt'),'new fixture bytes')
+        [IO.File]::WriteAllText((Join-Path $destination 'one.txt'),'old')
+        [IO.File]::WriteAllText((Join-Path $destination 'keep.txt'),'keep fixture')
+        Assert-AtlasCopyDestination -Source $source -Destination $destination
+        $copy=Invoke-AtlasNativeProcess -FilePath (Join-Path $env:SystemRoot 'System32/robocopy.exe') -ArgumentList @($source,$destination,'/E','/R:0','/W:0','/XJ') -TimeoutSeconds 20 -SuccessCodes @(0,1,2,3)
+        $copy.State | Should -Be Correct
+        (Test-AtlasCopySample -Source $source -Destination $destination).OK | Should -BeTrue
+        [IO.File]::ReadAllText((Join-Path $destination 'keep.txt')) | Should -Be 'keep fixture'
+    }
+    It 'reports a real sharing violation as failure rather than verified backup' -Skip:($env:OS -ne 'Windows_NT') {
+        $source=Join-Path $TestDrive 'locked source'
+        $destination=Join-Path $TestDrive 'locked destination'
+        New-Item -ItemType Directory -Path $source,$destination | Out-Null
+        $file=Join-Path $source 'locked.txt'
+        [IO.File]::WriteAllText($file,'locked fixture bytes')
+        $handle=[IO.FileStream]::new($file,[IO.FileMode]::Open,[IO.FileAccess]::ReadWrite,[IO.FileShare]::None)
+        try {
+            $copy=Invoke-AtlasNativeProcess -FilePath (Join-Path $env:SystemRoot 'System32/robocopy.exe') -ArgumentList @($source,$destination,'/E','/R:0','/W:0','/XJ') -TimeoutSeconds 20 -SuccessCodes @(0,1,2,3)
+            $copy.State | Should -Be Failed
+            $copy.ExitCode | Should -BeGreaterOrEqual 8
+            $verification=Test-AtlasCopySample -Source $source -Destination $destination
+            $verification.OK | Should -BeFalse
+            $verification.State | Should -Be Failed
+        } finally { $handle.Dispose() }
+    }
+}
+
 Describe 'Diagnostic dependency installation boundaries' {
     BeforeAll {
         $script:RepoRoot=Split-Path -Parent $PSScriptRoot
