@@ -73,6 +73,11 @@ otras copias offline ni sustituye una nueva prueba de reconexion de esta version
 
 ## Autonomía y dependencias
 
+La [separacion de trabajo autonomo y aceptacion](../TRABAJO-AUTONOMO-Y-ACEPTACION.md)
+resume que puede completarse ahora y las decisiones concretas del propietario.
+El bloque [Almacenamiento 1.5.10](ALMACENAMIENTO-2026-10-26.md) conserva fuentes
+parciales y no transforma datos de espacio ausentes en una medicion satisfactoria.
+
 ### Pasos para el propietario, cuando quiera cerrar la aceptacion real
 
 1. **Windows 10 y recuperacion:** indicar que se desea retomar el laboratorio.

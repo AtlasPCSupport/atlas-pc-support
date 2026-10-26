@@ -144,12 +144,19 @@ function Invoke-DiagnosticoMaster {
             StTblSize     = 'Size'
             StTblHealth   = 'Health'
             StTblClass    = 'Classification'
-            StHddSlow     = 'HDD (mechanical) - Slow'
-            StSataMid     = 'SATA SSD - Medium'
-            StNvmeFast    = 'NVMe - Fast'
+            StHddSlow     = 'HDD reported'
+            StSataMid     = 'SATA SSD reported'
+            StNvmeFast    = 'NVMe reported'
             StSsdUnk      = 'SSD (bus not identified)'
             StUnclass     = 'Unclassified'
             StFreeOf      = '{0}GB free of {1}GB'
+            StPhysicalUnavailable = 'Physical disk inventory not evaluated: query failed.'
+            StVolumesUnavailable = 'Volume inventory not evaluated: query failed.'
+            StEmptyPhysical = 'No physical disks reported by the provider.'
+            StEmptyVolumes = 'No fixed volumes reported by the provider.'
+            StCapacityUnknown = 'Space not evaluated: missing or inconsistent capacity/free space.'
+            StDeviceCapacityUnknown = 'At least one physical disk has no usable reported capacity.'
+            StUnmeasured = 'Reported storage inventory only; no speed or physical health test performed.'
             NetAdap       = 'Adapter'
             NetIp         = 'IP'
             NetMac        = 'MAC'
@@ -388,12 +395,19 @@ function Invoke-DiagnosticoMaster {
             StTblSize     = 'Tamano'
             StTblHealth   = 'Salud'
             StTblClass    = 'Clasificacion'
-            StHddSlow     = 'HDD MECANICO - Lento'
-            StSataMid     = 'SSD SATA - Medio'
-            StNvmeFast    = 'NVMe - Rapido'
+            StHddSlow     = 'HDD reportado'
+            StSataMid     = 'SSD SATA reportado'
+            StNvmeFast    = 'NVMe reportado'
             StSsdUnk      = 'SSD (bus no identificado)'
             StUnclass     = 'No clasificado'
             StFreeOf      = '{0}GB libre de {1}GB'
+            StPhysicalUnavailable = 'Inventario de discos fisicos no evaluado: fallo de consulta.'
+            StVolumesUnavailable = 'Inventario de volumenes no evaluado: fallo de consulta.'
+            StEmptyPhysical = 'El proveedor no reporto discos fisicos.'
+            StEmptyVolumes = 'El proveedor no reporto volumenes fijos.'
+            StCapacityUnknown = 'Espacio no evaluado: capacidad/espacio libre ausentes o inconsistentes.'
+            StDeviceCapacityUnknown = 'Al menos un disco fisico no tiene capacidad reportada utilizable.'
+            StUnmeasured = 'Solo inventario reportado; no se ejecuta prueba de velocidad ni salud fisica.'
             NetAdap       = 'Adaptador'
             NetIp         = 'IP'
             NetMac        = 'MAC'
@@ -754,9 +768,22 @@ function Get-CPUUpgradeInfo {
 }
 
 function Get-StorageAnalysis {
-    $result = @{ Disks = @(); HasHDD = $false; HasSATASSD = $false; HasNVMe = $false; CriticalSpace = $false; HtmlSection = "" }
-    $physDisks = Get-PhysicalDisk -ErrorAction SilentlyContinue
-    $logDisks = Get-CimInstance Win32_LogicalDisk -ErrorAction SilentlyContinue | Where-Object { $_.DriveType -eq 3 }
+    $result = @{
+        Disks = @(); Volumes = @(); HasHDD = $false; HasSATASSD = $false; HasNVMe = $false
+        CriticalSpace = $null; HtmlSection = ''; State = 'NotEvaluated'; Notes = @()
+        PhysicalInventoryState = 'Unavailable'; VolumeInventoryState = 'Unavailable'
+    }
+    $physDisks = @(); $logDisks = @()
+    try {
+        $physDisks = @(Get-PhysicalDisk -ErrorAction Stop)
+        $result.PhysicalInventoryState = if ($physDisks.Count) { 'Observed' } else { 'Empty' }
+        if (-not $physDisks.Count) { $result.Notes += $L.StEmptyPhysical }
+    } catch { $result.Notes += $L.StPhysicalUnavailable }
+    try {
+        $logDisks = @(Get-CimInstance Win32_LogicalDisk -OperationTimeoutSec 10 -ErrorAction Stop | Where-Object { $_.DriveType -eq 3 })
+        $result.VolumeInventoryState = if ($logDisks.Count) { 'Observed' } else { 'Empty' }
+        if (-not $logDisks.Count) { $result.Notes += $L.StEmptyVolumes }
+    } catch { $result.Notes += $L.StVolumesUnavailable }
 
     $htmlTable = "<table class='info-table'><tr><th>$($L.StTblDisk)</th><th>$($L.StTblType)</th><th>$($L.StTblBus)</th><th>$($L.StTblSize)</th><th>$($L.StTblHealth)</th><th>$($L.StTblClass)</th></tr>"
     if ($physDisks) {
@@ -764,23 +791,29 @@ function Get-StorageAnalysis {
             $name = if ($pd.FriendlyName) { $pd.FriendlyName } else { $L.DiskLbl }
             $media = if ($pd.MediaType) { $pd.MediaType.ToString() } else { $L.UnknownLbl }
             $bus = if ($pd.BusType) { $pd.BusType.ToString() } else { $L.UnknownLbl }
-            $sizeGB = if ($pd.Size) { [math]::Round($pd.Size / 1GB, 0) } else { 0 }
+            $deviceBytes = 0.0
+            $sizeGB = $null
+            if ($null -ne $pd.Size -and [double]::TryParse([string]$pd.Size, [Globalization.NumberStyles]::Float, [Globalization.CultureInfo]::InvariantCulture, [ref]$deviceBytes) -and
+                $deviceBytes -gt 0 -and -not [double]::IsInfinity($deviceBytes)) {
+                $sizeGB = [math]::Round($deviceBytes / 1GB, 1)
+            } elseif ($result.Notes -notcontains $L.StDeviceCapacityUnknown) { $result.Notes += $L.StDeviceCapacityUnknown }
+            $sizeDisplay = if ($null -ne $sizeGB) { "${sizeGB} GB" } else { $L.UnknownLbl }
             $health = if ($null -ne $pd.HealthStatus) { $pd.HealthStatus.ToString() } else { $L.UnknownLbl }
             $healthColor = if ($health -eq "Healthy") { "#28a745" } elseif ($health -in @('Warning','Unhealthy')) { "#dc3545" } else { "#888" }
             $classification = ""; $classColor = ""
             if ($media -match "HDD") {
-                $result.HasHDD = $true; $classification = "&#9888; $($L.StHddSlow)"; $classColor = "#dc3545"
+                $result.HasHDD = $true; $classification = $L.StHddSlow; $classColor = "#666666"
             } elseif ($media -match "SSD" -and $bus -match "SATA|ATA" -and $bus -notmatch "NVMe") {
-                $result.HasSATASSD = $true; $classification = "&#9432; $($L.StSataMid)"; $classColor = "#ffc107"
+                $result.HasSATASSD = $true; $classification = $L.StSataMid; $classColor = "#666666"
             } elseif ($bus -match "NVMe") {
-                $result.HasNVMe = $true; $classification = "&#10004; $($L.StNvmeFast)"; $classColor = "#28a745"
+                $result.HasNVMe = $true; $classification = $L.StNvmeFast; $classColor = "#666666"
             }
             if ([string]::IsNullOrEmpty($classification)) {
                 if ($media -match "SSD") { $classification = $L.StSsdUnk; $classColor = "#888" }
                 else { $classification = $L.StUnclass; $classColor = "#888" }
             }
             $safeName=[Net.WebUtility]::HtmlEncode($name);$safeMedia=[Net.WebUtility]::HtmlEncode($media);$safeBus=[Net.WebUtility]::HtmlEncode($bus);$safeHealth=[Net.WebUtility]::HtmlEncode($health)
-            $htmlTable += "<tr><td>${safeName}</td><td>${safeMedia}</td><td>${safeBus}</td><td>${sizeGB} GB</td><td style='color:${healthColor}'>${safeHealth}</td><td style='color:${classColor};font-weight:bold'>${classification}</td></tr>"
+            $htmlTable += "<tr><td>${safeName}</td><td>${safeMedia}</td><td>${safeBus}</td><td>${sizeDisplay}</td><td style='color:${healthColor}'>${safeHealth}</td><td style='color:${classColor};font-weight:bold'>${classification}</td></tr>"
             $result.Disks += @{ Name=$name; Media=$media; Bus=$bus; SizeGB=$sizeGB; Health=$health; Class=$classification }
         }
     }
@@ -790,11 +823,26 @@ function Get-StorageAnalysis {
     if ($logDisks) {
         $spaceHtml = "<div style='margin-top:10px'>"
         foreach ($ld in $logDisks) {
-            $totalGB = [math]::Round($ld.Size / 1GB, 1)
-            $freeGB = [math]::Round($ld.FreeSpace / 1GB, 1)
-            $usedPct = if ($ld.Size -gt 0) { [math]::Round((($ld.Size - $ld.FreeSpace) / $ld.Size) * 100, 0) } else { 0 }
-            $barColor = if ($usedPct -ge 90) { "#dc3545" } elseif ($usedPct -ge 75) { "#ffc107" } else { "#28a745" }
-            if ($usedPct -ge 90) { $result.CriticalSpace = $true }
+            $totalBytes = 0.0; $freeBytes = 0.0
+            $valid = $null -ne $ld.Size -and $null -ne $ld.FreeSpace -and
+                [double]::TryParse([string]$ld.Size, [Globalization.NumberStyles]::Float, [Globalization.CultureInfo]::InvariantCulture, [ref]$totalBytes) -and
+                [double]::TryParse([string]$ld.FreeSpace, [Globalization.NumberStyles]::Float, [Globalization.CultureInfo]::InvariantCulture, [ref]$freeBytes) -and
+                -not [double]::IsInfinity($totalBytes) -and -not [double]::IsNaN($totalBytes) -and
+                -not [double]::IsInfinity($freeBytes) -and -not [double]::IsNaN($freeBytes) -and
+                $totalBytes -gt 0 -and $freeBytes -ge 0 -and $freeBytes -le $totalBytes
+            if (-not $valid) {
+                $result.Volumes += @{ DeviceID=$ld.DeviceID; SizeGB=$null; FreeGB=$null; UsedPercent=$null }
+                $spaceHtml += "<p><strong>$([Net.WebUtility]::HtmlEncode([string]$ld.DeviceID))</strong> $($L.StCapacityUnknown)</p>"
+                if ($result.Notes -notcontains $L.StCapacityUnknown) { $result.Notes += $L.StCapacityUnknown }
+                continue
+            }
+            $totalGB = [math]::Round($totalBytes / 1GB, 1)
+            $freeGB = [math]::Round($freeBytes / 1GB, 1)
+            $usedExact = (($totalBytes - $freeBytes) / $totalBytes) * 100
+            $usedPct = [math]::Round($usedExact, 0)
+            $result.Volumes += @{ DeviceID=$ld.DeviceID; SizeGB=$totalGB; FreeGB=$freeGB; UsedPercent=$usedPct }
+            $barColor = if ($usedExact -ge 90) { "#dc3545" } elseif ($usedExact -ge 75) { "#ffc107" } else { "#28a745" }
+            if ($usedExact -ge 90) { $result.CriticalSpace = $true }
             $spaceHtml += "<div style='margin:5px 0;font-size:13px'><strong>$([Net.WebUtility]::HtmlEncode([string]$ld.DeviceID))</strong> $($L.StFreeOf -f $freeGB, $totalGB) "
             $spaceHtml += "<div style='background:#e9ecef;border-radius:4px;height:14px;width:200px;display:inline-block;vertical-align:middle'>"
             $spaceHtml += "<div style='background:${barColor};height:100%;width:${usedPct}%;border-radius:4px'></div></div>"
@@ -802,7 +850,16 @@ function Get-StorageAnalysis {
         }
         $spaceHtml += "</div>"
     }
-    $result.HtmlSection = $htmlTable + $spaceHtml
+    $validVolumes = @($result.Volumes | Where-Object { $null -ne $_.UsedPercent }).Count
+    if ($logDisks.Count -gt 0 -and $validVolumes -eq $logDisks.Count -and $null -eq $result.CriticalSpace) {
+        $result.CriticalSpace = $false
+    }
+    if ($physDisks.Count -gt 0 -or $logDisks.Count -gt 0) {
+        $result.State = if ($result.Notes.Count) { 'Partial' } else { 'Observed' }
+    }
+    $notesHtml = "<p>$($L.StUnmeasured)</p>"
+    foreach ($note in $result.Notes) { $notesHtml += "<p>${note}</p>" }
+    $result.HtmlSection = $notesHtml + $htmlTable + $spaceHtml
     return $result
 }
 

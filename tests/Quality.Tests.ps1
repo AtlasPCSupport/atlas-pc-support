@@ -810,8 +810,8 @@ Describe 'Storage evidence without bus/size guesses' {
         . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
         . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-DiagnosticoMaster.ps1' 'Get-StorageAnalysis')
         function Get-PhysicalDisk {[CmdletBinding()]param() throw 'Real inventory blocked'}
-        function Get-CimInstance {[CmdletBinding()]param($ClassName) throw 'Real inventory blocked'}
-        $script:L=@{UnknownLbl='Unknown';StUnclass='Not classified'}
+        function Get-CimInstance {[CmdletBinding()]param($ClassName,$OperationTimeoutSec) throw 'Real inventory blocked'}
+        $script:L=@{UnknownLbl='Unknown';StUnclass='Not classified';StPhysicalUnavailable='Physical inventory unavailable';StVolumesUnavailable='Volume inventory unavailable';StEmptyPhysical='No physical disks reported';StEmptyVolumes='No fixed volumes reported';StCapacityUnknown='Space not evaluated';StDeviceCapacityUnknown='Disk capacity unavailable';StUnmeasured='Inventory only, performance not measured'}
     }
     It 'does not label an unspecified large SATA disk as an HDD or unhealthy' {
         Mock Get-PhysicalDisk {[pscustomobject]@{FriendlyName='<script>fixture</script>';MediaType='Unspecified';BusType='SATA';Size=1TB;HealthStatus=$null}}
@@ -826,6 +826,88 @@ Describe 'Storage evidence without bus/size guesses' {
         Mock Get-CimInstance { }
         $result=Get-StorageAnalysis
         $result.HasHDD|Should -BeTrue;$result.Disks[0].Health|Should -Be '0'
+    }
+    It 'retains a real volume finding when physical disk inventory fails' {
+        Mock Get-PhysicalDisk {throw 'Access denied'}
+        Mock Get-CimInstance {[pscustomobject]@{DeviceID='Q:';DriveType=3;Size=100GB;FreeSpace=5GB}}
+        $result=Get-StorageAnalysis
+        $result.State|Should -Be Partial
+        $result.PhysicalInventoryState|Should -Be Unavailable
+        $result.VolumeInventoryState|Should -Be Observed
+        $result.CriticalSpace|Should -BeTrue
+        $result.Volumes[0].UsedPercent|Should -Be 95
+        $result.HtmlSection|Should -Match 'Physical inventory unavailable'
+    }
+    It 'retains device information when volume enumeration fails' {
+        Mock Get-PhysicalDisk {[pscustomobject]@{FriendlyName='Fixture';MediaType='HDD';BusType='SATA';Size=1TB;HealthStatus='Healthy'}}
+        Mock Get-CimInstance {throw 'Access denied'}
+        $result=Get-StorageAnalysis
+        $result.State|Should -Be Partial
+        $result.HasHDD|Should -BeTrue
+        $result.VolumeInventoryState|Should -Be Unavailable
+        $result.CriticalSpace|Should -BeNullOrEmpty
+        $result.HtmlSection|Should -Match 'Volume inventory unavailable'
+    }
+    It 'reports an empty inventory explicitly without declaring healthy capacity' {
+        Mock Get-PhysicalDisk { }
+        Mock Get-CimInstance { }
+        $result=Get-StorageAnalysis
+        $result.State|Should -Be NotEvaluated
+        $result.PhysicalInventoryState|Should -Be Empty
+        $result.VolumeInventoryState|Should -Be Empty
+        $result.CriticalSpace|Should -BeNullOrEmpty
+        $result.HtmlSection|Should -Match 'No physical disks reported'
+        $result.HtmlSection|Should -Match 'No fixed volumes reported'
+    }
+    It 'does not invent volume space from <Case> values' -ForEach @(
+        @{Case='missing total';Size=$null;Free=1GB},@{Case='missing free';Size=100GB;Free=$null},
+        @{Case='zero total';Size=0;Free=0},@{Case='negative free';Size=100GB;Free=-1},
+        @{Case='free above total';Size=100GB;Free=101GB},@{Case='non numeric';Size='invalid';Free=1},
+        @{Case='non finite';Size=[double]::PositiveInfinity;Free=1}
+    ) {
+        Mock Get-PhysicalDisk { }
+        Mock Get-CimInstance {[pscustomobject]@{DeviceID='Q:';DriveType=3;Size=$Size;FreeSpace=$Free}}
+        $result=Get-StorageAnalysis
+        $result.Volumes[0].UsedPercent|Should -BeNullOrEmpty
+        $result.CriticalSpace|Should -BeNullOrEmpty
+        $result.HtmlSection|Should -Match 'Space not evaluated'
+        $result.HtmlSection|Should -Not -Match 'width:0%|width:-|width:NaN|width:Infinity'
+    }
+    It 'uses exact occupancy for the low-space threshold before display rounding' -ForEach @(@{Free=10.4GB;Critical=$false},@{Free=10GB;Critical=$true},@{Free=0;Critical=$true},@{Free=100GB;Critical=$false}) {
+        Mock Get-PhysicalDisk {[pscustomobject]@{FriendlyName='Fixture';Size=1TB;BusType='NVMe';MediaType='SSD';HealthStatus='Healthy'}}
+        Mock Get-CimInstance {[pscustomobject]@{DeviceID='Q:';DriveType=3;Size=100GB;FreeSpace=$Free}}
+        $result=Get-StorageAnalysis
+        $result.CriticalSpace|Should -Be $Critical
+        $result.Volumes[0].UsedPercent|Should -BeGreaterOrEqual 0
+        $result.Volumes[0].UsedPercent|Should -BeLessOrEqual 100
+    }
+    It 'preserves a known critical volume alongside another with unavailable capacity' {
+        Mock Get-PhysicalDisk { }
+        Mock Get-CimInstance {@([pscustomobject]@{DeviceID='Q:';DriveType=3;Size=100GB;FreeSpace=1GB},[pscustomobject]@{DeviceID='R:';DriveType=3;Size=100GB;FreeSpace=$null})}
+        $result=Get-StorageAnalysis
+        $result.CriticalSpace|Should -BeTrue
+        $result.State|Should -Be Partial
+        $result.Volumes.Count|Should -Be 2
+        $result.Volumes[1].UsedPercent|Should -BeNullOrEmpty
+    }
+    It 'does not present unavailable physical disk capacity as zero GB' {
+        Mock Get-PhysicalDisk {[pscustomobject]@{FriendlyName='Fixture';MediaType='SSD';BusType='NVMe';Size=$null;HealthStatus='Healthy'}}
+        Mock Get-CimInstance {[pscustomobject]@{DeviceID='Q:';DriveType=3;Size=100GB;FreeSpace=50GB}}
+        $result=Get-StorageAnalysis
+        $result.Disks[0].SizeGB|Should -BeNullOrEmpty
+        $result.State|Should -Be Partial
+        $result.HtmlSection|Should -Match 'Disk capacity unavailable'
+        $result.HtmlSection|Should -Not -Match '<td>0 GB</td>'
+    }
+    It 'keeps a healthy reported NVMe device with a valid volume as observed inventory' {
+        Mock Get-PhysicalDisk {[pscustomobject]@{FriendlyName='Fixture';MediaType='SSD';BusType='NVMe';Size=1TB;HealthStatus='Healthy'}}
+        Mock Get-CimInstance {[pscustomobject]@{DeviceID='Q:';DriveType=3;Size=100GB;FreeSpace=50GB}}
+        $result=Get-StorageAnalysis
+        $result.State|Should -Be Observed
+        $result.Notes.Count|Should -Be 0
+        $result.Disks[0].Health|Should -Be Healthy
+        $result.HasNVMe|Should -BeTrue
+        Should -Invoke Get-CimInstance -Times 1 -Exactly -ParameterFilter {$ClassName -eq 'Win32_LogicalDisk' -and $OperationTimeoutSec -eq 10}
     }
 }
 
