@@ -49,7 +49,13 @@ instaladores, de rendimiento de los discos o recuperacion de datos reales.
 La revision [RAM](RAM-2026-10-26.md) de 1.5.8 retira inferencias de canal/XMP
 y de memoria soldada por formato desconocido. Distingue capacidad no evaluada
 de cero GB, consulta limites extendidos y codifica cadenas del dispositivo en
-HTML. No demuestra ampliacion fisica ni cierra las heuristicas CPU/OS restantes.
+HTML. No demuestra ampliacion fisica.
+
+El bloque [CPU y asesor](CPU-Y-ASESOR-2026-10-26.md), 1.5.9, retira generaciones
+inferidas, notas globales sin medicion y compras automaticas por CPU. Conserva
+inventario multiprocesador, codifica CPU/red en HTML y distingue fallo de red
+de ausencia de adaptadores. Windows 10 requiere revisar edicion/canal/parches,
+sin inferir cobertura por su nombre. No cierra los ensayos fisicos restantes.
 
 1. Corregir problemas reproducibles sin VMs: detección de dependencias, errores
    ocultos y conclusiones que exceden la evidencia del diagnóstico.
@@ -62,6 +68,26 @@ HTML. No demuestra ampliacion fisica ni cierra las heuristicas CPU/OS restantes.
 5. Revisar deuda por impacto sin suprimir avisos para presentar una cifra cero.
 
 ## Autonomía y dependencias
+
+### Pasos para el propietario, cuando quiera cerrar la aceptacion real
+
+1. **Windows 10 y recuperacion:** indicar que se desea retomar el laboratorio.
+   Primero se prepara una sola VM con snapshot y un paquete QA nuevo de la
+   release aprobada. Las instrucciones manuales se entregan de una en una;
+   cuentas, BitLocker, red, servicios e instalaciones se prueban alli.
+2. **Aplicaciones y RustDesk:** indicar las aplicaciones prioritarias y el
+   escenario de conexion que se debe aceptar. Se prepara su lista de ensayos;
+   su descarga verificada no sustituye instalacion, reinicio y conexion reales.
+3. **Firma y licencias:** definir la identidad que firmara Atlas y los usos
+   laborales/redistribucion previstos. Con esas decisiones se puede concretar
+   certificado, proveedores y condiciones que faltan verificar.
+4. **Hardware adicional:** reservar los medios/sistemas de archivos y equipos
+   representativos para los ensayos pendientes. La USB NTFS y su reconexion
+   ya tienen evidencia; desconexion durante escritura, fallos de alimentacion,
+   exFAT/FAT32 y sensores reales siguen siendo casos distintos.
+
+Estos pasos no son necesarios para aplicar las correcciones aisladas de codigo
+publicadas. Tampoco autorizan a trasladar ensayos destructivos al PC del usuario.
 
 Los ensayos de esta sección que requieren VMs están aplazados por decisión del
 usuario. No se trasladan al host para darlos por completados.

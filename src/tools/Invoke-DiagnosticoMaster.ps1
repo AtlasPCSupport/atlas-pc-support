@@ -52,7 +52,7 @@ function Invoke-DiagnosticoMaster {
             OpeningTools  = '   Opening CPU-Z, HWiNFO64, CrystalDiskInfo and CrystalDiskMark...'
             Step2Detail   = '2. Extracting hardware (CPU-Z engine)...'
             Step2Simple   = '2. Extracting hardware (Simplified native mode)...'
-            Step3         = '3. CPU upgrade check...'
+            Step3         = '3. CPU firmware inventory...'
             Step4         = '4. RAM diagnostics...'
             Step5         = '5. Storage analysis...'
             Step6         = '6. Network profile...'
@@ -60,8 +60,11 @@ function Invoke-DiagnosticoMaster {
             Step8         = '8. Battery audit...'
             Step9         = '9. Generating upgrade recommendations...'
             Step10        = '10. Generating HTML report...'
-            ScoreLine     = 'SCORE: {0}/100 - {1}'
-            NoRecs        = '    No recommendations - the computer is in good shape.'
+            NoRecs        = 'No automatic upgrade proposals from available inventory. This does not certify health or performance.'
+            UpgradeScope  = 'Inventory observations only. No overall health or performance score; verify workload and compatibility before purchasing.'
+            CpuUnmeasured = 'CPU performance not measured'
+            CpuServiceManual = 'Replacement and soldering not verified. Consult the model service manual; firmware labels and codes do not prove compatibility.'
+            NoNetInfo     = 'Network inventory not evaluated: query failed.'
             ReadyAt       = 'READY: {0}'
             ReturnHint    = 'Press [SPACE] to return to the menu, or any other key to exit...'
             FatalError    = 'Fatal error: {0}'
@@ -78,7 +81,7 @@ function Invoke-DiagnosticoMaster {
             H1Section     = '1. System summary'
             H2Hardware    = '2. Detailed inventory (CPU-Z)'
             H2HardwareSimple = '2. Simplified inventory'
-            H3Cpu         = '3. Processor status'
+            H3Cpu         = '3. Processor inventory'
             H4Ram         = '4. RAM diagnostics'
             H5Storage     = '5. Storage'
             H6Net         = '6. Network profile'
@@ -115,8 +118,6 @@ function Invoke-DiagnosticoMaster {
             RamChannelUnknown = 'Not verified (SMBIOS inventory)'
             RamXmpUnknown = 'Not verified'
             RamIncomplete = 'RAM capacity unavailable or incomplete. Overall upgrade score not evaluated; verify hardware before purchasing.'
-            DualCh        = 'Dual Channel'
-            SingleCh      = 'Single Channel'
             UnreportedMax = 'Not reported'
             UnknownLbl    = 'Unknown'
             FormUnk       = 'Unknown'
@@ -136,23 +137,7 @@ function Invoke-DiagnosticoMaster {
             RamColPart    = 'Part Number'
             CpuTblSocket  = 'Socket'
             CpuTblUpg     = 'Upgrade Method'
-            CpuTblGen     = 'Generation'
             CpuTblCores   = 'Cores / Threads'
-            CpuTblScore   = 'Classification'
-            CpuTblRepl    = 'Replaceable'
-            CpuSoldered   = 'SOLDERED (BGA) - Not replaceable'
-            CpuProbSold   = 'PROBABLY SOLDERED'
-            CpuSocketed   = 'SOCKETED - Replaceable'
-            CpuAdvSold    = 'The processor is soldered to the board. It cannot be replaced.'
-            CpuAdvProb    = 'Signs indicate the CPU is probably soldered. Verify with the manufacturer.'
-            CpuAdvSocket  = 'The processor uses socket {0}. It can be replaced with a compatible one.'
-            CpuDetect     = 'Detection: {0}'
-            CpuNoSig      = 'No specific signs'
-            CpuGenNotDet  = 'Not detected'
-            ScoreBasic    = 'BASIC'
-            ScoreOld      = 'OLD'
-            ScoreOk       = 'ACCEPTABLE'
-            ScoreGood     = 'GOOD'
             StTblDisk     = 'Disk'
             StTblType     = 'Type'
             StTblBus      = 'Bus'
@@ -182,9 +167,6 @@ function Invoke-DiagnosticoMaster {
             BatStCrit     = 'Critical'
             BatStInUse    = 'In use'
             BatFraud      = 'Reported capacity and cycles do not establish battery age or authenticity. Validate capacity with a controlled discharge test.'
-            UpgGood       = 'COMPUTER IN GOOD SHAPE'
-            UpgNoCrit     = 'No critical areas detected.'
-            UpgState      = 'OVERALL STATE: {0} ({1}/100)'
             UpgArea       = 'Area'
             UpgLevel      = 'Level'
             UpgDiag       = 'Diagnosis'
@@ -196,13 +178,10 @@ function Invoke-DiagnosticoMaster {
             LvlNotice     = 'NOTICE'
             RecRamLow     = 'RAM Insufficient ({0}GB)'
             RecRamLim     = 'RAM Limited ({0}GB)'
-            RecRamSC      = 'RAM running in Single Channel'
-            RecCpuObs     = 'Outdated processor'
-            RecCpuOld     = 'Old processor ({0})'
-            RecHdd        = 'Mechanical disk (HDD) - VERY slow'
-            RecSataSsd    = 'SATA SSD (medium speed)'
+            RecHdd        = 'HDD reported in storage inventory'
+            RecSataSsd    = 'SATA SSD reported in storage inventory'
             RecDiskCrit   = 'Critical disk space (>90%)'
-            RecWin10Eol   = 'Windows 10 - End of support Oct 2025'
+            RecWin10Eol   = 'Windows 10: verify edition and servicing coverage'
             RecOsObs      = 'Outdated operating system'
             RamActSold    = 'Firmware indicates soldered memory. Verify expansion options in the service manual.'
             RamActFree    = 'Firmware reports {0} unpopulated position(s). Verify physical sockets and supported modules before purchasing.'
@@ -216,34 +195,21 @@ function Invoke-DiagnosticoMaster {
             RamActFreeMed = 'Firmware reports {0} unpopulated position(s). Verify sockets, compatibility and workload needs.'
             RamActReplaceMed = 'Verify removable modules, supported capacity and workload needs before purchasing.'
             RamCostNa     = 'Quote after model and compatibility verification'
-            RamSCAct      = 'Add a second identical module for Dual Channel. Improves 10-20%.'
-            RamSCCost     = 'Identical module: S/80-180'
-            RamSCImpact   = 'Dual channel improves gaming, editing and graphics tasks.'
-            CpuActSold    = 'CPU is soldered. Replacing the entire computer is recommended.'
-            CpuCostI5     = 'i5 Gen 12+ computer: from S/1,500'
-            CpuActSocket  = 'Replace with a CPU compatible with socket {0}.'
-            CpuCostUpg    = 'CPU upgrade: S/200-600'
-            CpuImpactBasic= 'Basic/old CPU is the largest bottleneck. Everything feels slow.'
-            CpuActSoldMed = 'CPU is soldered. Functional for basic office, consider replacement medium-term.'
-            CpuCostFut    = 'New computer recommended in the future'
-            CpuActUpgMed  = 'Consider upgrading to a higher-generation CPU.'
-            CpuCostUpgMed = 'CPU upgrade: S/200-500'
-            CpuImpactOld  = 'Old generations lack modern instructions and efficiency.'
-            DiskActHdd    = 'Replace HDD with SSD. The HIGHEST-impact upgrade. Boots 5-10x faster.'
-            DiskCostHdd   = 'SATA 480GB SSD: S/80-120 | NVMe 500GB: S/100-150'
-            DiskImpactHdd = 'Switching from HDD to SSD is upgrade #1. Windows boots in 15s vs 2+ min.'
-            DiskActSata   = 'Consider NVMe if the board supports it. 3-5x improvement in transfers.'
-            DiskCostSata  = 'NVMe 500GB SSD: S/100-150 | 1TB: S/180-250'
-            DiskImpactSata= 'NVMe improves load times, compilation and large transfers.'
-            DiskActCrit   = 'Free up space or add an additional disk urgently.'
-            DiskCostCrit  = 'Additional disk 500GB: S/80-150'
-            DiskImpactCrit= 'Disk >90% causes extreme slowness, update failures and possible corruption.'
-            OsActWin10    = 'Plan migration to Windows 11 if hardware is compatible.'
-            OsCostWin10   = 'Win11 license: S/50-150 (or free upgrade)'
-            OsImpactWin10 = 'No support = no security patches. Risk of vulnerabilities.'
-            OsActObs      = 'Update to Windows 10/11 urgently.'
-            OsCostObs     = 'Windows license: S/50-150'
-            OsImpactObs   = 'Unpatched system = vulnerable to malware and ransomware.'
+            DiskActHdd    = 'Identify the system/application volume and measure its workload before planning replacement.'
+            DiskCostHdd   = 'Quote after model, interface and workload verification'
+            DiskImpactHdd = 'Media type alone does not establish the current bottleneck or boot time.'
+            DiskActSata   = 'Verify available interfaces, workload and manufacturer compatibility before considering NVMe.'
+            DiskCostSata  = 'Quote after model, interface and workload verification'
+            DiskImpactSata= 'No transfer-rate improvement measured by this inventory.'
+            DiskActCrit   = 'Review the affected volume and protect data before cleanup or expansion.'
+            DiskCostCrit  = 'Quote only after reviewing the volume and available options'
+            DiskImpactCrit= 'Limited free space can constrain updates and applications; it does not diagnose corruption.'
+            OsActWin10    = 'Verify exact edition, build/UBR, servicing channel, updates and any applicable ESU entitlement before choosing maintenance or migration.'
+            OsCostWin10   = 'Verify licensing with the owner; no price or entitlement inferred'
+            OsImpactWin10 = 'The caption alone does not establish update coverage. Enterprise LTSC and IoT Enterprise LTSC require separate checks.'
+            OsActObs      = 'Review exact edition, vendor support and compatible migration options.'
+            OsCostObs     = 'Verify licensing and compatibility with the owner'
+            OsImpactObs   = 'This inventory does not audit patch status or licensing.'
             GpuStep       = '8B. GPU slowness triage...'
             GpuVerdictOk  = 'NO STRONG SIGNALS'
             GpuVerdictObs = 'OBSERVATION'
@@ -330,7 +296,7 @@ function Invoke-DiagnosticoMaster {
             OpeningTools  = '   Abriendo CPU-Z, HWiNFO64, CrystalDiskInfo y CrystalDiskMark...'
             Step2Detail   = '2. Extrayendo Hardware (Motor CPU-Z)...'
             Step2Simple   = '2. Extrayendo Hardware (Modo Simplificado Nativo)...'
-            Step3         = '3. CPU Upgrade Check...'
+            Step3         = '3. Inventario de firmware de CPU...'
             Step4         = '4. Diagnostico RAM...'
             Step5         = '5. Analisis de Almacenamiento...'
             Step6         = '6. Perfil de Red...'
@@ -338,8 +304,11 @@ function Invoke-DiagnosticoMaster {
             Step8         = '8. Auditando Bateria...'
             Step9         = '9. Generando Recomendaciones de Upgrade...'
             Step10        = '10. Generando Reporte HTML...'
-            ScoreLine     = 'SCORE: {0}/100 - {1}'
-            NoRecs        = '    Sin recomendaciones - equipo en buen estado.'
+            NoRecs        = 'Sin propuestas automaticas de ampliacion con el inventario disponible. No certifica salud ni rendimiento.'
+            UpgradeScope  = 'Solo observaciones de inventario. Sin nota global de salud o rendimiento; verificar uso y compatibilidad antes de comprar.'
+            CpuUnmeasured = 'Rendimiento de CPU no medido'
+            CpuServiceManual = 'Reemplazo y soldadura no verificados. Consultar el manual de servicio del modelo; etiquetas y codigos de firmware no prueban compatibilidad.'
+            NoNetInfo     = 'Inventario de red no evaluado: fallo de consulta.'
             ReadyAt       = 'LISTO: {0}'
             ReturnHint    = 'Presione [ESPACIO] para volver al menu o cualquier otra tecla para salir...'
             FatalError    = 'Error Fatal: {0}'
@@ -356,7 +325,7 @@ function Invoke-DiagnosticoMaster {
             H1Section     = '1. Resumen de Sistema'
             H2Hardware    = '2. Inventario Detallado (CPU-Z)'
             H2HardwareSimple = '2. Inventario Simplificado'
-            H3Cpu         = '3. Estado del Procesador'
+            H3Cpu         = '3. Inventario del procesador'
             H4Ram         = '4. Diagnostico de Memoria RAM'
             H5Storage     = '5. Almacenamiento'
             H6Net         = '6. Perfil de Red'
@@ -393,8 +362,6 @@ function Invoke-DiagnosticoMaster {
             RamChannelUnknown = 'No verificado (inventario SMBIOS)'
             RamXmpUnknown = 'No verificado'
             RamIncomplete = 'Capacidad de RAM no disponible o incompleta. Puntuacion global de ampliacion no evaluada; verificar hardware antes de comprar.'
-            DualCh        = 'Dual Channel'
-            SingleCh      = 'Single Channel'
             UnreportedMax = 'No reportado'
             UnknownLbl    = 'Desconocido'
             FormUnk       = 'Desconocido'
@@ -414,23 +381,7 @@ function Invoke-DiagnosticoMaster {
             RamColPart    = 'Part Number'
             CpuTblSocket  = 'Socket'
             CpuTblUpg     = 'Upgrade Method'
-            CpuTblGen     = 'Generacion'
             CpuTblCores   = 'Nucleos / Hilos'
-            CpuTblScore   = 'Clasificacion'
-            CpuTblRepl    = 'Reemplazable'
-            CpuSoldered   = 'SOLDADO (BGA) - No reemplazable'
-            CpuProbSold   = 'PROBABLEMENTE SOLDADO'
-            CpuSocketed   = 'SOCKET - Reemplazable'
-            CpuAdvSold    = 'El procesador esta soldado a la placa. No es posible reemplazarlo.'
-            CpuAdvProb    = 'Senales indican CPU probablemente soldado. Verifique con el fabricante.'
-            CpuAdvSocket  = 'El procesador usa socket {0}. Es posible reemplazarlo por otro compatible.'
-            CpuDetect     = 'Deteccion: {0}'
-            CpuNoSig      = 'Sin senales especificas'
-            CpuGenNotDet  = 'No detectada'
-            ScoreBasic    = 'BASICO'
-            ScoreOld      = 'ANTIGUO'
-            ScoreOk       = 'ACEPTABLE'
-            ScoreGood     = 'BUENO'
             StTblDisk     = 'Disco'
             StTblType     = 'Tipo'
             StTblBus      = 'Bus'
@@ -460,9 +411,6 @@ function Invoke-DiagnosticoMaster {
             BatStCrit     = 'Critico'
             BatStInUse    = 'En uso'
             BatFraud      = 'La capacidad y los ciclos reportados no establecen edad ni autenticidad de la bateria. Validar capacidad con una descarga controlada.'
-            UpgGood       = 'EQUIPO EN BUEN ESTADO'
-            UpgNoCrit     = 'No se detectaron areas criticas.'
-            UpgState      = 'ESTADO GENERAL: {0} ({1}/100)'
             UpgArea       = 'Area'
             UpgLevel      = 'Nivel'
             UpgDiag       = 'Diagnostico'
@@ -474,13 +422,10 @@ function Invoke-DiagnosticoMaster {
             LvlNotice     = 'AVISO'
             RecRamLow     = 'RAM Insuficiente ({0}GB)'
             RecRamLim     = 'RAM Limitada ({0}GB)'
-            RecRamSC      = 'RAM en Single Channel'
-            RecCpuObs     = 'Procesador Obsoleto'
-            RecCpuOld     = 'Procesador Antiguo ({0})'
-            RecHdd        = 'Disco Mecanico (HDD) - MUY Lento'
-            RecSataSsd    = 'SSD SATA (velocidad media)'
+            RecHdd        = 'HDD reportado en el inventario'
+            RecSataSsd    = 'SSD SATA reportado en el inventario'
             RecDiskCrit   = 'Espacio en Disco Critico (>90%)'
-            RecWin10Eol   = 'Windows 10 - Fin de Soporte Oct 2025'
+            RecWin10Eol   = 'Windows 10: verificar edicion y cobertura de actualizaciones'
             RecOsObs      = 'Sistema Operativo Obsoleto'
             RamActSold    = 'El firmware indica memoria soldada. Verificar opciones de ampliacion en el manual de servicio.'
             RamActFree    = 'El firmware reporta {0} posicion(es) sin poblar. Verificar sockets fisicos y modulos compatibles antes de comprar.'
@@ -494,34 +439,21 @@ function Invoke-DiagnosticoMaster {
             RamActFreeMed = 'Firmware: {0} posicion(es) sin poblar. Verificar sockets, compatibilidad y necesidades de uso.'
             RamActReplaceMed = 'Verificar modulos removibles, capacidad admitida y necesidades de uso antes de comprar.'
             RamCostNa     = 'Cotizar tras verificar modelo y compatibilidad'
-            RamSCAct      = 'Agregar segundo modulo identico para Dual Channel. Mejora 10-20%.'
-            RamSCCost     = 'Modulo identico: S/80-180'
-            RamSCImpact   = 'Dual channel mejora rendimiento en juegos, edicion y tareas graficas.'
-            CpuActSold    = 'CPU soldado. Se recomienda reemplazar el equipo completo.'
-            CpuCostI5     = 'Equipo i5 Gen 12+: desde S/1,500'
-            CpuActSocket  = 'Reemplazar por CPU compatible con socket {0}.'
-            CpuCostUpg    = 'CPU upgrade: S/200-600'
-            CpuImpactBasic= 'CPU basico/antiguo es el mayor cuello de botella. Todo se siente lento.'
-            CpuActSoldMed = 'CPU soldado. Funcional para oficina basica, considere reemplazo a mediano plazo.'
-            CpuCostFut    = 'Equipo nuevo recomendado a futuro'
-            CpuActUpgMed  = 'Considere upgrade a CPU de mayor generacion.'
-            CpuCostUpgMed = 'CPU upgrade: S/200-500'
-            CpuImpactOld  = 'Generaciones antiguas carecen de instrucciones modernas y eficiencia.'
-            DiskActHdd    = 'Reemplazar HDD por SSD. Mejora con MAYOR impacto. Arrancara 5-10x mas rapido.'
-            DiskCostHdd   = 'SSD SATA 480GB: S/80-120 | NVMe 500GB: S/100-150'
-            DiskImpactHdd = 'Cambiar HDD a SSD es la mejora #1. Windows arranca en 15s en vez de 2+ min.'
-            DiskActSata   = 'Considere NVMe si la placa soporta. Mejora 3-5x en transferencias.'
-            DiskCostSata  = 'SSD NVMe 500GB: S/100-150 | 1TB: S/180-250'
-            DiskImpactSata= 'NVMe mejora tiempos de carga, compilacion y transferencias grandes.'
-            DiskActCrit   = 'Liberar espacio o agregar disco adicional urgentemente.'
-            DiskCostCrit  = 'Disco adicional 500GB: S/80-150'
-            DiskImpactCrit= 'Disco >90% causa lentitud extrema, fallos de update y posible corrupcion.'
-            OsActWin10    = 'Planificar migracion a Windows 11 si el hardware es compatible.'
-            OsCostWin10   = 'Licencia Win11: S/50-150 (o upgrade gratuito)'
-            OsImpactWin10 = 'Sin soporte = sin parches de seguridad. Riesgo de vulnerabilidades.'
-            OsActObs      = 'Actualizar a Windows 10/11 urgentemente.'
-            OsCostObs     = 'Licencia Windows: S/50-150'
-            OsImpactObs   = 'Sistema sin parches = vulnerable a malware y ransomware.'
+            DiskActHdd    = 'Identificar el volumen del sistema/aplicaciones y medir su carga antes de planificar reemplazo.'
+            DiskCostHdd   = 'Cotizar tras verificar modelo, interfaz y necesidades de uso'
+            DiskImpactHdd = 'El tipo de medio no demuestra por si solo el cuello de botella ni el tiempo de arranque.'
+            DiskActSata   = 'Verificar interfaces disponibles, necesidades de uso y compatibilidad del fabricante antes de considerar NVMe.'
+            DiskCostSata  = 'Cotizar tras verificar modelo, interfaz y necesidades de uso'
+            DiskImpactSata= 'Este inventario no mide una mejora en la tasa de transferencia.'
+            DiskActCrit   = 'Revisar el volumen afectado y proteger datos antes de limpiar o ampliar.'
+            DiskCostCrit  = 'Cotizar solo tras revisar el volumen y las opciones disponibles'
+            DiskImpactCrit= 'El espacio limitado puede restringir actualizaciones y aplicaciones; no diagnostica corrupcion.'
+            OsActWin10    = 'Verificar edicion exacta, build/UBR, canal de mantenimiento, actualizaciones y derecho ESU aplicable antes de elegir mantenimiento o migracion.'
+            OsCostWin10   = 'Verificar licencias con el propietario; no se infieren precio ni derechos'
+            OsImpactWin10 = 'El nombre del sistema no demuestra cobertura de actualizaciones. Enterprise LTSC e IoT Enterprise LTSC requieren comprobaciones separadas.'
+            OsActObs      = 'Revisar edicion exacta, soporte del fabricante y opciones de migracion compatibles.'
+            OsCostObs     = 'Verificar licencias y compatibilidad con el propietario'
+            OsImpactObs   = 'Este inventario no audita el estado de parches ni licencias.'
             GpuStep       = '8B. Triaje de lentitud por GPU...'
             GpuVerdictOk  = 'SIN SEÑALES FUERTES'
             GpuVerdictObs = 'OBSERVACION'
@@ -789,108 +721,35 @@ function Get-RAMDiagnostic {
 
 function Get-CPUUpgradeInfo {
     $result = @{
-        HtmlSection = ""; IsSoldered = $false; SocketType = ""
-        UpgradeMethod = ""; Summary = ""
-        Generation = 0; GenerationLabel = ""; IsBasic = $false
-        CoreCount = 0; ThreadCount = 0; CPUName = ""
-        ScoreLabel = ""; ScoreColor = ""
+        HtmlSection = ""; Summary = $L.NoCpuInfo; State = 'NotEvaluated'
+        IsSoldered = $null; Generation = $null; ProcessorCount = 0; Processors = @()
+        ScoreLabel = $L.CpuUnmeasured; ScoreColor = '#666666'
     }
-
-    $proc = Get-CimInstance Win32_Processor -ErrorAction SilentlyContinue | Select-Object -First 1
-    if (-not $proc) {
+    try { $processors = @(Get-CimInstance Win32_Processor -OperationTimeoutSec 10 -ErrorAction Stop) }
+    catch { Write-Verbose "CPU inventory unavailable: $_"; $processors = @() }
+    if (-not $processors.Count) {
         $result.HtmlSection = "<pre>$($L.NoCpuInfo)</pre>"
         return $result
     }
-
-    $result.CPUName = if ($proc.Name) { $proc.Name.Trim() } else { $L.UnknownLbl }
-    $result.CoreCount = if ($proc.NumberOfCores) { $proc.NumberOfCores } else { 0 }
-    $result.ThreadCount = if ($proc.NumberOfLogicalProcessors) { $proc.NumberOfLogicalProcessors } else { 0 }
-    $socketName = if ($proc.SocketDesignation) { $proc.SocketDesignation } else { $L.UnknownLbl }
-    $result.SocketType = $socketName
-
-    $upgradeCode = if ($proc.UpgradeMethod) { [int]$proc.UpgradeMethod } else { 2 }
-
-    $upgradeMethodNames = @{
-        1="Other"; 2=$L.UnknownLbl; 3="Daughter Board"; 4="ZIF Socket"; 5="Replaceable"
-        6="None (BGA/Soldered)"; 7="LIF Socket"; 8="Slot 1"; 9="Slot 2"
-        10="370-pin"; 11="Slot A"; 12="Slot M"; 13="Socket 423"; 14="Socket A (462)"
-        15="Socket 478"; 16="Socket 754"; 17="Socket 940"; 18="Socket 939"
-        19="mPGA604"; 20="LGA771"; 21="LGA775"; 22="S1"; 23="AM2"; 24="F (1207)"
-        25="LGA1366"; 26="G34"; 27="AM3"; 28="C32"; 29="LGA1156"; 30="LGA1567"
-        31="PGA988A"; 32="BGA1288"; 33="rPGA988B"; 34="BGA1023"; 35="BGA1224"
-        36="LGA1155"; 37="LGA1356"; 38="LGA2011"; 39="FS1"; 40="FS2"; 41="FM1"
-        42="FM2"; 43="LGA2011-3"; 44="LGA1356-3"; 45="LGA1150"; 46="BGA1168"
-        47="BGA1234"; 48="BGA1364"; 49="AM4"; 50="LGA1151"; 51="BGA1356"
-        52="BGA1440"; 53="BGA1515"; 54="LGA3647-1"; 55="SP3"; 56="SP3r2"
-        57="LGA2066"; 58="BGA1392"; 59="BGA1510"; 60="BGA1528"; 61="LGA4189"
-        62="LGA1200"; 63="LGA4677"; 64="LGA1700"; 65="BGA1744"; 66="BGA1781"
-        67="BGA1211"; 68="BGA2422"; 69="LGA1211"; 70="LGA2085"; 71="LGA4710"
+    $result.State = 'Observed'; $result.ProcessorCount = $processors.Count
+    $html = "<p>$($L.CpuUnmeasured). $($L.CpuServiceManual)</p>"
+    $html += "<table class='info-table'><tr><th>$($L.ProcLbl)</th><th>$($L.CpuTblSocket)</th><th>$($L.CpuTblUpg) (SMBIOS)</th><th>$($L.CpuTblCores)</th></tr>"
+    foreach ($proc in $processors) {
+        $name = if ($proc.Name) { $proc.Name.Trim() } else { $L.UnknownLbl }
+        $socket = if ($proc.SocketDesignation) { $proc.SocketDesignation } else { $L.UnknownLbl }
+        $upgradeCode = if ($proc.UpgradeMethod -gt 0) { [int]$proc.UpgradeMethod } else { $null }
+        $cores = if ($proc.NumberOfCores -gt 0) { [int]$proc.NumberOfCores } else { $null }
+        $threads = if ($proc.NumberOfLogicalProcessors -gt 0) { [int]$proc.NumberOfLogicalProcessors } else { $null }
+        $result.Processors += @{ Name=$name; SocketDesignation=$socket; UpgradeMethod=$upgradeCode; Cores=$cores; Threads=$threads }
+        $safeName = [System.Net.WebUtility]::HtmlEncode($name)
+        $safeSocket = [System.Net.WebUtility]::HtmlEncode($socket)
+        $codeDisplay = if ($null -ne $upgradeCode) { $upgradeCode } else { $L.UnknownLbl }
+        $coreDisplay = if ($null -ne $cores) { $cores } else { $L.UnknownLbl }
+        $threadDisplay = if ($null -ne $threads) { $threads } else { $L.UnknownLbl }
+        $html += "<tr><td>${safeName}</td><td>${safeSocket}</td><td>${codeDisplay}</td><td>${coreDisplay} / ${threadDisplay}</td></tr>"
     }
-
-    $upgradeMethodName = if ($upgradeMethodNames.ContainsKey($upgradeCode)) { $upgradeMethodNames[$upgradeCode] } else { "Code ${upgradeCode}" }
-    $result.UpgradeMethod = $upgradeMethodName
-
-    $cpuName = $result.CPUName
-    $gen = 0; $genLabel = ""
-    if ($cpuName -match "i[3579]-(\d{1,2})(\d{2,3})") { $gen = [int]$matches[1]; $genLabel = "Intel Gen ${gen}" }
-    elseif ($cpuName -match "Core\s*Ultra") { $gen = 14; $genLabel = "Intel Core Ultra (Gen 14+)" }
-    elseif ($cpuName -match "Intel.*\b(1[234]\d{2,3})\b") { $firstTwo = [int]($matches[1].Substring(0,2)); if ($firstTwo -ge 10 -and $firstTwo -le 14) { $gen=$firstTwo; $genLabel="Intel Gen ${gen}" } }
-    elseif ($cpuName -match "Ryzen\s+[3579]\s+(\d)(\d{2,3})") { $gen = [int]$matches[1]; $genLabel = "AMD Ryzen Gen ${gen}" }
-    elseif ($cpuName -match "Ryzen\s+[3579]\s+(\d)(\d{3})") { $gen = [int]$matches[1]; $genLabel = "AMD Ryzen Gen ${gen}" }
-    elseif ($cpuName -match "Athlon|A[46]-|A[46]\s|E[12]-|FX-") { $gen = 1; $genLabel = "AMD Legacy" }
-    $result.Generation = $gen; $result.GenerationLabel = $genLabel
-
-    if ($cpuName -match "Celeron|Pentium|Atom|Sempron|Athlon") { $result.IsBasic = $true }
-    elseif ($cpuName -match "i3-[234]\d{2}" -or ($cpuName -match "i3" -and $gen -le 4)) { $result.IsBasic = $true }
-    elseif ($result.CoreCount -le 2 -and $result.ThreadCount -le 2) { $result.IsBasic = $true }
-
-    if ($result.IsBasic -or $gen -le 3) { $result.ScoreLabel=$L.ScoreBasic; $result.ScoreColor="#dc3545" }
-    elseif ($gen -le 6) { $result.ScoreLabel=$L.ScoreOld; $result.ScoreColor="#fd7e14" }
-    elseif ($gen -le 9) { $result.ScoreLabel=$L.ScoreOk; $result.ScoreColor="#ffc107" }
-    else { $result.ScoreLabel=$L.ScoreGood; $result.ScoreColor="#28a745" }
-    if ($gen -eq 0 -and $result.CoreCount -ge 6) { $result.ScoreLabel=$L.ScoreOk; $result.ScoreColor="#ffc107" }
-
-    $bgaSignals = 0; $bgaReasons = @()
-    if ($upgradeCode -eq 6) { $bgaSignals += 3; $bgaReasons += "UpgradeMethod = None/BGA" }
-    elseif ($upgradeMethodName -match "BGA") { $bgaSignals += 3; $bgaReasons += "Socket BGA (${upgradeMethodName})" }
-    if ($socketName -match "BGA") { $bgaSignals += 2; $bgaReasons += "Socket designated BGA" }
-    if ($cpuName -match "[-\s](\d{4,5})[UYHPG]\b") { $bgaSignals += 1; $bgaReasons += "Mobile suffix" }
-    $chassis = Get-CimInstance Win32_SystemEnclosure -ErrorAction SilentlyContinue
-    $isLaptop = $false
-    if ($chassis) { foreach ($ct in $chassis.ChassisTypes) { if ($ct -in @(9,10,14,31,32)) { $isLaptop=$true; break } } }
-    if ($isLaptop -and $bgaSignals -ge 1) { $bgaSignals += 1; $bgaReasons += "Laptop chassis" }
-
-    if ($bgaSignals -ge 3) {
-        $result.IsSoldered=$true; $statusIcon="&#128274;"; $statusText=$L.CpuSoldered
-        $statusColor="#dc3545"; $bgColor="#f8d7da"; $borderColor="#f5c6cb"; $textColor="#721c24"
-        $advice=$L.CpuAdvSold
-    } elseif ($bgaSignals -ge 1) {
-        $result.IsSoldered=$true; $statusIcon="&#9888;"; $statusText=$L.CpuProbSold
-        $statusColor="#fd7e14"; $bgColor="#fff3cd"; $borderColor="#ffeeba"; $textColor="#856404"
-        $advice=$L.CpuAdvProb
-    } else {
-        $result.IsSoldered=$false; $statusIcon="&#128280;"; $statusText=$L.CpuSocketed
-        $statusColor="#28a745"; $bgColor="#d4edda"; $borderColor="#c3e6cb"; $textColor="#155724"
-        $advice=$L.CpuAdvSocket -f $socketName
-    }
-
-    $reasonList = if ($bgaReasons.Count -gt 0) { $bgaReasons -join " | " } else { $L.CpuNoSig }
-    $alertHtml = "<div style='background:${bgColor};color:${textColor};padding:12px;border:1px solid ${borderColor};border-radius:4px;margin-top:10px;font-size:13px'>"
-    $alertHtml += "<strong>${statusIcon} ${statusText}</strong><br>${advice}<br>"
-    $alertHtml += "<span style='font-size:11px;opacity:0.8'>$($L.CpuDetect -f $reasonList)</span></div>"
-
-    $scoreLabel=$result.ScoreLabel; $scoreColor=$result.ScoreColor
-    $genDisplay = if ($genLabel) { $genLabel } else { $L.CpuGenNotDet }
-    $cpuTable = "<table class='info-table'>"
-    $cpuTable += "<tr><th>$($L.CpuTblSocket)</th><td>${socketName}</td></tr>"
-    $cpuTable += "<tr><th>$($L.CpuTblUpg)</th><td>${upgradeMethodName}</td></tr>"
-    $cpuTable += "<tr><th>$($L.CpuTblGen)</th><td>${genDisplay}</td></tr>"
-    $cpuTable += "<tr><th>$($L.CpuTblCores)</th><td>$($result.CoreCount)C / $($result.ThreadCount)T</td></tr>"
-    $cpuTable += "<tr><th>$($L.CpuTblScore)</th><td style='color:${scoreColor};font-weight:bold'>${scoreLabel}</td></tr>"
-    $cpuTable += "<tr><th>$($L.CpuTblRepl)</th><td style='color:${statusColor};font-weight:bold'>${statusIcon} ${statusText}</td></tr>"
-    $cpuTable += "</table>"
-    $result.HtmlSection = $cpuTable + $alertHtml
-    $result.Summary = "${statusText} | ${scoreLabel} | ${genDisplay}"
+    $result.HtmlSection = $html + '</table>'
+    $result.Summary = "$($L.CpuUnmeasured) | $($L.CpuServiceManual)"
     return $result
 }
 
@@ -936,7 +795,7 @@ function Get-StorageAnalysis {
             $usedPct = if ($ld.Size -gt 0) { [math]::Round((($ld.Size - $ld.FreeSpace) / $ld.Size) * 100, 0) } else { 0 }
             $barColor = if ($usedPct -ge 90) { "#dc3545" } elseif ($usedPct -ge 75) { "#ffc107" } else { "#28a745" }
             if ($usedPct -ge 90) { $result.CriticalSpace = $true }
-            $spaceHtml += "<div style='margin:5px 0;font-size:13px'><strong>$($ld.DeviceID)</strong> $($L.StFreeOf -f $freeGB, $totalGB) "
+            $spaceHtml += "<div style='margin:5px 0;font-size:13px'><strong>$([Net.WebUtility]::HtmlEncode([string]$ld.DeviceID))</strong> $($L.StFreeOf -f $freeGB, $totalGB) "
             $spaceHtml += "<div style='background:#e9ecef;border-radius:4px;height:14px;width:200px;display:inline-block;vertical-align:middle'>"
             $spaceHtml += "<div style='background:${barColor};height:100%;width:${usedPct}%;border-radius:4px'></div></div>"
             $spaceHtml += " <span style='color:${barColor};font-weight:bold'>${usedPct}%</span></div>"
@@ -949,110 +808,68 @@ function Get-StorageAnalysis {
 
 function Get-UpgradeAdvisor {
     param([hashtable]$RAMData, [hashtable]$CPUData, [hashtable]$StorageData, [string]$OSCaption)
-    $recommendations = @(); $overallScore = 0; $maxScore = 0
-
-    $maxScore += 25; $ramGB = $RAMData.TotalGB
+    $recommendations = @(); $ramGB = $RAMData.TotalGB
     $ramKnown = ($null -ne $ramGB -and $ramGB -gt 0)
     if ($ramKnown -and $ramGB -lt 4) {
-        $overallScore += 0
         if ($RAMData.AllSoldered) { $ramAction=$L.RamActSold; $ramCost=$L.RamCostNew }
         elseif ($RAMData.HasFreeSlots) { $ramAction=($L.RamActFree -f $RAMData.SlotsLibres); $ramCost=$L.RamCost8 }
         else { $ramAction=$L.RamActReplace; $ramCost=$L.RamCost8 }
-        $recommendations += @{ Area="RAM"; Level=$L.LvlCritical; Color="#dc3545"; Icon="&#9888;"; Title=($L.RecRamLow -f $ramGB); Action=$ramAction; Cost=$ramCost; Impact=$L.RamImpactLow; Score=0 }
+        $recommendations += @{ Area="RAM"; Level=$L.LvlCritical; Color="#dc3545"; Icon="&#9888;"; Title=($L.RecRamLow -f $ramGB); Action=$ramAction; Cost=$ramCost; Impact=$L.RamImpactLow }
     } elseif ($ramKnown -and $ramGB -lt 8) {
-        $overallScore += 10
         if ($RAMData.AllSoldered) { $ramAction=$L.RamActSoldOk; $ramCost=$L.RamCostNa }
         elseif ($RAMData.HasFreeSlots) { $ramAction=($L.RamActFreeMed -f $RAMData.SlotsLibres); $ramCost=$L.RamCost8 }
         else { $ramAction=$L.RamActReplaceMed; $ramCost=$L.RamCostKit }
-        $recommendations += @{ Area="RAM"; Level=$L.LvlLow; Color="#fd7e14"; Icon="&#9432;"; Title=($L.RecRamLim -f $ramGB); Action=$ramAction; Cost=$ramCost; Impact=$L.RamImpactMed; Score=10 }
-    } elseif ($ramKnown) { $overallScore += 25 }
-
-    $maxScore += 25
-    if ($CPUData.IsBasic -or $CPUData.Generation -le 3) {
-        $overallScore += 0
-        if ($CPUData.IsSoldered) { $cpuAction=$L.CpuActSold; $cpuCost=$L.CpuCostI5 }
-        else { $cpuAction=($L.CpuActSocket -f $CPUData.SocketType); $cpuCost=$L.CpuCostUpg }
-        $recommendations += @{ Area="CPU"; Level=$L.LvlCritical; Color="#dc3545"; Icon="&#9888;"; Title=$L.RecCpuObs; Action=$cpuAction; Cost=$cpuCost; Impact=$L.CpuImpactBasic; Score=0 }
-    } elseif ($CPUData.Generation -le 6) {
-        $overallScore += 10
-        if ($CPUData.IsSoldered) { $cpuAction=$L.CpuActSoldMed; $cpuCost=$L.CpuCostFut }
-        else { $cpuAction=$L.CpuActUpgMed; $cpuCost=$L.CpuCostUpgMed }
-        $recommendations += @{ Area="CPU"; Level=$L.LvlOld; Color="#fd7e14"; Icon="&#9432;"; Title=($L.RecCpuOld -f $CPUData.GenerationLabel); Action=$cpuAction; Cost=$cpuCost; Impact=$L.CpuImpactOld; Score=10 }
-    } elseif ($CPUData.Generation -le 9) { $overallScore += 20 }
-    else { $overallScore += 25 }
-
-    $maxScore += 25
+        $recommendations += @{ Area="RAM"; Level=$L.LvlLow; Color="#fd7e14"; Icon="&#9432;"; Title=($L.RecRamLim -f $ramGB); Action=$ramAction; Cost=$ramCost; Impact=$L.RamImpactMed }
+    }
     if ($StorageData.HasHDD -and -not $StorageData.HasNVMe -and -not $StorageData.HasSATASSD) {
-        $overallScore += 0
-        $recommendations += @{ Area="DISK"; Level=$L.LvlCritical; Color="#dc3545"; Icon="&#9888;"; Title=$L.RecHdd; Action=$L.DiskActHdd; Cost=$L.DiskCostHdd; Impact=$L.DiskImpactHdd; Score=0 }
+        $recommendations += @{ Area="DISK"; Level=$L.LvlNotice; Color="#ffc107"; Icon="&#9432;"; Title=$L.RecHdd; Action=$L.DiskActHdd; Cost=$L.DiskCostHdd; Impact=$L.DiskImpactHdd }
     } elseif ($StorageData.HasSATASSD -and -not $StorageData.HasNVMe) {
-        $overallScore += 18
-        $recommendations += @{ Area="DISK"; Level=$L.LvlNotice; Color="#ffc107"; Icon="&#9432;"; Title=$L.RecSataSsd; Action=$L.DiskActSata; Cost=$L.DiskCostSata; Impact=$L.DiskImpactSata; Score=18 }
-    } elseif ($StorageData.HasNVMe) { $overallScore += 25 }
-    else { $overallScore += 15 }
-
+        $recommendations += @{ Area="DISK"; Level=$L.LvlNotice; Color="#ffc107"; Icon="&#9432;"; Title=$L.RecSataSsd; Action=$L.DiskActSata; Cost=$L.DiskCostSata; Impact=$L.DiskImpactSata }
+    }
     if ($StorageData.CriticalSpace) {
-        $recommendations += @{ Area="DISK"; Level=$L.LvlCritical; Color="#dc3545"; Icon="&#9888;"; Title=$L.RecDiskCrit; Action=$L.DiskActCrit; Cost=$L.DiskCostCrit; Impact=$L.DiskImpactCrit; Score=0 }
+        $recommendations += @{ Area="DISK"; Level=$L.LvlCritical; Color="#dc3545"; Icon="&#9888;"; Title=$L.RecDiskCrit; Action=$L.DiskActCrit; Cost=$L.DiskCostCrit; Impact=$L.DiskImpactCrit }
     }
-
-    $maxScore += 25; $osScore = 25
-    if ($OSCaption -match "Windows 10") {
-        $osScore = 15
-        $recommendations += @{ Area="OS"; Level=$L.LvlNotice; Color="#fd7e14"; Icon="&#9432;"; Title=$L.RecWin10Eol; Action=$L.OsActWin10; Cost=$L.OsCostWin10; Impact=$L.OsImpactWin10; Score=15 }
-    } elseif ($OSCaption -match "Windows 7|Windows 8") {
-        $osScore = 0
-        $recommendations += @{ Area="OS"; Level=$L.LvlCritical; Color="#dc3545"; Icon="&#9888;"; Title=$L.RecOsObs; Action=$L.OsActObs; Cost=$L.OsCostObs; Impact=$L.OsImpactObs; Score=0 }
+    if ($OSCaption -match 'Windows 10') {
+        $recommendations += @{ Area="OS"; Level=$L.LvlNotice; Color="#fd7e14"; Icon="&#9432;"; Title=$L.RecWin10Eol; Action=$L.OsActWin10; Cost=$L.OsCostWin10; Impact=$L.OsImpactWin10 }
+    } elseif ($OSCaption -match 'Windows 7|Windows 8') {
+        $recommendations += @{ Area="OS"; Level=$L.LvlCritical; Color="#dc3545"; Icon="&#9888;"; Title=$L.RecOsObs; Action=$L.OsActObs; Cost=$L.OsCostObs; Impact=$L.OsImpactObs }
     }
-    $overallScore += $osScore
-
-    $globalPct = if ($maxScore -gt 0) { [math]::Round(($overallScore / $maxScore) * 100, 0) } else { 0 }
-    if ($globalPct -ge 80) { $globalLabel=$L.ScoreGood; $globalColor="#28a745"; $globalIcon="&#10004;" }
-    elseif ($globalPct -ge 60) { $globalLabel=$L.ScoreOk; $globalColor="#ffc107"; $globalIcon="&#9432;" }
-    elseif ($globalPct -ge 35) { $globalLabel=$L.LvlLow; $globalColor="#fd7e14"; $globalIcon="&#9888;" }
-    else { $globalLabel=$L.LvlCritical; $globalColor="#dc3545"; $globalIcon="&#9888;" }
-    if (-not $ramKnown) { $globalPct=$null; $globalLabel=$L.GpuNotEvaluated; $globalColor="#666666" }
-
-    $html = ""
-    if ($recommendations.Count -eq 0 -and $ramKnown) {
-        $html = "<div style='background:#d4edda;color:#155724;padding:20px;border-radius:6px;text-align:center;font-size:16px'><strong>&#10004; $($L.UpgGood)</strong><br>$($L.UpgNoCrit)</div>"
-    } else {
-        if ($ramKnown) {
-            $html += "<div style='text-align:center;margin-bottom:20px'><div style='display:inline-block;background:${globalColor};color:#fff;padding:15px 30px;border-radius:50px;font-size:20px;font-weight:bold'>${globalIcon} $($L.UpgState -f $globalLabel, $globalPct)</div></div>"
-        } else { $html += "<p>$($L.RamIncomplete)</p>" }
-        $html += "<table class='info-table' style='margin-top:15px'><tr><th style='width:70px'>$($L.UpgArea)</th><th style='width:80px'>$($L.UpgLevel)</th><th>$($L.UpgDiag)</th><th>$($L.UpgAction)</th><th style='width:180px'>$($L.UpgCost)</th></tr>"
-        $sorted = $recommendations | Sort-Object {
-            $lvl = $_.Level
-            if ($lvl -eq $L.LvlCritical) { 0 }
-            elseif ($lvl -eq $L.LvlLow) { 1 }
-            elseif ($lvl -eq $L.LvlOld) { 2 }
-            elseif ($lvl -eq $L.LvlNotice) { 3 }
-            else { 4 }
-        }
-        foreach ($rec in $sorted) {
+    $html = "<p>$($L.UpgradeScope)</p>"
+    if (-not $ramKnown) { $html += "<p>$($L.RamIncomplete)</p>" }
+    if ($CPUData.State -ne 'Observed') { $html += "<p>$($L.NoCpuInfo)</p>" }
+    if ($recommendations.Count -eq 0) { $html += "<p>$($L.NoRecs)</p>" }
+    else {
+        $html += "<table class='info-table'><tr><th>$($L.UpgArea)</th><th>$($L.UpgLevel)</th><th>$($L.UpgDiag)</th><th>$($L.UpgAction)</th><th>$($L.UpgCost)</th></tr>"
+        foreach ($rec in ($recommendations | Sort-Object { if ($_.Level -eq $L.LvlCritical) { 0 } elseif ($_.Level -eq $L.LvlLow) { 1 } else { 2 } })) {
             $recColor = $rec.Color
-            $html += "<tr><td><strong>$($rec.Area)</strong></td>"
-            $html += "<td style='color:#fff;background:${recColor};padding:3px 8px;border-radius:4px;font-weight:bold;text-align:center;white-space:nowrap'>$($rec.Icon) $($rec.Level)</td>"
-            $html += "<td><strong>$($rec.Title)</strong><br><span style='font-size:11px;color:#666'>$($rec.Impact)</span></td>"
-            $html += "<td>$($rec.Action)</td><td style='font-size:12px'>$($rec.Cost)</td></tr>"
+            $html += "<tr><td><strong>$($rec.Area)</strong></td><td style='background:${recColor}'>$($rec.Icon) $($rec.Level)</td>"
+            $html += "<td><strong>$($rec.Title)</strong><br>$($rec.Impact)</td><td>$($rec.Action)</td><td>$($rec.Cost)</td></tr>"
         }
-        $html += "</table>"
+        $html += '</table>'
     }
-    return @{ HtmlSection=$html; Recommendations=$recommendations; Score=$globalPct; ScoreLabel=$globalLabel; ScoreColor=$globalColor }
+    return @{ HtmlSection=$html; Recommendations=$recommendations; Score=$null; ScoreLabel=$L.UpgradeScope; ScoreColor='#666666' }
 }
 
 function Get-NetworkProfile {
-    $result = @{ HtmlSection = ""; TextSummary = "" }
-    $adapters = Get-CimInstance Win32_NetworkAdapterConfiguration -ErrorAction SilentlyContinue | Where-Object { $_.IPEnabled }
+    $result = @{ HtmlSection = ""; TextSummary = ""; State = 'NotEvaluated' }
+    try { $adapters = @(Get-CimInstance Win32_NetworkAdapterConfiguration -OperationTimeoutSec 10 -ErrorAction Stop | Where-Object { $_.IPEnabled }) }
+    catch { $result.HtmlSection = "<pre>$($L.NoNetInfo)</pre>"; $result.TextSummary = $L.NoNetInfo; return $result }
+    $result.State = 'Observed'
     if (-not $adapters) { $result.HtmlSection = "<pre>$($L.NoNetAdapt)</pre>"; return $result }
     $htmlTable = "<table class='info-table'><tr><th>$($L.NetAdap)</th><th>$($L.NetIp)</th><th>$($L.NetMac)</th><th>$($L.NetGw)</th><th>$($L.NetDns)</th></tr>"
     $textNet = ""
     foreach ($a in $adapters) {
         $desc = if ($a.Description) { $a.Description } else { $L.UnknownLbl }
-        $ip = if ($a.IPAddress) { ($a.IPAddress | Select-Object -First 1) } else { "N/A" }
+        $ip = if ($a.IPAddress) { $a.IPAddress -join ', ' } else { "N/A" }
         $mac = if ($a.MACAddress) { $a.MACAddress } else { "N/A" }
-        $gw = if ($a.DefaultIPGateway) { ($a.DefaultIPGateway | Select-Object -First 1) } else { "N/A" }
+        $gw = if ($a.DefaultIPGateway) { $a.DefaultIPGateway -join ', ' } else { "N/A" }
         $dns = if ($a.DNSServerSearchOrder) { ($a.DNSServerSearchOrder -join ", ") } else { "N/A" }
-        $htmlTable += "<tr><td>${desc}</td><td>${ip}</td><td style='font-family:Consolas;font-size:11px'>${mac}</td><td>${gw}</td><td style='font-size:11px'>${dns}</td></tr>"
+        $safeDesc = [System.Net.WebUtility]::HtmlEncode($desc)
+        $safeIp = [System.Net.WebUtility]::HtmlEncode($ip)
+        $safeMac = [System.Net.WebUtility]::HtmlEncode($mac)
+        $safeGw = [System.Net.WebUtility]::HtmlEncode($gw)
+        $safeDns = [System.Net.WebUtility]::HtmlEncode($dns)
+        $htmlTable += "<tr><td>${safeDesc}</td><td>${safeIp}</td><td style='font-family:Consolas;font-size:11px'>${safeMac}</td><td>${safeGw}</td><td style='font-size:11px'>${safeDns}</td></tr>"
         $textNet += "${desc} | IP: ${ip} | MAC: ${mac}`n"
     }
     $htmlTable += "</table>"; $result.HtmlSection = $htmlTable; $result.TextSummary = $textNet
@@ -1716,15 +1533,16 @@ do {
                                 $checkValue=$line.Replace($key,"").Trim()
                                 if ([string]::IsNullOrWhiteSpace($checkValue) -or $checkValue -eq ":" -or $checkValue -eq "=") { continue }
                                 if ($key -eq "CPUID" -and $checkValue -match "^0x") { continue }
+                                $safeLine = [Net.WebUtility]::HtmlEncode($line)
                                 if ($isStorageSection -and $line -match "^\s*Name") { $cleanText+="`n$($L.DiskFound)`n" }
                                 if ($isGraphicsSection -and $line -match "^\s*Display adapter") { $cleanText+="`n$($L.GfxFound)`n" }
                                 if ($key -eq "Temperature" -and $line -match "(\d+)\s*degC") {
                                     $tempVal = [int]$matches[1]
                                     $tempColor = if ($tempVal -ge 85) { "#dc3545" } elseif ($tempVal -ge 70) { "#ff8c00" } else { "#28a745" }
                                     $tempLabel = if ($tempVal -ge 85) { $L.TempCrit } elseif ($tempVal -ge 70) { $L.TempWarm } else { "" }
-                                    $cleanText += "<span style='color:${tempColor};font-weight:bold'>${line}${tempLabel}</span>`n"
+                                    $cleanText += "<span style='color:${tempColor};font-weight:bold'>${safeLine}${tempLabel}</span>`n"
                                 } else {
-                                    $cleanText += $line + "`n"
+                                    $cleanText += $safeLine + "`n"
                                 }
                                 break
                             }
@@ -1738,7 +1556,7 @@ do {
         } else { Escribir-Centrado $L.Step2Simple "Cyan" }
 
         if ([string]::IsNullOrEmpty($htmlHardware)) {
-            function Fmt-Line ($titulo, $valor) { return "<span class='categoria-resaltada'>${titulo}:</span> ${valor}`n" }
+            function Fmt-Line ($titulo, $valor) { return "<span class='categoria-resaltada'>$([Net.WebUtility]::HtmlEncode([string]$titulo)):</span> $([Net.WebUtility]::HtmlEncode([string]$valor))`n" }
             $inv=""
             $bb=Get-CimInstance Win32_BaseBoard -ErrorAction SilentlyContinue; $bios=Get-CimInstance Win32_BIOS -ErrorAction SilentlyContinue
             $bbProduct=if($bb -and $bb.Product){$bb.Product}else{"N/A"}; $bbManuf=if($bb -and $bb.Manufacturer){$bb.Manufacturer}else{"N/A"}
@@ -1759,7 +1577,7 @@ do {
         Escribir-Centrado $L.Step3 "Cyan"
         $cpuInfo = Get-CPUUpgradeInfo
         $htmlCPU = "<h2>$($L.H3Cpu)</h2>" + $cpuInfo.HtmlSection
-        $cpuColor = if ($cpuInfo.IsSoldered) { "Red" } else { "Green" }
+        $cpuColor = if ($cpuInfo.State -eq 'NotEvaluated') { 'Yellow' } else { 'Gray' }
         Write-Host "    $($cpuInfo.Summary)" -ForegroundColor $cpuColor
 
         Escribir-Centrado $L.Step4 "Cyan"
@@ -1835,7 +1653,7 @@ do {
                 }
                 $batPercent="$($wmiBat.EstimatedChargeRemaining)%"
             }
-            $htmlBat="<h2>$($L.H8Battery)</h2><table class='info-table'><tr><th>$($L.BatStatus)</th><td>${batStatus} (${batPercent})</td></tr><tr><th>$($L.BatHealth)</th><td style='color:${saludColor};font-weight:bold'>${saludStr}</td></tr><tr><th>$($L.BatCycles)</th><td>${cycleCount}</td></tr><tr><th>$($L.BatCap)</th><td>${designCap} / ${fullCap} mWh</td></tr><tr><th>$($L.BatMan)</th><td>${manufactureName} / ${chemistry}</td></tr></table>${notaFraude}"
+            $htmlBat="<h2>$($L.H8Battery)</h2><table class='info-table'><tr><th>$($L.BatStatus)</th><td>${batStatus} (${batPercent})</td></tr><tr><th>$($L.BatHealth)</th><td style='color:${saludColor};font-weight:bold'>${saludStr}</td></tr><tr><th>$($L.BatCycles)</th><td>${cycleCount}</td></tr><tr><th>$($L.BatCap)</th><td>${designCap} / ${fullCap} mWh</td></tr><tr><th>$($L.BatMan)</th><td>$([Net.WebUtility]::HtmlEncode($manufactureName + ' / ' + $chemistry))</td></tr></table>${notaFraude}"
         } else { $htmlBat="<h2>$($L.H8Battery)</h2><pre>$($L.NoBattery)</pre>" }
 
         Escribir-Centrado $L.GpuStep "Cyan"
@@ -1848,26 +1666,18 @@ do {
         Escribir-Centrado $L.Step9 "Magenta"
         $upgradeResult = Get-UpgradeAdvisor -RAMData $ramDiag -CPUData $cpuInfo -StorageData $storageData -OSCaption $os.Caption
         $htmlUpgrade = "<h2 style='background:#FF5500'>$($L.H9Upgrade)</h2>" + $upgradeResult.HtmlSection
-        $scoreLbl = $upgradeResult.ScoreLabel
-        if ($scoreLbl -eq $L.LvlCritical -or $scoreLbl -eq $L.LvlLow) { $scoreCol = 'Red' }
-        elseif ($scoreLbl -eq $L.ScoreOk -or $null -eq $upgradeResult.Score) { $scoreCol = 'Yellow' }
-        else { $scoreCol = 'Green' }
-        Write-Host ""; Write-Host "    ========================================" -ForegroundColor $scoreCol
-        $scoreDisplay = if ($null -eq $upgradeResult.Score) { '--' } else { $upgradeResult.Score }
-        Write-Host "    $($L.ScoreLine -f $scoreDisplay, $upgradeResult.ScoreLabel)" -ForegroundColor $scoreCol
-        Write-Host "    ========================================" -ForegroundColor $scoreCol
+        Write-Host ""; Write-Host "    $($L.UpgradeScope)" -ForegroundColor Gray
         if ($upgradeResult.Recommendations.Count -gt 0) {
             foreach ($rec in $upgradeResult.Recommendations) {
                 if ($rec.Level -eq $L.LvlCritical -or $rec.Level -eq $L.LvlLow) { $rcCol = 'Red' } else { $rcCol = 'Yellow' }
                 Write-Host "    [$($rec.Level)] $($rec.Title)" -ForegroundColor $rcCol
             }
         }
-        elseif ($null -eq $upgradeResult.Score) { Write-Host $L.RamIncomplete -ForegroundColor Yellow }
-        else { Write-Host $L.NoRecs -ForegroundColor Green }
+        else { Write-Host $L.NoRecs -ForegroundColor Gray }
 
         Escribir-Centrado $L.Step10 "Green"
         $fechaReporte=Get-Date -Format 'dd/MM/yyyy HH:mm'; $yearReporte=Get-Date -Format 'yyyy'
-        $reportTitle = $L.HtmlReportTitle -f $aliasPC
+        $reportTitle = [Net.WebUtility]::HtmlEncode(($L.HtmlReportTitle -f $aliasPC))
         $css = @"
     <style>
         body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#f4f4f9;color:#333;margin:0;padding:20px}
@@ -1895,12 +1705,12 @@ do {
     <div class="container">
         <div class="header"><h1>ATLAS PC SUPPORT</h1><p>$($L.HtmlHdrSub)</p></div>
         <div class="info-box">
-            <div class="info-item"><strong>$($L.HtmlClient)</strong> ${aliasPC}</div>
-            <div class="info-item"><strong>$($L.HtmlEquip)</strong> ${pc}</div>
+            <div class="info-item"><strong>$($L.HtmlClient)</strong> $([Net.WebUtility]::HtmlEncode([string]$aliasPC))</div>
+            <div class="info-item"><strong>$($L.HtmlEquip)</strong> $([Net.WebUtility]::HtmlEncode([string]$pc))</div>
             <div class="info-item"><strong>$($L.HtmlDate)</strong> ${fechaReporte}</div>
         </div>
         <div class="content-area">
-            <h2>$($L.H1Section)</h2><pre>${txtSys}</pre>
+            <h2>$($L.H1Section)</h2><pre>$([Net.WebUtility]::HtmlEncode($txtSys))</pre>
             ${htmlHardware}
             ${htmlCPU}
             ${htmlRAM}
