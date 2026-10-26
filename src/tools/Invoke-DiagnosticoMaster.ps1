@@ -1261,10 +1261,12 @@ function Resolve-DiagDep {
     )
 
     $resolved = Find-FirstExistingPath -Candidates $InstallPaths
-    if (-not $resolved -and (Get-Command winget -ErrorAction SilentlyContinue)) {
-        try {
-            winget install --id $WingetId --exact --accept-source-agreements --accept-package-agreements --silent | Out-Null
-        } catch {}
+    $winget = if (-not $resolved) { Get-AtlasWingetPath } else { $null }
+    if (-not $resolved -and $winget) {
+        $installation = Invoke-AtlasNativeProcess -FilePath $winget -ArgumentList @('install','--id',$WingetId,'--exact','--source','winget','--accept-source-agreements','--accept-package-agreements','--silent') -TimeoutSeconds 600 -SuccessCodes @(0,-1978335189,-1978335135)
+        if ($installation.State -ne 'Correct') {
+            throw "Dependency $WingetId installation: $($installation.State) (exit $($installation.ExitCode)). Inspect before retrying."
+        }
         if ($CommandNames) {
             foreach ($cmdName in $CommandNames) {
                 $cmd = Get-Command $cmdName -ErrorAction SilentlyContinue

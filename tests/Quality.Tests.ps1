@@ -124,6 +124,40 @@ Describe 'Native outcomes and copy coverage' {
     }
 }
 
+Describe 'Diagnostic dependency installation boundaries' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-DiagnosticoMaster.ps1' 'Resolve-DiagDep')
+        function Find-FirstExistingPath { param($Candidates) }
+        function Get-AtlasWingetPath { 'fixture-winget.exe' }
+        function Invoke-AtlasNativeProcess { [CmdletBinding()]param($FilePath,$ArgumentList,$TimeoutSeconds,$SuccessCodes) throw 'Real installation blocked' }
+    }
+    BeforeEach {
+        Mock Find-FirstExistingPath { $null }
+        Mock Invoke-AtlasNativeProcess { [pscustomobject]@{State='TimedOut';ExitCode=0} }
+    }
+    It 'keeps an installed diagnostic dependency without starting an installer' {
+        Mock Find-FirstExistingPath { 'existing.exe' }
+        Mock Get-Item { [pscustomobject]@{Attributes=0} }
+        Resolve-DiagDep -WingetId 'Fixture.Tool' -InstallPaths @('existing.exe') | Should -Be existing.exe
+        Should -Invoke Invoke-AtlasNativeProcess -Times 0 -Exactly
+    }
+    It 'reports a timed out dependency before staging a partial installation' {
+        {Resolve-DiagDep -WingetId 'Fixture.Tool' -InstallPaths @('missing.exe')} | Should -Throw '*TimedOut*'
+        Should -Invoke Invoke-AtlasNativeProcess -Times 1 -Exactly -ParameterFilter {
+            $FilePath -eq 'fixture-winget.exe' -and $TimeoutSeconds -eq 600 -and
+            $ArgumentList[4] -eq '--source' -and $ArgumentList[5] -eq 'winget'
+        }
+        Should -Invoke Find-FirstExistingPath -Times 1 -Exactly
+    }
+    It 'looks up the installed file only after an accepted process result' {
+        Mock Invoke-AtlasNativeProcess { [pscustomobject]@{State='Correct';ExitCode=0} }
+        Resolve-DiagDep -WingetId 'Fixture.Tool' -InstallPaths @('missing.exe') | Should -BeNullOrEmpty
+        Should -Invoke Find-FirstExistingPath -Times 2 -Exactly
+    }
+}
+
 Describe 'Service restoration and dependent protection' {
     BeforeAll {
         . (Join-Path (Split-Path -Parent $PSScriptRoot) 'src/lib/Operations.ps1')

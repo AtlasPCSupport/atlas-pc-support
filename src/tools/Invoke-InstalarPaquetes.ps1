@@ -45,7 +45,8 @@ function Invoke-InstalarPaquetes {
             SubTitle             = 'Bulk software installer via winget · Atlas PC Support'
             WingetVersion           = 'winget version: {0}'
             WingetUnavailable       = 'winget is not available on this system.'
-            WingetUnavailableWin10  = 'winget is not installed. Click "[+] Install winget" to install automatically.'
+            WingetUnavailableWin10  = 'WinGet could not be verified. Repair App Installer, then reopen Atlas.'
+            WingetProbeHint         = 'Detection: {0}. No applications were installed by this check.'
             InstallWingetBtn        = '[+] Install winget'
             InstallingWinget        = '[...] Installing winget...'
             MenuSelectAll           = 'Select All'
@@ -98,7 +99,8 @@ function Invoke-InstalarPaquetes {
             SubTitle                = 'Instalación masiva de software con winget · Atlas PC Support'
             WingetVersion           = 'Versión de winget: {0}'
             WingetUnavailable       = 'winget no está disponible en este sistema.'
-            WingetUnavailableWin10  = 'winget no está instalado. Haz clic en "[+] Instalar winget" para instalarlo automáticamente.'
+            WingetUnavailableWin10  = 'No se pudo verificar WinGet. Repara App Installer y vuelve a abrir Atlas.'
+            WingetProbeHint         = 'Detección: {0}. Esta comprobación no instaló aplicaciones.'
             InstallWingetBtn        = '[+] Instalar winget'
             InstallingWinget        = '[...] Instalando winget...'
             MenuSelectAll        = 'Seleccionar Todo'
@@ -261,53 +263,6 @@ function Invoke-InstalarPaquetes {
         ($L.CleanTempCategory) = @(
             @{ Id='__action:clean-temp'; Name=$L.CleanTempName; Type='action'; Handler='Clean-TempFiles' }
         )
-    }
-
-    if (-not (Get-Command Get-AtlasWingetPath -ErrorAction SilentlyContinue)) {
-        function script:Get-AtlasWingetPath {
-            [CmdletBinding()]
-            param()
-            $cmd = Get-Command winget.exe -ErrorAction SilentlyContinue
-            if ($cmd -and $cmd.Source -and (Test-Path -LiteralPath $cmd.Source)) { return $cmd.Source }
-            try {
-                $pkg = Get-AppxPackage -Name 'Microsoft.DesktopAppInstaller' -ErrorAction SilentlyContinue |
-                       Sort-Object -Property Version -Descending | Select-Object -First 1
-                if ($pkg -and $pkg.InstallLocation) {
-                    $exe = Join-Path $pkg.InstallLocation 'winget.exe'
-                    if (Test-Path -LiteralPath $exe) { return $exe }
-                }
-            } catch {}
-            try {
-                $candidates = Get-ChildItem -Path 'C:\Program Files\WindowsApps' -Filter 'winget.exe' -Recurse -ErrorAction SilentlyContinue |
-                              Where-Object { $_.DirectoryName -like '*Microsoft.DesktopAppInstaller*' } |
-                              Sort-Object -Property FullName -Descending
-                if ($candidates) { return $candidates[0].FullName }
-            } catch {}
-            return $null
-        }
-    }
-
-    if (-not (Get-Command Get-AtlasWingetCapabilities -ErrorAction SilentlyContinue)) {
-        function script:Get-AtlasWingetCapabilities {
-            [CmdletBinding()]
-            param([string]$WingetPath)
-            $caps = [ordered]@{ Available = $false; Version = $null; SupportsNoInteract = $false; SupportsMsStore = $false }
-            if (-not $WingetPath -or -not (Test-Path -LiteralPath $WingetPath)) { return $caps }
-            $caps.Available = $true
-            $raw = try { (& $WingetPath --version 2>$null | Select-Object -First 1) } catch { $null }
-            if (-not $raw) { return $caps }
-            $text = ([string]$raw).Trim().TrimStart('v')
-            $caps.Version = $text
-            $parsed = $null
-            if ([version]::TryParse(($text -split '-')[0], [ref]$parsed)) {
-                $caps.SupportsNoInteract = ($parsed -ge [version]'1.3')
-                $caps.SupportsMsStore    = ($parsed -ge [version]'1.2')
-            } else {
-                $caps.SupportsNoInteract = $true
-                $caps.SupportsMsStore    = $true
-            }
-            return $caps
-        }
     }
 
     $script:WingetPath = Get-AtlasWingetPath
@@ -715,6 +670,7 @@ function Invoke-InstalarPaquetes {
             $msgUnavail = if ($L -and $L.WingetUnavailableWin10) { $L.WingetUnavailableWin10 } else { $L.WingetUnavailable }
             $ui.TxtWingetVer.Text = $msgUnavail
             $ui.TxtWingetVer.Foreground = [System.Windows.Media.Brushes]::OrangeRed
+            $ui.TxtWingetVer.ToolTip = ($L.WingetProbeHint -f $script:WingetCaps.ProbeState)
         }
         if ($ui.BtnInstallWingetAuto) { $ui.BtnInstallWingetAuto.Visibility = 'Visible' }
         if ($ui.BtnInstall) { $ui.BtnInstall.IsEnabled = $false }
