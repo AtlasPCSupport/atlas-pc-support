@@ -35,8 +35,11 @@ hardware, recuperación, USB ni instalaciones reales de terceros.
 Actualizacion 26/10/2026: [USB fisica NTFS](USB-2026-10-26.md) con 16 controles
 aprobados en dos ejecuciones: copia incremental, hashes completos de los fixtures,
 ida/vuelta, bloqueo y rechazo de bundle alterado. Las entradas offline 5.1/7 se
-validaron con `-NoLaunch`. Persistencia tras expulsar/reconectar, otros sistemas
-de archivos y fallos de alimentacion/espacio siguen pendientes.
+validaron con `-NoLaunch`. La lectura posterior a una reconexion confirmada por el
+usuario tambien aprobo hashes de fixtures, 33 miembros de 1.5.7 y la version
+anterior 1.5.6, sin escribir en la USB. Evidencia:
+[USB-RECONEXION](USB-RECONEXION-2026-10-26.json). Otros sistemas de archivos,
+desconexion durante copia y fallos de alimentacion/espacio siguen pendientes.
 
 La revision adicional [USB-COPIAS](USB-COPIAS-2026-10-26.md) elimina el fallback
 no verificado en carpetas de recursos del preparador, exige hashes de todos sus
