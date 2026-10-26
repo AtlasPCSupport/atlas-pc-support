@@ -162,6 +162,54 @@ Describe 'Real Robocopy integration confined to TestDrive' -Tag 'LocalFileIO' {
     }
 }
 
+Describe 'Opt-in physical USB acceptance guards' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $script:RepoRoot 'src/lib/Release.ps1')
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        . (Get-TestFunction $script:RepoRoot 'tests/Invoke-UsbAcceptance.ps1' 'Assert-UsbIdentity')
+        . (Get-TestFunction $script:RepoRoot 'tests/Invoke-UsbAcceptance.ps1' 'Assert-OwnedUsbPath')
+        function Get-Volume { [CmdletBinding()]param($DriveLetter) throw 'Real volume blocked' }
+        function Get-Partition { [CmdletBinding()]param($DriveLetter) throw 'Real partition blocked' }
+        function Get-Disk { [CmdletBinding()]param([Parameter(ValueFromPipeline)]$InputObject) throw 'Real disk blocked' }
+        $script:DriveLetter='E';$script:driveRoot='E:\';$script:ExpectedDiskNumber=2
+        $script:ExpectedIdentitySha256=Get-AtlasTextHash 'fixture-disk|fixture-volume'
+        $script:usbRoot='E:\ATLAS_USB_QA_fixture'
+    }
+    BeforeEach {
+        Mock Get-Volume { [pscustomobject]@{UniqueId='fixture-volume';FileSystem='NTFS';SizeRemaining=2GB} }
+        Mock Get-Partition { [pscustomobject]@{DiskNumber=2} }
+        Mock Get-Disk { [pscustomobject]@{Number=2;UniqueId='fixture-disk';BusType='USB';IsBoot=$false;IsSystem=$false;IsOffline=$false;IsReadOnly=$false} }
+        Mock Assert-AtlasPlainDirectory { }
+    }
+    It 'accepts only the explicitly matched non-system USB identity' {
+        (Assert-UsbIdentity).FileSystem | Should -Be NTFS
+    }
+    It 'rejects a different volume identity even if the letter and disk number match' {
+        Mock Get-Volume { [pscustomobject]@{UniqueId='replacement-volume';FileSystem='NTFS';SizeRemaining=2GB} }
+        {Assert-UsbIdentity} | Should -Throw '*identity changed*'
+    }
+    It 'rejects internal, system, read-only and mismatched disks' -ForEach @(
+        @{Bus='SATA';Boot=$false;ReadOnly=$false;Number=2},
+        @{Bus='USB';Boot=$true;ReadOnly=$false;Number=2},
+        @{Bus='USB';Boot=$false;ReadOnly=$true;Number=2},
+        @{Bus='USB';Boot=$false;ReadOnly=$false;Number=3}
+    ) {
+        Mock Get-Disk { [pscustomobject]@{Number=$Number;UniqueId='fixture-disk';BusType=$Bus;IsBoot=$Boot;IsSystem=$false;IsOffline=$false;IsReadOnly=$ReadOnly} }
+        {Assert-UsbIdentity} | Should -Throw '*non-system USB*'
+    }
+    It 'refuses insufficient free space without trying to fill or format a drive' {
+        Mock Get-Volume { [pscustomobject]@{UniqueId='fixture-volume';FileSystem='NTFS';SizeRemaining=100MB} }
+        {Assert-UsbIdentity} | Should -Throw '*1 GiB*'
+    }
+    It 'rejects root, sibling-prefix and traversal paths outside its owned folder' -Skip:($env:OS -ne 'Windows_NT') {
+        foreach($path in @('E:\','E:\ATLAS_USB_QA_fixture-other\file','E:\ATLAS_USB_QA_fixture\..\existing.txt')) {
+            {Assert-OwnedUsbPath $path} | Should -Throw '*escaped*'
+        }
+        {Assert-OwnedUsbPath 'E:\ATLAS_USB_QA_fixture\copy\file.txt'} | Should -Not -Throw
+    }
+}
+
 Describe 'Fresh diagnostic export evidence' {
     BeforeAll {
         $script:RepoRoot=Split-Path -Parent $PSScriptRoot
