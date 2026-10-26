@@ -1,0 +1,26 @@
+{
+  "SchemaVersion": 1,
+  "VerifiedUtc": "2026-10-26T21:33:50.7521814Z",
+  "FileSystem": "NTFS",
+  "Version": "1.5.9",
+  "Commit": "8c0c899fd3f808604d072c8c5cfff4082d163b3e",
+  "ManifestSha256": "3c34ab517bf2693075aacbfc16f4e98b1dc7416cb7f822ed44bcf08ecd2dec55",
+  "PreviousVersion": "1.5.7",
+  "PreviousCommit": "4b58914a804760c8737706322795516655067ae7",
+  "UpgradeVerified": true,
+  "OfflineNoLaunch51Passed": true,
+  "OfflineNoLaunch7Passed": true,
+  "OfflineRollbackVerified": true,
+  "CurrentReleaseRestored": true,
+  "Members": 33,
+  "ScopedToOwnedQaDirectory": true,
+  "DefenderActive": true,
+  "ReconnectionTestedThisAttempt": false,
+  "Windows10Qualified": false,
+  "InitialAttempt": {
+    "Passed": false,
+    "OfflineNoLaunch51Passed": true,
+    "Failure": "Local verification helper selected multiple PowerShell 7 application paths as one executable path; process launch failed before the PowerShell 7 check.",
+    "Recovery": "Selected one existing executable, verified current 1.5.9 and previous 1.5.7, resumed the checks and verified rollback and final current release."
+  }
+}
