@@ -1,4 +1,114 @@
 #Requires -Modules Pester
+Describe 'RAM evidence and cautious upgrade advice' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        $ast=Get-TestAst $script:RepoRoot 'src/tools/Invoke-DiagnosticoMaster.ps1'
+        $translations=$ast.Find({param($n) $n -is [System.Management.Automation.Language.AssignmentStatementAst] -and $n.Left.Extent.Text -eq '$T'},$true)
+        . ([scriptblock]::Create($translations.Extent.Text))
+        $script:L=$T.en; $script:lang='en'
+        foreach($name in @('Get-RAMDiagnostic','Get-UpgradeAdvisor')) {
+            . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-DiagnosticoMaster.ps1' $name)
+        }
+        function Get-CimInstance {[CmdletBinding()]param($ClassName,$OperationTimeoutSec) throw 'Real inventory blocked'}
+        $script:CpuFixture=@{Generation=12;IsBasic=$false;IsSoldered=$false;SocketType='Fixture'}
+        $script:DiskFixture=@{HasNVMe=$true;HasHDD=$false;HasSATASSD=$false;CriticalSpace=$false}
+    }
+    BeforeEach {
+        Mock Get-CimInstance {
+            switch($ClassName) {
+                Win32_PhysicalMemoryArray {[pscustomobject]@{MemoryDevices=4;MaxCapacity=32MB;MaxCapacityEx=64MB}}
+                Win32_PhysicalMemory {[pscustomobject]@{Capacity=8GB;FormFactor=12;Speed=3200;ConfiguredClockSpeed=2666;DeviceLocator='DIMM1'}}
+                Win32_SystemEnclosure {[pscustomobject]@{ChassisTypes=@(9)}}
+            }
+        }
+    }
+    It 'does not infer an active channel from <Count> populated memory devices' -ForEach @(@{Count=1},@{Count=2},@{Count=3}) {
+        Mock Get-CimInstance {1..$Count|ForEach-Object {[pscustomobject]@{Capacity=8GB;FormFactor=12}}} -ParameterFilter {$ClassName -eq 'Win32_PhysicalMemory'}
+        $ram=Get-RAMDiagnostic
+        $ram.IsDualChannel|Should -BeNullOrEmpty
+        $ram.ChannelLabel|Should -Be $L.RamChannelUnknown
+        $ram.TextSummary|Should -Not -Match 'Single Channel|Dual Channel'
+        $advice=Get-UpgradeAdvisor -RAMData $ram -CPUData $script:CpuFixture -StorageData $script:DiskFixture -OSCaption 'Windows 11'
+        $advice.Recommendations.Title|Should -Not -Contain $L.RecRamSC
+    }
+    It 'does not call an unknown laptop form factor soldered or removable' {
+        Mock Get-CimInstance {[pscustomobject]@{Capacity=8GB;FormFactor=0}} -ParameterFilter {$ClassName -eq 'Win32_PhysicalMemory'}
+        $ram=Get-RAMDiagnostic
+        $ram.Modules[0].IsSoldered|Should -BeNullOrEmpty
+        $ram.AllSoldered|Should -BeFalse
+        $ram.HtmlSection|Should -Not -Match 'UPGRADABLE:'
+    }
+    It 'reports a rate difference without claiming XMP state' {
+        $ram=Get-RAMDiagnostic
+        $ram.Modules[0].XMPStatus|Should -Be $L.RamXmpUnknown
+        $ram.HtmlSection|Should -Not -Match 'XMP off|LOW \('
+        $ram.Modules[0].Speed|Should -Be 2666
+        $ram.Modules[0].NativeSpeed|Should -Be 3200
+    }
+    It 'prefers extended maximum capacity and includes multiple system memory arrays' {
+        Mock Get-CimInstance {@([pscustomobject]@{MemoryDevices=2;MaxCapacity=32MB;MaxCapacityEx=64MB;Use=3},[pscustomobject]@{MemoryDevices=2;MaxCapacity=32MB;MaxCapacityEx=64MB;Use=3},[pscustomobject]@{MemoryDevices=8;MaxCapacityEx=1TB;Use=4})} -ParameterFilter {$ClassName -eq 'Win32_PhysicalMemoryArray'}
+        $ram=Get-RAMDiagnostic
+        $ram.MaxCapGB|Should -Be 128
+        $ram.SlotsTotal|Should -Be 4
+    }
+    It 'preserves installed capacity if the array query fails' {
+        Mock Get-CimInstance {throw 'Array denied'} -ParameterFilter {$ClassName -eq 'Win32_PhysicalMemoryArray'}
+        $ram=Get-RAMDiagnostic
+        $ram.TotalGB|Should -Be 8
+        $ram.SlotsTotal|Should -Be 0
+        $ram.HasFreeSlots|Should -BeFalse
+    }
+    It 'uses the legacy capacity only when extended capacity is unavailable' {
+        Mock Get-CimInstance {[pscustomobject]@{MemoryDevices=2;MaxCapacity=32MB;MaxCapacityEx=0;Use=3}} -ParameterFilter {$ClassName -eq 'Win32_PhysicalMemoryArray'}
+        (Get-RAMDiagnostic).MaxCapGB|Should -Be 32
+    }
+    It 'does not score partial capacity or count an unknown device as removable' {
+        Mock Get-CimInstance {@([pscustomobject]@{Capacity=8GB;FormFactor=12},[pscustomobject]@{Capacity=0;FormFactor=0})} -ParameterFilter {$ClassName -eq 'Win32_PhysicalMemory'}
+        $ram=Get-RAMDiagnostic
+        $ram.TotalGB|Should -BeNullOrEmpty
+        $ram.Modules[1].CapacityGB|Should -BeNullOrEmpty
+        $ram.Modules[1].IsSoldered|Should -BeNullOrEmpty
+    }
+    It 'still reports observed limited capacity with model-specific purchasing advice' {
+        Mock Get-CimInstance {[pscustomobject]@{Capacity=2GB;FormFactor=12}} -ParameterFilter {$ClassName -eq 'Win32_PhysicalMemory'}
+        $ram=Get-RAMDiagnostic
+        $advice=Get-UpgradeAdvisor -RAMData $ram -CPUData $script:CpuFixture -StorageData $script:DiskFixture -OSCaption 'Windows 11'
+        $advice.Score|Should -Not -BeNullOrEmpty
+        $finding=@($advice.Recommendations|Where-Object Area -eq RAM)
+        $finding.Count|Should -Be 1
+        $finding[0].Action|Should -Match 'Verify'
+        $finding[0].Cost|Should -Match 'verification'
+    }
+    It 'does not treat missing modules as zero RAM or score the incomplete advisor' -ForEach @(@{Mode='Empty'},@{Mode='Denied'},@{Mode='MissingCapacity'}) {
+        Mock Get-CimInstance {
+            if($Mode -eq 'Denied'){throw 'Memory denied'}
+            if($Mode -eq 'MissingCapacity'){[pscustomobject]@{FormFactor=12}}
+        } -ParameterFilter {$ClassName -eq 'Win32_PhysicalMemory'}
+        $ram=Get-RAMDiagnostic
+        $ram.TotalGB|Should -BeNullOrEmpty
+        $advice=Get-UpgradeAdvisor -RAMData $ram -CPUData $script:CpuFixture -StorageData $script:DiskFixture -OSCaption 'Windows 11'
+        $advice.Score|Should -BeNullOrEmpty
+        @($advice.Recommendations|Where-Object Area -eq RAM).Count|Should -Be 0
+        $advice.HtmlSection|Should -Not -Match 'COMPUTER IN GOOD SHAPE'
+        $advice.HtmlSection|Should -Match ([regex]::Escape($L.RamIncomplete))
+    }
+    It 'encodes device strings in RAM HTML without altering inventory values' {
+        Mock Get-CimInstance {[pscustomobject]@{Capacity=8GB;FormFactor=12;DeviceLocator='<script>slot</script>';Manufacturer='A&B';PartNumber='<img src=x>'}} -ParameterFilter {$ClassName -eq 'Win32_PhysicalMemory'}
+        $ram=Get-RAMDiagnostic
+        $ram.Modules[0].Manufacturer|Should -Be 'A&B'
+        $ram.HtmlSection|Should -Not -Match '<script>|<img '
+        $ram.HtmlSection|Should -Match 'A&amp;B'
+    }
+    It 'retains explicit soldered and removable evidence without claiming expansion is impossible' {
+        Mock Get-CimInstance {@([pscustomobject]@{Capacity=4GB;FormFactor=21;DeviceLocator='Onboard'},[pscustomobject]@{Capacity=4GB;FormFactor=12;DeviceLocator='DIMM1'})} -ParameterFilter {$ClassName -eq 'Win32_PhysicalMemory'}
+        $ram=Get-RAMDiagnostic
+        $ram.Modules[0].IsSoldered|Should -BeTrue
+        $ram.Modules[1].IsSoldered|Should -BeFalse
+        $ram.AllSoldered|Should -BeFalse
+    }
+}
+
 Describe 'Native outcomes and copy coverage' {
     BeforeAll {
         $script:RepoRoot=Split-Path -Parent $PSScriptRoot
