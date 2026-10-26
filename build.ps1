@@ -16,7 +16,7 @@ function ConvertTo-PowerShellLiteral {
     param([string]$Text)
     return "'" + $Text.Replace("'", "''") + "'"
 }
-$version = '1.5.4'
+$version = '1.5.5'
 $buildDate = '2026-10-25' # Release metadata, deliberately reproducible across hosts.
 $manifest = Get-EmbeddedContent (Join-Path $PSScriptRoot 'config/tools.json')
 $dependencies = Get-EmbeddedContent (Join-Path $PSScriptRoot 'config/dependencies.json')

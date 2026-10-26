@@ -20,7 +20,7 @@ if ($PSVersionTable.PSEdition -eq 'Desktop') {
 }
 
 
-$script:AtlasVersion = '1.5.4'
+$script:AtlasVersion = '1.5.5'
 $script:AtlasBuildDate = '2026-10-25'
 $script:AtlasToolsManifest = '{
   "$comment": "Tool manifest. Each entry describes one tool. The launcher uses this to render the panel''s tool tiles.",
@@ -873,7 +873,7 @@ $script:AtlasToolsManifest = '{
   ]
 }
 '
-$script:AtlasToolHashesJson = '{"generatedAt":"2026-10-25","algorithm":"SHA256","files":{"Invoke-AIReadiness.ps1":"62d6388cf643f1d5ca6bc8217929a2299cb6accae2c574f1f694ff9ceff5e248","Invoke-ActualizarPowerShell.ps1":"47e5d2a7c74d52191d9deacbc29360766b0120e1ecc50fde74ed94a9c089031e","Invoke-AuditoriaRouter.ps1":"c60b60203f6a7627d91a13d64bc592e36ea2fd5d552d0a83b4f6a9394d1119bb","Invoke-Deduplicador.ps1":"2147b9d475f36f93c2908bb3c1701b35c5e4a144eb1b5356653e90af322c1a01","Invoke-DiagnosticoEventos.ps1":"6e3b3763abcfe0e8f975c23f69d2bcdc716f6cd478e03b372f4602123552ccf3","Invoke-DiagnosticoMaster.ps1":"008128df1e762c95451cde446538f29a158720b1f0abe83c710dee63d3aebe58","Invoke-EntregaPC.ps1":"b6a7326be8dc1d7edf9c556e5ebaaaae5d43efb2c9936d111ac803f72a5c9ac8","Invoke-ExtraerLicencias.ps1":"bd8436451e725c872ac155aa948a1af5e3fb0734a9f479fac220b3ba52f43871","Invoke-Fase0.ps1":"14e7d9f9498853c4dc98d392cb022e21681064208cb208a88baff5f15d1e1966","Invoke-FastCopy.ps1":"af30d5dc46ac9f4e69592729d2f5f663cef6fbbf532a86d354694efc98a27e9f","Invoke-GPUCheck.ps1":"31c10a8e7800714a7ff53ddf1bb01b6fa4de9a6bea049c439c5db3a8bb36faca","Invoke-GestorBitLocker.ps1":"93969ccbf4b2810c7e8f480c58de5af4e0d96d6c979eda8a1ac44bf14bd453a9","Invoke-HostsManager.ps1":"21bb6ec2607f7b35f4651c0fb061b6ac0f45db8c1d4683bd4ca96cf85f2d8dc2","Invoke-InstalarMicrosoftStore.ps1":"d2d73a1a359585c13e09cf2eafe89fe588d5cdb9a89872730ab7a4e9de5a09de","Invoke-InstalarPaquetes.ps1":"d0d98a1e0d02271bcee8b03076b4bf2dd17cc252984390dbf5e24e510737ac43","Invoke-InstalarRuntimes.ps1":"0d973d2105d0468ad15e05543d10cf24d168beb4363df3dd261444a067812ef5","Invoke-KeyboardDoctor.ps1":"ee6b0d31e41874aa98e427e6d3adadc89490f1c900bb41568a023689e3b6d28b","Invoke-MantenimientoPRO.ps1":"226545d07cf4f201e958670f8c49168785b838320ddbc8959d2fc65751582931","Invoke-MenorPrivilegio.ps1":"93d6d30992dc2abb8cc9b044c2c9f457feff87011431238a9d47ecf683da435c","Invoke-PartsUpgrade.ps1":"ac447e5450c8cdee9c00f6bdcd739d0f720422da24fd6ca847d9ec75845fff90","Invoke-Personalizacion.ps1":"57f979ffe953aaed57632b004b687d5651cb41b21e0313ea3d23c423a6dcf1c4","Invoke-PrepararUSB.ps1":"fb33ccab4b790756ec9889308a9223b6580a98ec8cd62addd5220babad9e71d3","Invoke-PrinterDoctor.ps1":"f27fbed8ff8725a0a460a6a78964b4c5f6ccd374f59486596ef18abb5f5841a4","Invoke-RespaldoControladores.ps1":"c5817dc1e4b03b751bed7ff6b029a6a6e4a3b08da8fad8e2aba549dc4e30435d","Invoke-Robocopy.ps1":"d08cdc873f722652d94a64b1582ac3425d74e18b190c8588c2cbd461c6b6c60d","Invoke-SelectorDNS.ps1":"1dee53c8a288e5b76eacd96241771052ee05478c840795deebdd9907c3a89cae","Invoke-StopServices.ps1":"9cb88839b1e350bcee6ce63b5809ccc7c4ff4d11ee773ca3715b2d5386f1212b"}}'
+$script:AtlasToolHashesJson = '{"generatedAt":"2026-10-25","algorithm":"SHA256","files":{"Invoke-AIReadiness.ps1":"97748d251357e39bb40fd490b0940a5f6a475b7c0061f5465eaaf7d2bd4a1a65","Invoke-ActualizarPowerShell.ps1":"47e5d2a7c74d52191d9deacbc29360766b0120e1ecc50fde74ed94a9c089031e","Invoke-AuditoriaRouter.ps1":"c60b60203f6a7627d91a13d64bc592e36ea2fd5d552d0a83b4f6a9394d1119bb","Invoke-Deduplicador.ps1":"2147b9d475f36f93c2908bb3c1701b35c5e4a144eb1b5356653e90af322c1a01","Invoke-DiagnosticoEventos.ps1":"6e3b3763abcfe0e8f975c23f69d2bcdc716f6cd478e03b372f4602123552ccf3","Invoke-DiagnosticoMaster.ps1":"008128df1e762c95451cde446538f29a158720b1f0abe83c710dee63d3aebe58","Invoke-EntregaPC.ps1":"b6a7326be8dc1d7edf9c556e5ebaaaae5d43efb2c9936d111ac803f72a5c9ac8","Invoke-ExtraerLicencias.ps1":"bd8436451e725c872ac155aa948a1af5e3fb0734a9f479fac220b3ba52f43871","Invoke-Fase0.ps1":"14e7d9f9498853c4dc98d392cb022e21681064208cb208a88baff5f15d1e1966","Invoke-FastCopy.ps1":"af30d5dc46ac9f4e69592729d2f5f663cef6fbbf532a86d354694efc98a27e9f","Invoke-GPUCheck.ps1":"31c10a8e7800714a7ff53ddf1bb01b6fa4de9a6bea049c439c5db3a8bb36faca","Invoke-GestorBitLocker.ps1":"93969ccbf4b2810c7e8f480c58de5af4e0d96d6c979eda8a1ac44bf14bd453a9","Invoke-HostsManager.ps1":"21bb6ec2607f7b35f4651c0fb061b6ac0f45db8c1d4683bd4ca96cf85f2d8dc2","Invoke-InstalarMicrosoftStore.ps1":"d2d73a1a359585c13e09cf2eafe89fe588d5cdb9a89872730ab7a4e9de5a09de","Invoke-InstalarPaquetes.ps1":"d0d98a1e0d02271bcee8b03076b4bf2dd17cc252984390dbf5e24e510737ac43","Invoke-InstalarRuntimes.ps1":"0d973d2105d0468ad15e05543d10cf24d168beb4363df3dd261444a067812ef5","Invoke-KeyboardDoctor.ps1":"ee6b0d31e41874aa98e427e6d3adadc89490f1c900bb41568a023689e3b6d28b","Invoke-MantenimientoPRO.ps1":"226545d07cf4f201e958670f8c49168785b838320ddbc8959d2fc65751582931","Invoke-MenorPrivilegio.ps1":"93d6d30992dc2abb8cc9b044c2c9f457feff87011431238a9d47ecf683da435c","Invoke-PartsUpgrade.ps1":"ac447e5450c8cdee9c00f6bdcd739d0f720422da24fd6ca847d9ec75845fff90","Invoke-Personalizacion.ps1":"57f979ffe953aaed57632b004b687d5651cb41b21e0313ea3d23c423a6dcf1c4","Invoke-PrepararUSB.ps1":"fb33ccab4b790756ec9889308a9223b6580a98ec8cd62addd5220babad9e71d3","Invoke-PrinterDoctor.ps1":"f27fbed8ff8725a0a460a6a78964b4c5f6ccd374f59486596ef18abb5f5841a4","Invoke-RespaldoControladores.ps1":"c5817dc1e4b03b751bed7ff6b029a6a6e4a3b08da8fad8e2aba549dc4e30435d","Invoke-Robocopy.ps1":"d08cdc873f722652d94a64b1582ac3425d74e18b190c8588c2cbd461c6b6c60d","Invoke-SelectorDNS.ps1":"1dee53c8a288e5b76eacd96241771052ee05478c840795deebdd9907c3a89cae","Invoke-StopServices.ps1":"9cb88839b1e350bcee6ce63b5809ccc7c4ff4d11ee773ca3715b2d5386f1212b"}}'
 $script:AtlasXamlTemplate = '<Window
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -929,6 +929,10 @@ $script:AtlasXamlTemplate = '<Window
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter Property="Background" Value="{StaticResource AccentPressedBrush}"/>
                             </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter Property="BorderBrush" Value="{StaticResource TextPrimaryBrush}"/>
+                                <Setter Property="BorderThickness" Value="2"/>
+                            </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
@@ -954,6 +958,7 @@ $script:AtlasXamlTemplate = '<Window
 
         <!-- Categoría pill -->
         <Style x:Key="CategoryPill" TargetType="RadioButton">
+            <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -967,7 +972,7 @@ $script:AtlasXamlTemplate = '<Window
                                 CornerRadius="{{CORNER_RADIUS}}"
                                 Background="Transparent"
                                 BorderBrush="Transparent"
-                                BorderThickness="1">
+                                BorderThickness="{TemplateBinding BorderThickness}">
                             <ContentPresenter HorizontalAlignment="Center"
                                               VerticalAlignment="Center"
                                               Margin="{TemplateBinding Padding}"/>
@@ -979,6 +984,10 @@ $script:AtlasXamlTemplate = '<Window
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="Pill" Property="Background" Value="{StaticResource AccentBrush}"/>
                                 <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Pill" Property="BorderBrush" Value="{StaticResource TextPrimaryBrush}"/>
+                                <Setter Property="BorderThickness" Value="2"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -1137,6 +1146,7 @@ $script:AtlasXamlTemplate = '<Window
                 </StackPanel>
 
                 <TextBox x:Name="SearchBox"
+                         AutomationProperties.Name="{{SEARCH_PLACEHOLDER}}"
                          Grid.Column="1"
                          MaxWidth="360"
                          Margin="24,0"
@@ -1156,6 +1166,7 @@ $script:AtlasXamlTemplate = '<Window
                                Margin="0,0,12,0"
                                VerticalAlignment="Center"/>
                     <ComboBox x:Name="LanguageCombo"
+                              AutomationProperties.Name="{{LANG_TOOLTIP}}"
                               Style="{StaticResource AtlasComboBox}"
                               Width="130"
                               Height="34"
@@ -1164,6 +1175,7 @@ $script:AtlasXamlTemplate = '<Window
                               VerticalContentAlignment="Center"
                               ToolTip="{{LANG_TOOLTIP}}"/>
                     <Button x:Name="BtnRestart"
+                            AutomationProperties.Name="{{RESTART_TOOLTIP}}"
                             Content="↻"
                             Style="{StaticResource AtlasSecondaryButton}"
                             Margin="0,0,8,0"
@@ -1309,6 +1321,7 @@ $script:AtlasXamlTemplate = '<Window
                             FontSize="12"
                             ToolTip="{{DASH_TOGGLE_TOOLTIP}}"/>
                     <Button x:Name="BtnDashRefresh"
+                            AutomationProperties.Name="{{DASH_REFRESH_TOOLTIP}}"
                             Content="↻"
                             Style="{StaticResource AtlasSecondaryButton}"
                             Margin="8,0,0,0"
@@ -1323,9 +1336,11 @@ $script:AtlasXamlTemplate = '<Window
         <Border Grid.Row="2"
                 Background="{{BG_COLOR}}"
                 Padding="24,12,24,0">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
             <StackPanel x:Name="CategoryBar"
                         Orientation="Horizontal"
                         VerticalAlignment="Center"/>
+            </ScrollViewer>
         </Border>
 
         <!-- SIDEBAR + CONTENT -->
@@ -1495,9 +1510,11 @@ $script:AtlasXamlTemplate = '<Window
                            Foreground="{StaticResource TextMutedBrush}"
                            FontSize="11"
                            VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="1"
+                <Button Grid.Column="1"
                            x:Name="CoffeeLink"
-                           Text="☕ {{COFFEE_LABEL}}"
+                           Content="☕ {{COFFEE_LABEL}}"
+                           Style="{StaticResource AtlasSecondaryButton}"
+                           Background="Transparent" BorderBrush="Transparent" BorderThickness="0" Padding="0"
                            Foreground="{StaticResource AccentBrush}"
                            FontSize="11"
                            FontWeight="SemiBold"
@@ -7161,7 +7178,7 @@ function New-AtlasToolCard {
                    Height='56'
                    Margin='0,0,0,10'/>
         <StackPanel Orientation='Horizontal'>
-            <Button x:Name='BtnRun' Content='{{BTN_RUN}}' Tag='{{ID}}' Padding='14,6'
+            <Button x:Name='BtnRun' Content='{{BTN_RUN}}' AutomationProperties.Name='{{NAME}}: {{BTN_RUN}}' Tag='{{ID}}' Padding='14,6'
                     Background='$($Palette.AccentColor)' Foreground='White'
                     BorderBrush='$($Palette.AccentColor)' BorderThickness='1'
                     Cursor='Hand'/>
@@ -7496,6 +7513,15 @@ function Initialize-AtlasDashboard {
     $Window.Tag = [pscustomobject]@{ DashboardState=$state; DashboardTimer=$timer; DashboardPoll=$poll; DashboardStart=$startRead }
 }
 
+function Set-AtlasInitialWindowBounds {
+    param([Windows.Window]$Window, [Windows.Rect]$WorkArea = [Windows.SystemParameters]::WorkArea)
+    if ($WorkArea.IsEmpty -or $WorkArea.Width -le 0 -or $WorkArea.Height -le 0) { throw 'Desktop work area is unavailable.' }
+    $Window.MinWidth = [Math]::Min($Window.MinWidth, $WorkArea.Width)
+    $Window.MinHeight = [Math]::Min($Window.MinHeight, $WorkArea.Height)
+    $Window.Width = [Math]::Min([Math]::Max($Window.Width, $Window.MinWidth), $WorkArea.Width)
+    $Window.Height = [Math]::Min([Math]::Max($Window.Height, $Window.MinHeight), $WorkArea.Height)
+}
+
 function Show-AtlasWindow {
     param(
         [hashtable]$Branding,
@@ -7516,6 +7542,7 @@ function Show-AtlasWindow {
 
     $reader = New-Object System.Xml.XmlNodeReader $xamlDoc
     $window = [Windows.Markup.XamlReader]::Load($reader)
+    Set-AtlasInitialWindowBounds -Window $window
 
     # Agarrar controles
     $categoryBar = $window.FindName('CategoryBar')
@@ -7703,7 +7730,7 @@ $(Get-AtlasString 'about.description')
     # Coffee / donacion (footer)
     if ($coffeeLink) {
         $coffeeUrl = 'https://www.paypal.me/atlaspcsupport'
-        $coffeeLink.Add_MouseLeftButtonUp({
+        $coffeeLink.Add_Click({
             try {
                 Start-Process $coffeeUrl
             } catch {

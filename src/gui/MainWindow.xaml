@@ -53,6 +53,10 @@
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter Property="Background" Value="{StaticResource AccentPressedBrush}"/>
                             </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter Property="BorderBrush" Value="{StaticResource TextPrimaryBrush}"/>
+                                <Setter Property="BorderThickness" Value="2"/>
+                            </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
@@ -78,6 +82,7 @@
 
         <!-- Categoría pill -->
         <Style x:Key="CategoryPill" TargetType="RadioButton">
+            <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -91,7 +96,7 @@
                                 CornerRadius="{{CORNER_RADIUS}}"
                                 Background="Transparent"
                                 BorderBrush="Transparent"
-                                BorderThickness="1">
+                                BorderThickness="{TemplateBinding BorderThickness}">
                             <ContentPresenter HorizontalAlignment="Center"
                                               VerticalAlignment="Center"
                                               Margin="{TemplateBinding Padding}"/>
@@ -103,6 +108,10 @@
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="Pill" Property="Background" Value="{StaticResource AccentBrush}"/>
                                 <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Pill" Property="BorderBrush" Value="{StaticResource TextPrimaryBrush}"/>
+                                <Setter Property="BorderThickness" Value="2"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -261,6 +270,7 @@
                 </StackPanel>
 
                 <TextBox x:Name="SearchBox"
+                         AutomationProperties.Name="{{SEARCH_PLACEHOLDER}}"
                          Grid.Column="1"
                          MaxWidth="360"
                          Margin="24,0"
@@ -280,6 +290,7 @@
                                Margin="0,0,12,0"
                                VerticalAlignment="Center"/>
                     <ComboBox x:Name="LanguageCombo"
+                              AutomationProperties.Name="{{LANG_TOOLTIP}}"
                               Style="{StaticResource AtlasComboBox}"
                               Width="130"
                               Height="34"
@@ -288,6 +299,7 @@
                               VerticalContentAlignment="Center"
                               ToolTip="{{LANG_TOOLTIP}}"/>
                     <Button x:Name="BtnRestart"
+                            AutomationProperties.Name="{{RESTART_TOOLTIP}}"
                             Content="↻"
                             Style="{StaticResource AtlasSecondaryButton}"
                             Margin="0,0,8,0"
@@ -433,6 +445,7 @@
                             FontSize="12"
                             ToolTip="{{DASH_TOGGLE_TOOLTIP}}"/>
                     <Button x:Name="BtnDashRefresh"
+                            AutomationProperties.Name="{{DASH_REFRESH_TOOLTIP}}"
                             Content="↻"
                             Style="{StaticResource AtlasSecondaryButton}"
                             Margin="8,0,0,0"
@@ -447,9 +460,11 @@
         <Border Grid.Row="2"
                 Background="{{BG_COLOR}}"
                 Padding="24,12,24,0">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
             <StackPanel x:Name="CategoryBar"
                         Orientation="Horizontal"
                         VerticalAlignment="Center"/>
+            </ScrollViewer>
         </Border>
 
         <!-- SIDEBAR + CONTENT -->
@@ -619,9 +634,11 @@
                            Foreground="{StaticResource TextMutedBrush}"
                            FontSize="11"
                            VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="1"
+                <Button Grid.Column="1"
                            x:Name="CoffeeLink"
-                           Text="☕ {{COFFEE_LABEL}}"
+                           Content="☕ {{COFFEE_LABEL}}"
+                           Style="{StaticResource AtlasSecondaryButton}"
+                           Background="Transparent" BorderBrush="Transparent" BorderThickness="0" Padding="0"
                            Foreground="{StaticResource AccentBrush}"
                            FontSize="11"
                            FontWeight="SemiBold"

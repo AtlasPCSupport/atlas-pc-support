@@ -1,5 +1,27 @@
 #Requires -Version 5.1
 #Requires -Modules Pester
+Describe 'Public bootstrap verification without legacy banner assumptions' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $script:RepoRoot 'src/lib/Release.ps1')
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        . (Get-TestFunction $script:RepoRoot 'api/cloudflare-worker/test-worker-endpoints.ps1' 'Test-AtlasServedBootstrap')
+        $script:Template="#Requires -Version 5.1`n`$publishedCommit = '__ATLAS_RELEASE_COMMIT__'`n`$publishedManifest = '__ATLAS_RELEASE_MANIFEST_SHA256__'"
+        $script:Descriptor=[pscustomobject]@{commit=('a'*40);manifestSha256=('b'*64)}
+        $script:Manifest=[pscustomobject]@{files=[pscustomobject]@{'get.ps1'=(Get-AtlasTextHash $script:Template)}}
+        $script:Served=$script:Template.Replace('__ATLAS_RELEASE_COMMIT__',$script:Descriptor.commit).Replace('__ATLAS_RELEASE_MANIFEST_SHA256__',$script:Descriptor.manifestSha256)
+    }
+    It 'accepts a commit-bound bootstrap with the current header' {
+        Test-AtlasServedBootstrap $script:Served $script:Descriptor $script:Manifest | Should -BeTrue
+    }
+    It 'rejects modified executable content even with correct publication pins' {
+        Test-AtlasServedBootstrap ($script:Served+"`nWrite-Output changed") $script:Descriptor $script:Manifest | Should -BeFalse
+    }
+    It 'rejects a bootstrap that embeds a different commit' {
+        Test-AtlasServedBootstrap ($script:Served.Replace($script:Descriptor.commit,('c'*40))) $script:Descriptor $script:Manifest | Should -BeFalse
+    }
+}
+
 Describe 'Complete immutable releases and recovery' {
     BeforeAll {
         $script:RepoRoot = Split-Path -Parent $PSScriptRoot

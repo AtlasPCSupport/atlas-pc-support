@@ -231,7 +231,7 @@ function New-AtlasToolCard {
                    Height='56'
                    Margin='0,0,0,10'/>
         <StackPanel Orientation='Horizontal'>
-            <Button x:Name='BtnRun' Content='{{BTN_RUN}}' Tag='{{ID}}' Padding='14,6'
+            <Button x:Name='BtnRun' Content='{{BTN_RUN}}' AutomationProperties.Name='{{NAME}}: {{BTN_RUN}}' Tag='{{ID}}' Padding='14,6'
                     Background='$($Palette.AccentColor)' Foreground='White'
                     BorderBrush='$($Palette.AccentColor)' BorderThickness='1'
                     Cursor='Hand'/>
@@ -566,6 +566,15 @@ function Initialize-AtlasDashboard {
     $Window.Tag = [pscustomobject]@{ DashboardState=$state; DashboardTimer=$timer; DashboardPoll=$poll; DashboardStart=$startRead }
 }
 
+function Set-AtlasInitialWindowBounds {
+    param([Windows.Window]$Window, [Windows.Rect]$WorkArea = [Windows.SystemParameters]::WorkArea)
+    if ($WorkArea.IsEmpty -or $WorkArea.Width -le 0 -or $WorkArea.Height -le 0) { throw 'Desktop work area is unavailable.' }
+    $Window.MinWidth = [Math]::Min($Window.MinWidth, $WorkArea.Width)
+    $Window.MinHeight = [Math]::Min($Window.MinHeight, $WorkArea.Height)
+    $Window.Width = [Math]::Min([Math]::Max($Window.Width, $Window.MinWidth), $WorkArea.Width)
+    $Window.Height = [Math]::Min([Math]::Max($Window.Height, $Window.MinHeight), $WorkArea.Height)
+}
+
 function Show-AtlasWindow {
     param(
         [hashtable]$Branding,
@@ -586,6 +595,7 @@ function Show-AtlasWindow {
 
     $reader = New-Object System.Xml.XmlNodeReader $xamlDoc
     $window = [Windows.Markup.XamlReader]::Load($reader)
+    Set-AtlasInitialWindowBounds -Window $window
 
     # Agarrar controles
     $categoryBar = $window.FindName('CategoryBar')
@@ -773,7 +783,7 @@ $(Get-AtlasString 'about.description')
     # Coffee / donacion (footer)
     if ($coffeeLink) {
         $coffeeUrl = 'https://www.paypal.me/atlaspcsupport'
-        $coffeeLink.Add_MouseLeftButtonUp({
+        $coffeeLink.Add_Click({
             try {
                 Start-Process $coffeeUrl
             } catch {

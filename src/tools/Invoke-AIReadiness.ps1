@@ -239,15 +239,11 @@ function Invoke-AIReadiness {
             [string]$Filter = ''
         )
         try {
-            if (Get-Command Get-CimInstance -ErrorAction SilentlyContinue) {
-                $args = @{ ClassName = $ClassName; Namespace = $Namespace; ErrorAction = 'Stop' }
-                if ($Filter) { $args.Filter = $Filter }
-                return @(Get-CimInstance @args)
-            }
-            $args = @{ Class = $ClassName; Namespace = $Namespace; ErrorAction = 'Stop' }
-            if ($Filter) { $args.Filter = $Filter }
-            return @(Get-WmiObject @args)
+            $query = @{ ClassName = $ClassName; Namespace = $Namespace; OperationTimeoutSec = 10; ErrorAction = 'Stop' }
+            if ($Filter) { $query.Filter = $Filter }
+            return @(Get-CimInstance @query)
         } catch {
+            Write-Warning "Inventory $ClassName was not evaluated. Check CIM availability and permissions."
             return @()
         }
     }
@@ -287,23 +283,6 @@ function Invoke-AIReadiness {
         return [pscustomobject]@{ Name=$Name; Url=$Url; Reachable=$reachable; Status=$status }
     }
 
-    function Invoke-AIRCpuBenchmark {
-        try {
-            $sw = [System.Diagnostics.Stopwatch]::StartNew()
-            $ops = 0
-            while ($sw.ElapsedMilliseconds -lt 700) {
-                for ($i = 1; $i -le 3000; $i++) {
-                    $null = [math]::Sqrt(($i * 13.37) % 997)
-                }
-                $ops += 3000
-            }
-            $sw.Stop()
-            return [math]::Round(($ops / [math]::Max($sw.Elapsed.TotalSeconds, 0.1)) / 1000000, 2)
-        } catch {
-            return 0
-        }
-    }
-
     function Get-AIRDiskInfo {
         $rows = @()
         try {
@@ -323,13 +302,9 @@ function Invoke-AIReadiness {
             $disks = Get-AIRCim -ClassName 'Win32_DiskDrive'
             foreach ($d in $disks) {
                 $model = [string]$d.Model
-                $media = [string]$d.MediaType
-                if ($model -match '(?i)nvme') { $media = 'SSD' }
-                elseif ($model -match '(?i)\bssd\b|solid') { $media = 'SSD' }
-                elseif ($media -match '(?i)fixed hard disk') { $media = 'HDD' }
                 $rows += [pscustomobject]@{
                     Name=$model
-                    MediaType=$media
+                    MediaType='Unknown' # Win32_DiskDrive fixed media does not distinguish HDD from SSD.
                     BusType=[string]$d.InterfaceType
                     SizeGB=(Format-AIRGB $d.Size)
                     Health=[string]$d.Status
@@ -340,26 +315,31 @@ function Invoke-AIReadiness {
     }
 
     function Get-AIRNvidiaSmi {
+        [CmdletBinding()]
+        param()
         $cmd = Get-Command 'nvidia-smi.exe' -ErrorAction SilentlyContinue
         if (-not $cmd) { $cmd = Get-Command 'nvidia-smi' -ErrorAction SilentlyContinue }
         if (-not $cmd) { return $null }
         try {
-            $out = & $cmd.Source '--query-gpu=name,memory.total,temperature.gpu,driver_version' '--format=csv,noheader,nounits' 2>$null
+            $probe = Invoke-AtlasNativeProcess -FilePath $cmd.Source -ArgumentList @('--query-gpu=name,memory.total,temperature.gpu,driver_version','--format=csv,noheader,nounits') -TimeoutSeconds 10
+            if ($probe.State -ne 'Correct') { throw 'NVIDIA telemetry query failed.' }
+            $out = [string]$probe.Stdout
             if (-not $out) { return $null }
             $rows = @()
-            foreach ($line in @($out)) {
+            foreach ($line in @($out -split '\r?\n' | Where-Object { $_.Trim() })) {
                 $parts = @($line -split ',\s*')
                 if ($parts.Count -ge 4) {
                     $rows += [pscustomobject]@{
                         Name=$parts[0]
-                        MemoryMB=[int]($parts[1] -replace '[^\d]', '')
-                        TemperatureC=[int]($parts[2] -replace '[^\d]', '')
+                        MemoryMB=$(if ($parts[1] -match '^\d+$') { [int]$parts[1] } else { $null })
+                        TemperatureC=$(if ($parts[2] -match '^\d+$') { [int]$parts[2] } else { $null })
                         DriverVersion=$parts[3]
                     }
                 }
             }
             return @($rows)
         } catch {
+            Write-Warning 'NVIDIA telemetry was not evaluated. Inventory remains a limited heuristic.'
             return $null
         }
     }
@@ -453,14 +433,13 @@ function Invoke-AIReadiness {
         $logical = if ($cpu -and $cpu.NumberOfLogicalProcessors) { [int]$cpu.NumberOfLogicalProcessors } else { 0 }
         $cores = if ($cpu -and $cpu.NumberOfCores) { [int]$cpu.NumberOfCores } else { 0 }
         $cpuName = if ($cpu) { [string]$cpu.Name } else { '' }
-        $cpuBench = 0 # No CPU microbenchmark is run by inventory.
         $maxVram = 0
         foreach ($g in $gpuRows) {
             if ([double]$g.VRAMGB -gt $maxVram) { $maxVram = [double]$g.VRAMGB }
         }
         $hasBasicGpu = @($gpuRows | Where-Object { $_.Name -match '(?i)basic display|microsoft basic' }).Count -gt 0
         $hasSsd = @($diskRows | Where-Object { $_.MediaType -match '(?i)ssd|nvme' -or $_.BusType -match '(?i)nvme' }).Count -gt 0
-        $hasHddOnly = ($diskRows.Count -gt 0 -and -not $hasSsd)
+        $hasHddOnly = ($diskRows.Count -gt 0 -and @($diskRows | Where-Object { $_.MediaType -notmatch '^(?i:HDD)$' }).Count -eq 0)
         $badDisk = @($diskRows | Where-Object { $_.Health -and $_.Health -notmatch '(?i)^(ok|healthy|unknown)$' }).Count -gt 0
 
         $ollama = Get-AIRCommandState 'ollama'
@@ -475,7 +454,6 @@ function Invoke-AIReadiness {
 
         $ramScore = if ($ramGb -ge 64) { 25 } elseif ($ramGb -ge 32) { 22 } elseif ($ramGb -ge 16) { 17 } elseif ($ramGb -ge 8) { 10 } elseif ($ramGb -ge 4) { 4 } else { 0 }
         $cpuScore = if ($logical -ge 16) { 20 } elseif ($logical -ge 12) { 17 } elseif ($logical -ge 8) { 14 } elseif ($logical -ge 4) { 9 } elseif ($logical -gt 0) { 5 } else { 0 }
-        if ($cpuBench -ge 4 -and $cpuScore -lt 20) { $cpuScore += 1 }
         $gpuScore = if ($maxVram -ge 16) { 25 } elseif ($maxVram -ge 12) { 22 } elseif ($maxVram -ge 8) { 19 } elseif ($maxVram -ge 6) { 15 } elseif ($maxVram -ge 4) { 11 } elseif ($maxVram -ge 2) { 6 } elseif ($maxVram -gt 0) { 3 } else { 0 }
         if ($hasBasicGpu -and $gpuScore -gt 2) { $gpuScore = 2 }
         $diskScore = if ($hasSsd) { 15 } elseif ($diskRows.Count -gt 0) { 4 } else { 0 }
@@ -537,7 +515,7 @@ function Invoke-AIReadiness {
             Verdict=$verdict
             RecommendedMode=$mode
             Scores=[ordered]@{ RAM=$ramScore; CPU=$cpuScore; GPU=$gpuScore; Storage=$diskScore; Stack=$stackScore }
-            CPU=[ordered]@{ Name=$cpuName; Cores=$cores; LogicalProcessors=$logical; MaxClockMHz=if ($cpu) { [int]$cpu.MaxClockSpeed } else { 0 }; BenchmarkMOps=$cpuBench }
+            CPU=[ordered]@{ Name=$cpuName; Cores=$cores; LogicalProcessors=$logical; MaxClockMHz=if ($cpu) { [int]$cpu.MaxClockSpeed } else { 0 }; BenchmarkExecuted=$false; BenchmarkMOps=$null }
             RAM=[ordered]@{ TotalGB=$ramGb }
             GPU=@($gpuRows)
             NvidiaSmi=@($nvidia)
@@ -582,7 +560,7 @@ function Invoke-AIReadiness {
 
         $componentRows = @(
             [pscustomobject]@{ Component=$L.Ram; Value=("{0} GB" -f $Report.RAM.TotalGB); Score=$Report.Scores.RAM },
-            [pscustomobject]@{ Component=$L.Cpu; Value=("{0} ({1}C/{2}T, {3} MOps)" -f $Report.CPU.Name, $Report.CPU.Cores, $Report.CPU.LogicalProcessors, $Report.CPU.BenchmarkMOps); Score=$Report.Scores.CPU },
+            [pscustomobject]@{ Component=$L.Cpu; Value=("{0} ({1}C/{2}T)" -f $Report.CPU.Name, $Report.CPU.Cores, $Report.CPU.LogicalProcessors); Score=$Report.Scores.CPU },
             [pscustomobject]@{ Component=$L.Gpu; Value=(($Report.GPU | ForEach-Object { "{0} ({1} GB VRAM)" -f $_.Name, $_.VRAMGB }) -join '; '); Score=$Report.Scores.GPU },
             [pscustomobject]@{ Component=$L.Disk; Value=(($Report.Disks | ForEach-Object { "{0} {1} {2}GB health={3}" -f $_.BusType, $_.MediaType, $_.SizeGB, $_.Health }) -join '; '); Score=$Report.Scores.Storage },
             [pscustomobject]@{ Component=$L.Stack; Value=(($Report.Stack | ForEach-Object { "{0}: {1}" -f $_.Component, $_.State }) -join '; '); Score=$Report.Scores.Stack }
