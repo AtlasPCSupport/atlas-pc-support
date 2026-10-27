@@ -210,6 +210,7 @@ function Invoke-PrinterDoctor {
     $atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
 
     $script:PrinterDoctorReport = [ordered]@{
+        Coverage = @{}
         Generated = Get-Date
         Computer = $env:COMPUTERNAME
         OS = ''
@@ -274,109 +275,55 @@ function Invoke-PrinterDoctor {
     }
 
     function Get-PDPrinters {
-        $printers = @()
-        try {
-            $printers = @(Get-CimInstance Win32_Printer -ErrorAction Stop | Sort-Object Name | ForEach-Object {
-                [pscustomobject]@{
-                    Name = $_.Name
-                    Default = [bool]$_.Default
-                    Shared = [bool]$_.Shared
-                    Network = [bool]$_.Network
-                    WorkOffline = [bool]$_.WorkOffline
-                    PrinterStatus = $_.PrinterStatus
-                    DetectedErrorState = $_.DetectedErrorState
-                    DriverName = $_.DriverName
-                    PortName = $_.PortName
-                }
-            })
-        } catch {}
-        $script:PrinterDoctorReport.Printers = $printers
-        return $printers
+        $read = Invoke-AtlasInventoryRead -Source 'Printers' -Query {
+            Get-CimInstance Win32_Printer -OperationTimeoutSec 10 -ErrorAction Stop | Sort-Object Name | Select-Object Name, Default, Shared, Network, WorkOffline, PrinterStatus, DetectedErrorState, DriverName, PortName
+        }
+        $script:PrinterDoctorReport.Coverage['Printers'] = $read.State
+        $script:PrinterDoctorReport.Printers = @($read.Items)
+        return @($read.Items)
     }
 
     function Get-PDPorts {
-        $ports = @()
-        try {
+        $read = Invoke-AtlasInventoryRead -Source 'Printer ports' -Query {
             if (Get-Command Get-PrinterPort -ErrorAction SilentlyContinue) {
-                $ports = @(Get-PrinterPort -ErrorAction Stop | Sort-Object Name | ForEach-Object {
-                    [pscustomobject]@{
-                        Name = $_.Name
-                        HostAddress = $_.PrinterHostAddress
-                        PortNumber = $_.PortNumber
-                        Protocol = $_.Protocol
-                        Description = $_.Description
-                    }
-                })
+                Get-PrinterPort -ErrorAction Stop | Sort-Object Name |
+                    Select-Object Name, @{n='HostAddress';e={$_.PrinterHostAddress}}, PortNumber, Protocol, Description
+                return
             }
-        } catch {}
-        if (-not $ports) {
-            try {
-                $ports = @(Get-CimInstance Win32_TCPIPPrinterPort -ErrorAction Stop | Sort-Object Name | ForEach-Object {
-                    [pscustomobject]@{
-                        Name = $_.Name
-                        HostAddress = $_.HostAddress
-                        PortNumber = $_.PortNumber
-                        Protocol = $_.Protocol
-                        Description = $_.Description
-                    }
-                })
-            } catch {}
+            Get-CimInstance Win32_TCPIPPrinterPort -OperationTimeoutSec 10 -ErrorAction Stop |
+                Sort-Object Name | Select-Object Name, HostAddress, PortNumber, Protocol, Description
         }
-        $script:PrinterDoctorReport.Ports = @($ports)
-        return @($ports)
+        $script:PrinterDoctorReport.Coverage['Ports'] = $read.State
+        $script:PrinterDoctorReport.Ports = @($read.Items)
+        return @($read.Items)
     }
 
     function Get-PDDrivers {
-        $drivers = @()
-        try {
-            $drivers = @(Get-CimInstance Win32_PrinterDriver -ErrorAction Stop | Sort-Object Name | ForEach-Object {
-                [pscustomobject]@{
-                    Name = $_.Name
-                    DriverPath = $_.DriverPath
-                    InfName = $_.InfName
-                    SupportedPlatform = $_.SupportedPlatform
-                    Version = $_.Version
-                }
-            })
-        } catch {}
-        $script:PrinterDoctorReport.Drivers = $drivers
-        return $drivers
+        $read = Invoke-AtlasInventoryRead -Source 'Drivers' -Query {
+            Get-CimInstance Win32_PrinterDriver -OperationTimeoutSec 10 -ErrorAction Stop | Sort-Object Name | Select-Object Name, DriverPath, InfName, SupportedPlatform, Version
+        }
+        $script:PrinterDoctorReport.Coverage['Drivers'] = $read.State
+        $script:PrinterDoctorReport.Drivers = @($read.Items)
+        return @($read.Items)
     }
 
     function Get-PDSpooler {
-        $svc = $null
-        try {
-            $svc = Get-CimInstance Win32_Service -Filter "Name='Spooler'" -ErrorAction Stop
-            $svc = [pscustomobject]@{
-                Name = $svc.Name
-                State = $svc.State
-                Status = $svc.Status
-                StartMode = $svc.StartMode
-                ProcessId = $svc.ProcessId
-            }
-        } catch {}
-        $script:PrinterDoctorReport.Spooler = $svc
-        return $svc
+        $read = Invoke-AtlasInventoryRead -Source 'Spooler service' -Query {
+            Get-CimInstance Win32_Service -Filter "Name='Spooler'" -OperationTimeoutSec 10 -ErrorAction Stop |
+                Select-Object Name, State, Status, StartMode, ProcessId
+        }
+        $script:PrinterDoctorReport.Coverage['Spooler'] = $read.State
+        $script:PrinterDoctorReport.Spooler = $read.Items | Select-Object -First 1
+        return $script:PrinterDoctorReport.Spooler
     }
 
     function Get-PDJobs {
-        $jobs = @()
-        try {
-            $jobs = @(Get-CimInstance Win32_PrintJob -ErrorAction Stop | Sort-Object Name | ForEach-Object {
-                [pscustomobject]@{
-                    Name = $_.Name
-                    Owner = $_.Owner
-                    Document = $_.Document
-                    JobStatus = $_.JobStatus
-                    Status = $_.Status
-                    TimeSubmitted = $_.TimeSubmitted
-                    Size = $_.Size
-                    TotalPages = $_.TotalPages
-                }
-            })
-        } catch {}
-        $script:PrinterDoctorReport.Jobs = $jobs
-        return $jobs
+        $read = Invoke-AtlasInventoryRead -Source 'Jobs' -Query {
+            Get-CimInstance Win32_PrintJob -OperationTimeoutSec 10 -ErrorAction Stop | Sort-Object Name | Select-Object Name, Owner, Document, JobStatus, Status, TimeSubmitted, Size, TotalPages
+        }
+        $script:PrinterDoctorReport.Coverage['Jobs'] = $read.State
+        $script:PrinterDoctorReport.Jobs = @($read.Items)
+        return @($read.Items)
     }
 
     function Get-PDPrintEvents {
@@ -387,10 +334,14 @@ function Invoke-PrinterDoctor {
             @{ LogName='Microsoft-Windows-PrintService/Admin'; StartTime=$since; Level=1,2,3 }
             @{ LogName='System'; ProviderName='Microsoft-Windows-PrintSpooler'; StartTime=$since; Level=1,2,3 }
         )
+        $script:PrinterDoctorReport.Coverage['Events'] = 'Observed'
         foreach ($q in $queries) {
-            try {
-                $events += @(Get-WinEvent -FilterHashtable $q -ErrorAction Stop | Select-Object -First 50 TimeCreated, ProviderName, Id, LevelDisplayName, Message)
-            } catch {}
+            $read = Invoke-AtlasInventoryRead -Source $q.LogName -Query {
+                Get-WinEvent -FilterHashtable $q -MaxEvents 50 -ErrorAction Stop |
+                    Select-Object TimeCreated, ProviderName, Id, LevelDisplayName, Message
+            }
+            if ($read.State -ne 'Observed') { $script:PrinterDoctorReport.Coverage['Events'] = 'NotEvaluated' }
+            $events += @($read.Items)
         }
         $script:PrinterDoctorReport.Events = @($events | Sort-Object TimeCreated -Descending)
         return $script:PrinterDoctorReport.Events
@@ -399,6 +350,7 @@ function Invoke-PrinterDoctor {
     function Invoke-PDQuickDiagnosis {
         $script:PrinterDoctorReport.Findings = @()
         $script:PrinterDoctorReport.Recommendations = @()
+        $script:PrinterDoctorReport.Coverage = @{}
         Get-PDSystemInfo
         $printers = @(Get-PDPrinters)
         $ports = @(Get-PDPorts)
@@ -407,13 +359,16 @@ function Invoke-PrinterDoctor {
         $jobs = @(Get-PDJobs)
         $events = @(Get-PDPrintEvents -Days 7)
 
-        if (-not $spooler -or $spooler.State -ne 'Running') { Add-Finding $L.FindingNoSpooler $L.RecNoSpooler }
-        if ($printers.Count -eq 0) { Add-Finding $L.FindingNoPrinter $L.RecNoPrinter }
+        if ($script:PrinterDoctorReport.Coverage.Spooler -eq 'Observed' -and (-not $spooler -or $spooler.State -ne 'Running')) { Add-Finding $L.FindingNoSpooler $L.RecNoSpooler }
+        if ($script:PrinterDoctorReport.Coverage.Printers -eq 'Observed' -and $printers.Count -eq 0) { Add-Finding $L.FindingNoPrinter $L.RecNoPrinter }
         foreach ($p in $printers | Where-Object { $_.WorkOffline -or $_.PrinterStatus -in 7, 9 }) {
             Add-Finding ($L.FindingOffline -f $p.Name) $L.RecOffline
         }
         if ($jobs.Count -gt 0) { Add-Finding ("Queued jobs observed: $($jobs.Count); presence alone does not establish a stuck queue.") 'Inspect job age and state before clearing a selected queue.' }
         if ($events.Count -gt 0) { Add-Finding ($L.FindingEvents -f $events.Count) $L.RecEvents }
+        foreach ($source in @($script:PrinterDoctorReport.Coverage.Keys)) {
+            if ($script:PrinterDoctorReport.Coverage[$source] -ne 'Observed') { Add-Finding "$source not evaluated; results are incomplete." 'Check availability and permissions before repair.' }
+        }
         if ($script:PrinterDoctorReport.Findings.Count -eq 0) { Add-Finding $L.FindingOk $L.RecOk }
 
         [pscustomobject]@{
@@ -430,6 +385,7 @@ function Invoke-PrinterDoctor {
         $printers = @(Get-PDPrinters)
         $ports = @(Get-PDPorts)
         $drivers = @(Get-PDDrivers)
+        if ($script:PrinterDoctorReport.Coverage.Printers -ne 'Observed') { Write-Warning 'Printers not evaluated.'; return }
         if ($printers.Count -eq 0) { Write-Host $L.NoPrinters -ForegroundColor Yellow; return }
         $printers | Format-Table Name, Default, Network, WorkOffline, PrinterStatus, DriverName, PortName -AutoSize
         if ($ports.Count -gt 0) {
@@ -461,12 +417,14 @@ function Invoke-PrinterDoctor {
 
     function Show-PDJobs {
         $jobs = @(Get-PDJobs)
+        if ($script:PrinterDoctorReport.Coverage.Jobs -ne 'Observed') { Write-Warning 'Jobs not evaluated.'; return }
         if ($jobs.Count -eq 0) { Write-Host $L.NoJobs -ForegroundColor Green; return }
         $jobs | Format-Table Name, Owner, Document, JobStatus, Status, TotalPages, Size -AutoSize
     }
 
     function Show-PDEvents {
         $events = @(Get-PDPrintEvents -Days 7)
+        if ($script:PrinterDoctorReport.Coverage.Events -ne 'Observed') { Write-Warning 'Events not evaluated.'; return }
         if ($events.Count -eq 0) { Write-Host $L.NoEvents -ForegroundColor Green; return }
         $events | Select-Object -First 20 TimeCreated, ProviderName, Id, LevelDisplayName, @{n='Message';e={ $m = [string]$_.Message; $m = $m -replace '\s+', ' '; $m.Substring(0, [Math]::Min(120, $m.Length)) }} | Format-Table -Wrap
     }
@@ -550,13 +508,13 @@ function Invoke-PrinterDoctor {
 
         $printerRows = if ($script:PrinterDoctorReport.Printers.Count) {
             ($script:PrinterDoctorReport.Printers | ForEach-Object { "<tr><td>$(ConvertTo-HtmlCell $_.Name)</td><td>$($_.Default)</td><td>$($_.WorkOffline)</td><td>$(ConvertTo-HtmlCell $_.DriverName)</td><td>$(ConvertTo-HtmlCell $_.PortName)</td></tr>" }) -join "`n"
-        } else { "<tr><td colspan='5'>$($L.NoPrinters)</td></tr>" }
+        } else { "<tr><td colspan='5'>$(if ($script:PrinterDoctorReport.Coverage.Printers -eq 'Observed') { $L.NoPrinters } else { 'Not evaluated' })</td></tr>" }
         $jobRows = if ($script:PrinterDoctorReport.Jobs.Count) {
             ($script:PrinterDoctorReport.Jobs | ForEach-Object { "<tr><td>$(ConvertTo-HtmlCell $_.Name)</td><td>[REDACTED]</td><td>[REDACTED]</td><td>$(ConvertTo-HtmlCell $_.Status)</td></tr>" }) -join "`n"
-        } else { "<tr><td colspan='4'>$($L.NoJobs)</td></tr>" }
+        } else { "<tr><td colspan='4'>$(if ($script:PrinterDoctorReport.Coverage.Jobs -eq 'Observed') { $L.NoJobs } else { 'Not evaluated' })</td></tr>" }
         $eventRows = if ($script:PrinterDoctorReport.Events.Count) {
             ($script:PrinterDoctorReport.Events | Select-Object -First 20 | ForEach-Object { "<tr><td>$($_.TimeCreated)</td><td>$(ConvertTo-HtmlCell $_.ProviderName)</td><td>$($_.Id)</td><td>$(ConvertTo-HtmlCell $_.LevelDisplayName)</td><td>$(ConvertTo-HtmlCell $_.Message)</td></tr>" }) -join "`n"
-        } else { "<tr><td colspan='5'>$($L.NoEvents)</td></tr>" }
+        } else { "<tr><td colspan='5'>$(if ($script:PrinterDoctorReport.Coverage.Events -eq 'Observed') { $L.NoEvents } else { 'Not evaluated' })</td></tr>" }
         $findingsHtml = ($script:PrinterDoctorReport.Findings | ForEach-Object { "<li>$(ConvertTo-HtmlCell $_)</li>" }) -join "`n"
         $recsHtml = ($script:PrinterDoctorReport.Recommendations | ForEach-Object { "<li>$(ConvertTo-HtmlCell $_)</li>" }) -join "`n"
         $spoolerState = if ($script:PrinterDoctorReport.Spooler) { $script:PrinterDoctorReport.Spooler.State } else { $L.Unknown }

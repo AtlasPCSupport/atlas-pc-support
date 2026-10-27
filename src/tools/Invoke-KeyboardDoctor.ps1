@@ -218,6 +218,7 @@ function Invoke-KeyboardDoctor {
     $atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyContinue)
 
     $script:KeyboardDoctorReport = [ordered]@{
+        Coverage = @{}
         Generated = Get-Date
         Computer = $env:COMPUTERNAME
         OS = ''
@@ -296,23 +297,12 @@ function Invoke-KeyboardDoctor {
 
     function Get-KDDevicesByClass {
         param([string[]]$Classes)
-        $items = @()
-        foreach ($className in $Classes) {
-            try {
-                if (Get-Command Get-PnpDevice -ErrorAction SilentlyContinue) {
-                    $items += @(Get-PnpDevice -Class $className -ErrorAction SilentlyContinue | Select-Object FriendlyName, Class, Status, InstanceId)
-                }
-            } catch {}
+        $read = Invoke-AtlasInventoryRead -Source ('PnP: ' + ($Classes -join ', ')) -Query {
+            Get-CimInstance Win32_PnPEntity -OperationTimeoutSec 10 -ErrorAction Stop | Where-Object { $_.PNPClass -in $Classes } |
+                Select-Object @{n='FriendlyName';e={$_.Name}}, @{n='Class';e={$_.PNPClass}}, Status, @{n='InstanceId';e={$_.PNPDeviceID}}
         }
-        if ($items.Count -eq 0) {
-            try {
-                $rx = ($Classes -join '|')
-                $items += @(Get-CimInstance Win32_PnPEntity -ErrorAction SilentlyContinue | Where-Object {
-                    $_.PNPClass -match $rx -or $_.Name -match $rx
-                } | Select-Object @{n='FriendlyName';e={$_.Name}}, @{n='Class';e={$_.PNPClass}}, Status, @{n='InstanceId';e={$_.PNPDeviceID}})
-            } catch {}
-        }
-        return @($items)
+        $script:KeyboardDoctorReport.Coverage[($Classes -join ',')] = $read.State
+        return @($read.Items)
     }
 
     function Get-KDKeyboardDevices {
@@ -338,7 +328,7 @@ function Invoke-KeyboardDoctor {
         $rows = @()
         foreach ($d in $defs) {
             $flags = $null
-            $enabled = $false
+            $enabled = $null
             try {
                 $p = Get-ItemProperty -LiteralPath $d.Path -ErrorAction Stop
                 $flags = [string]$p.Flags
@@ -347,59 +337,44 @@ function Invoke-KeyboardDoctor {
             } catch {}
             $rows += [pscustomobject]@{
                 Name = $d.Name
-                Enabled = [bool]$enabled
+                Enabled = $enabled
                 Flags = if ($flags) { $flags } else { $L.Unknown }
+                State = if ($null -ne $enabled) { 'Observed' } else { 'NotEvaluated' }
             }
         }
         $script:KeyboardDoctorReport.Accessibility = $rows
+        $script:KeyboardDoctorReport.Coverage['Accessibility'] = if (@($rows | Where-Object State -eq 'NotEvaluated').Count) { 'NotEvaluated' } else { 'Observed' }
         return $rows
     }
 
     function Get-KDBattery {
-        $result = [ordered]@{
-            Present = $false
-            Name = ''
-            Status = ''
-            EstimatedChargeRemaining = $null
+        $read = Invoke-AtlasInventoryRead -Source 'Battery status' -Query { Get-CimInstance Win32_Battery -OperationTimeoutSec 10 -ErrorAction Stop }
+        $script:KeyboardDoctorReport.Coverage['Battery'] = $read.State
+        # Do not join unrelated first rows; detailed capacity remains in Master.
+        $result = [pscustomobject]@{
+            Present = if ($read.State -eq 'Observed') { [bool]$read.Items.Count } else { $null }
+            Name = (@($read.Items | ForEach-Object Name) -join '; ')
+            Status = (@($read.Items | ForEach-Object Status) -join '; ')
+            EstimatedChargeRemaining = if ($read.Items.Count -eq 1 -and $null -ne $read.Items[0].EstimatedChargeRemaining -and $read.Items[0].EstimatedChargeRemaining -ge 0 -and $read.Items[0].EstimatedChargeRemaining -le 100) { $read.Items[0].EstimatedChargeRemaining } else { $null }
             WearPercent = $null
-            Note = $L.NoBattery
+            Note = 'Capacity wear not measured here; use the per-battery report in Diagnostico Master. No swelling diagnosis from inventory.'
         }
-        try {
-            $bat = Get-CimInstance Win32_Battery -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ($bat) {
-                $result.Present = $true
-                $result.Name = [string]$bat.Name
-                $result.Status = [string]$bat.Status
-                $result.EstimatedChargeRemaining = $bat.EstimatedChargeRemaining
-                $result.Note = ''
-            }
-        } catch {}
-        try {
-            $static = Get-CimInstance -Namespace root\wmi -ClassName BatteryStaticData -ErrorAction SilentlyContinue | Select-Object -First 1
-            $full = Get-CimInstance -Namespace root\wmi -ClassName BatteryFullChargedCapacity -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ($static -and $full -and $static.DesignedCapacity -gt 0) {
-                $wear = [math]::Round((1 - ($full.FullChargedCapacity / $static.DesignedCapacity)) * 100, 1)
-                if ($wear -lt 0) { $wear = 0 }
-                $result.WearPercent = $wear
-            }
-        } catch {}
-        $script:KeyboardDoctorReport.Battery = [pscustomobject]$result
-        return $script:KeyboardDoctorReport.Battery
+        $script:KeyboardDoctorReport.Battery = $result
+        return $result
     }
 
     function Get-KDEvents {
         param([int]$Days = 14)
         $start = (Get-Date).AddDays(-1 * $Days)
         $events = @()
-        try {
-            $all = @(Get-WinEvent -FilterHashtable @{ LogName='System'; StartTime=$start } -ErrorAction SilentlyContinue | Where-Object {
-                ($_.Level -in @(1,2,3)) -and (
-                    $_.ProviderName -match 'i8042|kbd|hid|Kernel-PnP|UserPnp|DriverFrameworks|SynTP|ETD|ELAN|I2C' -or
-                    $_.Message -match 'keyboard|teclado|touchpad|trackpad|hid|i2c|ps/2'
-                )
-            } | Select-Object -First 80 TimeCreated, ProviderName, Id, LevelDisplayName, Message)
-            $events += $all
-        } catch {}
+        $read = Invoke-AtlasInventoryRead -Source 'Keyboard-related System events' -Query {
+            Get-WinEvent -FilterHashtable @{ LogName='System'; StartTime=$start; Level=1,2,3 } -MaxEvents 500 -ErrorAction Stop | Where-Object {
+                $_.ProviderName -match 'i8042|kbd|hid|Kernel-PnP|UserPnp|DriverFrameworks|SynTP|ETD|ELAN|I2C' -or
+                $_.Message -match 'keyboard|teclado|touchpad|trackpad|hid|i2c|ps/2'
+            } | Select-Object -First 80 TimeCreated, ProviderName, Id, LevelDisplayName, Message
+        }
+        $script:KeyboardDoctorReport.Coverage['Events'] = $read.State
+        $events = @($read.Items)
         $script:KeyboardDoctorReport.Events = @($events | Sort-Object TimeCreated -Descending)
         return $script:KeyboardDoctorReport.Events
     }
@@ -409,6 +384,7 @@ function Invoke-KeyboardDoctor {
         $script:KeyboardDoctorReport.Recommendations = @()
         $script:KeyboardDoctorReport.Result = 'Inventory observations; hardware health not certified'
 
+        $script:KeyboardDoctorReport.Coverage = @{}
         Get-KDSystemInfo
         $keyboards = @(Get-KDKeyboardDevices)
         $touch = @(Get-KDPointingDevices)
@@ -416,7 +392,7 @@ function Invoke-KeyboardDoctor {
         $battery = Get-KDBattery
         $events = @(Get-KDEvents -Days 14)
 
-        if ($keyboards.Count -eq 0) {
+        if ($script:KeyboardDoctorReport.Coverage.Keyboard -eq 'Observed' -and $keyboards.Count -eq 0) {
             Add-KDFinding 'risk' $L.FindingNoKeyboard $L.RecNoKeyboard
         }
         foreach ($kb in $keyboards | Where-Object { $_.Status -and $_.Status -notmatch 'OK|Unknown' }) {
@@ -438,6 +414,9 @@ function Invoke-KeyboardDoctor {
         if ($script:KeyboardDoctorReport.Manual.Touchpad -eq 'stopped') { Add-KDFinding 'observation' $L.FindingTouchpad $L.RecTouchpad }
         $monitorCount = Get-KDMonitorCount -Observations @($script:KeyboardDoctorReport.Monitor)
         if ($monitorCount -gt 0) { Add-KDFinding 'observation' ($L.FindingMonitor -f $monitorCount) $L.RecMonitor }
+        foreach ($source in @($script:KeyboardDoctorReport.Coverage.Keys)) {
+            if ($script:KeyboardDoctorReport.Coverage[$source] -ne 'Observed') { Add-KDFinding 'observation' "$source not evaluated; inventory incomplete." 'Check availability and permissions before repair.' }
+        }
         if ($script:KeyboardDoctorReport.Findings.Count -eq 0) { Add-KDFinding 'info' $L.FindingOk $L.RecOk }
 
         [pscustomobject]@{
@@ -454,6 +433,7 @@ function Invoke-KeyboardDoctor {
         $keyboards = @(Get-KDKeyboardDevices)
         $touch = @(Get-KDPointingDevices)
         Write-Host $L.Device -ForegroundColor Cyan
+        if ($script:KeyboardDoctorReport.Coverage.Keyboard -ne 'Observed') { Write-Warning 'Keyboard inventory not evaluated.'; return }
         if ($keyboards.Count -eq 0) { Write-Host "  $($L.FindingNoKeyboard)" -ForegroundColor Yellow }
         else { $keyboards | Format-Table FriendlyName, Class, Status, InstanceId -AutoSize -Wrap }
         Write-Host "`nTouchpad / HID / Mouse:" -ForegroundColor Cyan
@@ -477,6 +457,7 @@ function Invoke-KeyboardDoctor {
 
     function Show-KDEvents {
         $events = @(Get-KDEvents -Days 14)
+        if ($script:KeyboardDoctorReport.Coverage.Events -ne 'Observed') { Write-Warning 'Events not evaluated.'; return }
         if ($events.Count -eq 0) { Write-Host $L.NoEvents -ForegroundColor Green; return }
         $events | Select-Object -First 25 TimeCreated, ProviderName, Id, LevelDisplayName, @{n='Message';e={ $m = [string]$_.Message; $m = $m -replace '\s+', ' '; $m.Substring(0, [Math]::Min(120, $m.Length)) }} | Format-Table -Wrap
     }
