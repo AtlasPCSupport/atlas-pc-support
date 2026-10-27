@@ -436,7 +436,8 @@ function Invoke-KeyboardDoctor {
         if ($script:KeyboardDoctorReport.Manual.Bios -eq 'y') { Add-KDFinding 'risk' $L.FindingBios $L.RecBios }
         if ($script:KeyboardDoctorReport.Manual.ExternalKeyboard -eq 'stopped') { Add-KDFinding 'risk' $L.FindingExternal $L.RecExternal }
         if ($script:KeyboardDoctorReport.Manual.Touchpad -eq 'stopped') { Add-KDFinding 'observation' $L.FindingTouchpad $L.RecTouchpad }
-        if ($script:KeyboardDoctorReport.Monitor.Count -gt 0) { Add-KDFinding 'observation' ($L.FindingMonitor -f $script:KeyboardDoctorReport.Monitor.Count) $L.RecMonitor }
+        $monitorCount = Get-KDMonitorCount -Observations @($script:KeyboardDoctorReport.Monitor)
+        if ($monitorCount -gt 0) { Add-KDFinding 'observation' ($L.FindingMonitor -f $monitorCount) $L.RecMonitor }
         if ($script:KeyboardDoctorReport.Findings.Count -eq 0) { Add-KDFinding 'info' $L.FindingOk $L.RecOk }
 
         [pscustomobject]@{
@@ -507,6 +508,16 @@ function Invoke-KeyboardDoctor {
                 }
             }
         } while ($op.ToUpperInvariant() -ne 'B')
+    }
+
+    function Get-KDMonitorCount {
+        param([object[]]$Observations)
+        $total = 0
+        foreach ($row in $Observations) {
+            $value = 0
+            if ($row.Scope -eq 'FocusedWindow' -and [int]::TryParse([string]$row.Count, [ref]$value) -and $value -ge 0) { $total += $value }
+        }
+        return $total
     }
 
     function Invoke-KDMonitor {
@@ -590,7 +601,7 @@ function Invoke-KeyboardDoctor {
         $findRows = @($script:KeyboardDoctorReport.Findings | ForEach-Object {
             [pscustomobject]@{ Severity=$_.Severity; Finding=$_.Finding; Recommendation=$_.Recommendation }
         })
-        $monitorRows = @($script:KeyboardDoctorReport.Monitor | Select-Object @{n='Time';e={ '{0:HH:mm:ss.fff}' -f $_.Time }}, Key, Code)
+        $monitorRows = @($script:KeyboardDoctorReport.Monitor | Select-Object Scope, Count, CapturedText, AtUtc)
         $manualRows = @(
             [pscustomobject]@{ Test='BIOS/UEFI'; Result=$script:KeyboardDoctorReport.Manual.Bios },
             [pscustomobject]@{ Test='External keyboard'; Result=$script:KeyboardDoctorReport.Manual.ExternalKeyboard },
@@ -636,7 +647,7 @@ footer{padding:14px 26px;background:#f8fafc;color:#64748b;font-size:12px}
         [void]$sb.AppendLine("<h2>$($L.Events)</h2>")
         [void]$sb.AppendLine((New-KDTable -Rows (@($script:KeyboardDoctorReport.Events | Select-Object -First 30 TimeCreated, ProviderName, Id, LevelDisplayName, @{n='Message';e={ ([string]$_.Message) -replace '\s+', ' ' }})) -Columns @('TimeCreated','ProviderName','Id','LevelDisplayName','Message')))
         [void]$sb.AppendLine("<h2>Focused-window key count (no text captured)</h2>")
-        [void]$sb.AppendLine((New-KDTable -Rows $monitorRows -Columns @('Time','Key','Code')))
+        [void]$sb.AppendLine((New-KDTable -Rows $monitorRows -Columns @('Scope','Count','CapturedText','AtUtc')))
         [void]$sb.AppendLine("</div><footer>ATLAS PC SUPPORT - Keyboard Doctor</footer></div></body></html>")
         Write-AtlasShareableReport -Path $htmlPath -Content $sb.ToString() -Tool 'Keyboard observations'
 
@@ -653,7 +664,7 @@ footer{padding:14px 26px;background:#f8fafc;color:#64748b;font-size:12px}
         }
         [void]$txt.AppendLine("")
         [void]$txt.AppendLine("Manual: BIOS=$($script:KeyboardDoctorReport.Manual.Bios); External=$($script:KeyboardDoctorReport.Manual.ExternalKeyboard); Touchpad=$($script:KeyboardDoctorReport.Manual.Touchpad)")
-        [void]$txt.AppendLine("Focused test count: $($script:KeyboardDoctorReport.Monitor.Count)")
+        [void]$txt.AppendLine("Focused test count: $(Get-KDMonitorCount -Observations @($script:KeyboardDoctorReport.Monitor))")
         Write-AtlasShareableReport -Path $txtPath -Content $txt.ToString() -Tool 'Keyboard observations'
 
         Write-Host ($L.ExportSaved -f $htmlPath) -ForegroundColor Green

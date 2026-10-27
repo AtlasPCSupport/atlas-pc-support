@@ -529,15 +529,15 @@ function Invoke-AIReadiness {
     }
 
     function Export-AIRReport {
-        param([object]$Report)
-        $desktop = [Environment]::GetFolderPath('Desktop')
-        if (-not $desktop -or -not (Test-Path -LiteralPath $desktop)) { $desktop = $PWD.Path }
-        $root = Join-Path $desktop 'REPORTES_PC'
-        $root = Join-Path $root 'AIReadiness'
-        $safeClient = ($Report.ClientName -replace '[\\/:*?"<>|]', '_').Trim()
-        if ([string]::IsNullOrWhiteSpace($safeClient)) { $safeClient = 'SinNombre' }
-        $dir = Join-Path $root $safeClient
-        if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+        param([object]$Report, [string]$ReportId)
+        if (-not $ReportId) { $ReportId = [guid]::NewGuid().ToString('N') }
+        if ($ReportId -cnotmatch '^[a-f0-9]{32}$') { throw 'Report ID must contain 32 lowercase hexadecimal characters.' }
+        $root = Get-AtlasReportDir -SubFolder 'AIReadiness'
+        Assert-AtlasPlainDirectory $root
+        $dir = Join-Path $root $ReportId
+        if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -ErrorAction Stop | Out-Null }
+        Assert-AtlasPlainDirectory $dir
+        $privateNames = @($Report.ClientName, $Report.ConsultantName)
         $htmlPath = Join-Path $dir 'report.html'
         $jsonPath = Join-Path $dir 'report.json'
         $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
@@ -556,7 +556,7 @@ function Invoke-AIReadiness {
         }
         $Report.Delta = $delta
 
-        Write-AtlasShareableReport -Path $jsonPath -Content ($Report | ConvertTo-Json -Depth 8) -Tool 'AI Readiness Inventory'
+        Write-AtlasShareableReport -Path $jsonPath -Content ($Report | ConvertTo-Json -Depth 8) -Tool 'AI Readiness Inventory' -SensitiveValues $privateNames
 
         $componentRows = @(
             [pscustomobject]@{ Component=$L.Ram; Value=("{0} GB" -f $Report.RAM.TotalGB); Score=$Report.Scores.RAM },
@@ -606,7 +606,7 @@ tr:nth-child(even){background:#f8fafc}
 <div class="card"><strong>$($L.Score)</strong><div class="score">$($Report.Score)/100</div></div>
 <div class="card"><strong>$($L.Verdict)</strong><br><span class="badge $badgeClass">$(ConvertTo-AIRHtml $Report.Verdict)</span></div>
 <div class="card"><strong>$($L.Mode)</strong><br>$(ConvertTo-AIRHtml $Report.RecommendedMode)</div>
-<div class="card"><strong>$($L.Client)</strong><br>$(ConvertTo-AIRHtml $Report.ClientName)<br><strong>$($L.Consultant)</strong><br>$(ConvertTo-AIRHtml $Report.ConsultantName)</div>
+<div class="card"><strong>$($L.Client)</strong><br>[REDACTED]<br><strong>$($L.Consultant)</strong><br>[REDACTED]</div>
 <div class="card"><strong>$($L.Computer)</strong><br>$(ConvertTo-AIRHtml $Report.ComputerName)<br>$(ConvertTo-AIRHtml $Report.Manufacturer) $(ConvertTo-AIRHtml $Report.Model)</div>
 <div class="card"><strong>$($L.OS)</strong><br>$(ConvertTo-AIRHtml $Report.OS)<br><strong>$($L.Generated)</strong><br>$($Report.Generated)</div>
 </div>
@@ -622,9 +622,9 @@ tr:nth-child(even){background:#f8fafc}
 </div></div></body></html>
 "@
 
-        Write-AtlasShareableReport -Path $htmlPath -Content $html -Tool 'AI Readiness Inventory'
-        Write-AtlasShareableReport -Path $htmlCopyPath -Content $html -Tool 'AI Readiness Inventory'
-        return [pscustomobject]@{ Html=$htmlPath; Json=$jsonPath; HtmlCopy=$htmlCopyPath }
+        Write-AtlasShareableReport -Path $htmlPath -Content $html -Tool 'AI Readiness Inventory' -SensitiveValues $privateNames
+        Write-AtlasShareableReport -Path $htmlCopyPath -Content $html -Tool 'AI Readiness Inventory' -SensitiveValues $privateNames
+        return [pscustomobject]@{ Html=$htmlPath; Json=$jsonPath; HtmlCopy=$htmlCopyPath; ReportId=$ReportId }
     }
 
     Write-AIRHeader
@@ -639,7 +639,9 @@ tr:nth-child(even){background:#f8fafc}
 
     try {
         $report = New-AIRReport -ClientName $clientName -ConsultantName $consultName
-        $paths = Export-AIRReport -Report $report
+        $reportId = Read-Host $(if ($lang -eq 'es') { 'ID de informe anterior (32 caracteres); ENTER inicia uno nuevo' } else { 'Previous report ID (32 characters); ENTER starts a new report' })
+        $paths = Export-AIRReport -Report $report -ReportId $reportId
+        Write-Host "  Report ID (reuse to compare): $($paths.ReportId)"
         Write-Host "  $esc[32m$($L.Done):$esc[0m $($paths.Html)"
         Write-Host "  JSON: $($paths.Json)"
         try {

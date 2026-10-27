@@ -24,7 +24,7 @@ The report also recommends the most realistic mode:
 The audit is read-only and dependency-free. It checks:
 
 - RAM capacity.
-- CPU cores, logical processors and a short synthetic CPU benchmark.
+- CPU cores and logical processors. The inventory score is a heuristic; no CPU benchmark is executed.
 - GPU inventory, reported VRAM, driver date/status and optional `nvidia-smi` details when available.
 - Storage type and health via `Get-PhysicalDisk` or WMI fallback.
 - Local AI stack presence: Ollama, Python and winget.
@@ -37,7 +37,7 @@ The audit is read-only and dependency-free. It checks:
 Reports are written under:
 
 ```text
-Desktop\REPORTES_PC\AIReadiness\<ClientName>\
+Documents\AtlasPC\reports\AIReadiness\<ReportId>\
 ```
 
 Files:
@@ -45,6 +45,13 @@ Files:
 - `report.html` — latest customer-facing report.
 - `report.json` — latest machine-readable baseline used for delta comparison.
 - `report-YYYYMMDD-HHMMSS.html` — timestamped copy.
+
+The directory uses a random 32-character ID, not a customer name. Client and
+consultant identity fields are redacted in shared JSON and HTML, including short
+names. To compare with a previous report, enter that report's ID when prompted;
+Enter creates a new isolated report. Older name-based directories are preserved
+and are not silently imported or treated as redacted exports. Review them before
+sharing. These observations do not establish model/backend performance.
 
 ## Safety model
 
@@ -59,7 +66,8 @@ Some details may be richer when running as Administrator, but admin is not requi
 
 ## Offline USB
 
-`Build Offline USB` copies the compiled `launcher.ps1`. Because AI Readiness Assessment is now fully embedded in `src/tools/Invoke-AIReadiness.ps1` and then in the compiled launcher, preparing or updating an offline USB includes it automatically.
+`Build Offline USB` installs the complete verified release, including the launcher,
+catalogs and tool sources. Preparing or updating an offline USB includes this tool.
 
 To refresh an existing USB:
 

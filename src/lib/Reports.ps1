@@ -46,7 +46,7 @@ function Protect-AtlasReportObject {
         $result = [ordered]@{}
         $names = if ($InputObject -is [Collections.IDictionary]) { @($InputObject.Keys) } else { @($InputObject.PSObject.Properties.Name) }
         foreach ($name in $names) {
-            if ($name -match '^(?i:Serial(?:Number)?|UUID|ProcessorId|MachineGuid|MacAddress|IpAddress(?:es)?|UserName|ComputerName|Computer|HostName|Owner|Client|Cliente|Customer|Document|SSID|BSSID|RecoveryPassword|ProductKey|KeyProtectorId|FullName|FileSystemLabel|PNPDeviceId|DeviceId|InstanceId|DeviceInstanceId)$') {
+            if ($name -match '^(?i:Serial(?:Number)?|UUID|ProcessorId|MachineGuid|MacAddress|IpAddress(?:es)?|UserName|ComputerName|Computer|HostName|Owner|Client|ClientName|ConsultantName|Cliente|Customer|Document|SSID|BSSID|RecoveryPassword|ProductKey|KeyProtectorId|FullName|FileSystemLabel|PNPDeviceId|DeviceId|InstanceId|DeviceInstanceId)$') {
                 $result[$name] = '[REDACTED]'
             } else { $result[$name] = Protect-AtlasReportObject $InputObject.$name -SensitiveValues $SensitiveValues }
         }

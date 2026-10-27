@@ -19,9 +19,10 @@ Describe 'Shareable report privacy and trace' {
         $result|Should -Not -Match 'SN123|SN456|BCD'
     }
     It 'redacts client fields without a length exception' {
-        $result=Protect-AtlasReportObject ([pscustomobject]@{Cliente='XY';Client='AB';Customer='CD';State='NotEvaluated'})
+        $result=Protect-AtlasReportObject ([pscustomobject]@{Cliente='XY';Client='AB';Customer='CD';ClientName='Al';ConsultantName='Bo';State='NotEvaluated'})
         $result.Cliente|Should -Be '[REDACTED]';$result.Client|Should -Be '[REDACTED]';$result.Customer|Should -Be '[REDACTED]'
         $result.State|Should -Be NotEvaluated
+        $result.ClientName|Should -Be '[REDACTED]';$result.ConsultantName|Should -Be '[REDACTED]'
     }
     It 'preserves evidence fields and types while masking nested identity fields' {
         $input=[pscustomobject]@{Score=0;Evaluated=$false;SerialNumber='SN-FIXTURE';Items=@([pscustomobject]@{Owner='Other User';Document='private.pdf';State='NotEvaluated'});Missing=$null}

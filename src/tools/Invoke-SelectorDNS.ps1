@@ -51,7 +51,7 @@ $txt = @{
     # Opciones DNS
     Opt1         = if ($es) { " 1. DNS Automatico        (Windows por defecto)" }       else { " 1. Automatic DNS         (Windows default)" }
     HeaderCF     = "--- CLOUDFLARE -----------------------------------------------"
-    Opt2         = " 2. Basico               (1.1.1.1  | Max Speed)"
+    Opt2         = " 2. Basico               (1.1.1.1  | General)"
     Opt3         = " 3. Avanzado             (1.1.1.2  | Malware Block)"
     Opt4         = " 4. Familiar             (1.1.1.3  | Malware + Adult)"
     HeaderGG     = "--- GOOGLE ---------------------------------------------------"
@@ -61,27 +61,21 @@ $txt = @{
     HeaderOD     = "--- OPENDNS --------------------------------------------------"
     Opt7         = " 7. OpenDNS Home         (208.67.222.222 | General)"
     Opt8         = " 8. OpenDNS FamilyShield (208.67.222.123 | Adult Block)"
-    HeaderMV     = "--- MULLVAD --------------------------------------------------"
-    Opt9         = " 9. Mullvad 1            (194.242.2.2 | Solo DNS Resolver)"
-    Opt10        = "10. Mullvad 2            (194.242.2.3 | AdBlock)"
-    Opt11        = "11. Mullvad 3            (194.242.2.4 | Ads+Trackers+Adware)"
-    Opt12        = "12. Mullvad 4            (194.242.2.5 | Social Media+Molest.)"
-    Opt13        = "13. Mullvad 5            (194.242.2.6 | Adult+Gambling)"
-    Opt14        = "14. Mullvad 6            (194.242.2.9 | Extreme)"
+    HeaderMV     = if ($es) { "Mullvad retirado: requiere DNS cifrado; cierre anunciado 02/11/2026." } else { "Mullvad retired: encrypted DNS required; closure announced 2026-11-02." }
     HeaderND     = "--- NEXTDNS --------------------------------------------------"
     Opt15        = "15. NextDNS              (45.90.28.0  | Configurable)"
     HeaderCU     = "--- PERSONALIZADO / CUSTOM -----------------------------------"
     Opt16        = if ($es) { "16. DNS Personalizado    (Ingresa tus propias IPs)" }     else { "16. Custom DNS           (Enter your own IPs)" }
     # Herramientas
     HeaderTools  = if ($es) { "===== HERRAMIENTAS =====================================" } else { "===== TOOLS ============================================" }
-    Opt17        = if ($es) { "17. Test de Latencia DNS    (Ping a todos los servers)" } else { "17. DNS Latency Test        (Ping all servers)" }
+    Opt17        = if ($es) { "17. Latencia ICMP           (no mide resolucion DNS)" } else { "17. ICMP latency            (not DNS resolution)" }
     Opt18        = if ($es) { "18. Backup DNS actual       (Guardar config actual)" }     else { "18. Backup current DNS      (Save current config)" }
     Opt19        = if ($es) { "19. Restaurar desde Backup  (Revertir cambios)" }          else { "19. Restore from Backup     (Revert changes)" }
     Opt20        = if ($es) { "20. Toggle DNS-over-HTTPS   (DoH On/Off)" }                else { "20. Toggle DNS-over-HTTPS   (DoH On/Off)" }
     Opt21        = if ($es) { "21. Revisar tarea heredada (sin crear nuevas)" }          else { "21. Review legacy task (no new task creation)" }
     Opt22        = if ($es) { "22. Ver Registro            (Ultimas 30 entradas)" }       else { "22. View Activity Log       (Last 30 entries)" }
     Opt23        = if ($es) { "23. Seleccion por Adaptador (Elegir NIC especifica)" }     else { "23. Per-Adapter Selection   (Choose specific NIC)" }
-    Opt24        = if ($es) { "24. Test Seguridad DNS      (Cloudflare ESNI browser)" }   else { "24. DNS Security Test       (Cloudflare ESNI browser)" }
+    Opt24        = if ($es) { "24. Informacion ECH         (requiere navegador compatible)" }   else { "24. ECH information         (requires compatible browser)" }
     Opt0         = if ($es) { " 0. Salir" }                                               else { " 0. Exit" }
     # Prompts y mensajes
     Prompt       = if ($es) { "Elige una opcion (0-24)" }              else { "Choose an option (0-24)" }
@@ -107,8 +101,8 @@ $txt = @{
     BackupNone   = if ($es) { "[ERROR] No se encontro archivo de backup en:" } else { "[ERROR] No backup file found at:" }
     RestoreOk    = if ($es) { "[OK] DNS restaurado desde backup." }     else { "[OK] DNS restored from backup." }
     # Latencia
-    PingTesting  = if ($es) { "Probando latencia (3 pings por servidor)..." } else { "Testing latency (3 pings per server)..." }
-    Fastest      = if ($es) { "Mas rapido" }                            else { "Fastest" }
+    PingTesting  = if ($es) { "Latencia ICMP (3 pings); no prueba velocidad DNS ni cifrado." } else { "ICMP latency (3 pings); does not test DNS speed or encryption." }
+    Fastest      = if ($es) { "Menor ping ICMP" }                            else { "Lowest ICMP ping" }
     NoResp       = if ($es) { "Sin respuesta" }                         else { "No response" }
     # DoH
     DoHStatus    = if ($es) { "Estado DoH actual:" }                    else { "Current DoH status:" }
@@ -141,12 +135,6 @@ $dnsProfiles = [ordered]@{
     '6'  = @{ Label = "Quad9";                    Addr = @("9.9.9.9","149.112.112.112","2620:fe::fe","2620:fe::9") }
     '7'  = @{ Label = "OpenDNS Home";             Addr = @("208.67.222.222","208.67.220.220") }
     '8'  = @{ Label = "OpenDNS FamilyShield";     Addr = @("208.67.222.123","208.67.220.123") }
-    '9'  = @{ Label = "Mullvad 1 (Resolver)";     Addr = @("194.242.2.2","2a07:e340::2") }
-    '10' = @{ Label = "Mullvad 2 (AdBlock)";      Addr = @("194.242.2.3","2a07:e340::3") }
-    '11' = @{ Label = "Mullvad 3 (Tracker)";      Addr = @("194.242.2.4","2a07:e340::4") }
-    '12' = @{ Label = "Mullvad 4 (Social)";       Addr = @("194.242.2.5","2a07:e340::5") }
-    '13' = @{ Label = "Mullvad 5 (Adult)";        Addr = @("194.242.2.6","2a07:e340::6") }
-    '14' = @{ Label = "Mullvad 6 (Extreme)";      Addr = @("194.242.2.9","2a07:e340::9") }
     '15' = @{ Label = "NextDNS";                  Addr = @("45.90.28.0","45.90.30.0","2a07:a8c0::","2a07:a8c1::") }
 }
 
@@ -172,18 +160,6 @@ $dohTemplates = @{
     "149.112.112.112"      = "https://dns.quad9.net/dns-query"
     "2620:fe::fe"          = "https://dns.quad9.net/dns-query"
     "2620:fe::9"           = "https://dns.quad9.net/dns-query"
-    "194.242.2.2"          = "https://doh.mullvad.net/dns-query"
-    "2a07:e340::2"         = "https://doh.mullvad.net/dns-query"
-    "194.242.2.3"          = "https://adblock.doh.mullvad.net/dns-query"
-    "2a07:e340::3"         = "https://adblock.doh.mullvad.net/dns-query"
-    "194.242.2.4"          = "https://adblock.doh.mullvad.net/dns-query"
-    "2a07:e340::4"         = "https://adblock.doh.mullvad.net/dns-query"
-    "194.242.2.5"          = "https://adblock.doh.mullvad.net/dns-query"
-    "2a07:e340::5"         = "https://adblock.doh.mullvad.net/dns-query"
-    "194.242.2.6"          = "https://adblock.doh.mullvad.net/dns-query"
-    "2a07:e340::6"         = "https://adblock.doh.mullvad.net/dns-query"
-    "194.242.2.9"          = "https://adblock.doh.mullvad.net/dns-query"
-    "2a07:e340::9"         = "https://adblock.doh.mullvad.net/dns-query"
     "45.90.28.0"           = "https://dns.nextdns.io/dns-query"
     "45.90.30.0"           = "https://dns.nextdns.io/dns-query"
     "2a07:a8c0::"          = "https://dns.nextdns.io/dns-query"
@@ -199,9 +175,6 @@ $latencyTargets = [ordered]@{
     "Quad9"                 = "9.9.9.9"
     "OpenDNS Home"          = "208.67.222.222"
     "OpenDNS FamilyShield"  = "208.67.222.123"
-    "Mullvad 1"             = "194.242.2.2"
-    "Mullvad 2"             = "194.242.2.3"
-    "Mullvad 3"             = "194.242.2.4"
     "Mullvad 6 (Extreme)"   = "194.242.2.9"
     "NextDNS"               = "45.90.28.0"
 }
@@ -256,6 +229,17 @@ function Get-DNSStatusLines {
     return $lines
 }
 
+function Assert-ClassicDNSAddresses {
+    param([string[]]$Addresses)
+    foreach ($value in $Addresses) {
+        $address = $null
+        if (-not [Net.IPAddress]::TryParse($value, [ref]$address)) { throw "Invalid DNS address: $value" }
+        if ($address.ToString() -match '^(194\.242\.2\.(2|3|4|5|6|9)|2a07:e340::(2|3|4|5|6|9))$') {
+            throw 'Mullvad public DNS is unavailable for classic DNS; closure announced 2026-11-02. Existing configuration was not changed.'
+        }
+    }
+}
+
 function Apply-DNS {
     param(
         [string[]]$AdapterNames,
@@ -265,6 +249,7 @@ function Apply-DNS {
     Write-Host ""
     Write-Host "  $($txt.Applying)" -ForegroundColor Cyan
 
+    Assert-ClassicDNSAddresses -Addresses $Addresses
     $snapshotPath = Join-Path (Get-AtlasReportDir -SubFolder DnsSnapshots) ('dns-' + [guid]::NewGuid().ToString('N') + '.json')
     Save-AtlasDnsSnapshot -AdapterNames $AdapterNames -Path $snapshotPath | Out-Null
     Copy-Item -LiteralPath $snapshotPath -Destination $backupFile -Force -ErrorAction Stop
@@ -527,12 +512,6 @@ do {
     Write-Host "$lm$($txt.Opt8)"
     Write-Host ""
     Write-Host "$lm$($txt.HeaderMV)" -ForegroundColor Cyan
-    Write-Host "$lm$($txt.Opt9)"
-    Write-Host "$lm$($txt.Opt10)"
-    Write-Host "$lm$($txt.Opt11)"
-    Write-Host "$lm$($txt.Opt12)"
-    Write-Host "$lm$($txt.Opt13)"
-    Write-Host "$lm$($txt.Opt14)"
     Write-Host ""
     Write-Host "$lm$($txt.HeaderND)" -ForegroundColor Cyan
     Write-Host "$lm$($txt.Opt15)"
@@ -563,6 +542,7 @@ do {
         continue
     }
     switch ($opcion) {
+        { $_ -in @('9','10','11','12','13','14') } { Write-Warning $txt.HeaderMV }
         { $dnsProfiles.Keys -contains $_ } {
             $profile  = $dnsProfiles[$opcion]
             $adapters = Get-PhysicalAdapters
@@ -582,7 +562,7 @@ do {
         '23' { Invoke-PerAdapterDNS }
         '24' {
             Write-Host "`n  $($txt.Opening)" -ForegroundColor Magenta
-            Start-Process "https://www.cloudflare.com/ssl/encrypted-sni/"
+            Start-Process "https://developers.cloudflare.com/ssl/edge-certificates/ech/"
         }
         default {
             if ($opcion -ne '') {

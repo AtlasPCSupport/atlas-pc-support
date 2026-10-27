@@ -1,4 +1,93 @@
 #Requires -Modules Pester
+
+Describe 'Audit phase 1: classic DNS and aggregate keyboard evidence' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        foreach($name in @('Assert-ClassicDNSAddresses','Apply-DNS')) {
+            . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-SelectorDNS.ps1' $name)
+        }
+        . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-KeyboardDoctor.ps1' 'Get-KDMonitorCount')
+        . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-KeyboardDoctor.ps1' 'Invoke-KDQuickDiagnosis')
+        . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-KeyboardDoctor.ps1' 'Add-KDFinding')
+        function Get-KDSystemInfo {}
+        function Get-KDKeyboardDevices {[pscustomobject]@{Status='OK'}}
+        function Get-KDPointingDevices {}
+        function Get-KDAccessibility {}
+        function Get-KDBattery {}
+        function Get-KDEvents {param($Days)}
+        function Save-AtlasDnsSnapshot {param($AdapterNames,$Path) throw 'Real network changes blocked'}
+    }
+    It 'rejects retired encrypted-only addresses before a DNS snapshot or change: <Address>' -ForEach @(
+        @{Address='194.242.2.2'},@{Address='194.242.2.9'},@{Address='2a07:e340:0:0:0:0:0:4'}
+    ) {
+        Mock Save-AtlasDnsSnapshot {throw 'Snapshot must not be reached'}
+        {Apply-DNS -AdapterNames Fixture -Addresses $Address -Label Fixture}|Should -Throw '*Mullvad*'
+        Should -Invoke Save-AtlasDnsSnapshot -Times 0 -Exactly
+    }
+    It 'keeps DHCP and supported classic DNS choices available and rejects malformed input' {
+        {Assert-ClassicDNSAddresses @()}|Should -Not -Throw
+        {Assert-ClassicDNSAddresses @('1.1.1.1','2606:4700:4700::1111')}|Should -Not -Throw
+        {Assert-ClassicDNSAddresses @('not-an-address')}|Should -Throw '*Invalid*'
+        $ast=Get-TestAst $script:RepoRoot 'src/tools/Invoke-SelectorDNS.ps1'
+        $profiles=$ast.Find({param($n) $n -is [Management.Automation.Language.AssignmentStatementAst] -and $n.Left.Extent.Text -eq '$dnsProfiles'},$true)
+        . ([scriptblock]::Create($profiles.Extent.Text))
+        foreach($key in @('9','10','11','12','13','14')) {$dnsProfiles.Keys|Should -Not -Contain $key}
+    }
+    It 'counts actual focused-window events rather than the number of monitor records: <Count>' -ForEach @(@{Count=0},@{Count=1},@{Count=17}) {
+        Get-KDMonitorCount @([pscustomobject]@{Scope='FocusedWindow';Count=$Count;CapturedText=$false})|Should -Be $Count
+        Get-KDMonitorCount @()|Should -Be 0
+        Get-KDMonitorCount @([pscustomobject]@{Time='legacy';Key='fixture'})|Should -Be 0
+    }
+    It 'uses the aggregate in the real quick diagnosis: <Count>' -ForEach @(@{Count=0},@{Count=17}) {
+        $script:L=@{FindingMonitor='Monitor events {0}';RecMonitor='Observe';FindingOk='No findings';RecOk='Review';ResultObs='Observation'}
+        $script:KeyboardDoctorReport=@{Manual=@{};Monitor=@([pscustomobject]@{Scope='FocusedWindow';Count=$Count});Findings=@();Recommendations=@();Result=''}
+        Invoke-KDQuickDiagnosis|Out-Null
+        $findings=@($script:KeyboardDoctorReport.Findings|Where-Object Finding -like 'Monitor events *')
+        if($Count -eq 0){$findings.Count|Should -Be 0}
+        else {$findings.Count|Should -Be 1;$findings[0].Finding|Should -Be "Monitor events $Count"}
+    }
+}
+
+Describe 'Audit phase 1: private AI report export with explicit baseline ID' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Release.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Reports.ps1')
+        foreach($name in @('Export-AIRReport','New-AIRTable','ConvertTo-AIRHtml')) {
+            . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-AIReadiness.ps1' $name)
+        }
+        function Get-AtlasReportDir {param($SubFolder) throw 'Real report directory blocked'}
+    }
+    BeforeEach {
+        $script:AiRoot=Join-Path $TestDrive ([guid]::NewGuid().ToString('N'))
+        [void](New-Item -ItemType Directory -Path $script:AiRoot)
+        Mock Get-AtlasReportDir {$script:AiRoot}
+        $script:L=@{ReportTitle='Fixture';NoData='No data'};$script:lang='en'
+        $script:AiReport=[ordered]@{ClientName='Al';ConsultantName='Bo';Score=50;Verdict='Fixture';RecommendedMode='Fixture';Generated='2026-10-27';RAM=@{TotalGB=16};CPU=@{Name='Fixture CPU';Cores=4;LogicalProcessors=8};Scores=@{RAM=17;CPU=14;GPU=0;Storage=15;Stack=0};GPU=@();Disks=@();Stack=@();Connectivity=@();Findings=@();Recommendations=@();ModelRecommendations=@()}
+    }
+    It 'masks short identity fields in JSON/HTML and uses an opaque directory' {
+        $paths=Export-AIRReport -Report $script:AiReport
+        $paths.ReportId|Should -Match '^[a-f0-9]{32}$'
+        Split-Path (Split-Path $paths.Json -Parent) -Leaf|Should -Be $paths.ReportId
+        $json=Get-Content -LiteralPath $paths.Json -Raw|ConvertFrom-Json
+        $json.ClientName|Should -Be '[REDACTED]';$json.ConsultantName|Should -Be '[REDACTED]'
+        $html=[IO.File]::ReadAllText($paths.Html)
+        $html|Should -Match '\[REDACTED\]';$html|Should -Not -Match '>Al<|>Bo<'
+    }
+    It 'compares only a deliberately reused valid ID and ignores client-name directories' {
+        $script:AiReport.ClientName='..'
+        $first=Export-AIRReport -Report $script:AiReport
+        $script:AiReport.Score=60
+        $second=Export-AIRReport -Report $script:AiReport -ReportId $first.ReportId
+        $second.Json|Should -Be $first.Json
+        $data=Get-Content -LiteralPath $second.Json -Raw|ConvertFrom-Json
+        $data.Delta.HasPrevious|Should -BeTrue;$data.Delta.ScoreChange|Should -Be '10'
+        {Export-AIRReport -Report $script:AiReport -ReportId '..'}|Should -Throw '*Report ID*'
+        {Export-AIRReport -Report $script:AiReport -ReportId 'CON'}|Should -Throw '*Report ID*'
+    }
+}
 Describe 'Diagnostic HTML text boundaries' {
     BeforeAll {
         $script:RepoRoot=Split-Path -Parent $PSScriptRoot
