@@ -34,7 +34,7 @@ Describe 'Audit phase 2: shared memory and cautious PartsUpgrade output' {
     It 'runs the real Parts report without inferring generation, XMP, BGA or unknown capacities: <Missing>' -ForEach @(@{Missing=$false},@{Missing=$true}) {
         Mock Get-CimInstance {
             switch($ClassName) {
-                Win32_PhysicalMemoryArray {if($Missing){throw 'Denied'};[pscustomobject]@{Use=3;MaxCapacityEx=64MB;MemoryDevices=2}}
+                Win32_PhysicalMemoryArray {[pscustomobject]@{Use=3;MaxCapacityEx=64MB;MemoryDevices=2}}
                 Win32_PhysicalMemory {if($Missing){throw 'Denied'};[pscustomobject]@{Capacity=8GB;Speed=3200;ConfiguredClockSpeed=2666;SMBIOSMemoryType=26;FormFactor=12}}
                 Win32_Processor {[pscustomobject]@{Name='Intel Core i7-8700';UpgradeMethod=6;SocketDesignation='Unknown';NumberOfCores=6;NumberOfLogicalProcessors=12}}
                 default {}
@@ -48,7 +48,11 @@ Describe 'Audit phase 2: shared memory and cautious PartsUpgrade output' {
         $script:PartsHtml|Should -Not -Match 'Intel Gen 87|XMP OFF|Soldada \(BGA\)|None/BGA|<!-- SHA256:'
         $script:PartsHtml|Should -Match 'None \(SMBIOS\)|not verified|no verificada'
         $script:PartsHtml|Should -Match 'N/D GB';$script:PartsHtml|Should -Match 'Healthy'
-        if($Missing){$script:PartsHtml|Should -Match 'no capacity-based purchase advice';$script:PartsHtml|Should -Not -Match 'RAM Insufficient'}
+        if($Missing){
+            $script:PartsHtml|Should -Match 'no capacity-based purchase advice'
+            $script:PartsHtml|Should -Not -Match 'RAM Insufficient'
+            $script:PartsHtml|Should -Match 'Slots libres</span><span[^>]*>N/D'
+        }
     }
 }
 

@@ -50,7 +50,7 @@ PowerShell 7.6.9: cero fallos, cero omitidas y cero errores del analizador. Los
 guards, la carga WPF sin mostrar ventana y la reproducción del bundle también
 pasaron, sin alterar los artefactos durante las pruebas. Se añadieron diez
 regresiones respecto de la fase anterior. El manifiesto de 1.5.14 es
-`fe93eb2a83a4e8937ef2c81ccc07e3cc657fc048e471f276d7d1dbcd2ac15720`.
+`bc27d7ac30eae80a2089d9924219737ee13283066fac060518f746df429b2a51`.
 La promoción exige además CI aprobado para el SHA exacto y comprobación pública
 posterior. El registro de la entrega/PR conserva esos resultados; esta nota
 explica el alcance funcional y no sustituye la evidencia física.

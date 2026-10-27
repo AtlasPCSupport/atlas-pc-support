@@ -362,7 +362,7 @@ function Invoke-PartsUpgrade {
     $maxGB = $memory.MaxGB
     $slotsTotales = $memory.SlotsTotal
     $slotsUsados = if ($memoryRead.State -eq 'Observed') { $memory.SlotsUsed } else { 'N/D' }
-    $slotsLibres = $memory.SlotsFree
+    $slotsLibres = if ($memoryRead.State -eq 'Observed') { $memory.SlotsFree } else { $null }
     $ramTotalGB = $memory.TotalGB
     if ($null -eq $slotsTotales) { $slotsTotales = 'N/D' }
     if ($null -eq $slotsLibres) { $slotsLibres = 'N/D' }
