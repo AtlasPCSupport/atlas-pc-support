@@ -178,7 +178,7 @@ function Invoke-ActualizarPowerShell {
     }
 
     function _Get-PS7Path {
-        $cmd = Get-Command pwsh.exe -ErrorAction SilentlyContinue
+        $cmd = Get-Command pwsh.exe -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
         if ($cmd -and $cmd.Path) { return $cmd.Path }
         $candidates = @(
             "$env:ProgramFiles\PowerShell\7\pwsh.exe",

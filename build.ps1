@@ -16,7 +16,7 @@ function ConvertTo-PowerShellLiteral {
     param([string]$Text)
     return "'" + $Text.Replace("'", "''") + "'"
 }
-$version = '1.5.11'
+$version = '1.5.12'
 $buildDate = '2026-10-27' # Release metadata, deliberately reproducible across hosts.
 $manifest = Get-EmbeddedContent (Join-Path $PSScriptRoot 'config/tools.json')
 $dependencies = Get-EmbeddedContent (Join-Path $PSScriptRoot 'config/dependencies.json')
@@ -99,7 +99,7 @@ $output = (@($header, $runtimeHeader, ($data -join "`n"), $libraryText, $runner,
 $launcherHash = (Get-FileHash -LiteralPath $OutFile -Algorithm SHA256).Hash.ToLowerInvariant()
 [IO.File]::WriteAllText("$OutFile.sha256", "$launcherHash  launcher.ps1`n", $utf8)
 $files = [ordered]@{}
-foreach ($name in @('get.ps1','launcher.ps1','config/tools.json','config/dependencies.json','config/tool-hashes.json','onboarding/install.bat')) {
+foreach ($name in @('get.ps1','launcher.ps1','config/tools.json','config/dependencies.json','config/tool-hashes.json','onboarding/install.bat','LICENSE')) {
     $path = if ($name -eq 'launcher.ps1') { $OutFile } else { Join-Path $PSScriptRoot $name }
     $files[$name] = Get-AtlasTextHash (Get-EmbeddedContent $path)
 }

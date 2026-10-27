@@ -12,6 +12,7 @@ on:
       - 'launcher.ps1.sha256'
       - 'release-manifest.json'
       - 'onboarding/**'
+      - 'LICENSE'
       - 'api/cloudflare-worker/**'
       - 'tests/**'
       - 'docs/INVENTARIO.md'
@@ -132,6 +133,7 @@ jobs:
             config/tool-hashes.json
             src/tools/Invoke-*.ps1
             onboarding/install.bat
+            LICENSE
 
   windows-compat:
     timeout-minutes: 20

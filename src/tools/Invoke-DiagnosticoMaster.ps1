@@ -163,13 +163,17 @@ function Invoke-DiagnosticoMaster {
             NetGw         = 'Gateway'
             NetDns        = 'DNS'
             BatStatus     = 'Status'
-            BatHealth     = 'Health'
+            BatHealth     = 'Reported full/design capacity ratio'
             BatCycles     = 'Cycles'
-            BatCap        = 'Capacity'
+            BatCap        = 'Design / full-charge capacity'
             BatMan        = 'Manufacturer'
             BatStDis      = 'Discharging'
             BatStCha      = 'Charging'
-            BatStFull     = 'Charged 100%'
+            BatStFull     = 'Fully charged'
+            BatStAc       = 'AC available; charging not established'
+            BatStPart     = 'Partially charged'
+            BatSource     = 'Capacity source'
+            BatStatusScope= 'Windows status records are listed separately; they are not matched to capacity rows.'
             BatStLow      = 'Low'
             BatStCrit     = 'Critical'
             BatStInUse    = 'In use'
@@ -414,13 +418,17 @@ function Invoke-DiagnosticoMaster {
             NetGw         = 'Gateway'
             NetDns        = 'DNS'
             BatStatus     = 'Estado'
-            BatHealth     = 'Salud'
+            BatHealth     = 'Relacion reportada de capacidad completa/diseno'
             BatCycles     = 'Ciclos'
-            BatCap        = 'Capacidad'
+            BatCap        = 'Capacidad de diseno / carga completa'
             BatMan        = 'Fabricante'
             BatStDis      = 'Descargando'
             BatStCha      = 'Cargando'
-            BatStFull     = 'Cargado 100%'
+            BatStFull     = 'Carga completa'
+            BatStAc       = 'CA disponible; carga no confirmada'
+            BatStPart     = 'Carga parcial'
+            BatSource     = 'Fuente de capacidad'
+            BatStatusScope= 'Los estados de Windows se muestran por separado; no se asocian a las filas de capacidad.'
             BatStLow      = 'Bajo'
             BatStCrit     = 'Critico'
             BatStInUse    = 'En uso'
@@ -764,6 +772,119 @@ function Get-CPUUpgradeInfo {
     }
     $result.HtmlSection = $html + '</table>'
     $result.Summary = "$($L.CpuUnmeasured) | $($L.CpuServiceManual)"
+    return $result
+}
+
+function ConvertTo-DiagBatteryNumber {
+    param($Value, [switch]$AllowZero)
+    $text = ([string]$Value).Trim()
+    # Accept whole values, including explicitly grouped mWh; never truncate a locale-specific decimal.
+    if ($text -notmatch '^(?:[0-9]+|[0-9]{1,3}(?:,[0-9]{3})+)(?:\s+mWh)?$') { return $null }
+    $number = 0L
+    $digits = ($text -replace '\s+mWh$', '').Replace(',', '')
+    if (-not [long]::TryParse($digits, [ref]$number) -or $number -ge [uint32]::MaxValue) { return $null }
+    if ($number -eq 0 -and -not $AllowZero) { return $null }
+    return $number
+}
+
+function ConvertFrom-DiagBatteryExport {
+    param([string]$Text, [ValidateSet('PowercfgXml','NirsoftText')][string]$Format)
+    if ($Format -eq 'PowercfgXml') {
+        $settings = [Xml.XmlReaderSettings]::new()
+        $settings.DtdProcessing = [Xml.DtdProcessing]::Prohibit
+        $settings.XmlResolver = $null
+        $settings.MaxCharactersInDocument = 10MB
+        $reader = [Xml.XmlReader]::Create([IO.StringReader]::new($Text), $settings)
+        try {
+            $document = [Xml.XmlDocument]::new(); $document.XmlResolver = $null
+            $document.Load($reader)
+            if ($document.DocumentElement.LocalName -ne 'BatteryReport') { throw 'Unexpected battery XML root.' }
+            foreach ($battery in $document.SelectNodes('/*[local-name()="BatteryReport"]/*[local-name()="Batteries"]/*[local-name()="Battery"]')) {
+                [pscustomobject]@{
+                    DesignCapacity = ConvertTo-DiagBatteryNumber $battery.DesignCapacity
+                    FullChargeCapacity = ConvertTo-DiagBatteryNumber $battery.FullChargeCapacity
+                    CycleCount = ConvertTo-DiagBatteryNumber $battery.CycleCount -AllowZero
+                    Manufacturer = [string]$battery.Manufacturer; Chemistry = [string]$battery.Chemistry
+                }
+            }
+        } finally { $reader.Dispose() }
+        return
+    }
+    $fields = @{}
+    foreach ($line in ($Text -split '\r?\n')) {
+        if ($line -match '^\s*(Designed Capacity|Full Charged Capacity|Number of charge/discharge cycles|Battery Manufacturer|Chemistry)\s*:\s*(.*?)\s*$') {
+            $key = $matches[1]; $value = $matches[2]
+            if ($fields.ContainsKey($key)) { throw 'Ambiguous multi-battery text export.' }
+            $fields[$key] = $value
+        }
+    }
+    if (-not $fields.ContainsKey('Designed Capacity') -and -not $fields.ContainsKey('Full Charged Capacity')) { throw 'Unrecognized battery text export.' }
+    [pscustomobject]@{
+        DesignCapacity = ConvertTo-DiagBatteryNumber $fields['Designed Capacity']
+        FullChargeCapacity = ConvertTo-DiagBatteryNumber $fields['Full Charged Capacity']
+        CycleCount = ConvertTo-DiagBatteryNumber $fields['Number of charge/discharge cycles'] -AllowZero
+        Manufacturer = [string]$fields['Battery Manufacturer']; Chemistry = [string]$fields['Chemistry']
+    }
+}
+
+function Get-BatteryAnalysis {
+    param([string]$BatteryInfoViewPath)
+    $result = @{ Batteries=@(); StatusRows=@(); CapacityState='Unavailable'; StatusState='Unavailable'; Source=$null; HtmlSection='' }
+    # Structured native data preserves each battery's capacity pair. The existing utility remains a fallback.
+    foreach ($format in @('PowercfgXml','NirsoftText')) {
+        if ($format -eq 'NirsoftText' -and (-not $BatteryInfoViewPath -or -not (Test-Path -LiteralPath $BatteryInfoViewPath))) { continue }
+        $extension = if ($format -eq 'PowercfgXml') { '.xml' } else { '.txt' }
+        $path = Join-Path $env:TEMP ('atlas_diag_battery_' + [guid]::NewGuid().ToString('N') + $extension)
+        try {
+            if ($format -eq 'PowercfgXml') {
+                $exe = Join-Path $env:SystemRoot 'System32/powercfg.exe'
+                $arguments = "/batteryreport /output `"$path`" /xml"
+            } else { $exe = $BatteryInfoViewPath; $arguments = "/stext `"$path`"" }
+            if (-not (Start-ProcessWithTimeout -FilePath $exe -Arguments $arguments -TimeoutSeconds 15 -ExpectedOutput $path)) { continue }
+            try { $text = [IO.File]::ReadAllText($path, [Text.UTF8Encoding]::new($false, $true)) }
+            catch { $text = [IO.File]::ReadAllText($path, [Text.Encoding]::Default) }
+            $result.Batteries = @(ConvertFrom-DiagBatteryExport -Text $text -Format $format)
+            $result.CapacityState = if ($result.Batteries.Count) { 'Observed' } else { 'Empty' }
+            $result.Source = if ($format -eq 'PowercfgXml') { 'Windows battery report' } else { 'BatteryInfoView' }
+            break
+        } catch { Write-Verbose "Battery export unavailable ($format): $_" }
+        finally { if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path -ErrorAction SilentlyContinue } }
+    }
+    try {
+        foreach ($status in @(Get-CimInstance Win32_Battery -OperationTimeoutSec 10 -ErrorAction Stop)) {
+            $charge = ConvertTo-DiagBatteryNumber $status.EstimatedChargeRemaining -AllowZero
+            if ($null -ne $charge -and $charge -gt 100) { $charge = $null }
+            $state = switch ($status.BatteryStatus) {
+                1 { $L.BatStDis } 2 { $L.BatStAc } 3 { $L.BatStFull }
+                4 { $L.BatStLow } 5 { $L.BatStCrit }
+                { $_ -in 6,7,8,9 } { $L.BatStCha }
+                11 { $L.BatStPart } default { $L.UnknownLbl }
+            }
+            $result.StatusRows += [pscustomobject]@{ Status=$state; ChargePercent=$charge }
+        }
+        $result.StatusState = if ($result.StatusRows.Count) { 'Observed' } else { 'Empty' }
+    } catch { Write-Verbose "Battery status unavailable: $_" }
+    $html = "<p>$($L.BatFraud)</p>"
+    if ($result.Source) { $html += "<p>$($L.BatSource): $($result.Source)</p>" }
+    if (-not $result.Batteries.Count) { $html += "<pre>$($L.NoBattery)</pre>" }
+    foreach ($battery in $result.Batteries) {
+        $ratio = $null
+        if ($null -ne $battery.DesignCapacity -and $null -ne $battery.FullChargeCapacity) { $ratio = 100.0 * $battery.FullChargeCapacity / $battery.DesignCapacity }
+        $battery | Add-Member -NotePropertyName CapacityRatioPercent -NotePropertyValue $ratio
+        $design = if ($null -ne $battery.DesignCapacity) { "$($battery.DesignCapacity) mWh" } else { $L.UnknownLbl }
+        $full = if ($null -ne $battery.FullChargeCapacity) { "$($battery.FullChargeCapacity) mWh" } else { $L.UnknownLbl }
+        $cycles = if ($null -ne $battery.CycleCount) { [string]$battery.CycleCount } else { $L.UnknownLbl }
+        $ratioDisplay = if ($null -ne $ratio) { '{0:N1}%' -f $ratio } else { $L.UnknownLbl }
+        $identity = [Net.WebUtility]::HtmlEncode($battery.Manufacturer + ' / ' + $battery.Chemistry)
+        $html += "<table class='info-table'><tr><th>$($L.BatHealth)</th><td>${ratioDisplay}</td></tr><tr><th>$($L.BatCycles)</th><td>${cycles}</td></tr><tr><th>$($L.BatCap)</th><td>${design} / ${full}</td></tr><tr><th>$($L.BatMan)</th><td>${identity}</td></tr></table>"
+    }
+    $html += "<p>$($L.BatStatusScope)</p>"
+    foreach ($status in $result.StatusRows) {
+        $chargeDisplay = if ($null -ne $status.ChargePercent) { "$($status.ChargePercent)%" } else { $L.UnknownLbl }
+        $html += "<p>$($L.BatStatus): $($status.Status) (${chargeDisplay})</p>"
+    }
+    if ($result.StatusState -eq 'Unavailable') { $html += "<p>$($L.BatStatus): $($L.UnknownLbl)</p>" }
+    $result.HtmlSection = $html
     return $result
 }
 
@@ -1663,55 +1784,10 @@ do {
         }
 
         Escribir-Centrado $L.Step8 "Cyan"
-        $htmlBat=""
         $exeBatView = $diagDeps.BatteryInfoView
         if (-not $exeBatView) { $exeBatView = Join-Path $appsLegacy "BatteryInfoView.exe" }
-        $designCap=0;$fullCap=0;$cycleCount=0;$chemistry="N/A";$voltage="N/A";$manufactureName="N/A"
-        if (Test-Path $exeBatView) {
-            $tmpBatInfo=Join-Path $env:TEMP ('atlas_diag_bat_info_' + [guid]::NewGuid().ToString('N') + '.txt')
-            $batOk=Start-ProcessWithTimeout -FilePath $exeBatView -Arguments "/stext `"${tmpBatInfo}`"" -TimeoutSeconds 15 -ExpectedOutput $tmpBatInfo
-            if($batOk -and (Test-Path $tmpBatInfo)){try{$linesBat=$null;foreach($enc in @("Unicode","UTF8","Default")){try{$linesBat=Get-Content $tmpBatInfo -Encoding $enc -ErrorAction Stop;if($linesBat -and $linesBat.Count -gt 3){break}}catch{$linesBat=$null}};if($linesBat){foreach($batLine in $linesBat){if($batLine -match "Designed Capacity\s+:\s+([0-9]+)"){$designCap=[int64]$matches[1]};if($batLine -match "Full Charged Capacity\s+:\s+([0-9]+)"){$fullCap=[int64]$matches[1]};if($batLine -match "Number of charge/discharge cycles\s+:\s+([0-9]+)"){$cycleCount=[int]$matches[1]};if($batLine -match "Battery Manufacturer\s+:\s+(.*)"){$manufactureName=$matches[1].Trim()};if($batLine -match "Chemistry\s+:\s+(.*)"){$chemistry=$matches[1].Trim()};if($batLine -match "Voltage\s+:\s+(.*)"){$voltage=$matches[1].Trim()}}}}catch{};Remove-Item $tmpBatInfo -ErrorAction SilentlyContinue}
-        }
-        if($designCap -eq 0){
-            $tmpBatXML=Join-Path $env:TEMP ('atlas_diag_battery_report_' + [guid]::NewGuid().ToString('N') + '.xml')
-            $batteryReportOk=Start-ProcessWithTimeout -FilePath (Join-Path $env:SystemRoot 'System32/powercfg.exe') -Arguments "/batteryreport /output `"${tmpBatXML}`" /xml" -TimeoutSeconds 15 -ExpectedOutput $tmpBatXML
-            if($batteryReportOk){
-                try{
-                    [xml]$xmlBat=Get-Content -LiteralPath $tmpBatXML -Raw -ErrorAction Stop
-                    $batInfo=@($xmlBat.BatteryReport.Batteries.Battery)
-                    $designCap=0;$fullCap=0;$cycleCount=0
-                    foreach($b in $batInfo){
-                        if($b.DesignCapacity){$designCap+=[int64]$b.DesignCapacity}
-                        if($b.FullChargeCapacity){$fullCap+=[int64]$b.FullChargeCapacity}
-                        if($b.CycleCount){$cycleCount=[math]::Max($cycleCount,[int]$b.CycleCount)}
-                    }
-                }catch{$designCap=0;$fullCap=0;Write-Warning 'Battery XML could not be evaluated.'}
-                finally{Remove-Item -LiteralPath $tmpBatXML -ErrorAction SilentlyContinue}
-            }
-        }
-        if($designCap -gt 0 -and $fullCap -gt 0){
-            $healthPct=($fullCap/$designCap)*100;$saludStr="{0:N1}%" -f $healthPct
-            if($healthPct -lt 50){$saludColor="#d9534f"}elseif($healthPct -lt 80){$saludColor="#f0ad4e"}else{$saludColor="#5cb85c"}
-            $notaFraude=""
-            if($healthPct -ge 98 -and $cycleCount -eq 0){$saludColor="#FF8C00";$saludStr+=" (?)";$notaFraude="<div style='background:#fff3cd;color:#856404;padding:10px;border:1px solid #ffeeba;border-radius:4px;margin-top:10px;font-size:12px'><strong>&#9888; $($L.BatFraud)</strong></div>"}
-            $wmiBat=Get-CimInstance Win32_Battery -ErrorAction SilentlyContinue;$batStatus=$L.UnknownLbl;$batPercent="0%"
-            if($wmiBat){
-                $batStatus=switch($wmiBat.BatteryStatus){
-                    1{$L.BatStDis}
-                    2{$L.BatStCha}
-                    3{$L.BatStFull}
-                    4{$L.BatStLow}
-                    5{$L.BatStCrit}
-                    6{$L.BatStCha}
-                    7{$L.BatStCha}
-                    8{$L.BatStCha}
-                    10{$L.BatStCha}
-                    default{$L.UnknownLbl}
-                }
-                $batPercent="$($wmiBat.EstimatedChargeRemaining)%"
-            }
-            $htmlBat="<h2>$($L.H8Battery)</h2><table class='info-table'><tr><th>$($L.BatStatus)</th><td>${batStatus} (${batPercent})</td></tr><tr><th>$($L.BatHealth)</th><td style='color:${saludColor};font-weight:bold'>${saludStr}</td></tr><tr><th>$($L.BatCycles)</th><td>${cycleCount}</td></tr><tr><th>$($L.BatCap)</th><td>${designCap} / ${fullCap} mWh</td></tr><tr><th>$($L.BatMan)</th><td>$([Net.WebUtility]::HtmlEncode($manufactureName + ' / ' + $chemistry))</td></tr></table>${notaFraude}"
-        } else { $htmlBat="<h2>$($L.H8Battery)</h2><pre>$($L.NoBattery)</pre>" }
+        $batteryData = Get-BatteryAnalysis -BatteryInfoViewPath $exeBatView
+        $htmlBat = "<h2>$($L.H8Battery)</h2>" + $batteryData.HtmlSection
 
         Escribir-Centrado $L.GpuStep "Cyan"
         $gpuTriage = Get-GPUSlownessTriageForReport
