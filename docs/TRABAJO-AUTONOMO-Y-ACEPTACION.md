@@ -1,6 +1,6 @@
 # Trabajo autonomo y aceptacion pendiente
 
-Estado: 26/10/2026. Las VMs permanecen pausadas; Windows 10 no esta homologado
+Estado: 27/10/2026. Las VMs permanecen pausadas; Windows 10 no esta homologado
 por completo. Las pruebas en PowerShell 5.1 sobre el host no certifican una
 edicion o parche de Windows 10.
 
@@ -25,6 +25,23 @@ edicion o parche de Windows 10.
   todas las carpetas offline del dispositivo se actualicen automaticamente.
 - 1.5.10: cobertura y capacidad del inventario de almacenamiento; consultar
   [su evidencia](audits/ALMACENAMIENTO-2026-10-26.md) y CI de la entrega.
+- Robocopy 1.5.10: copia completa e incremental ejecutadas manualmente desde
+  Atlas con archivos ficticios del host, contrastadas con SHA-256 y log nativo.
+  La incremental copio dos archivos, omitio cuatro y conservo el extra; cero
+  fallos. [Evidencia y limites](audits/COPIA-MANUAL-2026-10-27.md).
+
+## Decisiones ya tomadas
+
+- Se conservan las herramientas y funciones actuales; la
+  [propuesta alternativa de uso profesional](audits/PROPUESTA-USO-PROFESIONAL-2026-10-26.md)
+  no fue adoptada. Los permisos de uso profesional/redistribucion de terceros
+  siguen pendientes; la disponibilidad de las apps no los acredita.
+- La [adquisicion de firma publica](audits/FIRMA-OPCIONES-2026-10-26.md) esta
+  aplazada. No se generan certificados ni se cambia la confianza del host.
+- El siguiente ensayo de archivos puede ser una restauracion a una carpeta
+  nueva y aislada a partir de la copia ya verificada. No requiere VMs, borrar
+  el origen ni modificar cuentas, servicios o proteccion del equipo. Esto no
+  sustituye recuperacion del sistema, BitLocker o recuperacion tras reinicio.
 
 ## Una decision por vez para retomar lo manual
 
@@ -34,9 +51,10 @@ edicion o parche de Windows 10.
 2. Para instalaciones, indicar una lista corta de aplicaciones y el objetivo de
    RustDesk. El agente prepara comandos y criterios de exito para ese entorno;
    no se instalan aplicaciones en el PC del usuario como sustituto de una prueba.
-3. Para firma/licencias, indicar quien distribuye Atlas y si el uso sera interno,
-   servicio profesional o redistribucion a clientes. Eso permite concretar las
-   decisiones pendientes sin publicar datos de identidad ni credenciales.
+3. Firma/licencias: el uso como servicio tecnico y entrega a clientes ya esta
+   definido. Conservar las decisiones anteriores; retomar proveedores/permisos
+   solo cuando el propietario quiera revisar esos pendientes. No solicitar
+   otra vez datos de identidad ni iniciar compras o solicitudes automaticamente.
 
 No hace falta resolver esas decisiones para continuar corrigiendo fallos aislados.
 No se da por aprobada una instalacion, recuperacion, licencia o prueba fisica

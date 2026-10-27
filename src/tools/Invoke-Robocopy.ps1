@@ -50,13 +50,13 @@ function Invoke-Robocopy {
             CountMatch  = 'MATCHES'
             CountDiff   = 'DIFFERENT (normal if files were excluded)'
             CountLine   = '    Count: {0}'
-            MD5Line     = '    MD5 verification (sample of {0})...'
+            HashLine    = '    SHA-256 verification (sample of {0})...'
             NoFilesVerif= '    No files to verify.'
             CheckProg   = "`r    [{0}%] Verifying {1}/{2}..."
             MissingTag  = 'MISSING: {0}'
             CorruptTag  = 'CORRUPT: {0}'
             ErrorTag    = 'ERROR: {0}'
-            IntegrityOK = '    [OK] MD5 INTEGRITY: {0}/{1} files verified'
+            IntegrityOK = '    [OK] SHA-256 SAMPLE: {0}/{1} files verified'
             IntegrityKO = '    [!!] PROBLEMS: OK={0} | FAILED={1} | MISSING={2}'
             CopyingHdr  = 'COPYING... ({0} | MT:{1} | {2})'
             ResNoChange = 'NO CHANGES - Already copied'
@@ -122,7 +122,7 @@ function Invoke-Robocopy {
             PrevETA     = '    ETA:       ~{0} (estimated for {1})'
             PreviewSep  = '================================================='
             PreviewAct  = '    [S] START COPY  [B] Back  [N] Cancel'
-            VerifyAsk   = '    Verify MD5 integrity? [Y/N]'
+            VerifyAsk   = '    Verify a SHA-256 sample? [Y/N]'
             PostSep     = '    --------------------------------------------------------'
             PostA       = '    [A] Open destination folder'
             PostR       = '    [R] REPEAT with another destination (same source)'
@@ -135,7 +135,7 @@ function Invoke-Robocopy {
             NewDiskLine = '    Disk: {0}{1} | MT:{2}'
             NewDestLine = '    Destination: {0}'
             CopyOrCancel= '    [S] Copy  [N] Cancel'
-            VerifyMD5Q  = '    Verify MD5? [Y/N]'
+            VerifyHashQ = '    Verify a SHA-256 sample? [Y/N]'
             LogNotFnd   = '    Log not found.'
             ContinueY   = 'sS'
         }
@@ -162,13 +162,13 @@ function Invoke-Robocopy {
             CountMatch  = 'COINCIDE'
             CountDiff   = 'DIFERENTE (normal si se excluyeron archivos)'
             CountLine   = '    Conteo:  {0}'
-            MD5Line     = '    Verificacion MD5 (muestra de {0})...'
+            HashLine    = '    Verificacion SHA-256 (muestra de {0})...'
             NoFilesVerif= '    Sin archivos para verificar.'
             CheckProg   = "`r    [{0}%] Verificando {1}/{2}..."
             MissingTag  = 'FALTA: {0}'
             CorruptTag  = 'CORRUPTO: {0}'
             ErrorTag    = 'ERROR: {0}'
-            IntegrityOK = '    [OK] INTEGRIDAD MD5: {0}/{1} archivos verificados'
+            IntegrityOK = '    [OK] MUESTRA SHA-256: {0}/{1} archivos verificados'
             IntegrityKO = '    [!!] PROBLEMAS: OK={0} | FALLOS={1} | FALTANTES={2}'
             CopyingHdr  = 'COPIANDO... ({0} | MT:{1} | {2})'
             ResNoChange = 'SIN CAMBIOS - Todo ya estaba copiado'
@@ -234,7 +234,7 @@ function Invoke-Robocopy {
             PrevETA     = '    ETA:       ~{0} (estimado para {1})'
             PreviewSep  = '================================================='
             PreviewAct  = '    [S] INICIAR COPIA  [B] Volver  [N] Cancelar'
-            VerifyAsk   = '    Verificar integridad MD5? [S/N]'
+            VerifyAsk   = '    Verificar una muestra SHA-256? [S/N]'
             PostSep     = '    --------------------------------------------------------'
             PostA       = '    [A] Abrir carpeta destino'
             PostR       = '    [R] REPETIR con OTRO destino (mismo origen)'
@@ -247,7 +247,7 @@ function Invoke-Robocopy {
             NewDiskLine = '    Disco: {0}{1} | MT:{2}'
             NewDestLine = '    Destino: {0}'
             CopyOrCancel= '    [S] Copiar  [N] Cancelar'
-            VerifyMD5Q  = '    Verificar MD5? [S/N]'
+            VerifyHashQ = '    Verificar una muestra SHA-256? [S/N]'
             LogNotFnd   = '    Log no encontrado.'
             ContinueY   = 'sS'
         }
@@ -757,7 +757,7 @@ do {
                         -ExcludeDirs $extraXD -ExcludeFiles $extraXF
 
                     if ($result2.OK -and -not $isFile) {
-                        Write-Host ""; Write-Host $L.VerifyMD5Q -ForegroundColor DarkGray
+                        Write-Host ""; Write-Host $L.VerifyHashQ -ForegroundColor DarkGray
                         $v2 = Read-Host "    >"
                         if ($v2 -match '^[SsYy]$') { Test-CopyIntegrity -Origen $origen -Destino $newRutaFinal -ExcludeFiles (@("Pagefile.sys","Hiberfil.sys","swapfile.sys","Thumbs.db") + $extraXF) -ExcludeDirs (@("System Volume Information",'$RECYCLE.BIN',"Recovery") + $extraXD) | Out-Null }
                     }
