@@ -14,6 +14,41 @@
 #   - Cambios aqui afectan a TODAS las tools: mantener minimo y robusto.
 # ============================================================
 
+function Invoke-AtlasInventoryRead {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Source, [Parameter(Mandatory)][scriptblock]$Query)
+    try {
+        $items = @(& $Query)
+        return [pscustomobject]@{ Source=$Source; State='Observed'; Items=$items }
+    } catch {
+        if ($_.FullyQualifiedErrorId -like 'NoMatchingEventsFound*') {
+            return [pscustomobject]@{ Source=$Source; State='Observed'; Items=@() }
+        }
+        Write-Warning "$Source not evaluated; check availability and permissions."
+        return [pscustomobject]@{ Source=$Source; State='NotEvaluated'; Items=@() }
+    }
+}
+
+function Get-AtlasMemorySummary {
+    [CmdletBinding()]
+    param([object[]]$Modules=@(), [object[]]$Arrays=@())
+    $arrays = @($Arrays | Where-Object { -not $_.Use -or $_.Use -eq 3 })
+    $maximum = @($arrays | ForEach-Object {
+        if ($_.MaxCapacityEx -gt 0) { [double]$_.MaxCapacityEx }
+        elseif ($_.MaxCapacity -gt 0 -and $_.MaxCapacity -ne 2147483648) { [double]$_.MaxCapacity }
+    })
+    $total=$null; $max=$null; $slots=$null; $free=$null
+    if ($Modules.Count -and @($Modules | Where-Object { $_.Capacity -gt 0 }).Count -eq $Modules.Count) {
+        $total=[math]::Round(($Modules | Measure-Object Capacity -Sum).Sum / 1GB, 2)
+    }
+    if ($arrays.Count -and $maximum.Count -eq $arrays.Count) { $max=[math]::Round(($maximum | Measure-Object -Sum).Sum / 1MB, 2) }
+    if ($arrays.Count -and @($arrays | Where-Object { $_.MemoryDevices -gt 0 }).Count -eq $arrays.Count) {
+        $slots=($arrays | Measure-Object MemoryDevices -Sum).Sum
+        if ($slots -ge $Modules.Count) { $free=$slots-$Modules.Count }
+    }
+    [pscustomobject]@{TotalGB=$total;MaxGB=$max;SlotsTotal=$slots;SlotsUsed=$Modules.Count;SlotsFree=$free}
+}
+
 function Get-AtlasDependencyDefinition {
     [CmdletBinding()]
     param([Parameter(Mandatory)][string]$Name)

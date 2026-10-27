@@ -23,11 +23,16 @@ Printer Doctor is read-only by default.
 Repair actions are separated under **Repair actions** and require explicit confirmation:
 
 - Restart Print Spooler.
-- Clear all print queues.
+- Clear jobs in one explicitly named queue.
 - Open Windows printer settings.
 - Print a test page.
 
 Clearing queues and restarting Spooler can interrupt printing, so the tool asks the technician to type confirmation before making changes.
+
+Query failures are reported as not evaluated, separately from successful empty
+inventories. Event reads are capped per query; the report is not an exhaustive
+history. Restarting Spooler can affect all printing, even though clearing jobs is
+restricted to the selected queue.
 
 ## Integration
 

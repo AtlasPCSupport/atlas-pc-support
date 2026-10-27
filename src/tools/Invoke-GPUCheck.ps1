@@ -373,6 +373,7 @@ function Invoke-GPUCheck {
         Write-Host ("[GPU Check] {0} ({1}s)" -f $Label, $Seconds) -ForegroundColor Cyan
         $elapsed = 0
         $maxTempLimit = 93
+        Write-Host 'ACPI system-zone watchdog only; GPU-specific thermal protection is not established. Thresholds are screening heuristics, not OEM limits.' -ForegroundColor Yellow
 
         while ($elapsed -lt $Seconds) {
             Start-Sleep -Seconds 2
@@ -407,17 +408,18 @@ function Invoke-GPUCheck {
     }
 
     function Get-GpuSessionLevel {
-        param([double]$Total, [bool]$HasTelemetry, [bool]$StressRequested, [string]$SessionStatus)
+        param([double]$Total, [bool]$HasTelemetry, [bool]$StressRequested, [string]$SessionStatus, [bool]$EventsEvaluated=$true)
         if ($Total -ge 70) { return 'RIESGO ALTO' }
-        if ($Total -ge 40) { return 'OBSERVACION' }
-        if (-not $HasTelemetry -or $SessionStatus -ne 'Completed') { return 'NO CONCLUYENTE' }
+        if ($SessionStatus -eq 'ThermalStop') { return 'OBSERVACION' }
+        if ($Total -gt 0) { return 'OBSERVACION' }
+        if (-not $HasTelemetry -or -not $EventsEvaluated -or $SessionStatus -ne 'Completed') { return 'NO CONCLUYENTE' }
         if (-not $StressRequested) { return 'SIN HALLAZGOS EN REPOSO' }
         return 'SIN HALLAZGOS EN ESTA SESION'
     }
 
     function Start-NvidiaSmiLoop {
         param([string]$CsvPath)
-        $cmd = Get-Command 'nvidia-smi.exe' -ErrorAction SilentlyContinue
+        $cmd = Get-Command 'nvidia-smi.exe' -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
         if (-not $cmd) { return $null }
         $query = @(
             'timestamp',
@@ -437,9 +439,18 @@ function Invoke-GPUCheck {
     function Get-GpuEvents {
         param([datetime]$Since, [datetime]$Until)
         $fh = @{ LogName = 'System'; StartTime = $Since; EndTime = $Until }
-        return Get-WinEvent -FilterHashtable $fh -ErrorAction SilentlyContinue |
+        return Get-WinEvent -FilterHashtable $fh -MaxEvents 500 -ErrorAction Stop |
             Where-Object { $_.ProviderName -match 'Display|nvlddmkm|amdkmdag|igfx|dxgkrnl|Microsoft-Windows-WHEA-Logger' } |
-            Select-Object TimeCreated, Id, LevelDisplayName, ProviderName, Message
+            Select-Object TimeCreated, Id, Level, LevelDisplayName, ProviderName, Message
+    }
+
+    function Get-GpuEventAssessment {
+        param([object[]]$Events)
+        $display = @($Events | Where-Object { $_.ProviderName -match 'Display|nvlddmkm|amdkmdag|igfx|dxgkrnl' })
+        $errors = @($display | Where-Object { $_.Level -in @(1,2) }).Count
+        $tdr = @($display | Where-Object { $_.Id -eq 4101 -or $_.Message -match 'TDR|Display driver stopped responding|LiveKernelEvent' }).Count
+        $whea = @($Events | Where-Object { $_.ProviderName -match 'WHEA' }).Count
+        [pscustomobject]@{ ErrorCritical=$errors; TdrLike=$tdr; Whea=$whea; Score=$(if ($tdr) {40} elseif ($errors) {25} else {0}) }
     }
 
     function Build-HtmlReport {
@@ -456,6 +467,7 @@ table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6p
 <h1>GPU Check</h1>
 <div class="card"><b>Date:</b> $($Data.meta.date)<br/><b>Output:</b> $($Data.meta.outDir)</div>
 <div class="card"><b>Result:</b> $($Data.final.level) ($($Data.final.total)/100)<br/><b>Advice:</b> $($Data.final.advice)</div>
+<div class="card"><b>Coverage:</b> $([Net.WebUtility]::HtmlEncode([string]$Data.meta.eventsState)) — $([Net.WebUtility]::HtmlEncode([string]$Data.meta.eventScope))<br/>$([Net.WebUtility]::HtmlEncode([string]$Data.meta.scoreBasis))</div>
 <div class="card"><h3>Scores</h3>
 <ul><li>Events: $($Data.scores.events)</li><li>GPU-Z: $($Data.scores.gpuz)</li><li>NVIDIA: $($Data.scores.nvidia)</li></ul>
 </div>
@@ -565,7 +577,7 @@ table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6p
         Start-Sleep -Seconds 4
 
         if ($isNvidia) {
-            $cmdNv = Get-Command 'nvidia-smi.exe' -ErrorAction SilentlyContinue
+            $cmdNv = Get-Command 'nvidia-smi.exe' -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
             if ($cmdNv) {
                 Write-Host ("[GPU Check] " + $L.StartNvidiaSmi) -ForegroundColor Gray
                 $pN = Start-NvidiaSmiLoop -CsvPath $nvidiaCsv
@@ -593,7 +605,9 @@ table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6p
     $sessionEnd = Get-Date
 
     Write-Host ("[GPU Check] " + $L.CollectEvents) -ForegroundColor Gray
-    $events = Get-GpuEvents -Since ($sessionStart.AddSeconds(-30)) -Until ($sessionEnd.AddMinutes(1))
+    $eventRead = Invoke-AtlasInventoryRead -Source 'GPU-related System events (up to 500 newest System events)' -Query { Get-GpuEvents -Since ($sessionStart.AddSeconds(-30)) -Until ($sessionEnd.AddMinutes(1)) }
+    $events = @($eventRead.Items)
+    if ($eventRead.State -ne 'Observed') { $notes.Add('Event history not evaluated; no clean-session verdict.') | Out-Null }
     $events | ForEach-Object { Protect-AtlasReportObject $_ } | Export-Csv -LiteralPath $eventsCsv -NoTypeInformation -Encoding UTF8
 
     Write-Host ("[GPU Check] " + $L.AnalyzeStep) -ForegroundColor Gray
@@ -612,8 +626,8 @@ table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6p
             }
             if ($temps.Count -gt 0) {
                 $gpuzMaxT = [Math]::Round((($temps.ToArray() | Measure-Object -Maximum).Maximum), 1)
-                if ($gpuzMaxT -ge 95) { $gpuzScore += 30; $notes.Add("GPU-Z: temperatura critica ($gpuzMaxT C).") | Out-Null }
-                elseif ($gpuzMaxT -ge 88) { $gpuzScore += 15; $notes.Add("GPU-Z: temperatura alta ($gpuzMaxT C).") | Out-Null }
+                if ($gpuzMaxT -ge 95) { $gpuzScore = 70; $notes.Add("GPU-Z: temperatura critica ($gpuzMaxT C).") | Out-Null }
+                elseif ($gpuzMaxT -ge 88) { $gpuzScore = 40; $notes.Add("GPU-Z: temperatura alta ($gpuzMaxT C).") | Out-Null }
             } else {
                 $notes.Add('GPU-Z: sin temperatura parseable.') | Out-Null
             }
@@ -632,33 +646,31 @@ table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6p
         foreach ($r in $nvidiaRows) {
             $n = Clean-Number ([string]$r.'temperature.gpu')
             if ($null -ne $n -and $n -gt 0) { $temps.Add($n) | Out-Null }
-            if (([string]$r.'clocks_throttle_reasons.hw_thermal_slowdown').Trim() -match '^(?i:1|yes|true|on|active|enabled)$') { $nvidiaScore = [Math]::Max($nvidiaScore,20) }
-            if (([string]$r.'clocks_throttle_reasons.hw_slowdown').Trim() -match '^(?i:1|yes|true|on|active|enabled)$') { $nvidiaScore = [Math]::Max($nvidiaScore,15) }
+            if (([string]$r.'clocks_throttle_reasons.hw_thermal_slowdown').Trim() -match '^(?i:1|yes|true|on|active|enabled)$') { $nvidiaScore = [Math]::Max($nvidiaScore,70) }
+            if (([string]$r.'clocks_throttle_reasons.hw_slowdown').Trim() -match '^(?i:1|yes|true|on|active|enabled)$') { $nvidiaScore = [Math]::Max($nvidiaScore,40) }
             if (([string]$r.'clocks_throttle_reasons.sw_power_cap').Trim() -match '^(?i:1|yes|true|on|active|enabled)$') { $notes.Add('Power cap observed; may be normal under load.') | Out-Null }
         }
         if ($temps.Count -gt 0) {
             $nvidiaMaxT = [Math]::Round((($temps.ToArray() | Measure-Object -Maximum).Maximum), 1)
-            if ($nvidiaMaxT -ge 95) { $nvidiaScore += 30; $notes.Add("nvidia-smi: temperatura critica ($nvidiaMaxT C).") | Out-Null }
-            elseif ($nvidiaMaxT -ge 88) { $nvidiaScore += 15; $notes.Add("nvidia-smi: temperatura alta ($nvidiaMaxT C).") | Out-Null }
+            if ($nvidiaMaxT -ge 95) { $nvidiaScore = [Math]::Max($nvidiaScore,70); $notes.Add("nvidia-smi: temperatura critica ($nvidiaMaxT C).") | Out-Null }
+            elseif ($nvidiaMaxT -ge 88) { $nvidiaScore = [Math]::Max($nvidiaScore,40); $notes.Add("nvidia-smi: temperatura alta ($nvidiaMaxT C).") | Out-Null }
         }
         if ($nvidiaScore -gt 100) { $nvidiaScore = 100 }
     }
 
-    $eventsScore = 0
-    $errCount = (@($events | Where-Object { $_.LevelDisplayName -match 'Error|Critical' })).Count
-    $tdrCount = (@($events | Where-Object { $_.Id -in 4101, 14, 117, 141 -or $_.Message -match 'TDR|Display driver stopped responding|LiveKernelEvent' })).Count
-    $wheaCount = (@($events | Where-Object { $_.ProviderName -match 'WHEA' })).Count
-    if ($errCount -gt 0) { $eventsScore += 25; $notes.Add("Eventos Error/Critical: $errCount.") | Out-Null }
-    if ($tdrCount -gt 0) { $eventsScore += 30; $notes.Add("Eventos TDR-like: $tdrCount.") | Out-Null }
-    if ($wheaCount -gt 0) { $eventsScore += 35; $notes.Add("Eventos WHEA: $wheaCount.") | Out-Null }
-    if ($eventsScore -gt 100) { $eventsScore = 100 }
-
-    $total = [Math]::Round(($eventsScore * 0.50) + ($gpuzScore * 0.35) + ($nvidiaScore * 0.15), 1)
+    $eventAssessment = Get-GpuEventAssessment -Events $events
+    $eventsScore = $eventAssessment.Score
+    $errCount = $eventAssessment.ErrorCritical; $tdrCount = $eventAssessment.TdrLike; $wheaCount = $eventAssessment.Whea
+    if ($errCount) { $notes.Add("Display Error/Critical events: $errCount; cause not established.") | Out-Null }
+    if ($tdrCount) { $notes.Add("Display reset/TDR-like observations: $tdrCount; inspect original events.") | Out-Null }
+    if ($wheaCount) { $notes.Add("WHEA hardware observations: $wheaCount; not attributed to the GPU by this score.") | Out-Null }
+    # Preserve the strongest observed signal rather than diluting it across absent sources.
+    $total = (@($eventsScore, $gpuzScore, $nvidiaScore) | Measure-Object -Maximum).Maximum
     $hasTelemetry = $null -ne $gpuzMaxT -or $null -ne $nvidiaMaxT
-    $level = Get-GpuSessionLevel -Total $total -HasTelemetry $hasTelemetry -StressRequested:(-not $skipStress) -SessionStatus $sessionStatus
+    $level = Get-GpuSessionLevel -Total $total -HasTelemetry $hasTelemetry -StressRequested:(-not $skipStress) -SessionStatus $sessionStatus -EventsEvaluated:($eventRead.State -eq 'Observed')
     $advice = switch ($level) {
         'RIESGO ALTO' { 'Recomendar validacion de hardware profunda y no prometer mejora por mantenimiento general.' }
-        'OBSERVACION' { 'Aplicar mantenimiento termico/driver y repetir prueba para confirmar tendencia.' }
+        'OBSERVACION' { 'Revisar la evidencia y su cobertura antes de decidir mantenimiento o cambios de driver; repetir una prueba apropiada para confirmar tendencia.' }
         'NO CONCLUYENTE' { 'Faltan mediciones o la sesion quedo incompleta. No se puede concluir que la GPU este sana.' }
         default { 'Sin senales fuertes de falla GPU en esta sesion.' }
     }
@@ -674,6 +686,9 @@ table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6p
             skipStress = $skipStress
             sessionStatus = $sessionStatus
             hasTemperatureTelemetry = $hasTelemetry
+            eventsState = $eventRead.State
+            eventScope = 'Up to 500 newest System events in session window; not exhaustive'
+            scoreBasis = 'Maximum observed screening signal; not calibrated probability or OEM thermal limit'
         }
         scores = @{
             events = $eventsScore

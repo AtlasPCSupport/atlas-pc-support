@@ -217,10 +217,10 @@ function Invoke-AIReadiness {
     function Format-AIRGB {
         param([object]$Bytes)
         try {
-            if (-not $Bytes) { return 0 }
+            if ($null -eq $Bytes -or [double]$Bytes -le 0 -or [double]::IsNaN([double]$Bytes) -or [double]::IsInfinity([double]$Bytes)) { return $null }
             return [math]::Round(([double]$Bytes / 1GB), 1)
         } catch {
-            return 0
+            return $null
         }
     }
 
@@ -413,13 +413,13 @@ function Invoke-AIReadiness {
             foreach ($n in $nvidia) {
                 $match = $gpuRows | Where-Object { $_.Name -like "*$($n.Name)*" } | Select-Object -First 1
                 if ($match) {
-                    $match.VRAMGB = [math]::Round($n.MemoryMB / 1024, 1)
+                    $match.VRAMGB = $(if ($null -ne $n.MemoryMB -and $n.MemoryMB -gt 0) { [math]::Round($n.MemoryMB / 1024, 1) } else { $null })
                     $match.DriverVersion = $n.DriverVersion
                 } else {
                     $gpuRows += [pscustomobject]@{
                         Name=$n.Name
                         Processor='NVIDIA'
-                        VRAMGB=([math]::Round($n.MemoryMB / 1024, 1))
+                        VRAMGB=($(if ($null -ne $n.MemoryMB -and $n.MemoryMB -gt 0) { [math]::Round($n.MemoryMB / 1024, 1) } else { $null }))
                         DriverVersion=$n.DriverVersion
                         DriverDate=''
                         Status='OK'
@@ -429,7 +429,7 @@ function Invoke-AIReadiness {
         }
 
         $diskRows = @(Get-AIRDiskInfo)
-        $ramGb = if ($cs) { Format-AIRGB $cs.TotalPhysicalMemory } else { 0 }
+        $ramGb = if ($cs) { Format-AIRGB $cs.TotalPhysicalMemory } else { $null }
         $logical = if ($cpu -and $cpu.NumberOfLogicalProcessors) { [int]$cpu.NumberOfLogicalProcessors } else { 0 }
         $cores = if ($cpu -and $cpu.NumberOfCores) { [int]$cpu.NumberOfCores } else { 0 }
         $cpuName = if ($cpu) { [string]$cpu.Name } else { '' }
@@ -464,15 +464,16 @@ function Invoke-AIReadiness {
         if ($stackScore -gt 15) { $stackScore = 15 }
         $score = [math]::Min(100, [int]($ramScore + $cpuScore + $gpuScore + $diskScore + $stackScore))
 
-        $verdict = if (-not $cpu -or -not $cs -or $diskRows.Count -eq 0) { 'Not evaluated: incomplete inventory' } elseif ($score -ge 75) { $L.Ready } elseif ($score -ge 50) { $L.Limited } else { $L.NotReady }
+        $inventoryComplete = ($null -ne $ramGb -and $logical -gt 0 -and $diskRows.Count -gt 0)
+        $verdict = if (-not $inventoryComplete) { 'Not evaluated: incomplete inventory' } elseif ($score -ge 75) { $L.Ready } elseif ($score -ge 50) { $L.Limited } else { $L.NotReady }
         $verdict = [string]$verdict + ' (inventory heuristic; backend/model not tested; HTTP reachability is not API authorization)'
         $mode = if ($maxVram -ge 8 -and $score -ge 65) { $L.ModeGpu } elseif ($ramGb -ge 16 -and $hasSsd) { $L.ModeCpu } elseif ($reachableCount -ge 2) { $L.ModeCloud } else { $L.ModeNone }
 
         $findings = @()
         $recommendations = @()
-        if ($ramGb -lt 16) { $findings += $L.LowRam; $recommendations += $L.RecLowRam }
-        if ($logical -lt 8) { $findings += $L.LowCpu; $recommendations += $L.RecLowCpu }
-        if ($maxVram -lt 6) { $findings += $L.LowGpu; $recommendations += $L.RecLowGpu }
+        if ($null -ne $ramGb -and $ramGb -lt 16) { $findings += $L.LowRam; $recommendations += $L.RecLowRam }
+        if ($logical -gt 0 -and $logical -lt 8) { $findings += $L.LowCpu; $recommendations += $L.RecLowCpu }
+        if (@($gpuRows | Where-Object { $null -ne $_.VRAMGB }).Count -gt 0 -and $maxVram -lt 6) { $findings += $L.LowGpu; $recommendations += $L.RecLowGpu }
         if ($hasBasicGpu) { $findings += $L.BasicGpu; $recommendations += $L.RecBasicGpu }
         if ($hasHddOnly) { $findings += $L.HddOnly; $recommendations += $L.RecHddOnly }
         if ($badDisk) { $findings += $L.DiskHealth; $recommendations += $L.RecDiskHealth }
@@ -495,7 +496,8 @@ function Invoke-AIReadiness {
         if ($findings.Count -eq 0) { $findings += $L.FindingOk; $recommendations += $L.RecOk }
         $recommendations = @($recommendations | Select-Object -Unique)
 
-        $models = @(Get-AIRModelRecommendations -RamGB $ramGb -VramGB $maxVram)
+        $models = if ($inventoryComplete) { @(Get-AIRModelRecommendations -RamGB $ramGb -VramGB $maxVram) } else { @() }
+        if (-not $inventoryComplete) { $mode = 'Not evaluated: incomplete inventory'; $findings += 'Inventory incomplete; missing capacity is not zero and no model recommendation is established.' }
         $stackRows = @(
             [pscustomobject]@{ Component='Ollama'; State=($(if ($ollama.Installed) { $L.Installed } else { $L.NotInstalled })); Detail=$ollama.Path },
             [pscustomobject]@{ Component='Python'; State=($(if ($python.Installed) { $L.Installed } else { $L.NotInstalled })); Detail=$python.Path },
@@ -511,6 +513,7 @@ function Invoke-AIReadiness {
             OS=if ($os) { "$($os.Caption) $($os.OSArchitecture)" } else { '' }
             Manufacturer=if ($cs) { [string]$cs.Manufacturer } else { '' }
             Model=if ($cs) { [string]$cs.Model } else { '' }
+            InventoryComplete=$inventoryComplete
             Score=$score
             Verdict=$verdict
             RecommendedMode=$mode
@@ -584,7 +587,7 @@ h1{margin:0;font-size:25px} h2{margin-top:28px;color:#172554;border-bottom:2px s
 table{width:100%;border-collapse:collapse;margin:12px 0 18px}th{background:#dbeafe;color:#172554;text-align:left}th,td{border:1px solid #d8e0ec;padding:8px;vertical-align:top}.muted{color:#64748b}
 tr:nth-child(even){background:#f8fafc}
 '@
-        $badgeClass = if ($Report.Score -ge 75) { 'ready' } elseif ($Report.Score -ge 50) { 'limited' } else { 'notready' }
+        $badgeClass = if (-not $Report.InventoryComplete) { 'limited' } elseif ($Report.Score -ge 75) { 'ready' } elseif ($Report.Score -ge 50) { 'limited' } else { 'notready' }
         $componentHtml = New-AIRTable -Rows $componentRows -Columns @('Component','Value','Score')
         $gpuHtml = New-AIRTable -Rows $Report.GPU -Columns @('Name','Processor','VRAMGB','DriverVersion','DriverDate','Status')
         $diskHtml = New-AIRTable -Rows $Report.Disks -Columns @('Name','MediaType','BusType','SizeGB','Health')

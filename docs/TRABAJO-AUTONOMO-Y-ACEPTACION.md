@@ -41,6 +41,13 @@ Resumen del bloque terminado y dependencias externas:
   Capacidad/ciclos desconocidos permanecen como tales, cada bateria mantiene
   su pareja de capacidades y las releases nuevas incluyen LICENSE de Atlas;
   no se eliminan las herramientas ni se da por aceptado hardware real.
+- 1.5.13: [fase 1 de la auditoria integral](audits/FASE-1-AUDITORIA-2026-10-27.md):
+  DNS retirado, privacidad de informes y conteo agregado de teclado. Publicada
+  con 355 pruebas por runtime y verificacion del dominio/bundle completo.
+- 1.5.14: [fase 2 de la auditoria integral](audits/FASE-2-AUDITORIA-2026-10-27.md):
+  interpretacion de PartsUpgrade, memoria compartida, cobertura de consultas y
+  senales GPU. Se valida y promueve mediante los checks del SHA de su entrega;
+  no sustituye QA de hardware ni de Windows 10.
 
 ## Decisiones ya tomadas
 

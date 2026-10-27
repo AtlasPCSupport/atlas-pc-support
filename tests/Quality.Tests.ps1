@@ -1,4 +1,136 @@
 #Requires -Modules Pester
+BeforeAll {
+    . (Join-Path (Split-Path -Parent $PSScriptRoot) 'src/lib/ToolKit.ps1')
+}
+
+Describe 'Audit phase 2: shared memory and cautious PartsUpgrade output' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-PartsUpgrade.ps1' 'Invoke-PartsUpgrade')
+        function Get-PhysicalDisk {[CmdletBinding()]param() throw 'Real disks blocked'}
+        function Get-CimInstance {[CmdletBinding()]param($ClassName,$OperationTimeoutSec) throw 'Real hardware blocked'}
+        function Write-AtlasShareableReport {param($Path,$Content,$Tool) throw 'Real report blocked'}
+        $script:OriginalLang=$env:ATLAS_LANG;$env:ATLAS_LANG='en'
+        $script:PartsEnvironment=@{}
+        foreach($name in @('LOCALAPPDATA','APPDATA')) {
+            $script:PartsEnvironment[$name]=[Environment]::GetEnvironmentVariable($name)
+            [Environment]::SetEnvironmentVariable($name,$TestDrive)
+        }
+    }
+    AfterAll {
+        $env:ATLAS_LANG=$script:OriginalLang
+        foreach($name in $script:PartsEnvironment.Keys) {[Environment]::SetEnvironmentVariable($name,$script:PartsEnvironment[$name])}
+    }
+    It 'sums complete arrays and prefers extended capacity while preserving missing data' {
+        $modules=@([pscustomobject]@{Capacity=8GB},[pscustomobject]@{Capacity=8GB})
+        $arrays=@([pscustomobject]@{Use=3;MaxCapacity=1;MaxCapacityEx=64MB;MemoryDevices=2},[pscustomobject]@{Use=3;MaxCapacity=32MB;MemoryDevices=2})
+        $r=Get-AtlasMemorySummary -Modules $modules -Arrays $arrays
+        $r.TotalGB|Should -Be 16;$r.MaxGB|Should -Be 96;$r.SlotsTotal|Should -Be 4;$r.SlotsFree|Should -Be 2
+        $r=Get-AtlasMemorySummary -Modules @([pscustomobject]@{}) -Arrays @()
+        $r.TotalGB|Should -BeNullOrEmpty;$r.MaxGB|Should -BeNullOrEmpty;$r.SlotsTotal|Should -BeNullOrEmpty
+        (Get-AtlasMemorySummary -Modules $modules -Arrays @([pscustomobject]@{MemoryDevices=1})).SlotsFree|Should -BeNullOrEmpty
+    }
+    It 'runs the real Parts report without inferring generation, XMP, BGA or unknown capacities: <Missing>' -ForEach @(@{Missing=$false},@{Missing=$true}) {
+        Mock Get-CimInstance {
+            switch($ClassName) {
+                Win32_PhysicalMemoryArray {if($Missing){throw 'Denied'};[pscustomobject]@{Use=3;MaxCapacityEx=64MB;MemoryDevices=2}}
+                Win32_PhysicalMemory {if($Missing){throw 'Denied'};[pscustomobject]@{Capacity=8GB;Speed=3200;ConfiguredClockSpeed=2666;SMBIOSMemoryType=26;FormFactor=12}}
+                Win32_Processor {[pscustomobject]@{Name='Intel Core i7-8700';UpgradeMethod=6;SocketDesignation='Unknown';NumberOfCores=6;NumberOfLogicalProcessors=12}}
+                default {}
+            }
+        }
+        Mock Get-PhysicalDisk {[pscustomobject]@{FriendlyName='Fixture';Size=$null;HealthStatus=0;BusType='SATA';MediaType='Unknown'}}
+        Mock Read-Host {'2'};Mock Wait-AtlasExit {};Mock Start-Process {};Mock Clear-Host {};Mock Write-Host {}
+        Mock Get-AtlasReportDir {$TestDrive}
+        Mock Write-AtlasShareableReport {$script:PartsHtml=$Content}
+        Invoke-PartsUpgrade
+        $script:PartsHtml|Should -Not -Match 'Intel Gen 87|XMP OFF|Soldada \(BGA\)|None/BGA|<!-- SHA256:'
+        $script:PartsHtml|Should -Match 'None \(SMBIOS\)|not verified|no verificada'
+        $script:PartsHtml|Should -Match 'N/D GB';$script:PartsHtml|Should -Match 'Healthy'
+        if($Missing){$script:PartsHtml|Should -Match 'no capacity-based purchase advice';$script:PartsHtml|Should -Not -Match 'RAM Insufficient'}
+    }
+}
+
+Describe 'Audit phase 2: unavailable printer and keyboard queries are not empty successes' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        foreach($name in @('Get-PDPrinters','Get-PDPorts','Get-PDDrivers','Get-PDSpooler','Get-PDJobs','Get-PDPrintEvents','Invoke-PDQuickDiagnosis','Add-Finding')) {
+            . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-PrinterDoctor.ps1' $name)
+        }
+        foreach($name in @('Get-KDDevicesByClass','Get-KDKeyboardDevices','Get-KDPointingDevices','Get-KDAccessibility','Get-KDBattery','Get-KDEvents','Get-KDMonitorCount','Invoke-KDQuickDiagnosis','Add-KDFinding')) {
+            . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-KeyboardDoctor.ps1' $name)
+        }
+        function Get-PDSystemInfo {}
+        function Get-KDSystemInfo {}
+        function Get-CimInstance {[CmdletBinding()]param($ClassName,$OperationTimeoutSec,$Filter) throw 'Real hardware blocked'}
+        function Get-WinEvent {[CmdletBinding()]param($FilterHashtable,$MaxEvents) throw 'Real events blocked'}
+    }
+    BeforeEach {
+        $script:L=@{FindingNoPrinter='ABSENT_PRINTER';RecNoPrinter='Repair';FindingNoSpooler='STOPPED_SPOOLER';RecNoSpooler='Restart';FindingNoKeyboard='ABSENT_KEYBOARD';RecNoKeyboard='Repair';FindingOk='NO_FINDINGS';RecOk='Review';ResultObs='Observation'}
+        $script:PrinterDoctorReport=@{Coverage=@{};Findings=@();Recommendations=@()}
+        $script:KeyboardDoctorReport=@{Coverage=@{};Findings=@();Recommendations=@();Manual=@{};Monitor=@()}
+        Mock Get-Command {$null} -ParameterFilter {$Name -eq 'Get-PrinterPort'}
+        Mock Get-ItemProperty {throw 'Registry denied'}
+    }
+    It 'keeps denied queries out of absent-device and stopped-service findings' {
+        Mock Get-CimInstance {throw 'Access denied'};Mock Get-WinEvent {throw 'Access denied'}
+        Invoke-PDQuickDiagnosis|Out-Null
+        $script:PrinterDoctorReport.Coverage.Printers|Should -Be NotEvaluated
+        $script:PrinterDoctorReport.Findings|Should -Not -Contain 'ABSENT_PRINTER'
+        $script:PrinterDoctorReport.Findings|Should -Not -Contain 'STOPPED_SPOOLER'
+        Invoke-KDQuickDiagnosis|Out-Null
+        $script:KeyboardDoctorReport.Coverage.Keyboard|Should -Be NotEvaluated
+        @($script:KeyboardDoctorReport.Findings|Where-Object Finding -eq 'ABSENT_KEYBOARD').Count|Should -Be 0
+        $script:KeyboardDoctorReport.Battery.Present|Should -BeNullOrEmpty
+        @($script:KeyboardDoctorReport.Accessibility|Where-Object {$null -eq $_.Enabled}).Count|Should -Be 3
+    }
+    It 'distinguishes a successful empty inventory and a no-matching-events exception' {
+        Mock Get-CimInstance {};Mock Get-WinEvent {Write-Error 'No events' -ErrorId NoMatchingEventsFound -ErrorAction Stop}
+        Invoke-PDQuickDiagnosis|Out-Null
+        $script:PrinterDoctorReport.Coverage.Events|Should -Be Observed
+        $script:PrinterDoctorReport.Findings|Should -Contain 'ABSENT_PRINTER'
+        Invoke-KDQuickDiagnosis|Out-Null
+        $script:KeyboardDoctorReport.Coverage.Keyboard|Should -Be Observed
+        @($script:KeyboardDoctorReport.Findings|Where-Object Finding -eq 'ABSENT_KEYBOARD').Count|Should -Be 1
+    }
+    It 'does not combine capacity rows or manufacture wear when several batteries exist' {
+        Mock Get-CimInstance {@([pscustomobject]@{Name='A';EstimatedChargeRemaining=0},[pscustomobject]@{Name='B';EstimatedChargeRemaining=80})}
+        $r=Get-KDBattery
+        $r.WearPercent|Should -BeNullOrEmpty;$r.EstimatedChargeRemaining|Should -BeNullOrEmpty
+        Should -Invoke Get-CimInstance -Times 1 -Exactly -ParameterFilter {$ClassName -eq 'Win32_Battery' -and $OperationTimeoutSec -eq 10}
+    }
+}
+
+Describe 'Audit phase 2: real GPU scoring branches and event coverage' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        foreach($name in @('Get-GpuSessionLevel','Get-GpuEventAssessment','Clean-Number','Find-Col')) {
+            . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-GPUCheck.ps1' $name)
+        }
+        $source=[IO.File]::ReadAllText((Join-Path $script:RepoRoot 'src/tools/Invoke-GPUCheck.ps1'))
+        $start=$source.IndexOf('    $gpuzScore = 0');$end=$source.IndexOf('    if ($notes.Count -eq 0)', $start)
+        $script:GpuScoring=[scriptblock]::Create($source.Substring($start,$end-$start))
+        function Import-CsvAuto {param($Path) throw 'Real telemetry file blocked'}
+    }
+    It 'uses numeric event severity and does not attribute unrelated WHEA or ID 141 to GPU' {
+        $events=@([pscustomobject]@{ProviderName='Display';Level=2;LevelDisplayName='Error localizado';Id=7},[pscustomobject]@{ProviderName='Microsoft-Windows-WHEA-Logger';Level=2;Id=141})
+        $r=Get-GpuEventAssessment $events
+        $r.ErrorCritical|Should -Be 1;$r.Whea|Should -Be 1;$r.TdrLike|Should -Be 0;$r.Score|Should -Be 25
+        (Get-GpuEventAssessment @($events[1])).Score|Should -Be 0
+    }
+    It 'preserves a critical measured temperature and refuses a clean verdict without events: <Evaluated>' -ForEach @(@{Evaluated=$true},@{Evaluated=$false}) {
+        Mock Import-CsvAuto {1..3|ForEach-Object {[pscustomobject]@{'GPU Temperature'=95}}} -ParameterFilter {$Path -eq 'gpuz-fixture'}
+        Mock Import-CsvAuto {} -ParameterFilter {$Path -eq 'nvidia-fixture'}
+        $gpuzLog='gpuz-fixture';$nvidiaCsv='nvidia-fixture';$events=@();$notes=[Collections.Generic.List[string]]::new()
+        $eventRead=@{State=$(if($Evaluated){'Observed'}else{'NotEvaluated'})};$skipStress=$false;$sessionStatus='Completed'
+        . $script:GpuScoring
+        $total|Should -Be 70;$level|Should -Be 'RIESGO ALTO'
+        Get-GpuSessionLevel -Total 0 -HasTelemetry $true -StressRequested $true -SessionStatus Completed -EventsEvaluated $false|Should -Be 'NO CONCLUYENTE'
+    }
+}
 
 Describe 'Audit phase 1: classic DNS and aggregate keyboard evidence' {
     BeforeAll {
@@ -1034,6 +1166,23 @@ Describe 'AI inventory without obsolete or unbounded fallbacks' {
         $result.CPU.BenchmarkMOps | Should -BeNullOrEmpty
         $result.Findings | Should -Not -Contain 'HDD fixture finding'
         $result.Recommendations | Should -Not -Contain 'Replace HDD fixture'
+    }
+    It 'preserves missing RAM and VRAM and does not recommend a model from incomplete inventory' {
+        Mock Get-AIRCim {
+            switch($ClassName) {
+                Win32_ComputerSystem {[pscustomobject]@{TotalPhysicalMemory=$null}}
+                Win32_Processor {[pscustomobject]@{Name='Fixture';NumberOfLogicalProcessors=0}}
+                Win32_VideoController {[pscustomobject]@{Name='Fixture';AdapterRAM=$null}}
+                default {}
+            }
+        }
+        Mock Get-AIRNvidiaSmi {}
+        Mock Get-AIRDiskInfo {[pscustomobject]@{MediaType='Unknown';BusType='SATA';Health='Unknown'}}
+        $script:L=@{LowRam='FALSE_LOW_RAM';LowCpu='FALSE_LOW_CPU';LowGpu='FALSE_LOW_GPU'}
+        $r=New-AIRReport -ClientName '' -ConsultantName ''
+        $r.RAM.TotalGB|Should -BeNullOrEmpty;$r.GPU[0].VRAMGB|Should -BeNullOrEmpty
+        $r.InventoryComplete|Should -BeFalse;$r.ModelRecommendations.Count|Should -Be 0
+        $r.Findings|Should -Not -Contain 'FALSE_LOW_RAM';$r.Findings|Should -Not -Contain 'FALSE_LOW_CPU';$r.Findings|Should -Not -Contain 'FALSE_LOW_GPU'
     }
 }
 

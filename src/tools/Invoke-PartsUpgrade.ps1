@@ -47,7 +47,6 @@ function Invoke-PartsUpgrade {
             RAMTotal      = 'Total RAM:      {0} GB'
             BiosMaxRAM    = 'BIOS max:       {0} GB'
             ModulesHdr    = '--- Installed modules ---'
-            XmpOff        = '  [XMP OFF]'
             ModuleLine    = '  [{0}] {1} GB {2} @ {3}/{4} MHz  {5}  PN: {6}{7}'
             RAMRecHdr     = '--- RAM recommendations ---'
             RAMSlotsFree  = '[OK] You have {0} free slot(s). You can expand.'
@@ -59,9 +58,9 @@ function Invoke-PartsUpgrade {
             RAMCautionsHdr= '--- RAM buying precautions ---'
             RAMCau1       = '  * Same type (DDR4 with DDR4, DDR5 with DDR5, never mix).'
             RAMCau2       = '  * Same form factor: DIMM (desktop) or SO-DIMM (laptop).'
-            RAMCau3       = '  * Speed EQUAL or HIGHER than existing module (lower will be downclocked).'
-            RAMCau4       = '  * Voltage EQUAL. Mixing 1.35V with 1.2V is unstable.'
-            RAMCau5       = '  * Similar brand/latencies for clean dual-channel.'
+            RAMCau3       = '  * Verify supported transfer rates and fallback speeds in the OEM memory list.'
+            RAMCau4       = '  * Verify voltage and profile compatibility; advertised voltage alone is insufficient.'
+            RAMCau5       = '  * Channel mode is not established by matching brands or device count.'
             RAMCau6       = '  * Verify current RAM with CPU-Z before buying.'
             SecCPU        = '2. CPU (Processor)'
             CPUErr        = '[ERROR] Could not query CPU.'
@@ -71,8 +70,6 @@ function Invoke-PartsUpgrade {
             UpgradeMethod = 'Upgrade method: {0}'
             Generation    = 'Generation: {0}'
             ReplaceableHdr= '--- Replaceable? ---'
-            CPUSoldered   = '[X] CPU SOLDERED TO BOARD (BGA). NOT replaceable.'
-            CPUSolderedNote='    Upgrade: impossible without replacing the entire mainboard (and at that point, the entire PC).'
             CPUMaybeSold  = '[?] CPU PROBABLY SOLDERED. Verify with manufacturer before buying anything.'
             CPUInSocket   = '[OK] CPU in SOCKET ({0}) - Replaceable.'
             CPUSocketNote = '    You can swap it for another CPU compatible with this socket and chipset.'
@@ -87,8 +84,8 @@ function Invoke-PartsUpgrade {
             CPUCauHdr     = '--- CPU buying precautions ---'
             CPUCau1       = '  * Socket and chipset compatible (not just the physical socket).'
             CPUCau2       = '  * BIOS updated to a version that supports the target CPU.'
-            CPUCau3       = '  * TDP compatible with cooler/PSU. If raising TDP, change thermal paste minimum.'
-            CPUCau4       = '  * In laptops: almost ALWAYS soldered. Save your time, no upgrade.'
+            CPUCau3       = '  * Verify OEM power, cooling and firmware requirements for the exact target CPU.'
+            CPUCau4       = '  * Laptop CPU replacement requires the exact model service manual; not inferred here.'
             CPUCau5       = '  * If the CPU comes without a fan ("tray" or "OEM"), buy one separately.'
             SecStorage    = '3. STORAGE (Disks and slots)'
             DisksErr      = '[ERROR] Could not enumerate disks.'
@@ -105,8 +102,8 @@ function Invoke-PartsUpgrade {
             SumSATA       = '  SSD SATA:      {0}'
             SumHDD        = '  HDD mechanical:{0}'
             SumUSB        = '  USB external:  {0}'
-            SlotsHdr      = '--- Available physical slots (inferred) ---'
-            SlotsNote     = 'Windows does NOT directly expose "free M.2 slots". Inferred from mainboard model.'
+            SlotsHdr      = '--- Physical connectors: not evaluated ---'
+            SlotsNote     = 'Inventory does not establish free M.2 sockets. Consult the exact board service manual.'
             DetectedBoard = 'Mainboard detected: {0} {1}'
             ToFindSlots   = 'To find real slot count:'
             GoogleSearch  = '  1) Google: {0} specifications M.2 SATA slots'
@@ -121,14 +118,14 @@ function Invoke-PartsUpgrade {
             DesktopTyp2   = '  - 2-6 SATA ports (for 2.5" SSD or 3.5" HDD).'
             DesktopTyp3   = '  - Check M.2: some slots are M.2 SATA, others M.2 NVMe, others both ("combo").'
             StorageRecHdr = '--- Storage recommendations ---'
-            StorageHDDOnly= '[!!] System BOOTS from HDD. Migrating to SSD gives 5-10x perceived speedup. MAX priority.'
+            StorageHDDOnly= 'HDD observed; system-volume mapping and actual workload were not measured. Verify before replacement.'
             StorageHDDAlso= '[i] HDD present. Useful for data/backup. System should be on SSD (already seems to be).'
-            StorageNoNVMe = '[i] No NVMe. Consider migrating to M.2 NVMe for >3 GB/s sequential reads (SATA SSD caps at 550 MB/s).'
+            StorageNoNVMe = 'No NVMe reported; this alone is not a reason to replace storage or proof of spare M.2 sockets.'
             StorageCauHdr = '--- Storage buying precautions ---'
             StorageCau1   = '  * M.2 NVMe vs M.2 SATA: NOT interchangeable. Verify which your slot supports.'
             StorageCau2   = '  * PCIe 4.0 vs 3.0: a PCIe 4.0 SSD works in PCIe 3.0 but capped to slot speed.'
             StorageCau3   = '  * M.2 size: 2280 is standard (80 mm). 2230/2242 exist in ultraslim laptops.'
-            StorageCau4   = '  * DRAM cache: SSDs without DRAM (low-end QLC) degrade fast under sustained load.'
+            StorageCau4   = '  * Compare endurance, workload tests and warranty for the exact drive model.'
             StorageCau5   = '  * TBW (terabytes written): check endurance before buying for server/video editor.'
             StorageCau6   = '  * Buy SSD >= 500 GB (cost per GB nearly equal and performance better).'
             StorageCau7   = '  * Clone with vendor tool (Samsung Magician, Crucial Storage Executive, etc.) or Macrium Reflect.'
@@ -140,11 +137,11 @@ function Invoke-PartsUpgrade {
             GPUDesk2      = '  [!] When buying GPU verify: connector (8/6/12VHPWR), physical length (case), TDP vs PSU, PCIe slot.'
             PSUHdr        = '--- Power Supply (PSU) ---'
             PSULine1      = '  Windows does NOT expose PSU brand/wattage. Check the physical label inside the case.'
-            PSULine2      = '  For GPU upgrade or strong CPU: ensure PSU is 80+ Bronze or higher with enough wattage.'
+            PSULine2      = '  Verify exact PSU power, connectors, protections and OEM requirements; efficiency grade alone does not establish quality.'
             BIOSHdr       = '--- BIOS / UEFI ---'
             BIOSVersion   = '  Version:  {0}'
             BIOSDate      = '  Date:     {0} ({1} years ago)'
-            BIOSOld       = '  [!] Old BIOS. Updating may unlock newer CPUs and fix bugs. Check vendor website.'
+            BIOSOld       = '  BIOS date alone does not mandate an update. Check exact OEM release notes and recovery procedure.'
             BIOSReadErr   = '  Could not read BIOS.'
             ExportHdr     = 'EXPORT REPORT'
             ExportOpt1    = ' [1] Save TXT to Desktop'
@@ -156,7 +153,6 @@ function Invoke-PartsUpgrade {
             QuitNoSave    = 'Quitting without saving.'
             CPUUMOther    = 'Other'
             CPUUMUnknown  = 'Unknown'
-            CPUUMBGA      = 'None (BGA/Soldered)'
             CPUUMReplace  = 'Replaceable'
             CPUUMNotRep   = 'Not reported'
         }
@@ -180,7 +176,6 @@ function Invoke-PartsUpgrade {
             RAMTotal      = 'RAM total:      {0} GB'
             BiosMaxRAM    = 'Maximo segun BIOS: {0} GB'
             ModulesHdr    = '--- Modulos instalados ---'
-            XmpOff        = '  [XMP APAGADO]'
             ModuleLine    = '  [{0}] {1} GB {2} @ {3}/{4} MHz  {5}  PN: {6}{7}'
             RAMRecHdr     = '--- Recomendaciones RAM ---'
             RAMSlotsFree  = '[OK] Tienes {0} slot(s) libre(s). Puedes ampliar.'
@@ -192,9 +187,9 @@ function Invoke-PartsUpgrade {
             RAMCautionsHdr= '--- Precauciones al comprar RAM ---'
             RAMCau1       = '  * Mismo tipo (DDR4 con DDR4, DDR5 con DDR5, nunca mezclar).'
             RAMCau2       = '  * Mismo form factor: DIMM (escritorio) o SO-DIMM (laptop).'
-            RAMCau3       = '  * Velocidad IGUAL o SUPERIOR al modulo existente (si pones menor, el CPU la bajara).'
-            RAMCau4       = '  * Voltaje IGUAL. Mezclar 1.35V con 1.2V da inestabilidad.'
-            RAMCau5       = '  * Marca/latencias parecidas para dual-channel limpio.'
+            RAMCau3       = '  * Verifica tasas y velocidades compatibles en la lista de memoria OEM.'
+            RAMCau4       = '  * Verifica voltaje y perfiles compatibles; el voltaje anunciado no basta.'
+            RAMCau5       = '  * La marca y cantidad de modulos no acreditan el modo de canales.'
             RAMCau6       = '  * Verifica con CPU-Z la RAM actual antes de comprar.'
             SecCPU        = '2. CPU (Procesador)'
             CPUErr        = '[ERROR] No se pudo consultar el CPU.'
@@ -204,8 +199,6 @@ function Invoke-PartsUpgrade {
             UpgradeMethod = 'Upgrade method: {0}'
             Generation    = 'Generacion: {0}'
             ReplaceableHdr= '--- Reemplazable? ---'
-            CPUSoldered   = '[X] CPU SOLDADO A LA PLACA (BGA). NO es reemplazable.'
-            CPUSolderedNote='    Actualizacion: imposible salvo reemplazo completo de placa base (y con eso, el PC entero).'
             CPUMaybeSold  = '[?] CPU PROBABLEMENTE SOLDADO. Verifica con el fabricante antes de comprar nada.'
             CPUInSocket   = '[OK] CPU en SOCKET ({0}) - Reemplazable.'
             CPUSocketNote = '    Puedes cambiarlo por otro CPU compatible con este socket y chipset.'
@@ -220,8 +213,8 @@ function Invoke-PartsUpgrade {
             CPUCauHdr     = '--- Precauciones al comprar CPU ---'
             CPUCau1       = '  * Socket y chipset compatibles (no solo el socket fisico).'
             CPUCau2       = '  * BIOS actualizada a version que soporte el CPU objetivo.'
-            CPUCau3       = '  * TDP compatible con el disipador/fuente. Si subes TDP, cambia pasta termica minimo.'
-            CPUCau4       = '  * En laptops: casi SIEMPRE soldado. Ahorrate tiempo, no hay upgrade.'
+            CPUCau3       = '  * Verifica potencia, refrigeracion y firmware OEM para el CPU exacto.'
+            CPUCau4       = '  * El reemplazo de CPU en laptop depende del manual del modelo; aqui no se infiere.'
             CPUCau5       = '  * Si el CPU viene sin fan (tipo "tray" o "OEM"), compra uno aparte.'
             SecStorage    = '3. ALMACENAMIENTO (Discos y slots)'
             DisksErr      = '[ERROR] No se pudieron enumerar discos.'
@@ -238,8 +231,8 @@ function Invoke-PartsUpgrade {
             SumSATA       = '  SSD SATA:      {0}'
             SumHDD        = '  HDD mecanico:  {0}'
             SumUSB        = '  USB externo:   {0}'
-            SlotsHdr      = '--- Slots fisicos disponibles (inferencia) ---'
-            SlotsNote     = 'Windows NO expone directamente "slots M.2 libres". Se infiere del modelo de placa base.'
+            SlotsHdr      = '--- Conectores fisicos: no evaluados ---'
+            SlotsNote     = 'El inventario no acredita conectores M.2 libres. Consulta el manual de la placa exacta.'
             DetectedBoard = 'Placa base detectada: {0} {1}'
             ToFindSlots   = 'Para saber slots reales:'
             GoogleSearch  = '  1) Busca en Google: {0} specifications M.2 SATA slots'
@@ -254,14 +247,14 @@ function Invoke-PartsUpgrade {
             DesktopTyp2   = '  - 2-6 puertos SATA (para SSD 2.5" o HDD 3.5").'
             DesktopTyp3   = '  - Verifica M.2: algunos slots son M.2 SATA, otros M.2 NVMe, otros ambos ("combo").'
             StorageRecHdr = '--- Recomendaciones almacenamiento ---'
-            StorageHDDOnly= '[!!] El SISTEMA arranca de HDD. Migrar a SSD da 5-10x mejora percibida. Prioridad MAXIMA.'
+            StorageHDDOnly= 'HDD observado; no se midio volumen de arranque ni carga real. Verifica antes de reemplazar.'
             StorageHDDAlso= '[i] Tienes HDD presente. Util para datos/backup. Sistema deberia estar en SSD (ya parece serlo).'
-            StorageNoNVMe = '[i] Sin NVMe. Considera migrar a M.2 NVMe para lectura secuencial >3 GB/s (SATA SSD tope es 550 MB/s).'
+            StorageNoNVMe = 'No se informa NVMe; no prueba un cuello de botella ni conectores M.2 disponibles.'
             StorageCauHdr = '--- Precauciones al comprar almacenamiento ---'
             StorageCau1   = '  * M.2 NVMe vs M.2 SATA: NO son intercambiables. Verifica cual admite tu slot.'
             StorageCau2   = '  * PCIe 4.0 vs 3.0: un SSD PCIe 4.0 funciona en slot PCIe 3.0 pero limitado a la velocidad del slot.'
             StorageCau3   = '  * Tamano M.2: 2280 es el estandar (80 mm). 2230/2242 existen en laptops ultraslim.'
-            StorageCau4   = '  * DRAM cache: SSDs sin DRAM (QLC low-end) se degradan rapido con cargas sostenidas.'
+            StorageCau4   = '  * Compara resistencia, pruebas de la carga y garantia del modelo exacto.'
             StorageCau5   = '  * TBW (terabytes writes): revisa endurance antes de comprar para servidor/editor de video.'
             StorageCau6   = '  * Compra SSD >= 500 GB (el coste GB es casi igual y rendimiento mejora).'
             StorageCau7   = '  * Clona con herramienta del fabricante (Samsung Magician, Crucial Storage Executive, etc) o Macrium Reflect.'
@@ -273,11 +266,11 @@ function Invoke-PartsUpgrade {
             GPUDesk2      = '  [!] Al comprar GPU verifica: conector (8/6/12VHPWR), largo fisico (caja), TDP vs fuente, slot PCIe.'
             PSUHdr        = '--- Fuente de poder (PSU) ---'
             PSULine1      = '  Windows NO expone la marca/wattage de la PSU. Revisa la etiqueta fisica dentro de la caja.'
-            PSULine2      = '  Para upgrade de GPU o CPU potente: verifica que la fuente sea 80+ Bronze o superior y con wattage suficiente.'
+            PSULine2      = '  Verifica potencia, conectores, protecciones y requisitos OEM; la eficiencia sola no acredita calidad.'
             BIOSHdr       = '--- BIOS / UEFI ---'
             BIOSVersion   = '  Version:  {0}'
             BIOSDate      = '  Fecha:    {0} (hace {1} anios)'
-            BIOSOld       = '  [!] BIOS antigua. Actualizarla puede habilitar CPUs nuevos y corregir bugs. Revisa la web del fabricante.'
+            BIOSOld       = '  La fecha de BIOS sola no obliga a actualizar. Revisa notas OEM y procedimiento de recuperacion.'
             BIOSReadErr   = '  No se pudo leer BIOS.'
             ExportHdr     = 'EXPORTAR REPORTE'
             ExportOpt1    = ' [1] Guardar TXT en Escritorio'
@@ -289,7 +282,6 @@ function Invoke-PartsUpgrade {
             QuitNoSave    = 'Saliendo sin guardar.'
             CPUUMOther    = 'Otro'
             CPUUMUnknown  = 'Desconocido'
-            CPUUMBGA      = 'Ninguno (BGA/Soldado)'
             CPUUMReplace  = 'Reemplazable'
             CPUUMNotRep   = 'No reportado'
         }
@@ -356,67 +348,52 @@ function Invoke-PartsUpgrade {
     if ($cs) { Log-Out ($L.Model -f $cs.Model) }
     if ($csp -and $csp.Name) { Log-Out ($L.ModelExact -f $csp.Name) }
     if ($bb) { Log-Out ($L.Mainboard -f $bb.Manufacturer, $bb.Product) }
-    Log-Out ($L.FormFactor -f $(if ($isLaptop) { $L.FFLaptop } else { $L.FFDesktop }))
+    Log-Out ($L.FormFactor -f $(if (-not $chassis) { 'N/D' } elseif ($isLaptop) { $L.FFLaptop } else { $L.FFDesktop }))
 
     # ================================================================
     # RAM
     # ================================================================
     Section-Header $L.SecRAM
 
-    try {
-        $placa = Get-CimInstance Win32_PhysicalMemoryArray -ErrorAction Stop
-        $modulos = @(Get-CimInstance Win32_PhysicalMemory -ErrorAction Stop)
-    } catch {
-        Log-Out $L.RAMErr 'Red'
-        $placa = $null; $modulos = @()
-    }
-
-    $maxGB = $null
-    if ($placa -and $placa.MaxCapacity -gt 0) {
-        $maxGB = [math]::Round(($placa.MaxCapacity / 1024 / 1024), 0)
-    }
-    $slotsTotales = if ($placa) { $placa.MemoryDevices } else { 0 }
-    $slotsUsados = $modulos.Count
-    $slotsLibres = [Math]::Max(0, [int]$slotsTotales - [int]$slotsUsados)
-    $ramTotalGB = if ($modulos) { [math]::Round((($modulos | Measure-Object Capacity -Sum).Sum / 1GB), 2) } else { 0 }
+    $memoryRead = Invoke-AtlasInventoryRead -Source 'Memory modules' -Query { Get-CimInstance Win32_PhysicalMemory -OperationTimeoutSec 10 -ErrorAction Stop }
+    $arrayRead = Invoke-AtlasInventoryRead -Source 'Memory arrays' -Query { Get-CimInstance Win32_PhysicalMemoryArray -OperationTimeoutSec 10 -ErrorAction Stop }
+    $modulos = @($memoryRead.Items)
+    $memory = Get-AtlasMemorySummary -Modules $modulos -Arrays @($arrayRead.Items)
+    $maxGB = $memory.MaxGB
+    $slotsTotales = $memory.SlotsTotal
+    $slotsUsados = if ($memoryRead.State -eq 'Observed') { $memory.SlotsUsed } else { 'N/D' }
+    $slotsLibres = $memory.SlotsFree
+    $ramTotalGB = $memory.TotalGB
+    if ($null -eq $slotsTotales) { $slotsTotales = 'N/D' }
+    if ($null -eq $slotsLibres) { $slotsLibres = 'N/D' }
 
     Log-Out ($L.SlotsTotal -f $slotsTotales)
     Log-Out ($L.SlotsUsed -f $slotsUsados)
     Log-Out ($L.SlotsFree -f $slotsLibres)
-    Log-Out ($L.RAMTotal -f $ramTotalGB) 'Green'
+    Log-Out ($L.RAMTotal -f $(if ($null -ne $ramTotalGB) { $ramTotalGB } else { 'N/D' })) 'Gray'
     if ($maxGB) { Log-Out ($L.BiosMaxRAM -f $maxGB) 'Green' }
 
     $ramTypes = @{}
     Log-Out ''
     Log-Out $L.ModulesHdr 'Yellow'
     foreach ($ram in $modulos) {
-        $capGB = [math]::Round($ram.Capacity / 1GB, 0)
+        $capGB = if ($ram.Capacity -gt 0) { [math]::Round($ram.Capacity / 1GB, 2) } else { 'N/D' }
         $ramTypeCode = [int]$ram.SMBIOSMemoryType
         $ramTypeMap = @{ 20='DDR'; 21='DDR2'; 24='DDR3'; 26='DDR4'; 34='DDR5' }
         $ramTypeName = if ($ramTypeMap.ContainsKey($ramTypeCode)) { $ramTypeMap[$ramTypeCode] } else { "Type $ramTypeCode" }
         $ramTypes[$ramTypeName] = $true
         $nat = $ram.Speed
         $cfg = $ram.ConfiguredClockSpeed
-        $xmpFlag = if ($cfg -lt $nat) { $L.XmpOff } else { '' }
+        $xmpFlag = ' | XMP: not evaluated'
         Log-Out ($L.ModuleLine -f $ram.DeviceLocator, $capGB, $ramTypeName, $cfg, $nat, $ram.Manufacturer, $ram.PartNumber, $xmpFlag)
     }
 
     Log-Out ''
     Log-Out $L.RAMRecHdr 'Magenta'
     $ramTypesList = @($ramTypes.Keys) -join ', '
-    if ($slotsLibres -gt 0) {
-        Log-Out ($L.RAMSlotsFree -f $slotsLibres) 'Green'
-        Log-Out ($L.RAMBuyMatch -f $ramTypesList, ($modulos[0].Speed))
-    } else {
-        Log-Out $L.RAMNoSlots 'Yellow'
-    }
-    if ($ramTotalGB -lt 8) {
-        Log-Out $L.RAMLow 'Yellow'
-    } elseif ($ramTotalGB -lt 16) {
-        Log-Out $L.RAMMid 'White'
-    } else {
-        Log-Out ($L.RAMOK -f $ramTotalGB) 'Green'
-    }
+    Log-Out 'SMBIOS reports devices, not guaranteed accessible sockets. Verify the OEM service manual, supported capacity and module compatibility before purchase.' 'Yellow'
+    if ($null -ne $ramTotalGB) { Log-Out ($L.RAMTotal -f $ramTotalGB) }
+    else { Log-Out 'RAM capacity not evaluated; no capacity-based purchase advice.' 'Yellow' }
     Log-Out ''
     Log-Out $L.RAMCautionsHdr 'Cyan'
     Log-Out $L.RAMCau1
@@ -431,7 +408,7 @@ function Invoke-PartsUpgrade {
     # ================================================================
     Section-Header $L.SecCPU
 
-    $proc = Get-CimInstance Win32_Processor -ErrorAction SilentlyContinue | Select-Object -First 1
+    $proc = Get-CimInstance Win32_Processor -OperationTimeoutSec 10 -ErrorAction SilentlyContinue | Select-Object -First 1
     if (-not $proc) {
         Log-Out $L.CPUErr 'Red'
     } else {
@@ -443,7 +420,7 @@ function Invoke-PartsUpgrade {
 
         $upgradeMethodNames = @{
             1=$L.CPUUMOther; 2=$L.CPUUMUnknown; 3='Daughter Board'; 4='ZIF Socket'; 5=$L.CPUUMReplace
-            6=$L.CPUUMBGA; 7='LIF Socket'; 8='Slot 1'; 9='Slot 2'
+            6='None (SMBIOS)'; 7='LIF Socket'; 8='Slot 1'; 9='Slot 2'
             10='370-pin'; 11='Slot A'; 12='Slot M'; 13='Socket 423'; 14='Socket A (462)'
             15='Socket 478'; 16='Socket 754'; 17='Socket 940'; 18='Socket 939'
             19='mPGA604'; 20='LGA771'; 21='LGA775'; 22='S1'; 23='AM2'; 24='F (1207)'
@@ -459,49 +436,16 @@ function Invoke-PartsUpgrade {
         }
         $upgradeMethodName = if ($upgradeMethodNames.ContainsKey($upgradeCode)) { $upgradeMethodNames[$upgradeCode] } else { "Code $upgradeCode" }
 
-        $gen = 0; $genLabel = ''
-        if ($cpuName -match 'i[3579]-(\d{1,2})(\d{2,3})') { $gen = [int]$matches[1]; $genLabel = "Intel Gen $gen" }
-        elseif ($cpuName -match 'Core\s*Ultra') { $gen = 14; $genLabel = 'Intel Core Ultra (Gen 14+)' }
-        elseif ($cpuName -match 'Ryzen\s+[3579]\s+(\d)(\d{2,4})') { $gen = [int]$matches[1]; $genLabel = "AMD Ryzen Gen $gen" }
-        elseif ($cpuName -match 'Athlon|A[46]-|A[46]\s|E[12]-|FX-') { $gen = 1; $genLabel = 'AMD Legacy' }
-
+        $genLabel = '' # Marketing names do not establish a universal architecture generation.
         Log-Out ($L.CPULine -f $cpuName) 'Green'
         Log-Out ($L.CoresThreads -f $cores, $threads)
         Log-Out ($L.SocketRep -f $socketName)
         Log-Out ($L.UpgradeMethod -f $upgradeMethodName)
         if ($genLabel) { Log-Out ($L.Generation -f $genLabel) }
 
-        $bgaSignals = 0; $bgaReasons = @()
-        if ($upgradeCode -eq 6) { $bgaSignals += 3; $bgaReasons += 'UpgradeMethod = None/BGA' }
-        elseif ($upgradeMethodName -match 'BGA') { $bgaSignals += 3; $bgaReasons += "Socket BGA ($upgradeMethodName)" }
-        if ($socketName -match 'BGA') { $bgaSignals += 2; $bgaReasons += 'Socket designated BGA' }
-        if ($cpuName -match '[-\s](\d{4,5})[UYHPG]\b') { $bgaSignals += 1; $bgaReasons += 'Mobile suffix (U/Y/H/P/G)' }
-        if ($isLaptop -and $bgaSignals -ge 1) { $bgaSignals += 1; $bgaReasons += 'Laptop chassis' }
-
         Log-Out ''
-        Log-Out $L.ReplaceableHdr 'Magenta'
-        if ($bgaSignals -ge 3) {
-            Log-Out $L.CPUSoldered 'Red'
-            Log-Out $L.CPUSolderedNote
-        } elseif ($bgaSignals -ge 1) {
-            Log-Out $L.CPUMaybeSold 'Yellow'
-        } else {
-            Log-Out ('Socket/upgradeability not verified: ' + $socketName) 'Yellow'
-            Log-Out 'Check the exact OEM board, BIOS and CPU support list before recommending a replacement.'
-        }
-        if ($bgaReasons.Count -gt 0) { Log-Out ($L.SignalsLine -f ($bgaReasons -join ' | ')) 'DarkGray' }
-
-        Log-Out ''
-        Log-Out $L.CPURecHdr 'Magenta'
-        if ($bgaSignals -ge 3) {
-            Log-Out $L.CPURecSold
-        } else {
-            Log-Out ($L.CPURec1 -f $socketName)
-            Log-Out $L.CPURec2
-            Log-Out $L.CPURec3
-            Log-Out $L.CPURec4
-            Log-Out $L.CPURec5
-        }
+        Log-Out 'CPU replaceability not verified by inventory. UpgradeMethod is reported SMBIOS data; None (6) does not establish BGA.' 'Yellow'
+        Log-Out 'Verify the exact OEM board, BIOS, cooling and supported CPU list before recommending a replacement.'
         Log-Out ''
         Log-Out $L.CPUCauHdr 'Cyan'
         Log-Out $L.CPUCau1
@@ -516,7 +460,9 @@ function Invoke-PartsUpgrade {
     # ================================================================
     Section-Header $L.SecStorage
 
-    $physDisks = @(Get-PhysicalDisk -ErrorAction SilentlyContinue)
+    $diskRead = Invoke-AtlasInventoryRead -Source 'Physical disk inventory' -Query { Get-PhysicalDisk -ErrorAction Stop }
+    $physDisks = @($diskRead.Items)
+    Log-Out ("Physical inventory: " + $diskRead.State) 'Gray'
     $nvmeCount = 0; $sataSsdCount = 0; $hddCount = 0; $usbCount = 0
 
     if ($physDisks.Count -eq 0) {
@@ -527,8 +473,8 @@ function Invoke-PartsUpgrade {
             $name = if ($pd.FriendlyName) { $pd.FriendlyName } else { 'Disk' }
             $bus = if ($pd.BusType) { $pd.BusType.ToString() } else { '?' }
             $media = if ($pd.MediaType) { $pd.MediaType.ToString() } else { '?' }
-            $sizeGB = if ($pd.Size) { [math]::Round($pd.Size / 1GB, 0) } else { 0 }
-            $health = if ($pd.HealthStatus) { $pd.HealthStatus.ToString() } else { '?' }
+            $sizeGB = if ($pd.Size -gt 0) { [math]::Round($pd.Size / 1GB, 2) } else { 'N/D' }
+            $health = if ($null -ne $pd.HealthStatus) { if ([string]$pd.HealthStatus -eq '0') { 'Healthy' } else { $pd.HealthStatus.ToString() } } else { 'Unknown' }
             # SpindleSpeed: > 0 = mechanical (RPM), 0 = SSD, $null on
             # systems whose driver doesn't expose it (most NVMe/USB).
             # This is more reliable than MediaType, which on RAID/SAS
@@ -582,7 +528,7 @@ function Invoke-PartsUpgrade {
         Log-Out $L.LaptopTyp1
         Log-Out $L.LaptopTyp2
         Log-Out $L.LaptopTyp3
-    } else {
+    } elseif ($chassis) {
         Log-Out $L.DesktopTyp
         Log-Out $L.DesktopTyp1
         Log-Out $L.DesktopTyp2
@@ -596,7 +542,7 @@ function Invoke-PartsUpgrade {
     } elseif ($hddCount -gt 0) {
         Log-Out $L.StorageHDDAlso
     }
-    if ($nvmeCount -eq 0 -and -not $isLaptop) {
+    if ($diskRead.State -eq 'Observed' -and $physDisks.Count -gt 0 -and $nvmeCount -eq 0 -and -not $isLaptop) {
         Log-Out $L.StorageNoNVMe
     }
     Log-Out ''
@@ -618,7 +564,7 @@ function Invoke-PartsUpgrade {
     if ($gpus.Count -gt 0) {
         Log-Out ($L.GPUHdr + ' - CIM VRAM is a legacy reported value, not validated GPU memory') 'Yellow'
         foreach ($g in $gpus) {
-            $vram = if ($g.AdapterRAM -gt 0) { [math]::Round($g.AdapterRAM / 1MB, 0) } else { 0 }
+            $vram = if ($g.AdapterRAM -gt 0) { [math]::Round($g.AdapterRAM / 1MB, 0) } else { 'N/D' }
             Log-Out ($L.GPULine -f $g.Name, $vram)
         }
         if ($isLaptop) {
@@ -665,6 +611,7 @@ function Invoke-PartsUpgrade {
     $opc = Read-Host $L.ChooseOpt
     $base = "PartsUpgrade_$(Get-Date -Format 'yyyyMMdd_HHmm')"
     $desk = [Environment]::GetFolderPath('Desktop')
+    if (-not $desk) { $desk = Get-AtlasReportDir -SubFolder 'PartsUpgrade' }
     switch ($opc) {
         '1' {
             $p = Join-Path $desk "$base.txt"
@@ -683,7 +630,7 @@ function Invoke-PartsUpgrade {
             $primary   = '#002147'
             $accent    = '#FF6600'
             foreach ($bp in @(
-                (Join-Path $PSScriptRoot 'branding.json'),
+                $(if ($PSScriptRoot) { Join-Path $PSScriptRoot 'branding.json' }),
                 (Join-Path $env:LOCALAPPDATA 'AtlasPC\branding.json'),
                 (Join-Path $env:APPDATA 'AtlasPC\branding.json'))) {
                 try {
@@ -707,17 +654,13 @@ function Invoke-PartsUpgrade {
 
             # ---------- CPU replaceability badge ----------
             $repClass = 'badge-warn'; $repText = 'Reemplazabilidad no verificada; consultar OEM'
-            if ($null -ne $bgaSignals) {
-                if ($bgaSignals -ge 3)     { $repClass = 'badge-error'; $repText = 'Soldada (BGA)' }
-                elseif ($bgaSignals -ge 1) { $repClass = 'badge-warn';  $repText = 'Probablemente soldada' }
-            }
             $ssdTotal = [int]$nvmeCount + [int]$sataSsdCount
-            $chassis  = if ($isLaptop) { 'Laptop' } else { 'Desktop / Otro' }
+            $chassis  = if (-not $chassis) { 'N/D' } elseif ($isLaptop) { 'Laptop' } else { 'Desktop / Otro' }
             $maxTxt   = if ($maxGB) { "$maxGB GB" } else { 'N/D' }
 
             # ---------- Summary (sys-grid) ----------
             $sys = @()
-            $sys += "<div class='sys-item'><span class='sys-label'>RAM total</span><span class='sys-value big'>$ramTotalGB GB</span></div>"
+            $sys += "<div class='sys-item'><span class='sys-label'>RAM total</span><span class='sys-value big'>$(if ($null -ne $ramTotalGB) { "$ramTotalGB GB" } else { "N/D" })</span></div>"
             $sys += "<div class='sys-item'><span class='sys-label'>Maximo (BIOS)</span><span class='sys-value big'>$maxTxt</span></div>"
             $sys += "<div class='sys-item'><span class='sys-label'>Slots usados</span><span class='sys-value big'>$slotsUsados / $slotsTotales</span></div>"
             $sys += "<div class='sys-item'><span class='sys-label'>Slots libres</span><span class='sys-value big'>$slotsLibres</span></div>"
@@ -727,14 +670,14 @@ function Invoke-PartsUpgrade {
 
             # ---------- RAM ----------
             $ramBars = ''
-            if ([int]$slotsTotales -gt 0) { $ramBars += _Bar $slotsUsados $slotsTotales $primary "Slots: $slotsUsados de $slotsTotales ocupados" }
-            if ($maxGB)                   { $ramBars += _Bar $ramTotalGB $maxGB $accent "RAM: $ramTotalGB GB de $maxGB GB (max BIOS)" }
+            if ($null -ne $memory.SlotsTotal -and $slotsUsados -is [int]) { $ramBars += _Bar $slotsUsados $slotsTotales $primary "Slots: $slotsUsados de $slotsTotales ocupados" }
+            if ($maxGB -and $null -ne $ramTotalGB) { $ramBars += _Bar $ramTotalGB $maxGB $accent "RAM: $ramTotalGB GB de $maxGB GB (max BIOS)" }
             $ramRows = ''
             foreach ($ram in $modulos) {
-                $capGB = [math]::Round($ram.Capacity / 1GB, 0)
+                $capGB = if ($ram.Capacity -gt 0) { [math]::Round($ram.Capacity / 1GB, 2) } else { 'N/D' }
                 $tmap = @{ 20='DDR'; 21='DDR2'; 24='DDR3'; 26='DDR4'; 34='DDR5' }; $tc = [int]$ram.SMBIOSMemoryType
                 $tn = if ($tmap.ContainsKey($tc)) { $tmap[$tc] } else { "T$tc" }
-                $xmp = if ($ram.ConfiguredClockSpeed -lt $ram.Speed) { " <span class='error'>XMP OFF</span>" } else { '' }
+                $xmp = " <span>XMP: not evaluated</span>"
                 $ramRows += "<tr><td>$(_Enc ([string]$ram.DeviceLocator))</td><td>$capGB GB</td><td>$tn</td><td>$($ram.ConfiguredClockSpeed) / $($ram.Speed) MHz$xmp</td><td>$(_Enc ([string]$ram.Manufacturer))</td><td>$(_Enc ([string]$ram.PartNumber))</td></tr>"
             }
             if (-not $ramRows) { $ramRows = "<tr><td colspan='6'>Sin datos de modulos (ejecuta como administrador)</td></tr>" }
@@ -761,9 +704,9 @@ function Invoke-PartsUpgrade {
                 $dn = if ($pd.FriendlyName) { $pd.FriendlyName } else { 'Disco' }
                 $db = if ($pd.BusType)      { $pd.BusType.ToString() } else { '?' }
                 $dm = if ($pd.MediaType)    { $pd.MediaType.ToString() } else { '?' }
-                $ds = if ($pd.Size)         { [math]::Round($pd.Size / 1GB, 0) } else { 0 }
-                $dh = if ($pd.HealthStatus) { $pd.HealthStatus.ToString() } else { '?' }
-                $hc = if ($dh -eq 'Healthy') { 'ok' } else { 'error' }
+                $ds = if ($pd.Size -gt 0) { [math]::Round($pd.Size / 1GB, 2) } else { 'N/D' }
+                $dh = if ($null -ne $pd.HealthStatus) { if ([string]$pd.HealthStatus -eq '0') { 'Healthy' } else { $pd.HealthStatus.ToString() } } else { 'Unknown' }
+                $hc = if ($dh -eq 'Healthy') { 'ok' } elseif ($dh -in @('Warning','Unhealthy','1','2')) { 'error' } else { '' }
                 $diskRows += "<tr><td>$(_Enc $dn)</td><td>$(_Enc $db)</td><td>$(_Enc $dm)</td><td>$ds GB</td><td class='$hc'>$(_Enc $dh)</td></tr>"
             }
             if (-not $diskRows) { $diskRows = "<tr><td colspan='5'>Sin discos detectados</td></tr>" }
@@ -771,20 +714,13 @@ function Invoke-PartsUpgrade {
             # ---------- GPU ----------
             $gpuRows = ''
             foreach ($g in $gpus) {
-                $vram = if ($g.AdapterRAM -gt 0) { [math]::Round($g.AdapterRAM / 1MB, 0) } else { 0 }
+                $vram = if ($g.AdapterRAM -gt 0) { [math]::Round($g.AdapterRAM / 1MB, 0) } else { 'N/D' }
                 $gpuRows += "<tr><td>$(_Enc ([string]$g.Name))</td><td>$vram MB</td></tr>"
             }
-            if (-not $gpuRows) { $gpuRows = "<tr><td colspan='2'>Sin GPU dedicada detectada</td></tr>" }
+            if (-not $gpuRows) { $gpuRows = "<tr><td colspan='2'>GPU not evaluated or none reported by this inventory.</td></tr>" }
 
             # ---------- Full text report + integrity SHA256 ----------
             $escaped = [System.Net.WebUtility]::HtmlEncode([string]$script:ReporteTexto)
-            $sha = ''
-            try {
-                $h = [System.Security.Cryptography.SHA256]::Create()
-                $sha = ([System.BitConverter]::ToString($h.ComputeHash([System.Text.Encoding]::UTF8.GetBytes([string]$script:ReporteTexto))) -replace '-', '')
-                $h.Dispose()
-            } catch {}
-
             $generated = Get-Date -Format 'dd-MM-yyyy HH:mm'
             $compName  = _Enc $env:COMPUTERNAME
             $brandEnc  = _Enc $brandName
@@ -875,10 +811,9 @@ $gpuRows
     </div>
     <div class="footer">
         <p>Generado por $brandEnc - Parts Upgrade Advisor</p>
-        <p style="font-size:10px;color:#aaa">Integridad del reporte verificable via SHA256 (ver fuente HTML)</p>
+        <p>Inventory observations; physical compatibility and health require separate verification.</p>
     </div>
 </div>
-<!-- SHA256: $sha -->
 </body></html>
 "@
             Write-AtlasShareableReport -Path $p -Content $html -Tool 'Parts inventory observations'

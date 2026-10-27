@@ -20,8 +20,14 @@ Read-only quick diagnosis checks:
 - Keyboard devices visible to Windows.
 - Touchpad / HID pointing devices.
 - Filter Keys, Sticky Keys and Toggle Keys registry flags.
-- Battery presence, charge and wear when Windows exposes battery WMI data.
+- Battery presence and charge when Windows exposes them. Capacity wear is not
+  calculated here; use Diagnostico Master's per-battery capacity report. This
+  avoids combining unrelated first capacity rows on multi-battery PCs.
 - Recent System events related to keyboard, HID, PnP, I2C, touchpad and driver frameworks.
+
+Failed queries remain not evaluated and do not become evidence of missing
+hardware. Events are a filtered sample of up to 500 newest System warnings/errors
+in the selected window, with at most 80 related rows; absence is not certification.
 
 Guided manual checks:
 

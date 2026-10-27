@@ -619,22 +619,13 @@ function Get-RAMDiagnostic {
         $arrays = @(Get-CimInstance Win32_PhysicalMemoryArray -OperationTimeoutSec 10 -ErrorAction Stop |
             Where-Object { -not $_.Use -or $_.Use -eq 3 })
     } catch { Write-Verbose "Memory array metadata unavailable: $_" }
-    $maxima = @($arrays | ForEach-Object {
-        if ($_.MaxCapacityEx -gt 0) { [double]$_.MaxCapacityEx }
-        elseif ($_.MaxCapacity -gt 0 -and $_.MaxCapacity -ne 2147483648) { [double]$_.MaxCapacity }
-    })
-    if ($arrays.Count -gt 0 -and $maxima.Count -eq $arrays.Count) {
-        $result.MaxCapGB = [math]::Round(($maxima | Measure-Object -Sum).Sum / 1MB, 2)
-    }
-    if ($arrays.Count -gt 0 -and @($arrays | Where-Object { $_.MemoryDevices -gt 0 }).Count -eq $arrays.Count) {
-        $result.SlotsTotal = ($arrays | Measure-Object MemoryDevices -Sum).Sum
-    }
-    $result.SlotsUsed = @($modulos).Count
-    $result.SlotsLibres = [math]::Max(0, $result.SlotsTotal - $result.SlotsUsed)
-    $result.HasFreeSlots = ($result.SlotsLibres -gt 0)
-    if (@($modulos | Where-Object { $_.Capacity -gt 0 }).Count -eq $modulos.Count) {
-        $result.TotalGB = [math]::Round(($modulos | Measure-Object Capacity -Sum).Sum / 1GB, 2)
-    }
+    $memory = Get-AtlasMemorySummary -Modules $modulos -Arrays $arrays
+    if ($null -ne $memory.MaxGB) { $result.MaxCapGB = $memory.MaxGB }
+    if ($null -ne $memory.SlotsTotal) { $result.SlotsTotal = $memory.SlotsTotal }
+    $result.SlotsUsed = $memory.SlotsUsed
+    if ($null -ne $memory.SlotsFree) { $result.SlotsLibres = $memory.SlotsFree }
+    $result.HasFreeSlots = ($null -ne $memory.SlotsFree -and $memory.SlotsFree -gt 0)
+    $result.TotalGB = $memory.TotalGB
     # Device count/capacity do not establish the active channel mode or XMP state.
 
     $maxCapDisplay = if ($result.MaxCapGB -gt 0) { "$($result.MaxCapGB) GB" } else { $L.UnreportedMax }
@@ -1649,7 +1640,7 @@ do {
         $proc = Get-CimInstance Win32_Processor -ErrorAction Stop
         $csproduct = Get-CimInstance Win32_ComputerSystemProduct -ErrorAction SilentlyContinue
         $ramSticks = Get-CimInstance Win32_PhysicalMemory -ErrorAction SilentlyContinue
-        $ramTotal=0; $ramDetalleStr="N/A"
+        $ramTotal="N/D"; $ramDetalleStr="N/A"
         if ($ramSticks) { $ramTotal=[math]::Round(($ramSticks|Measure-Object Capacity -Sum).Sum/1GB,2); $ramDetalleStr=($ramSticks|ForEach-Object{"$([math]::Round($_.Capacity/1GB,0))GB"}) -join " + " }
         $modeloExacto = if ($csproduct -and $csproduct.Name) { $csproduct.Name } else { "N/A" }
         $txtSys = "Alias: ${aliasPC}`nOS: $($os.Caption) ($($os.OSArchitecture))`n$($L.EquipoLbl): $($cs.Manufacturer) $($cs.Model)`nModel: ${modeloExacto}`nCPU: $($proc.Name)`nRAM Total: ${ramTotal} GB (${ramDetalleStr})`nPowerShell: $($PSVersionTable.PSVersion)"
@@ -1774,7 +1765,7 @@ do {
         $htmlNet = "<h2>$($L.H6Net)</h2>" + $netProfile.HtmlSection
 
         Escribir-Centrado $L.Step7 "Cyan"
-        $htmlBsod = "<h2>$($L.H7Bsod)</h2><pre>$($L.BsodNone)</pre>"
+        $htmlBsod = "<h2>$($L.H7Bsod)</h2><pre>Not evaluated: no successful fresh BSOD export.</pre>"
         $exeBsod = $diagDeps.BlueScreenView
         if (-not $exeBsod) { $exeBsod = Join-Path $appsLegacy "BlueScreenView.exe" }
         $tmpBsod = Join-Path $env:TEMP ('atlas_diag_bsod_' + [guid]::NewGuid().ToString('N') + '.txt')
