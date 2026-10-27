@@ -27,7 +27,7 @@ function Get-AtlasPS7Path {
     param()
 
     # 1) PATH
-    $cmd = Get-Command pwsh.exe -ErrorAction SilentlyContinue
+    $cmd = Get-Command pwsh.exe -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
     if ($cmd -and $cmd.Path) { return $cmd.Path }
 
     # 2) Ruta por defecto de instalacion MSI (64-bit y 32-bit)

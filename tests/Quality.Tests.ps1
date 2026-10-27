@@ -42,6 +42,27 @@ Describe 'Diagnostic HTML text boundaries' {
     }
 }
 
+Describe 'PowerShell executable resolution' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        . (Get-TestFunction $script:RepoRoot 'src/lib/PS7.ps1' 'Get-AtlasPS7Path')
+        . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-ActualizarPowerShell.ps1' '_Get-PS7Path')
+    }
+    It 'returns one executable when PATH exposes multiple installations: <Function>' -TestCases @(
+        @{Function='Get-AtlasPS7Path'},@{Function='_Get-PS7Path'}
+    ) {
+        param($Function)
+        Mock Get-Command {
+            [pscustomobject]@{Path='C:\fixture first\pwsh.exe'}
+            [pscustomobject]@{Path='C:\fixture second\pwsh.exe'}
+        } -ParameterFilter {$Name -eq 'pwsh.exe' -and $CommandType -eq 'Application'}
+        $paths=@(& $Function)
+        $paths.Count|Should -Be 1
+        $paths[0]|Should -Be 'C:\fixture first\pwsh.exe'
+    }
+}
+
 Describe 'Battery capacity and status stay within reported evidence' {
     BeforeAll {
         $script:RepoRoot=Split-Path -Parent $PSScriptRoot

@@ -40,6 +40,13 @@ LICENSE, copia del aviso completo y vuelta a una release anterior sin ese miembr
 La lista de rutas permitidas sigue siendo explicita; no se permiten archivos
 arbitrarios por incorporar un aviso.
 
+El comprobador USB compara el numero de miembros con el manifiesto verificado,
+sin fijarlo al antiguo valor 33. La resolucion de PowerShell 7 selecciona una
+sola aplicacion tanto en el helper compartido como en la herramienta de
+actualizacion y el ensayo USB; varios resultados del PATH no se concatenan
+en una ruta ejecutable invalida. Dos regresiones cubren ambos consumidores de
+producto sin iniciar esos ejecutables ficticios.
+
 No cambia la licencia de Atlas, no compra certificados y no concede permisos de
 uso profesional o redistribucion sobre HWiNFO, FastCopy u otros componentes.
 
@@ -48,9 +55,10 @@ uso profesional o redistribucion sobre HWiNFO, FastCopy u otros componentes.
 Las regresiones cubren numeros completos/ambiguos/ausentes, ciclos cero/desconocidos,
 varias baterias, XML namespaced, filas parciales, estados CIM, porcentaje invalido,
 fallback UTF-16, fallos de exportacion, salida nueva y codificacion HTML.
-El bloque de calidad/distribucion completo aprobo 174 pruebas en PowerShell 7.
-Las suites integrales por runtime y la publicacion se identifican en la PR de esta
-entrega. No equivalen a ejecutar esos proveedores en baterias reales o Windows 10.
+El bloque de calidad/distribucion se comprobo por separado; se anadieron tambien
+los casos de multiples rutas PowerShell. Las suites integrales finales por runtime
+y la publicacion se identifican en la PR de esta entrega. No equivalen a ejecutar
+esos proveedores en baterias reales o Windows 10.
 
 Fuentes consultadas:
 

@@ -143,10 +143,12 @@ try {
     if($descriptor.manifestSha256 -cne $digest){throw 'Checkout differs from the approved publication; do not prepare it.'}
     $offline=Join-Path $usbRoot 'atlas-offline';Assert-OwnedUsbPath $offline
     $release=Install-AtlasRelease -Root $offline -Descriptor $descriptor -SourceDirectory $repoRoot -PrepareOfflineEntry
-    Add-Check 'Approved bundle on physical USB' (@($release.Manifest.files.PSObject.Properties).Count -eq 33) @{Commit=$release.Commit;Manifest=$digest;Version=$release.Manifest.version;Members=33}
+    $expectedMembers=@((Test-AtlasRelease -Directory $repoRoot -ExpectedManifestSha256 $digest).files.PSObject.Properties).Count
+    $members=@($release.Manifest.files.PSObject.Properties).Count
+    Add-Check 'Approved bundle on physical USB' ($members -eq $expectedMembers) @{Commit=$release.Commit;Manifest=$digest;Version=$release.Manifest.version;Members=$members}
     $engine51=Join-Path $env:SystemRoot 'System32/WindowsPowerShell/v1.0/powershell.exe'
     Test-OfflineEntry $offline $engine51 'Offline entry PS5.1 NoLaunch'
-    $core=Get-Command pwsh.exe -ErrorAction SilentlyContinue
+    $core=Get-Command pwsh.exe -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
     if($core){Test-OfflineEntry $offline $core.Source 'Offline entry PS7 NoLaunch'}
     else {$checks.Add([pscustomobject]@{Name='Offline entry PS7 NoLaunch';Passed=$null;Details='PowerShell 7 not installed'})}
     # Corrupt only a second owned fixture bundle, never the retained usable entry.
