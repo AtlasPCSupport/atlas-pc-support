@@ -34,7 +34,7 @@ function Invoke-CheckScript {
 }
 
 # Keep the build away from the public launcher/checksums in the working tree.
-foreach ($relative in @('src', 'config', 'onboarding', 'build.ps1', 'get.ps1', 'release-manifest.json', 'launcher.ps1', 'launcher.ps1.sha256')) {
+foreach ($relative in @('src', 'config', 'onboarding', 'LICENSE', 'build.ps1', 'get.ps1', 'release-manifest.json', 'launcher.ps1', 'launcher.ps1.sha256')) {
     Copy-Item -LiteralPath (Join-Path $repoRoot $relative) -Destination $staging -Recurse -Force
 }
 $artifacts = @('get.ps1', 'release-manifest.json', 'launcher.ps1', 'launcher.ps1.sha256', 'config/tool-hashes.json')

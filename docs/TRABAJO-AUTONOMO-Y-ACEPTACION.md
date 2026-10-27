@@ -4,6 +4,9 @@ Estado: 27/10/2026. Las VMs permanecen pausadas; Windows 10 no esta homologado
 por completo. Las pruebas en PowerShell 5.1 sobre el host no certifican una
 edicion o parche de Windows 10.
 
+Resumen del bloque terminado y dependencias externas:
+[cierre autonomo del 27/10](audits/CIERRE-AUTONOMO-2026-10-27.md).
+
 | Area | Trabajo que puede completar el agente ahora | Que necesita al propietario |
 |---|---|---|
 | Deuda y errores | Reproducir fallos con fixtures, corregir codigo, comprobar 5.1/7, build/CI, push y publicacion autorizada | Aceptacion de comportamiento fisico cuando el fixture no lo demuestra |
@@ -34,6 +37,10 @@ edicion o parche de Windows 10.
   carpeta vacia restaurada, origen y respaldo intactos; cero fallos nativos.
   [Evidencia](audits/RESTAURACION-ARCHIVOS-2026-10-27.json). No certifica
   recuperacion del sistema, ACL, perdida de energia o Windows 10.
+- 1.5.12: [bateria y aviso propio de distribucion](audits/BATERIA-Y-DISTRIBUCION-2026-10-27.md).
+  Capacidad/ciclos desconocidos permanecen como tales, cada bateria mantiene
+  su pareja de capacidades y las releases nuevas incluyen LICENSE de Atlas;
+  no se eliminan las herramientas ni se da por aceptado hardware real.
 
 ## Decisiones ya tomadas
 

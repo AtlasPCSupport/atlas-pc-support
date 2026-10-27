@@ -12,8 +12,18 @@ El Worker mantiene `ATLAS_RELEASE_COMMIT` (SHA completo de Git) y
 `ATLAS_RELEASE_MANIFEST_SHA256` (digest de `release-manifest.json`) como variables
 del despliegue. No calcula la autoridad de publicación leyendo hashes de `main`.
 El manifiesto enumera bootstrap, launcher, catálogo de dependencias, contratos de
-herramientas, hashes, instalador batch público y los 27 scripts. Los textos usan
+herramientas, hashes, instalador batch público y los 27 scripts. Desde 1.5.12
+incluye tambien LICENSE de Atlas como miembro verificado (34 miembros en total).
+Las versiones anteriores completas siguen siendo verificables para rollback;
+no se presume que sus paquetes contengan ese archivo. El aviso MIT propio no
+concede licencias sobre utilidades de otros autores. Los textos usan
 SHA-256 sobre UTF-8/LF sin BOM; el propio manifiesto tiene digest de bytes exactos.
+
+Una entrada guardada de una version anterior conserva su lista estricta de
+miembros y puede rechazar la adquisicion de 1.5.12. Para actualizar, reabrir el
+enlace HTTPS habitual; para una USB, volver a prepararla desde el panel actualizado.
+La entrada y release antiguas siguen pudiendo verificar su propio conjunto sin
+conexion. El verificador nuevo permite seleccionar una release anterior completa.
 
 El Worker verifica el manifiesto contra su pin y el bootstrap contra el manifiesto
 antes de servirlo. Inserta el commit y digest aprobados en dos literales del

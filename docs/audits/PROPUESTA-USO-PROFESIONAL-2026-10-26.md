@@ -7,6 +7,10 @@ derechos profesionales/redistribucion sigue pendiente y no se da por aprobada.
 No cambia herramientas, descargas, publicacion, licencias ni archivos de la USB.
 No acredita derechos adquiridos ni aprueba un paquete de terceros completo.
 
+Actualizacion tecnica 27/10, 1.5.12: se incluye solamente el aviso MIT propio de
+Atlas en el bundle verificado y el artefacto CI. No adopta el paquete base
+alternativo, no retira apps y no resuelve permisos de terceros.
+
 ## Separar tres conceptos
 
 1. Ejecutar un programa durante un servicio tecnico.

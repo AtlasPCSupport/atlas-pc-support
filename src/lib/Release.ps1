@@ -69,6 +69,9 @@ function Test-AtlasRelease {
     if ($manifest.schemaVersion -ne 1 -or $manifest.algorithm -ne 'SHA256-UTF8-LF' -or -not $manifest.version) { throw 'Unsupported Atlas manifest.' }
     $names = @($manifest.files.PSObject.Properties.Name)
     $required = @('get.ps1', 'launcher.ps1', 'config/tools.json', 'config/dependencies.json', 'config/tool-hashes.json', 'onboarding/install.bat')
+    # Preserve verification/rollback of earlier complete bundles; new distributions carry their own MIT notice.
+    $releaseVersion = $null
+    if ([version]::TryParse([string]$manifest.version, [ref]$releaseVersion) -and $releaseVersion -ge [version]'1.5.12') { $required += 'LICENSE' }
     foreach ($name in $required) { if ($names -cnotcontains $name) { throw "Missing release member: $name" } }
     $seen = @{}
     foreach ($entry in $manifest.files.PSObject.Properties) {
@@ -167,7 +170,7 @@ function Install-AtlasRelease {
         if ($manifest.schemaVersion -ne 1 -or $manifest.algorithm -ne 'SHA256-UTF8-LF') { throw 'Unsupported release manifest.' }
         foreach ($entry in $manifest.files.PSObject.Properties) {
             $name = $entry.Name
-            if ($name -cnotmatch '^(get\.ps1|launcher\.ps1|onboarding/install\.bat|config/(tools|dependencies|tool-hashes)\.json|src/tools/Invoke-[A-Za-z0-9-]+\.ps1)$') { throw "Unsafe release path: $name" }
+            if ($name -cnotmatch '^(get\.ps1|launcher\.ps1|LICENSE|onboarding/install\.bat|config/(tools|dependencies|tool-hashes)\.json|src/tools/Invoke-[A-Za-z0-9-]+\.ps1)$') { throw "Unsafe release path: $name" }
             $destination = Join-Path $stage $name
             $parent = Split-Path -Parent $destination
             if (-not (Test-Path -LiteralPath $parent)) { New-Item -ItemType Directory -Path $parent -Force -ErrorAction Stop | Out-Null }

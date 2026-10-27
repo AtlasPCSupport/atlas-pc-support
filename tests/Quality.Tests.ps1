@@ -10,7 +10,6 @@ Describe 'Diagnostic HTML text boundaries' {
         . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-DiagnosticoMaster.ps1' 'Fmt-Line')
         $script:CpuzKeywords=[scriptblock]::Create(($ast.Find({param($n) $n -is [System.Management.Automation.Language.AssignmentStatementAst] -and $n.Left.Extent.Text -eq '$keywords'},$true)).Extent.Text)
         $script:CpuzLoop=[scriptblock]::Create(($ast.Find({param($n) $n -is [System.Management.Automation.Language.ForEachStatementAst] -and $n.Variable.Extent.Text -eq '$line' -and $n.Condition.Extent.Text -eq '$lines'},$true)).Extent.Text)
-        $script:BatteryHtml=[scriptblock]::Create(($ast.Find({param($n) $n -is [System.Management.Automation.Language.AssignmentStatementAst] -and $n.Left.Extent.Text -eq '$htmlBat' -and $n.Right.Extent.Text -match '\$L.BatMan'},$true)).Extent.Text)
         $script:HeaderParts=foreach($var in @('$reportTitle','$htmlHead','$html')) {
             $node=$ast.Find({param($n) $n -is [System.Management.Automation.Language.AssignmentStatementAst] -and $n.Left.Extent.Text -eq $var -and ($var -ne '$html' -or $n.Right.Extent.Text -match '^\$htmlHead')},$true)
             [scriptblock]::Create($node.Extent.Text)
@@ -31,13 +30,6 @@ Describe 'Diagnostic HTML text boundaries' {
         $cleanText|Should -Match 'color:#dc3545'
         $cleanText|Should -Match 'categoria-resaltada'
     }
-    It 'encodes battery identity in the real report fragment' {
-        $manufactureName='<script>battery</script>';$chemistry='A&B'
-        $batStatus='fixture';$batPercent='50%';$saludStr='fixture';$saludColor='#666';$cycleCount=5;$designCap=100;$fullCap=80;$notaFraude=''
-        . $script:BatteryHtml
-        $htmlBat|Should -Not -Match '<script>'
-        $htmlBat|Should -Match '&lt;script&gt;|A&amp;B'
-    }
     It 'encodes title, identity and system text while retaining owned HTML sections' {
         $aliasPC='<script>client</script>';$pc='<img src=x>';$txtSys='A&B <script>system</script>'
         $css='';$fechaReporte='fixture';$yearReporte='2026'
@@ -47,6 +39,131 @@ Describe 'Diagnostic HTML text boundaries' {
         $html|Should -Not -Match '<script>|<img '
         $html|Should -Match 'A&amp;B'
         $html|Should -Match '<p>Owned fixture</p>'
+    }
+}
+
+Describe 'Battery capacity and status stay within reported evidence' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        $ast=Get-TestAst $script:RepoRoot 'src/tools/Invoke-DiagnosticoMaster.ps1'
+        $translations=$ast.Find({param($n) $n -is [Management.Automation.Language.AssignmentStatementAst] -and $n.Left.Extent.Text -eq '$T'},$true)
+        . ([scriptblock]::Create($translations.Extent.Text))
+        $script:BatteryLabels=$T.en
+        foreach($name in @('ConvertTo-DiagBatteryNumber','ConvertFrom-DiagBatteryExport','Get-BatteryAnalysis')) {
+            . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-DiagnosticoMaster.ps1' $name)
+        }
+        function Start-ProcessWithTimeout { param($FilePath,$Arguments,$TimeoutSeconds,$ExpectedOutput) throw 'Real process blocked' }
+        function Get-CimInstance { [CmdletBinding()]param($ClassName,$OperationTimeoutSec) throw 'Real inventory blocked' }
+        $script:BatteryFixtureExe=Join-Path $TestDrive 'BatteryInfoView.exe'
+        [IO.File]::WriteAllText($script:BatteryFixtureExe,'Not executable; fixture only')
+    }
+    BeforeEach {
+        $script:L=$script:BatteryLabels
+        $script:BatteryXml='<BatteryReport><Batteries><Battery><DesignCapacity>57000</DesignCapacity><FullChargeCapacity>51000</FullChargeCapacity><Manufacturer>Fixture</Manufacturer><Chemistry>LIon</Chemistry></Battery></Batteries></BatteryReport>'
+        $script:BatteryText="Designed Capacity : 57,000 mWh`nFull Charged Capacity : 51,000 mWh`nNumber of charge/discharge cycles : N/A"
+        $script:BatteryStatuses=@();$script:BatteryNativeSuccess=$true;$script:BatteryVendorSuccess=$true;$script:BatteryPaths=@()
+        Mock Get-CimInstance { $script:BatteryStatuses }
+        Mock Start-ProcessWithTimeout {
+            $script:BatteryPaths += $ExpectedOutput
+            if($FilePath -like '*powercfg.exe') {
+                [IO.File]::WriteAllText($ExpectedOutput,$script:BatteryXml,[Text.UTF8Encoding]::new($false))
+                return $script:BatteryNativeSuccess
+            }
+            [IO.File]::WriteAllText($ExpectedOutput,$script:BatteryText,[Text.Encoding]::Unicode)
+            return $script:BatteryVendorSuccess
+        }
+    }
+    It 'parses whole grouped mWh values without truncating them and leaves absent cycles unknown' {
+        $row=ConvertFrom-DiagBatteryExport -Text $script:BatteryText -Format NirsoftText
+        $row.DesignCapacity|Should -Be 57000;$row.FullChargeCapacity|Should -Be 51000
+        $row.CycleCount|Should -BeNullOrEmpty
+    }
+    It 'does not turn invalid, ambiguous or unsupported numeric data into a capacity: <Value>' -TestCases @(
+        @{Value=''},@{Value='N/A'},@{Value='-1'},@{Value='57,00'},@{Value='57.000'},@{Value='1.5'},@{Value='NaN'},@{Value='Infinity'},@{Value='4294967295'}
+    ) {
+        param($Value)
+        ConvertTo-DiagBatteryNumber $Value | Should -BeNullOrEmpty
+    }
+    It 'retains an explicitly reported zero cycle count but not unsupported zero design capacity' {
+        ConvertTo-DiagBatteryNumber '0' -AllowZero | Should -Be 0
+        ConvertTo-DiagBatteryNumber '0' | Should -BeNullOrEmpty
+    }
+    It 'rejects duplicate text capacity fields rather than pairing different batteries' {
+        {ConvertFrom-DiagBatteryExport -Text ($script:BatteryText+"`nDesigned Capacity : 10000") -Format NirsoftText}|Should -Throw '*Ambiguous*'
+    }
+    It 'keeps multiple namespaced battery rows separate and never divides unmatched capacities' {
+        $script:BatteryXml='<BatteryReport xmlns="urn:fixture"><Batteries><Battery><DesignCapacity>100</DesignCapacity><FullChargeCapacity>80</FullChargeCapacity></Battery><Battery><FullChargeCapacity>70</FullChargeCapacity></Battery></Batteries></BatteryReport>'
+        $result=Get-BatteryAnalysis
+        $result.Batteries.Count|Should -Be 2
+        $result.Batteries[0].CapacityRatioPercent|Should -Be 80
+        $result.Batteries[1].DesignCapacity|Should -BeNullOrEmpty
+        $result.Batteries[1].CapacityRatioPercent|Should -BeNullOrEmpty
+        $result.Batteries[0].CycleCount|Should -BeNullOrEmpty
+    }
+    It 'rejects malformed XML and external entity declarations' {
+        {ConvertFrom-DiagBatteryExport '<BatteryReport>' PowercfgXml}|Should -Throw
+        {ConvertFrom-DiagBatteryExport '<!DOCTYPE BatteryReport [<!ENTITY x SYSTEM "file:///not-read">]><BatteryReport>&x;</BatteryReport>' PowercfgXml}|Should -Throw
+    }
+    It 'does not infer charging or zero percent from AC-available status' {
+        $script:BatteryStatuses=@([pscustomobject]@{BatteryStatus=2;EstimatedChargeRemaining=$null})
+        $result=Get-BatteryAnalysis
+        $result.StatusRows[0].Status|Should -Be $L.BatStAc
+        $result.StatusRows[0].ChargePercent|Should -BeNullOrEmpty
+        $result.HtmlSection|Should -Not -Match '\(0%\)'
+        Should -Invoke Get-CimInstance -Times 1 -Exactly -ParameterFilter {$OperationTimeoutSec -eq 10}
+    }
+    It 'preserves reported zero charge while rejecting a percentage above 100' {
+        $script:BatteryStatuses=@([pscustomobject]@{BatteryStatus=1;EstimatedChargeRemaining=0},[pscustomobject]@{BatteryStatus=3;EstimatedChargeRemaining=101})
+        $result=Get-BatteryAnalysis
+        $result.StatusRows[0].ChargePercent|Should -Be 0
+        $result.StatusRows[1].ChargePercent|Should -BeNullOrEmpty
+        $result.HtmlSection|Should -Not -Match '101%|100%'
+    }
+    It 'maps charging-critical and undefined status separately' {
+        $script:BatteryStatuses=@([pscustomobject]@{BatteryStatus=9},[pscustomobject]@{BatteryStatus=10},[pscustomobject]@{BatteryStatus=11})
+        $result=Get-BatteryAnalysis
+        $result.StatusRows[0].Status|Should -Be $L.BatStCha
+        $result.StatusRows[1].Status|Should -Be $L.UnknownLbl
+        $result.StatusRows[2].Status|Should -Be $L.BatStPart
+    }
+    It 'uses the existing utility fallback with BOM-detected text and cleans only its new reports' {
+        $script:BatteryNativeSuccess=$false
+        $result=Get-BatteryAnalysis -BatteryInfoViewPath $script:BatteryFixtureExe
+        $result.Source|Should -Be 'BatteryInfoView'
+        $result.Batteries[0].DesignCapacity|Should -Be 57000
+        $result.Batteries[0].CycleCount|Should -BeNullOrEmpty
+        $script:BatteryPaths.Count|Should -Be 2
+        @($script:BatteryPaths | Select-Object -Unique).Count|Should -Be 2
+        Should -Invoke Start-ProcessWithTimeout -Times 2 -Exactly -ParameterFilter {$ExpectedOutput -and $TimeoutSeconds -eq 15}
+        foreach($path in $script:BatteryPaths){Test-Path -LiteralPath $path|Should -BeFalse}
+    }
+    It 'rejects output left by failed exporters instead of reporting a measured battery' {
+        $script:BatteryNativeSuccess=$false;$script:BatteryVendorSuccess=$false
+        $result=Get-BatteryAnalysis -BatteryInfoViewPath $script:BatteryFixtureExe
+        $result.CapacityState|Should -Be Unavailable
+        $result.Batteries.Count|Should -Be 0
+    }
+    It 'keeps capacity findings if Windows status is denied' {
+        Mock Get-CimInstance {throw 'Fixture access denied'}
+        $result=Get-BatteryAnalysis
+        $result.CapacityState|Should -Be Observed
+        $result.StatusState|Should -Be Unavailable
+        $result.Batteries[0].FullChargeCapacity|Should -Be 51000
+    }
+    It 'distinguishes an empty report from an export failure without assuming absent batteries' {
+        $script:BatteryXml='<BatteryReport><Batteries/></BatteryReport>'
+        $result=Get-BatteryAnalysis
+        $result.CapacityState|Should -Be Empty
+        $result.HtmlSection|Should -Match 'not evaluated'
+    }
+    It 'encodes battery identity and does not label reported ratios as proof of physical health or authenticity' {
+        $script:BatteryXml='<BatteryReport><Batteries><Battery><DesignCapacity>100</DesignCapacity><FullChargeCapacity>110</FullChargeCapacity><CycleCount>0</CycleCount><Manufacturer>&lt;script&gt;battery&lt;/script&gt;</Manufacturer><Chemistry>A&amp;B</Chemistry></Battery></Batteries></BatteryReport>'
+        $result=Get-BatteryAnalysis
+        $result.Batteries[0].CapacityRatioPercent|Should -Be 110
+        $result.Batteries[0].CycleCount|Should -Be 0
+        $result.HtmlSection|Should -Not -Match '<script>|#5cb85c|#FF8C00|\(\?\)'
+        $result.HtmlSection|Should -Match '&lt;script&gt;|A&amp;B'
     }
 }
 
@@ -542,10 +659,10 @@ Describe 'Fresh diagnostic export evidence' {
         Mock Invoke-AtlasNativeProcess { [IO.File]::WriteAllText($script:Output,'fresh fixture');[pscustomobject]@{State='Correct';ExitCode=0} }
         Start-ProcessWithTimeout -FilePath fixture.exe -ExpectedOutput $script:Output | Should -BeTrue
     }
-    It 'requires fresh output at all four diagnostic export call sites' {
+    It 'requires fresh output at every diagnostic export call site, including the shared battery exporter' {
         $ast=Get-TestAst $script:RepoRoot 'src/tools/Invoke-DiagnosticoMaster.ps1'
         $calls=@($ast.FindAll({param($node) $node -is [Management.Automation.Language.CommandAst] -and $node.GetCommandName() -eq 'Start-ProcessWithTimeout'},$true))
-        $calls.Count | Should -Be 4
+        $calls.Count | Should -Be 3
         foreach($call in $calls) {
             @($call.CommandElements | Where-Object {$_ -is [Management.Automation.Language.CommandParameterAst]}).ParameterName | Should -Contain ExpectedOutput
         }

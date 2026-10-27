@@ -41,6 +41,7 @@ Describe 'Complete immutable releases and recovery' {
                 'config/dependencies.json' = '{}'
                 'config/tool-hashes.json' = '{}'
                 'onboarding/install.bat' = '@echo off'
+                'LICENSE' = 'MIT fixture notice'
                 'src/tools/Invoke-Fixture.ps1' = ('# harmless fixture ' + ('x' * 150))
             }
             $files = [ordered]@{}
@@ -50,7 +51,7 @@ Describe 'Complete immutable releases and recovery' {
                 [IO.File]::WriteAllText($path, $payload[$name], [Text.UTF8Encoding]::new($false))
                 $files[$name] = Get-AtlasTextHash $payload[$name]
             }
-            $manifest = [ordered]@{ schemaVersion=1; version='fixture'; algorithm='SHA256-UTF8-LF'; files=$files }
+            $manifest = [ordered]@{ schemaVersion=1; version='1.5.12'; algorithm='SHA256-UTF8-LF'; files=$files }
             [IO.File]::WriteAllText((Join-Path $directory 'release-manifest.json'), ($manifest | ConvertTo-Json -Depth 8 -Compress), [Text.UTF8Encoding]::new($false))
             return [pscustomobject]@{ Directory=$directory; Descriptor=[pscustomobject]@{ schemaVersion=1; commit=$Commit; manifestSha256=(Get-FileHash (Join-Path $directory 'release-manifest.json') -Algorithm SHA256).Hash.ToLowerInvariant() } }
         }
@@ -73,6 +74,19 @@ Describe 'Complete immutable releases and recovery' {
     }
     It 'uses canonical UTF-8 text consistently across BOM and line endings' {
         Get-AtlasTextHash ([string][char]0xFEFF + "hola`r`n") | Should -Be (Get-AtlasTextHash "hola`n")
+    }
+    It 'requires the MIT notice in new distributions' {
+        Update-FixtureManifest $script:A { param($m) $m.files.PSObject.Properties.Remove('LICENSE') }
+        { Test-AtlasRelease -Directory $script:A.Directory -ExpectedManifestSha256 $script:A.Descriptor.manifestSha256 } | Should -Throw '*LICENSE*'
+    }
+    It 'preserves offline rollback to an older complete bundle without a notice member' {
+        Update-FixtureManifest $script:A { param($m) $m.version='1.5.11'; $m.files.PSObject.Properties.Remove('LICENSE') }
+        Remove-Item -LiteralPath (Join-Path $script:A.Directory 'LICENSE')
+        Install-AtlasRelease -Root $script:Root -Descriptor $script:A.Descriptor -SourceDirectory $script:A.Directory | Out-Null
+        Install-AtlasRelease -Root $script:Root -Descriptor $script:B.Descriptor -SourceDirectory $script:B.Directory | Out-Null
+        [IO.File]::ReadAllText((Join-Path (Get-AtlasInstalledRelease $script:Root).Directory 'LICENSE')) | Should -Be 'MIT fixture notice'
+        $rollback = Restore-AtlasPreviousRelease -Root $script:Root
+        $rollback.Commit | Should -Be $script:A.Descriptor.commit
     }
     It 'hands an older bootstrap invocation to an approved complete release' {
         Mock Get-AtlasPublishedRelease { $script:A.Descriptor }
@@ -191,6 +205,7 @@ Describe 'Complete immutable releases and recovery' {
         Initialize-AtlasOfflineEntry -Root $script:Root -Release $release
         Test-Path -LiteralPath (Join-Path $script:Root 'get.previous.ps1') | Should -BeTrue
         @($release.Manifest.files.PSObject.Properties | Where-Object Name -like 'src/tools/*').Count | Should -Be 27
+        (Get-AtlasTextHash ([IO.File]::ReadAllText((Join-Path $release.Directory 'LICENSE')))) | Should -Be (Get-AtlasTextHash ([IO.File]::ReadAllText((Join-Path $script:RepoRoot 'LICENSE'))))
         $bat=Get-Content -LiteralPath (Join-Path $script:Root 'run.bat') -Raw
         $bat | Should -Not -Match 'Bypass|Unblock|https://'
         $engine=(Get-Process -Id $PID).Path
