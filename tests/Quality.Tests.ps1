@@ -71,6 +71,9 @@ Describe 'Battery capacity and status stay within reported evidence' {
         $translations=$ast.Find({param($n) $n -is [Management.Automation.Language.AssignmentStatementAst] -and $n.Left.Extent.Text -eq '$T'},$true)
         . ([scriptblock]::Create($translations.Extent.Text))
         $script:BatteryLabels=$T.en
+        $script:BatteryOriginalTemp=$env:TEMP;$script:BatteryOriginalSystemRoot=$env:SystemRoot
+        # These exporters are mocked. Give Linux CI isolated Windows-path roots too.
+        $env:TEMP=$TestDrive;$env:SystemRoot=$TestDrive
         foreach($name in @('ConvertTo-DiagBatteryNumber','ConvertFrom-DiagBatteryExport','Get-BatteryAnalysis')) {
             . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-DiagnosticoMaster.ps1' $name)
         }
@@ -78,6 +81,9 @@ Describe 'Battery capacity and status stay within reported evidence' {
         function Get-CimInstance { [CmdletBinding()]param($ClassName,$OperationTimeoutSec) throw 'Real inventory blocked' }
         $script:BatteryFixtureExe=Join-Path $TestDrive 'BatteryInfoView.exe'
         [IO.File]::WriteAllText($script:BatteryFixtureExe,'Not executable; fixture only')
+    }
+    AfterAll {
+        $env:TEMP=$script:BatteryOriginalTemp;$env:SystemRoot=$script:BatteryOriginalSystemRoot
     }
     BeforeEach {
         $script:L=$script:BatteryLabels
