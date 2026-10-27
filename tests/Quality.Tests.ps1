@@ -11,7 +11,10 @@ Describe 'Audit phase 3: verified local policies and reversible UAC' {
         . (Join-Path $script:RepoRoot 'src/lib/Operations.ps1')
         function Get-CimInstance {[CmdletBinding()]param($ClassName,$OperationTimeoutSec)throw 'Real inventory blocked'}
         function Invoke-AtlasNativeProcess {param($FilePath,$ArgumentList,$TimeoutSeconds)throw 'Real policy mutation blocked'}
+        $script:OriginalPolicySystemRoot=$env:SystemRoot
+        if(-not $env:SystemRoot){$env:SystemRoot=$TestDrive}
     }
+    AfterAll {$env:SystemRoot=$script:OriginalPolicySystemRoot}
     BeforeEach {
         $script:Policy=[pscustomobject]@{MinPasswordLength=8;MaxPasswordAge=90;MinPasswordAgeSeconds=0;LockoutThreshold=5}
         Mock Get-AtlasLocalAccountPolicy {$script:Policy}

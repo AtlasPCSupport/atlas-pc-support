@@ -38,7 +38,10 @@ CAT alterado sin cambiar tamaño, ruta relativa, lista inválida, doble aplicaci
 restauración de bytes y adaptador/familia inválidos. La lectura NetUserModalsGet
 se comprueba además sin escribir ni mostrar valores del host.
 
-Las suites completas 5.1/7 y CI del SHA exacto son requisitos de promoción.
+Las suites completas aprobaron 381 pruebas por runtime (5.1.26100.9711 y 7.6.9),
+sin fallos ni omitidas y sin errores del analizador. Se añadieron 16 regresiones.
+La adaptación del fixture de ruta Windows para Linux pasó además sin SystemRoot.
+CI del SHA exacto es un requisito adicional de promoción.
 La evidencia de publicación se conserva en el PR. No se ejecutan net accounts
 de escritura, cambios UAC, exportación/reinstalación real de drivers ni cambios
 DNS/hosts sobre el host durante esta entrega.
