@@ -762,8 +762,8 @@ do {
                 $lineas += "=========================================================="
                 $lineas += $L.T7TitleLine
                 $lineas += $L.T7DateLine -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
-                $lineas += $L.T7HostLine -f $env:COMPUTERNAME
-                $lineas += $L.T7UserLine -f $env:USERNAME
+                $lineas += $L.T7HostLine -f '[REDACTED]'
+                $lineas += $L.T7UserLine -f '[REDACTED]'
                 $lineas += "=========================================================="
                 $lineas += ""
                 $lineas += $L.T7UacSec
@@ -776,7 +776,7 @@ do {
                     $rol    = if ($admins -contains $u.Name) { 'Admin' } else { $L.RoleStd }
                     $estado = if ($u.Enabled) { $L.T4StateOn } else { $L.T4StateOff }
                     $clave  = if ($u.PasswordRequired) { $L.T4PwdReq } else { $L.T4PwdNo }
-                    $lineas += "  {0,-22} {1,-14} {2,-12} {3}" -f $u.Name, $rol, $estado, $clave
+                    $lineas += "  {0,-22} {1,-14} {2,-12} {3}" -f '[REDACTED]', $rol, $estado, $clave
                 }
                 $lineas += ""
                 $lineas += $L.T7PolicySec
@@ -786,8 +786,8 @@ do {
                 $lineas += $L.T7Footer
                 $lineas += "=========================================================="
 
-                $rutaInforme = "$env:USERPROFILE\Desktop\" + ($L.ReportFile -f (Get-Date -Format 'yyyyMMdd_HHmm'))
-                $lineas | Out-File -FilePath $rutaInforme -Encoding UTF8
+                $rutaInforme = Get-AtlasReportPath -Prefix 'AccountObservations' -Extension 'txt'
+                Write-AtlasShareableReport -Path $rutaInforme -Content ($lineas -join "`n") -Tool 'Account observations' -SensitiveValues @($usuarios | ForEach-Object Name)
                 Escribir-Centrado $L.T7Saved "Green"
                 Escribir-Centrado $rutaInforme "White"
             } catch {

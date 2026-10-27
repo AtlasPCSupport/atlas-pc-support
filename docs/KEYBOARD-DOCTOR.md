@@ -33,7 +33,7 @@ Optional monitor:
 
 - Foreground-only hands-off key monitor.
 - Requires explicit `CONSENT`.
-- Records key names/codes only, not text content.
+- Stores only an aggregate event count, focused-window scope and timestamp; no key names, codes or text content.
 - Warns the technician not to type passwords.
 
 ## Safety model
@@ -42,7 +42,7 @@ Keyboard Doctor is read-only by default.
 
 Repair actions are separated under **Repair actions** and require explicit confirmation:
 
-- Disable Filter/Sticky/Toggle Keys shortcuts for the current user.
+- Open keyboard accessibility settings for review of the intended user's preferences; Atlas does not overwrite their flags with fixed values.
 - Open Device Manager.
 - Open Windows keyboard accessibility settings.
 
@@ -50,7 +50,8 @@ The tool does **not** disable Defender, does **not** run a background keylogger,
 
 ## Offline USB
 
-`Build Offline USB` copies the compiled `launcher.ps1`. After this tool is merged into `main` and `launcher.ps1` is regenerated, preparing or updating an offline USB automatically includes Keyboard Doctor.
+`Build Offline USB` installs the complete verified release. Preparing or updating
+an offline USB includes Keyboard Doctor and its shared libraries.
 
 To refresh an existing USB:
 
