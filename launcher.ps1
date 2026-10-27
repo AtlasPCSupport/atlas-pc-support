@@ -20,7 +20,7 @@ if ($PSVersionTable.PSEdition -eq 'Desktop') {
 }
 
 
-$script:AtlasVersion = '1.5.14'
+$script:AtlasVersion = '1.5.15'
 $script:AtlasBuildDate = '2026-10-27'
 $script:AtlasToolsManifest = '{
   "$comment": "Tool manifest. Each entry describes one tool. The launcher uses this to render the panel''s tool tiles.",
@@ -873,7 +873,7 @@ $script:AtlasToolsManifest = '{
   ]
 }
 '
-$script:AtlasToolHashesJson = '{"generatedAt":"2026-10-27","algorithm":"SHA256","files":{"Invoke-AIReadiness.ps1":"0cc69f023d29584cfb59404458d1b47d864b6dd915aee1a37419e734f02a0346","Invoke-ActualizarPowerShell.ps1":"f3857d121fc6c702a4df8d4ae7b8ca8b0d1d87e166992272bfe957e7aadb8b15","Invoke-AuditoriaRouter.ps1":"c60b60203f6a7627d91a13d64bc592e36ea2fd5d552d0a83b4f6a9394d1119bb","Invoke-Deduplicador.ps1":"2147b9d475f36f93c2908bb3c1701b35c5e4a144eb1b5356653e90af322c1a01","Invoke-DiagnosticoEventos.ps1":"6e3b3763abcfe0e8f975c23f69d2bcdc716f6cd478e03b372f4602123552ccf3","Invoke-DiagnosticoMaster.ps1":"cb3d7edc902a738aaf6479b3aaf0f5d85a7c31d8a037b1b48e064e7ceeeea0a4","Invoke-EntregaPC.ps1":"b6a7326be8dc1d7edf9c556e5ebaaaae5d43efb2c9936d111ac803f72a5c9ac8","Invoke-ExtraerLicencias.ps1":"bd8436451e725c872ac155aa948a1af5e3fb0734a9f479fac220b3ba52f43871","Invoke-Fase0.ps1":"14e7d9f9498853c4dc98d392cb022e21681064208cb208a88baff5f15d1e1966","Invoke-FastCopy.ps1":"af30d5dc46ac9f4e69592729d2f5f663cef6fbbf532a86d354694efc98a27e9f","Invoke-GPUCheck.ps1":"7d10790ac4811c5fdf1b563c6b1768c92bd7ce62f814050380ffb93b4e651de3","Invoke-GestorBitLocker.ps1":"93969ccbf4b2810c7e8f480c58de5af4e0d96d6c979eda8a1ac44bf14bd453a9","Invoke-HostsManager.ps1":"21bb6ec2607f7b35f4651c0fb061b6ac0f45db8c1d4683bd4ca96cf85f2d8dc2","Invoke-InstalarMicrosoftStore.ps1":"d2d73a1a359585c13e09cf2eafe89fe588d5cdb9a89872730ab7a4e9de5a09de","Invoke-InstalarPaquetes.ps1":"d0d98a1e0d02271bcee8b03076b4bf2dd17cc252984390dbf5e24e510737ac43","Invoke-InstalarRuntimes.ps1":"0d973d2105d0468ad15e05543d10cf24d168beb4363df3dd261444a067812ef5","Invoke-KeyboardDoctor.ps1":"d920a97f29735097226420624a85283ad80602a9576a5d787ae0054fa857b7a6","Invoke-MantenimientoPRO.ps1":"226545d07cf4f201e958670f8c49168785b838320ddbc8959d2fc65751582931","Invoke-MenorPrivilegio.ps1":"05a97176f220f8ba308812d4c8996c05bc55b771adc404643ff2a61bc9165b49","Invoke-PartsUpgrade.ps1":"a328c3d6490323022f21bdb079e9fa7d34e7bd81c9288fa9d1c6222378c8ca61","Invoke-Personalizacion.ps1":"57f979ffe953aaed57632b004b687d5651cb41b21e0313ea3d23c423a6dcf1c4","Invoke-PrepararUSB.ps1":"4a3f4ef6a9ef85ca80f6789ecaecfc38c3cd6425d658f5e9147f3fce5541e0b2","Invoke-PrinterDoctor.ps1":"4a16f46c9699d18cc54a7174037c618a9e2727edb27b0735947689e99e3d4e68","Invoke-RespaldoControladores.ps1":"c5817dc1e4b03b751bed7ff6b029a6a6e4a3b08da8fad8e2aba549dc4e30435d","Invoke-Robocopy.ps1":"c55b58493fea3ce82d867c961c8fb94626121682c12e6bd444833cee2f5ad927","Invoke-SelectorDNS.ps1":"47101374664bacc1ed87f1f77bb3bb9dc57d8ee72961e8818328b86bad8dee1c","Invoke-StopServices.ps1":"9cb88839b1e350bcee6ce63b5809ccc7c4ff4d11ee773ca3715b2d5386f1212b"}}'
+$script:AtlasToolHashesJson = '{"generatedAt":"2026-10-27","algorithm":"SHA256","files":{"Invoke-AIReadiness.ps1":"0cc69f023d29584cfb59404458d1b47d864b6dd915aee1a37419e734f02a0346","Invoke-ActualizarPowerShell.ps1":"f3857d121fc6c702a4df8d4ae7b8ca8b0d1d87e166992272bfe957e7aadb8b15","Invoke-AuditoriaRouter.ps1":"c60b60203f6a7627d91a13d64bc592e36ea2fd5d552d0a83b4f6a9394d1119bb","Invoke-Deduplicador.ps1":"2147b9d475f36f93c2908bb3c1701b35c5e4a144eb1b5356653e90af322c1a01","Invoke-DiagnosticoEventos.ps1":"6e3b3763abcfe0e8f975c23f69d2bcdc716f6cd478e03b372f4602123552ccf3","Invoke-DiagnosticoMaster.ps1":"cb3d7edc902a738aaf6479b3aaf0f5d85a7c31d8a037b1b48e064e7ceeeea0a4","Invoke-EntregaPC.ps1":"b6a7326be8dc1d7edf9c556e5ebaaaae5d43efb2c9936d111ac803f72a5c9ac8","Invoke-ExtraerLicencias.ps1":"bd8436451e725c872ac155aa948a1af5e3fb0734a9f479fac220b3ba52f43871","Invoke-Fase0.ps1":"14e7d9f9498853c4dc98d392cb022e21681064208cb208a88baff5f15d1e1966","Invoke-FastCopy.ps1":"af30d5dc46ac9f4e69592729d2f5f663cef6fbbf532a86d354694efc98a27e9f","Invoke-GPUCheck.ps1":"7d10790ac4811c5fdf1b563c6b1768c92bd7ce62f814050380ffb93b4e651de3","Invoke-GestorBitLocker.ps1":"93969ccbf4b2810c7e8f480c58de5af4e0d96d6c979eda8a1ac44bf14bd453a9","Invoke-HostsManager.ps1":"b352272840ec27ffd4141ff1d002ba869365283064d5515e58ad036775bbea62","Invoke-InstalarMicrosoftStore.ps1":"d2d73a1a359585c13e09cf2eafe89fe588d5cdb9a89872730ab7a4e9de5a09de","Invoke-InstalarPaquetes.ps1":"d0d98a1e0d02271bcee8b03076b4bf2dd17cc252984390dbf5e24e510737ac43","Invoke-InstalarRuntimes.ps1":"0d973d2105d0468ad15e05543d10cf24d168beb4363df3dd261444a067812ef5","Invoke-KeyboardDoctor.ps1":"d920a97f29735097226420624a85283ad80602a9576a5d787ae0054fa857b7a6","Invoke-MantenimientoPRO.ps1":"226545d07cf4f201e958670f8c49168785b838320ddbc8959d2fc65751582931","Invoke-MenorPrivilegio.ps1":"93cd195f8f47c02e4428763418e685e276f33fecb6cc9f3bedcb0e5a14aab565","Invoke-PartsUpgrade.ps1":"a328c3d6490323022f21bdb079e9fa7d34e7bd81c9288fa9d1c6222378c8ca61","Invoke-Personalizacion.ps1":"57f979ffe953aaed57632b004b687d5651cb41b21e0313ea3d23c423a6dcf1c4","Invoke-PrepararUSB.ps1":"4a3f4ef6a9ef85ca80f6789ecaecfc38c3cd6425d658f5e9147f3fce5541e0b2","Invoke-PrinterDoctor.ps1":"4a16f46c9699d18cc54a7174037c618a9e2727edb27b0735947689e99e3d4e68","Invoke-RespaldoControladores.ps1":"2c8f4dda090fd620d99aad9b457213e8a4d748ea89b09e8380b68c0743e8efd1","Invoke-Robocopy.ps1":"c55b58493fea3ce82d867c961c8fb94626121682c12e6bd444833cee2f5ad927","Invoke-SelectorDNS.ps1":"47101374664bacc1ed87f1f77bb3bb9dc57d8ee72961e8818328b86bad8dee1c","Invoke-StopServices.ps1":"9cb88839b1e350bcee6ce63b5809ccc7c4ff4d11ee773ca3715b2d5386f1212b"}}'
 $script:AtlasXamlTemplate = '<Window
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -3899,6 +3899,133 @@ function Get-AtlasStoreState {
 
 # ---- lib/Operations ----
 # Small shared primitives for evidence and reversible Windows operations.
+function Get-AtlasLocalAccountPolicy {
+    [CmdletBinding()]
+    param()
+    if($env:OS -ne ''Windows_NT''){throw ''Local account policy requires Windows.''}
+    if(-not (''Atlas.LocalPolicyReader'' -as [type])) {
+        Add-Type -TypeDefinition @''
+using System;
+using System.Runtime.InteropServices;
+namespace Atlas {
+  public static class LocalPolicyReader {
+    [DllImport("Netapi32.dll", CharSet=CharSet.Unicode)]
+    static extern int NetUserModalsGet(string server, int level, out IntPtr buffer);
+    [DllImport("Netapi32.dll")] static extern int NetApiBufferFree(IntPtr buffer);
+    public static uint[] Read(int level, int count) {
+      IntPtr p = IntPtr.Zero;
+      try {
+        int result = NetUserModalsGet(null, level, out p);
+        if(result != 0) throw new System.ComponentModel.Win32Exception(result);
+        uint[] values = new uint[count];
+        for(int i=0; i<count; i++) values[i] = unchecked((uint)Marshal.ReadInt32(p, i*4));
+        return values;
+      } finally { if(p != IntPtr.Zero) NetApiBufferFree(p); }
+    }
+  }
+}
+''@ -ErrorAction Stop
+    }
+    $password=[Atlas.LocalPolicyReader]::Read(0,5)
+    $lockout=[Atlas.LocalPolicyReader]::Read(3,3)
+    [pscustomobject]@{MinPasswordLength=$password[0];MaxPasswordAge=$(if($password[1] -eq [uint32]::MaxValue){''UNLIMITED''}else{[int]($password[1]/86400)});MinPasswordAgeSeconds=$password[2];LockoutThreshold=$lockout[2];Source=''Local SAM / NetUserModalsGet''}
+}
+
+function Set-AtlasLocalAccountPolicy {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][hashtable]$Values,[Parameter(Mandatory)][string]$SnapshotPath)
+    $ranges=@{MinPasswordLength=@(0,14);MaxPasswordAge=@(0,999);LockoutThreshold=@(0,999)}
+    foreach($name in $Values.Keys) {
+        $n=0
+        if(-not $ranges.ContainsKey($name) -or -not [int]::TryParse([string]$Values[$name],[ref]$n) -or $n -lt $ranges[$name][0] -or $n -gt $ranges[$name][1]){throw "Invalid local policy value: $name"}
+    }
+    $computer=Get-CimInstance Win32_ComputerSystem -OperationTimeoutSec 10 -ErrorAction Stop
+    if(-not $computer -or $computer.PartOfDomain -isnot [bool] -or $computer.PartOfDomain -or $computer.DomainRole -ge 4){throw ''Use the organization policy administrator for domain-managed computers; local policy changes blocked.''}
+    $before=Get-AtlasLocalAccountPolicy
+    if($Values.ContainsKey(''MaxPasswordAge'') -and [int]$Values.MaxPasswordAge -gt 0 -and [int]$Values.MaxPasswordAge*86400 -lt $before.MinPasswordAgeSeconds){throw ''Maximum password age is below the current minimum.''}
+    $Values=$Values.Clone()
+    if($Values.ContainsKey(''MaxPasswordAge'') -and [int]$Values.MaxPasswordAge -eq 0){$Values.MaxPasswordAge=''UNLIMITED''}
+    Assert-AtlasPlainDirectory (Split-Path -Parent ([IO.Path]::GetFullPath($SnapshotPath)))
+    if(Test-Path -LiteralPath $SnapshotPath){throw ''Policy snapshot must be a new file.''}
+    $snapshot=[ordered]@{SchemaVersion=1;ComputerName=$env:COMPUTERNAME;CreatedUtc=[datetime]::UtcNow.ToString(''o'');Before=$before;Requested=$Values}
+    $json=$snapshot|ConvertTo-Json -Depth 5
+    [IO.File]::WriteAllText($SnapshotPath,$json,[Text.UTF8Encoding]::new($false))
+    if([IO.File]::ReadAllText($SnapshotPath,[Text.Encoding]::UTF8) -cne $json){throw ''Policy snapshot readback failed.''}
+    $switches=@{MinPasswordLength=''minpwlen'';MaxPasswordAge=''maxpwage'';LockoutThreshold=''lockoutthreshold''}
+    $completed=0
+    foreach($name in @(''MinPasswordLength'',''MaxPasswordAge'',''LockoutThreshold'')) {
+        if(-not $Values.ContainsKey($name)){continue}
+        try {
+            $result=Invoke-AtlasNativeProcess -FilePath (Join-Path $env:SystemRoot ''System32/net.exe'') -ArgumentList @(''accounts'',("/$($switches[$name]):$($Values[$name])")) -TimeoutSeconds 30
+            if($result.State -ne ''Correct''){throw "net.exe $($result.State), exit $($result.ExitCode): $($result.Stderr) $($result.Stdout)"}
+            $after=Get-AtlasLocalAccountPolicy
+            if([string]$after.$name -ne [string]$Values[$name]){throw ''Policy readback differs from the requested value.''}
+            $completed++
+        } catch {throw "Local policy incomplete: $completed verified change(s). Recovery values: $SnapshotPath. $($_.Exception.Message)"}
+    }
+    [pscustomobject]@{VerifiedChanges=$completed;Before=$before;After=(Get-AtlasLocalAccountPolicy);Snapshot=$SnapshotPath}
+}
+
+function Get-AtlasUacSnapshot {
+    [CmdletBinding()]
+    param()
+    $path=''HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System''
+    $key=Get-Item -LiteralPath $path -ErrorAction Stop
+    $properties=Get-ItemProperty -LiteralPath $path -ErrorAction Stop
+    $values=foreach($name in @(''EnableLUA'',''PromptOnSecureDesktop'',''ConsentPromptBehaviorUser'',''ConsentPromptBehaviorAdmin'')) {
+        $p=$properties.PSObject.Properties[$name]
+        if($p -and $key.GetValueKind($name).ToString() -ne ''DWord''){throw ''Unexpected UAC registry value type.''}
+        [pscustomobject]@{Name=$name;Present=($null -ne $p);Value=$(if($p){[int]$p.Value}else{$null})}
+    }
+    [pscustomobject]@{SchemaVersion=1;ComputerName=$env:COMPUTERNAME;CreatedUtc=[datetime]::UtcNow.ToString(''o'');Values=@($values)}
+}
+
+function Set-AtlasUacValues {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)]$Snapshot)
+    $limits=@{EnableLUA=1;PromptOnSecureDesktop=1;ConsentPromptBehaviorUser=3;ConsentPromptBehaviorAdmin=5}
+    $seen=@{}
+    if($Snapshot.SchemaVersion -ne 1 -or $Snapshot.ComputerName -cne $env:COMPUTERNAME -or @($Snapshot.Values).Count -ne 4){throw ''UAC snapshot does not match this computer.''}
+    foreach($entry in $Snapshot.Values) {
+        if(-not $limits.ContainsKey([string]$entry.Name) -or $seen.ContainsKey([string]$entry.Name) -or $entry.Present -isnot [bool] -or
+            ($entry.Present -and (($entry.Value -isnot [int] -and $entry.Value -isnot [long]) -or $entry.Value -lt 0 -or $entry.Value -gt $limits[$entry.Name]))){throw ''Invalid UAC snapshot value.''}
+        $seen[$entry.Name]=$true
+    }
+    $path=''HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System''
+    foreach($entry in $Snapshot.Values) {
+        if($entry.Present){New-ItemProperty -LiteralPath $path -Name $entry.Name -Value $entry.Value -PropertyType DWord -Force -ErrorAction Stop | Out-Null}
+        elseif((Get-ItemProperty -LiteralPath $path -ErrorAction Stop).PSObject.Properties[$entry.Name]){Remove-ItemProperty -LiteralPath $path -Name $entry.Name -ErrorAction Stop}
+    }
+    $after=Get-AtlasUacSnapshot
+    foreach($entry in $Snapshot.Values) {
+        $actual=$after.Values | Where-Object Name -eq $entry.Name
+        if($actual.Present -ne $entry.Present -or ($entry.Present -and $actual.Value -ne $entry.Value)){throw "UAC readback differs for $($entry.Name); inspect the recovery snapshot before retrying."}
+    }
+}
+
+function Set-AtlasUacPreset {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$SnapshotPath)
+    $before=Get-AtlasUacSnapshot
+    Assert-AtlasPlainDirectory (Split-Path -Parent ([IO.Path]::GetFullPath($SnapshotPath)))
+    if(Test-Path -LiteralPath $SnapshotPath){throw ''UAC snapshot must be a new file.''}
+    $json=$before|ConvertTo-Json -Depth 5
+    [IO.File]::WriteAllText($SnapshotPath,$json,[Text.UTF8Encoding]::new($false))
+    if([IO.File]::ReadAllText($SnapshotPath,[Text.Encoding]::UTF8) -cne $json){throw ''UAC snapshot readback failed.''}
+    Write-Host "UAC recovery snapshot: $SnapshotPath"
+    $requested=$json|ConvertFrom-Json
+    foreach($entry in $requested.Values){$entry.Present=$true;$entry.Value=if($entry.Name -eq ''ConsentPromptBehaviorAdmin''){2}else{1}}
+    try {Set-AtlasUacValues -Snapshot $requested}
+    catch {throw "UAC preset incomplete. Recovery snapshot: $SnapshotPath. $($_.Exception.Message)"}
+}
+
+function Restore-AtlasUacSnapshot {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Path)
+    Assert-AtlasPlainFile $Path
+    $snapshot=[IO.File]::ReadAllText($Path,[Text.Encoding]::UTF8)|ConvertFrom-Json -ErrorAction Stop
+    Set-AtlasUacValues -Snapshot $snapshot
+}
 function Assert-AtlasCopyDestination {
     [CmdletBinding()]
     param([Parameter(Mandatory)][string]$Source,[Parameter(Mandatory)][string]$Destination)
@@ -4097,25 +4224,157 @@ function Restore-AtlasDnsSnapshot {
     $snapshot=[IO.File]::ReadAllText($Path,[Text.Encoding]::UTF8)|ConvertFrom-Json -ErrorAction Stop
     if($snapshot.SchemaVersion -ne 1 -or @($snapshot.Adapters).Count -eq 0){throw ''Unsupported DNS backup. Legacy backups do not preserve DHCP/static origin.''}
     # Validate the entire snapshot before the first mutation.
+    $plan=@(); $seen=@{}
+    $adapters=@(Get-NetAdapter -ErrorAction Stop)
     foreach($entry in $snapshot.Adapters){
         $parsedGuid=[guid]::Empty
         if($entry.Family -notin @(''IPv4'',''IPv6'') -or $entry.Automatic -isnot [bool] -or -not [guid]::TryParse([string]$entry.Guid,[ref]$parsedGuid)){throw ''Invalid DNS snapshot row.''}
-        foreach($address in @($entry.Servers)){ $ip=$null; if(-not [Net.IPAddress]::TryParse([string]$address,[ref]$ip)){throw ''Invalid DNS address in snapshot.''} }
+        foreach($address in @($entry.Servers)){
+            $ip=$null
+            if(-not [Net.IPAddress]::TryParse([string]$address,[ref]$ip) -or
+                ($entry.Family -eq ''IPv4'' -and $ip.AddressFamily -ne [Net.Sockets.AddressFamily]::InterNetwork) -or
+                ($entry.Family -eq ''IPv6'' -and $ip.AddressFamily -ne [Net.Sockets.AddressFamily]::InterNetworkV6)){throw ''Invalid DNS address family in snapshot.''}
+        }
         if(-not $entry.Automatic -and @($entry.Servers).Count -eq 0){throw ''Static DNS snapshot lacks addresses.''}
-    }
-    foreach($entry in $snapshot.Adapters){
-        $adapter=Get-NetAdapter -ErrorAction Stop | Where-Object {[string]$_.InterfaceGuid -eq [string]$entry.Guid}
+        $id=$parsedGuid.ToString()+''/''+$entry.Family
+        if($seen.ContainsKey($id)){throw ''Duplicate DNS snapshot row.''}
+        $seen[$id]=$true
+        $adapter=@($adapters | Where-Object {[guid]$_.InterfaceGuid -eq $parsedGuid})
         if(@($adapter).Count -ne 1){throw "DNS adapter cannot be identified: $($entry.Guid)"}
+        $adapter=$adapter[0]
         $row=Get-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -AddressFamily $entry.Family -ErrorAction Stop
+        if(@($row).Count -ne 1){throw ''DNS address-family row is unavailable.''}
+        $service=if($entry.Family -eq ''IPv4''){''Tcpip''}else{''Tcpip6''}
+        $key="HKLM:\SYSTEM\CurrentControlSet\Services\$service\Parameters\Interfaces\$(([guid]$adapter.InterfaceGuid).ToString(''B''))"
+        Get-ItemProperty -LiteralPath $key -ErrorAction Stop | Out-Null
+        $plan+=@{Entry=$entry;Adapter=$adapter;Row=$row;Key=$key}
+    }
+    $completed=0
+    foreach($step in $plan){
+      $entry=$step.Entry; $adapter=$step.Adapter; $row=$step.Row
+      try {
         if($entry.Automatic){Set-DnsClientServerAddress -InputObject $row -ResetServerAddresses -ErrorAction Stop}
         else{Set-DnsClientServerAddress -InputObject $row -ServerAddresses @($entry.Servers) -ErrorAction Stop}
         $after=Get-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -AddressFamily $entry.Family -ErrorAction Stop
         if(-not $entry.Automatic -and (@($after.ServerAddresses)-join '','') -ne (@($entry.Servers)-join '','')){throw ''DNS static restoration could not be verified.''}
-        $service=if($entry.Family -eq ''IPv4''){''Tcpip''}else{''Tcpip6''}
-        $key="HKLM:\SYSTEM\CurrentControlSet\Services\$service\Parameters\Interfaces\$(([guid]$adapter.InterfaceGuid).ToString(''B''))"
-        $origin=Get-ItemProperty -LiteralPath $key -ErrorAction Stop
+        $origin=Get-ItemProperty -LiteralPath $step.Key -ErrorAction Stop
         if($entry.Automatic -and -not [string]::IsNullOrWhiteSpace([string]$origin.NameServer)){throw ''Automatic DNS restoration could not be verified.''}
+        $completed++
+      } catch {
+        throw "DNS restoration incomplete: $completed/$($plan.Count) rows verified; inspect $($entry.Guid)/$($entry.Family) and snapshot $Path. $($_.Exception.Message)"
+      }
     }
+}
+
+function Get-AtlasPlainTreeFiles {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Root)
+    $pending=[Collections.Generic.Stack[string]]::new()
+    $pending.Push($ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Root))
+    while($pending.Count) {
+        $directory=$pending.Pop()
+        Assert-AtlasPlainDirectory $directory
+        foreach($item in Get-ChildItem -LiteralPath $directory -Force -ErrorAction Stop) {
+            if($item.Attributes -band [IO.FileAttributes]::ReparsePoint){throw "Linked member not allowed: $($item.Name)"}
+            if($item.PSIsContainer){$pending.Push($item.FullName)}
+            else {Assert-AtlasPlainFile $item.FullName; $item}
+        }
+    }
+}
+
+function Write-AtlasDriverManifest {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Directory)
+    $root=$ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Directory).TrimEnd([char[]]''\/'')+[IO.Path]::DirectorySeparatorChar
+    $path=Join-Path $root ''driver-backup-manifest.json''
+    if(Test-Path -LiteralPath $path){throw ''Driver manifest already exists; use a new export attempt.''}
+    $files=@(Get-AtlasPlainTreeFiles -Root $root | ForEach-Object {
+        [ordered]@{Path=$_.FullName.Substring($root.Length).Replace(''\'',''/'');Bytes=$_.Length;Sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant()}
+    })
+    if(-not $files.Count -or -not @($files | Where-Object Path -match ''\.inf$'').Count){throw ''No driver INF exported; no completed backup can be claimed.''}
+    $manifest=[ordered]@{SchemaVersion=2;CreatedUtc=[datetime]::UtcNow.ToString(''o'');ExportVerified=$true;RestorationTested=$false;FileCount=$files.Count;InfCount=@($files|Where-Object Path -match ''\.inf$'').Count;Files=$files}
+    [IO.File]::WriteAllText($path,($manifest|ConvertTo-Json -Depth 6),[Text.UTF8Encoding]::new($false))
+    Test-AtlasDriverManifest -Directory $Directory | Out-Null
+    return $path
+}
+
+function Test-AtlasDriverManifest {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Directory)
+    $root=$ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Directory).TrimEnd([char[]]''\/'')+[IO.Path]::DirectorySeparatorChar
+    $path=Join-Path $root ''driver-backup-manifest.json''
+    Assert-AtlasPlainFile $path
+    $manifest=[IO.File]::ReadAllText($path,[Text.Encoding]::UTF8)|ConvertFrom-Json -ErrorAction Stop
+    if($manifest.SchemaVersion -ne 2 -or -not @($manifest.Files).Count -or $manifest.FileCount -ne @($manifest.Files).Count){throw ''Invalid driver manifest.''}
+    $seen=@{}
+    foreach($file in $manifest.Files) {
+        if([string]$file.Path -match ''(^|[\\/])\.\.?([\\/]|$)'' -or [IO.Path]::IsPathRooted([string]$file.Path) -or [string]$file.Sha256 -cnotmatch ''^[a-f0-9]{64}$''){throw ''Invalid driver manifest member.''}
+        $member=[IO.Path]::GetFullPath((Join-Path $root $file.Path))
+        if(-not $member.StartsWith($root,[StringComparison]::OrdinalIgnoreCase) -or $seen.ContainsKey($member)){throw ''Duplicate or escaping driver member.''}
+        $seen[$member]=$true
+        Assert-AtlasPlainFile $member
+        if((Get-Item -LiteralPath $member -Force -ErrorAction Stop).Length -ne $file.Bytes -or
+            (Get-FileHash -LiteralPath $member -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant() -cne $file.Sha256){throw "Driver member verification failed: $($file.Path)"}
+    }
+    $actual=@(Get-AtlasPlainTreeFiles -Root $root | Where-Object FullName -ne $path)
+    if($actual.Count -ne $seen.Count -or @($actual | Where-Object {-not $seen.ContainsKey($_.FullName)}).Count){throw ''Driver tree differs from the recorded export.''}
+    return $manifest
+}
+
+function Set-AtlasManagedHostsBlock {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Path,[Parameter(Mandatory)][string]$ListText,[Parameter(Mandatory)][uri]$Source)
+    if($Source.Scheme -ne ''https'' -or $Source.Host -ne ''raw.githubusercontent.com'' -or $Source.AbsolutePath -notlike ''/StevenBlack/hosts/*''){throw ''Unexpected hosts list source.''}
+    $entries=[Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    foreach($line in $ListText -split ''\r?\n'') {
+        $body=($line -split ''#'',2)[0].Trim()
+        if(-not $body){continue}
+        $parts=$body -split ''\s+''
+        if($parts.Count -lt 2){throw ''Malformed hosts list row.''}
+        $localNames=@(''localhost'',''localhost.localdomain'',''local'',''ip6-localhost'',''ip6-loopback'',''ip6-localnet'',''ip6-mcastprefix'',''ip6-allnodes'',''ip6-allrouters'',''ip6-allhosts'',''broadcasthost'')
+        if(-not @($parts[1..($parts.Count-1)] | Where-Object {$_ -notin $localNames}).Count){continue}
+        $ip=$null
+        if(-not [Net.IPAddress]::TryParse($parts[0],[ref]$ip)){throw ''Malformed hosts list address.''}
+        foreach($name in $parts[1..($parts.Count-1)]) {
+            if($name -in $localNames){continue}
+            if($parts[0] -notin @(''0.0.0.0'',''127.0.0.1'',''::'') -or $name -notmatch ''^(?=.{1,253}$)[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?$''){throw ''Unexpected non-blocking hosts list row.''}
+            [void]$entries.Add("0.0.0.0 $($name.ToLowerInvariant())")
+        }
+    }
+    if(-not $entries.Count){throw ''No blocking entries found.''}
+    $text=[IO.File]::ReadAllText($Path,[Text.Encoding]::UTF8)
+    if($text -match ''(?m)^# === ATLAS StevenBlack applied ''){throw ''Legacy appended list found. Restore its recorded backup before applying a managed block; personal entries will not be guessed.''}
+    $begin=''# BEGIN ATLAS STEVENBLACK''; $end=''# END ATLAS STEVENBLACK''
+    $starts=[regex]::Matches($text,''(?m)^# BEGIN ATLAS STEVENBLACK\r?$'').Count
+    $ends=[regex]::Matches($text,''(?m)^# END ATLAS STEVENBLACK\r?$'').Count
+    if($starts -ne $ends -or $starts -gt 1){throw ''Malformed managed hosts markers.''}
+    $digest=Get-AtlasTextHash $ListText
+    $observed=[datetime]::UtcNow.ToString(''o'')
+    if($starts -and $text.Contains("# Observed normalized-text SHA256: $digest")){
+        $previousDate=[regex]::Match($text,''(?m)^# Observed UTC: ([^\r\n]+)'')
+        if($previousDate.Success){$observed=$previousDate.Groups[1].Value}
+    }
+    $block=(@($begin,"# Source: $($Source.AbsoluteUri)","# Observed UTC: $observed","# Observed normalized-text SHA256: $digest")+@($entries | Sort-Object)+@($end)) -join [Environment]::NewLine
+    if($starts) {
+        $pattern=''(?ms)^# BEGIN ATLAS STEVENBLACK\r?\n.*?^# END ATLAS STEVENBLACK(?:\r?\n|$)''
+        if(-not [regex]::IsMatch($text,$pattern)){throw ''Invalid managed block boundaries.''}
+        $new=[regex]::Replace($text,$pattern,[Text.RegularExpressions.MatchEvaluator]{param($m)$block+[Environment]::NewLine})
+    } else {$new=$text+[Environment]::NewLine+$block+[Environment]::NewLine}
+    if($new -ceq $text){return [pscustomobject]@{Changed=$false;Backup=$null;Sha256=$digest;Entries=$entries.Count}}
+    $backup=Set-AtlasHostsText -Path $Path -Text $new
+    [pscustomobject]@{Changed=$true;Backup=$backup;Sha256=$digest;Entries=$entries.Count}
+}
+
+function Restore-AtlasHostsBackup {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Path,[Parameter(Mandatory)][string]$Backup)
+    Assert-AtlasPlainFile $Backup
+    Assert-AtlasPlainFile $Path
+    $bytes=[IO.File]::ReadAllBytes($Backup)
+    $previous=Set-AtlasHostsText -Path $Path -Text ([IO.File]::ReadAllText($Path,[Text.Encoding]::UTF8))
+    [IO.File]::WriteAllBytes($Path,$bytes)
+    if((Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath $Backup -Algorithm SHA256).Hash){throw "Hosts byte restoration failed; recovery copy: $previous"}
+    return $previous
 }
 
 function Get-AtlasServiceSnapshot {
@@ -6282,6 +6541,133 @@ function Get-AtlasStoreState {
 
 # ---- lib/Operations ----
 # Small shared primitives for evidence and reversible Windows operations.
+function Get-AtlasLocalAccountPolicy {
+    [CmdletBinding()]
+    param()
+    if($env:OS -ne 'Windows_NT'){throw 'Local account policy requires Windows.'}
+    if(-not ('Atlas.LocalPolicyReader' -as [type])) {
+        Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+namespace Atlas {
+  public static class LocalPolicyReader {
+    [DllImport("Netapi32.dll", CharSet=CharSet.Unicode)]
+    static extern int NetUserModalsGet(string server, int level, out IntPtr buffer);
+    [DllImport("Netapi32.dll")] static extern int NetApiBufferFree(IntPtr buffer);
+    public static uint[] Read(int level, int count) {
+      IntPtr p = IntPtr.Zero;
+      try {
+        int result = NetUserModalsGet(null, level, out p);
+        if(result != 0) throw new System.ComponentModel.Win32Exception(result);
+        uint[] values = new uint[count];
+        for(int i=0; i<count; i++) values[i] = unchecked((uint)Marshal.ReadInt32(p, i*4));
+        return values;
+      } finally { if(p != IntPtr.Zero) NetApiBufferFree(p); }
+    }
+  }
+}
+'@ -ErrorAction Stop
+    }
+    $password=[Atlas.LocalPolicyReader]::Read(0,5)
+    $lockout=[Atlas.LocalPolicyReader]::Read(3,3)
+    [pscustomobject]@{MinPasswordLength=$password[0];MaxPasswordAge=$(if($password[1] -eq [uint32]::MaxValue){'UNLIMITED'}else{[int]($password[1]/86400)});MinPasswordAgeSeconds=$password[2];LockoutThreshold=$lockout[2];Source='Local SAM / NetUserModalsGet'}
+}
+
+function Set-AtlasLocalAccountPolicy {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][hashtable]$Values,[Parameter(Mandatory)][string]$SnapshotPath)
+    $ranges=@{MinPasswordLength=@(0,14);MaxPasswordAge=@(0,999);LockoutThreshold=@(0,999)}
+    foreach($name in $Values.Keys) {
+        $n=0
+        if(-not $ranges.ContainsKey($name) -or -not [int]::TryParse([string]$Values[$name],[ref]$n) -or $n -lt $ranges[$name][0] -or $n -gt $ranges[$name][1]){throw "Invalid local policy value: $name"}
+    }
+    $computer=Get-CimInstance Win32_ComputerSystem -OperationTimeoutSec 10 -ErrorAction Stop
+    if(-not $computer -or $computer.PartOfDomain -isnot [bool] -or $computer.PartOfDomain -or $computer.DomainRole -ge 4){throw 'Use the organization policy administrator for domain-managed computers; local policy changes blocked.'}
+    $before=Get-AtlasLocalAccountPolicy
+    if($Values.ContainsKey('MaxPasswordAge') -and [int]$Values.MaxPasswordAge -gt 0 -and [int]$Values.MaxPasswordAge*86400 -lt $before.MinPasswordAgeSeconds){throw 'Maximum password age is below the current minimum.'}
+    $Values=$Values.Clone()
+    if($Values.ContainsKey('MaxPasswordAge') -and [int]$Values.MaxPasswordAge -eq 0){$Values.MaxPasswordAge='UNLIMITED'}
+    Assert-AtlasPlainDirectory (Split-Path -Parent ([IO.Path]::GetFullPath($SnapshotPath)))
+    if(Test-Path -LiteralPath $SnapshotPath){throw 'Policy snapshot must be a new file.'}
+    $snapshot=[ordered]@{SchemaVersion=1;ComputerName=$env:COMPUTERNAME;CreatedUtc=[datetime]::UtcNow.ToString('o');Before=$before;Requested=$Values}
+    $json=$snapshot|ConvertTo-Json -Depth 5
+    [IO.File]::WriteAllText($SnapshotPath,$json,[Text.UTF8Encoding]::new($false))
+    if([IO.File]::ReadAllText($SnapshotPath,[Text.Encoding]::UTF8) -cne $json){throw 'Policy snapshot readback failed.'}
+    $switches=@{MinPasswordLength='minpwlen';MaxPasswordAge='maxpwage';LockoutThreshold='lockoutthreshold'}
+    $completed=0
+    foreach($name in @('MinPasswordLength','MaxPasswordAge','LockoutThreshold')) {
+        if(-not $Values.ContainsKey($name)){continue}
+        try {
+            $result=Invoke-AtlasNativeProcess -FilePath (Join-Path $env:SystemRoot 'System32/net.exe') -ArgumentList @('accounts',("/$($switches[$name]):$($Values[$name])")) -TimeoutSeconds 30
+            if($result.State -ne 'Correct'){throw "net.exe $($result.State), exit $($result.ExitCode): $($result.Stderr) $($result.Stdout)"}
+            $after=Get-AtlasLocalAccountPolicy
+            if([string]$after.$name -ne [string]$Values[$name]){throw 'Policy readback differs from the requested value.'}
+            $completed++
+        } catch {throw "Local policy incomplete: $completed verified change(s). Recovery values: $SnapshotPath. $($_.Exception.Message)"}
+    }
+    [pscustomobject]@{VerifiedChanges=$completed;Before=$before;After=(Get-AtlasLocalAccountPolicy);Snapshot=$SnapshotPath}
+}
+
+function Get-AtlasUacSnapshot {
+    [CmdletBinding()]
+    param()
+    $path='HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System'
+    $key=Get-Item -LiteralPath $path -ErrorAction Stop
+    $properties=Get-ItemProperty -LiteralPath $path -ErrorAction Stop
+    $values=foreach($name in @('EnableLUA','PromptOnSecureDesktop','ConsentPromptBehaviorUser','ConsentPromptBehaviorAdmin')) {
+        $p=$properties.PSObject.Properties[$name]
+        if($p -and $key.GetValueKind($name).ToString() -ne 'DWord'){throw 'Unexpected UAC registry value type.'}
+        [pscustomobject]@{Name=$name;Present=($null -ne $p);Value=$(if($p){[int]$p.Value}else{$null})}
+    }
+    [pscustomobject]@{SchemaVersion=1;ComputerName=$env:COMPUTERNAME;CreatedUtc=[datetime]::UtcNow.ToString('o');Values=@($values)}
+}
+
+function Set-AtlasUacValues {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)]$Snapshot)
+    $limits=@{EnableLUA=1;PromptOnSecureDesktop=1;ConsentPromptBehaviorUser=3;ConsentPromptBehaviorAdmin=5}
+    $seen=@{}
+    if($Snapshot.SchemaVersion -ne 1 -or $Snapshot.ComputerName -cne $env:COMPUTERNAME -or @($Snapshot.Values).Count -ne 4){throw 'UAC snapshot does not match this computer.'}
+    foreach($entry in $Snapshot.Values) {
+        if(-not $limits.ContainsKey([string]$entry.Name) -or $seen.ContainsKey([string]$entry.Name) -or $entry.Present -isnot [bool] -or
+            ($entry.Present -and (($entry.Value -isnot [int] -and $entry.Value -isnot [long]) -or $entry.Value -lt 0 -or $entry.Value -gt $limits[$entry.Name]))){throw 'Invalid UAC snapshot value.'}
+        $seen[$entry.Name]=$true
+    }
+    $path='HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System'
+    foreach($entry in $Snapshot.Values) {
+        if($entry.Present){New-ItemProperty -LiteralPath $path -Name $entry.Name -Value $entry.Value -PropertyType DWord -Force -ErrorAction Stop | Out-Null}
+        elseif((Get-ItemProperty -LiteralPath $path -ErrorAction Stop).PSObject.Properties[$entry.Name]){Remove-ItemProperty -LiteralPath $path -Name $entry.Name -ErrorAction Stop}
+    }
+    $after=Get-AtlasUacSnapshot
+    foreach($entry in $Snapshot.Values) {
+        $actual=$after.Values | Where-Object Name -eq $entry.Name
+        if($actual.Present -ne $entry.Present -or ($entry.Present -and $actual.Value -ne $entry.Value)){throw "UAC readback differs for $($entry.Name); inspect the recovery snapshot before retrying."}
+    }
+}
+
+function Set-AtlasUacPreset {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$SnapshotPath)
+    $before=Get-AtlasUacSnapshot
+    Assert-AtlasPlainDirectory (Split-Path -Parent ([IO.Path]::GetFullPath($SnapshotPath)))
+    if(Test-Path -LiteralPath $SnapshotPath){throw 'UAC snapshot must be a new file.'}
+    $json=$before|ConvertTo-Json -Depth 5
+    [IO.File]::WriteAllText($SnapshotPath,$json,[Text.UTF8Encoding]::new($false))
+    if([IO.File]::ReadAllText($SnapshotPath,[Text.Encoding]::UTF8) -cne $json){throw 'UAC snapshot readback failed.'}
+    Write-Host "UAC recovery snapshot: $SnapshotPath"
+    $requested=$json|ConvertFrom-Json
+    foreach($entry in $requested.Values){$entry.Present=$true;$entry.Value=if($entry.Name -eq 'ConsentPromptBehaviorAdmin'){2}else{1}}
+    try {Set-AtlasUacValues -Snapshot $requested}
+    catch {throw "UAC preset incomplete. Recovery snapshot: $SnapshotPath. $($_.Exception.Message)"}
+}
+
+function Restore-AtlasUacSnapshot {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Path)
+    Assert-AtlasPlainFile $Path
+    $snapshot=[IO.File]::ReadAllText($Path,[Text.Encoding]::UTF8)|ConvertFrom-Json -ErrorAction Stop
+    Set-AtlasUacValues -Snapshot $snapshot
+}
 function Assert-AtlasCopyDestination {
     [CmdletBinding()]
     param([Parameter(Mandatory)][string]$Source,[Parameter(Mandatory)][string]$Destination)
@@ -6480,25 +6866,157 @@ function Restore-AtlasDnsSnapshot {
     $snapshot=[IO.File]::ReadAllText($Path,[Text.Encoding]::UTF8)|ConvertFrom-Json -ErrorAction Stop
     if($snapshot.SchemaVersion -ne 1 -or @($snapshot.Adapters).Count -eq 0){throw 'Unsupported DNS backup. Legacy backups do not preserve DHCP/static origin.'}
     # Validate the entire snapshot before the first mutation.
+    $plan=@(); $seen=@{}
+    $adapters=@(Get-NetAdapter -ErrorAction Stop)
     foreach($entry in $snapshot.Adapters){
         $parsedGuid=[guid]::Empty
         if($entry.Family -notin @('IPv4','IPv6') -or $entry.Automatic -isnot [bool] -or -not [guid]::TryParse([string]$entry.Guid,[ref]$parsedGuid)){throw 'Invalid DNS snapshot row.'}
-        foreach($address in @($entry.Servers)){ $ip=$null; if(-not [Net.IPAddress]::TryParse([string]$address,[ref]$ip)){throw 'Invalid DNS address in snapshot.'} }
+        foreach($address in @($entry.Servers)){
+            $ip=$null
+            if(-not [Net.IPAddress]::TryParse([string]$address,[ref]$ip) -or
+                ($entry.Family -eq 'IPv4' -and $ip.AddressFamily -ne [Net.Sockets.AddressFamily]::InterNetwork) -or
+                ($entry.Family -eq 'IPv6' -and $ip.AddressFamily -ne [Net.Sockets.AddressFamily]::InterNetworkV6)){throw 'Invalid DNS address family in snapshot.'}
+        }
         if(-not $entry.Automatic -and @($entry.Servers).Count -eq 0){throw 'Static DNS snapshot lacks addresses.'}
-    }
-    foreach($entry in $snapshot.Adapters){
-        $adapter=Get-NetAdapter -ErrorAction Stop | Where-Object {[string]$_.InterfaceGuid -eq [string]$entry.Guid}
+        $id=$parsedGuid.ToString()+'/'+$entry.Family
+        if($seen.ContainsKey($id)){throw 'Duplicate DNS snapshot row.'}
+        $seen[$id]=$true
+        $adapter=@($adapters | Where-Object {[guid]$_.InterfaceGuid -eq $parsedGuid})
         if(@($adapter).Count -ne 1){throw "DNS adapter cannot be identified: $($entry.Guid)"}
+        $adapter=$adapter[0]
         $row=Get-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -AddressFamily $entry.Family -ErrorAction Stop
+        if(@($row).Count -ne 1){throw 'DNS address-family row is unavailable.'}
+        $service=if($entry.Family -eq 'IPv4'){'Tcpip'}else{'Tcpip6'}
+        $key="HKLM:\SYSTEM\CurrentControlSet\Services\$service\Parameters\Interfaces\$(([guid]$adapter.InterfaceGuid).ToString('B'))"
+        Get-ItemProperty -LiteralPath $key -ErrorAction Stop | Out-Null
+        $plan+=@{Entry=$entry;Adapter=$adapter;Row=$row;Key=$key}
+    }
+    $completed=0
+    foreach($step in $plan){
+      $entry=$step.Entry; $adapter=$step.Adapter; $row=$step.Row
+      try {
         if($entry.Automatic){Set-DnsClientServerAddress -InputObject $row -ResetServerAddresses -ErrorAction Stop}
         else{Set-DnsClientServerAddress -InputObject $row -ServerAddresses @($entry.Servers) -ErrorAction Stop}
         $after=Get-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -AddressFamily $entry.Family -ErrorAction Stop
         if(-not $entry.Automatic -and (@($after.ServerAddresses)-join ',') -ne (@($entry.Servers)-join ',')){throw 'DNS static restoration could not be verified.'}
-        $service=if($entry.Family -eq 'IPv4'){'Tcpip'}else{'Tcpip6'}
-        $key="HKLM:\SYSTEM\CurrentControlSet\Services\$service\Parameters\Interfaces\$(([guid]$adapter.InterfaceGuid).ToString('B'))"
-        $origin=Get-ItemProperty -LiteralPath $key -ErrorAction Stop
+        $origin=Get-ItemProperty -LiteralPath $step.Key -ErrorAction Stop
         if($entry.Automatic -and -not [string]::IsNullOrWhiteSpace([string]$origin.NameServer)){throw 'Automatic DNS restoration could not be verified.'}
+        $completed++
+      } catch {
+        throw "DNS restoration incomplete: $completed/$($plan.Count) rows verified; inspect $($entry.Guid)/$($entry.Family) and snapshot $Path. $($_.Exception.Message)"
+      }
     }
+}
+
+function Get-AtlasPlainTreeFiles {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Root)
+    $pending=[Collections.Generic.Stack[string]]::new()
+    $pending.Push($ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Root))
+    while($pending.Count) {
+        $directory=$pending.Pop()
+        Assert-AtlasPlainDirectory $directory
+        foreach($item in Get-ChildItem -LiteralPath $directory -Force -ErrorAction Stop) {
+            if($item.Attributes -band [IO.FileAttributes]::ReparsePoint){throw "Linked member not allowed: $($item.Name)"}
+            if($item.PSIsContainer){$pending.Push($item.FullName)}
+            else {Assert-AtlasPlainFile $item.FullName; $item}
+        }
+    }
+}
+
+function Write-AtlasDriverManifest {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Directory)
+    $root=$ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Directory).TrimEnd([char[]]'\/')+[IO.Path]::DirectorySeparatorChar
+    $path=Join-Path $root 'driver-backup-manifest.json'
+    if(Test-Path -LiteralPath $path){throw 'Driver manifest already exists; use a new export attempt.'}
+    $files=@(Get-AtlasPlainTreeFiles -Root $root | ForEach-Object {
+        [ordered]@{Path=$_.FullName.Substring($root.Length).Replace('\','/');Bytes=$_.Length;Sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant()}
+    })
+    if(-not $files.Count -or -not @($files | Where-Object Path -match '\.inf$').Count){throw 'No driver INF exported; no completed backup can be claimed.'}
+    $manifest=[ordered]@{SchemaVersion=2;CreatedUtc=[datetime]::UtcNow.ToString('o');ExportVerified=$true;RestorationTested=$false;FileCount=$files.Count;InfCount=@($files|Where-Object Path -match '\.inf$').Count;Files=$files}
+    [IO.File]::WriteAllText($path,($manifest|ConvertTo-Json -Depth 6),[Text.UTF8Encoding]::new($false))
+    Test-AtlasDriverManifest -Directory $Directory | Out-Null
+    return $path
+}
+
+function Test-AtlasDriverManifest {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Directory)
+    $root=$ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Directory).TrimEnd([char[]]'\/')+[IO.Path]::DirectorySeparatorChar
+    $path=Join-Path $root 'driver-backup-manifest.json'
+    Assert-AtlasPlainFile $path
+    $manifest=[IO.File]::ReadAllText($path,[Text.Encoding]::UTF8)|ConvertFrom-Json -ErrorAction Stop
+    if($manifest.SchemaVersion -ne 2 -or -not @($manifest.Files).Count -or $manifest.FileCount -ne @($manifest.Files).Count){throw 'Invalid driver manifest.'}
+    $seen=@{}
+    foreach($file in $manifest.Files) {
+        if([string]$file.Path -match '(^|[\\/])\.\.?([\\/]|$)' -or [IO.Path]::IsPathRooted([string]$file.Path) -or [string]$file.Sha256 -cnotmatch '^[a-f0-9]{64}$'){throw 'Invalid driver manifest member.'}
+        $member=[IO.Path]::GetFullPath((Join-Path $root $file.Path))
+        if(-not $member.StartsWith($root,[StringComparison]::OrdinalIgnoreCase) -or $seen.ContainsKey($member)){throw 'Duplicate or escaping driver member.'}
+        $seen[$member]=$true
+        Assert-AtlasPlainFile $member
+        if((Get-Item -LiteralPath $member -Force -ErrorAction Stop).Length -ne $file.Bytes -or
+            (Get-FileHash -LiteralPath $member -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant() -cne $file.Sha256){throw "Driver member verification failed: $($file.Path)"}
+    }
+    $actual=@(Get-AtlasPlainTreeFiles -Root $root | Where-Object FullName -ne $path)
+    if($actual.Count -ne $seen.Count -or @($actual | Where-Object {-not $seen.ContainsKey($_.FullName)}).Count){throw 'Driver tree differs from the recorded export.'}
+    return $manifest
+}
+
+function Set-AtlasManagedHostsBlock {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Path,[Parameter(Mandatory)][string]$ListText,[Parameter(Mandatory)][uri]$Source)
+    if($Source.Scheme -ne 'https' -or $Source.Host -ne 'raw.githubusercontent.com' -or $Source.AbsolutePath -notlike '/StevenBlack/hosts/*'){throw 'Unexpected hosts list source.'}
+    $entries=[Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    foreach($line in $ListText -split '\r?\n') {
+        $body=($line -split '#',2)[0].Trim()
+        if(-not $body){continue}
+        $parts=$body -split '\s+'
+        if($parts.Count -lt 2){throw 'Malformed hosts list row.'}
+        $localNames=@('localhost','localhost.localdomain','local','ip6-localhost','ip6-loopback','ip6-localnet','ip6-mcastprefix','ip6-allnodes','ip6-allrouters','ip6-allhosts','broadcasthost')
+        if(-not @($parts[1..($parts.Count-1)] | Where-Object {$_ -notin $localNames}).Count){continue}
+        $ip=$null
+        if(-not [Net.IPAddress]::TryParse($parts[0],[ref]$ip)){throw 'Malformed hosts list address.'}
+        foreach($name in $parts[1..($parts.Count-1)]) {
+            if($name -in $localNames){continue}
+            if($parts[0] -notin @('0.0.0.0','127.0.0.1','::') -or $name -notmatch '^(?=.{1,253}$)[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?$'){throw 'Unexpected non-blocking hosts list row.'}
+            [void]$entries.Add("0.0.0.0 $($name.ToLowerInvariant())")
+        }
+    }
+    if(-not $entries.Count){throw 'No blocking entries found.'}
+    $text=[IO.File]::ReadAllText($Path,[Text.Encoding]::UTF8)
+    if($text -match '(?m)^# === ATLAS StevenBlack applied '){throw 'Legacy appended list found. Restore its recorded backup before applying a managed block; personal entries will not be guessed.'}
+    $begin='# BEGIN ATLAS STEVENBLACK'; $end='# END ATLAS STEVENBLACK'
+    $starts=[regex]::Matches($text,'(?m)^# BEGIN ATLAS STEVENBLACK\r?$').Count
+    $ends=[regex]::Matches($text,'(?m)^# END ATLAS STEVENBLACK\r?$').Count
+    if($starts -ne $ends -or $starts -gt 1){throw 'Malformed managed hosts markers.'}
+    $digest=Get-AtlasTextHash $ListText
+    $observed=[datetime]::UtcNow.ToString('o')
+    if($starts -and $text.Contains("# Observed normalized-text SHA256: $digest")){
+        $previousDate=[regex]::Match($text,'(?m)^# Observed UTC: ([^\r\n]+)')
+        if($previousDate.Success){$observed=$previousDate.Groups[1].Value}
+    }
+    $block=(@($begin,"# Source: $($Source.AbsoluteUri)","# Observed UTC: $observed","# Observed normalized-text SHA256: $digest")+@($entries | Sort-Object)+@($end)) -join [Environment]::NewLine
+    if($starts) {
+        $pattern='(?ms)^# BEGIN ATLAS STEVENBLACK\r?\n.*?^# END ATLAS STEVENBLACK(?:\r?\n|$)'
+        if(-not [regex]::IsMatch($text,$pattern)){throw 'Invalid managed block boundaries.'}
+        $new=[regex]::Replace($text,$pattern,[Text.RegularExpressions.MatchEvaluator]{param($m)$block+[Environment]::NewLine})
+    } else {$new=$text+[Environment]::NewLine+$block+[Environment]::NewLine}
+    if($new -ceq $text){return [pscustomobject]@{Changed=$false;Backup=$null;Sha256=$digest;Entries=$entries.Count}}
+    $backup=Set-AtlasHostsText -Path $Path -Text $new
+    [pscustomobject]@{Changed=$true;Backup=$backup;Sha256=$digest;Entries=$entries.Count}
+}
+
+function Restore-AtlasHostsBackup {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Path,[Parameter(Mandatory)][string]$Backup)
+    Assert-AtlasPlainFile $Backup
+    Assert-AtlasPlainFile $Path
+    $bytes=[IO.File]::ReadAllBytes($Backup)
+    $previous=Set-AtlasHostsText -Path $Path -Text ([IO.File]::ReadAllText($Path,[Text.Encoding]::UTF8))
+    [IO.File]::WriteAllBytes($Path,$bytes)
+    if((Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath $Backup -Algorithm SHA256).Hash){throw "Hosts byte restoration failed; recovery copy: $previous"}
+    return $previous
 }
 
 function Get-AtlasServiceSnapshot {

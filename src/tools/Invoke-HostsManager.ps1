@@ -232,7 +232,7 @@ function Invoke-HostsManager {
                 try {
                     $stamp  = Get-Date -Format 'yyyyMMdd-HHmmss'
                     $backup = Join-Path (Split-Path $hostsPath) "hosts.backup.$stamp"
-                    Copy-Item $hostsPath $backup -Force
+                    Copy-Item -LiteralPath $hostsPath -Destination $backup -Force -ErrorAction Stop
                     Write-Host ""
                     Write-Host ('  ' + ($L.BackupCreated -f $backup)) -ForegroundColor Green
                 } catch {
@@ -302,7 +302,7 @@ function Invoke-HostsManager {
                 try {
                     $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
                     $out = Join-Path ([Environment]::GetFolderPath('Desktop')) "hosts.atlas.$stamp.txt"
-                    Copy-Item $hostsPath $out -Force
+                    Copy-Item -LiteralPath $hostsPath -Destination $out -Force -ErrorAction Stop
                     Write-Host ""
                     Write-Host ('  ' + ($L.Exported -f $out)) -ForegroundColor Green
                 } catch {
@@ -361,30 +361,22 @@ function Invoke-HostsManager {
                 $ok = Read-Host ('  ' + $L.SBContinue)
                 if ($ok -notmatch '^[sSyY]$') { Pause-HostsManager -Message ('  ' + $L.SBCancelled); continue }
                 try {
-                    $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
-                    $before = Join-Path (Split-Path $hostsPath) "hosts.atlas-pre-stevenblack.$stamp"
-                    Copy-Item $hostsPath $before -Force -ErrorAction Stop
-                    $ptrFile = Join-Path $env:LOCALAPPDATA 'AtlasPC\hosts-last-stevenblack-backup.txt'
-                    if (-not (Test-Path (Split-Path $ptrFile))) { New-Item -ItemType Directory -Path (Split-Path $ptrFile) -Force | Out-Null }
-                    Set-Content -Path $ptrFile -Value $before -Encoding UTF8
-                    Write-Host ('  ' + ($L.SBBackupOK -f $before)) -ForegroundColor Green
-                    Write-Host ('  ' + $L.SBDownloading) -ForegroundColor Cyan
-                    $tmp = Join-Path $env:TEMP "atlas-stevenblack-$stamp.txt"
-                    Invoke-WebRequest -Uri $url -OutFile $tmp -UseBasicParsing -TimeoutSec 60 -ErrorAction Stop
-                    if (-not (Test-Path $tmp) -or (Get-Item $tmp).Length -lt 1000) {
-                        throw $L.SBEmpty
-                    }
-                    $userLines = Get-Content $hostsPath
-                    $marker = "# === ATLAS StevenBlack applied $stamp ==="
-                    $new = @()
-                    $new += $userLines
-                    $new += ""
-                    $new += $marker
-                    $new += (Get-Content $tmp)
-                    Set-AtlasHostsText -Path $hostsPath -Text ($new -join "`r`n") | Out-Null
-                    Remove-Item $tmp -Force -ErrorAction SilentlyContinue
-                    try { ipconfig /flushdns | Out-Null } catch {}
-                    Write-Host ('  ' + $L.SBApplied) -ForegroundColor Green
+                    $tmp = Join-Path $env:TEMP ('atlas-stevenblack-'+[guid]::NewGuid().ToString('N')+'.txt')
+                    try {
+                        Write-Host ('  ' + $L.SBDownloading) -ForegroundColor Cyan
+                        Invoke-WebRequest -Uri $url -OutFile $tmp -UseBasicParsing -TimeoutSec 60 -ErrorAction Stop
+                        if((Get-Item -LiteralPath $tmp -ErrorAction Stop).Length -gt 32MB){throw 'Hosts list exceeds the supported size.'}
+                        $result=Set-AtlasManagedHostsBlock -Path $hostsPath -ListText ([IO.File]::ReadAllText($tmp,[Text.Encoding]::UTF8)) -Source $url
+                        if($result.Changed) {
+                            $ptrFile = Join-Path $env:LOCALAPPDATA 'AtlasPC\hosts-last-stevenblack-backup.txt'
+                            New-Item -ItemType Directory -Path (Split-Path $ptrFile) -Force -ErrorAction Stop | Out-Null
+                            Set-Content -LiteralPath $ptrFile -Value $result.Backup -Encoding UTF8 -ErrorAction Stop
+                            Write-Host ('  ' + ($L.SBBackupOK -f $result.Backup)) -ForegroundColor Green
+                        }
+                        Write-Host ($result | ConvertTo-Json)
+                        try { Clear-DnsClientCache -ErrorAction Stop } catch { Write-Warning 'Hosts written; DNS cache flush not verified.' }
+                        Write-Host ('  ' + $L.SBApplied) -ForegroundColor Green
+                    } finally {if(Test-Path -LiteralPath $tmp){Remove-Item -LiteralPath $tmp -Force -ErrorAction Stop}}
                 } catch {
                     Write-Host ('  ' + ($L.ErrPrefix -f $_.Exception.Message)) -ForegroundColor Red
                     Write-Host ('  ' + $L.SBSuggest) -ForegroundColor Yellow
@@ -412,7 +404,7 @@ function Invoke-HostsManager {
                         $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
                         $bumpBefore = Join-Path (Split-Path $hostsPath) "hosts.before-revert-stevenblack.$stamp"
                         Copy-Item $hostsPath $bumpBefore -Force -ErrorAction Stop
-                        Set-AtlasHostsText -Path $hostsPath -Text ([IO.File]::ReadAllText($backupPath, [Text.Encoding]::UTF8)) | Out-Null
+                        Restore-AtlasHostsBackup -Path $hostsPath -Backup $backupPath | Out-Null
                         try { ipconfig /flushdns | Out-Null } catch {}
                         Write-Host ('  ' + $L.SBRestored) -ForegroundColor Green
                         Write-Host ('  ' + ($L.SBPostBackup -f $bumpBefore)) -ForegroundColor DarkGray

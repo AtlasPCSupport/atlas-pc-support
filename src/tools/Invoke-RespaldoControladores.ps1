@@ -29,7 +29,7 @@ function Invoke-RespaldoControladores {
     _Write-Title
 
     # Ensure running as Administrator
-    $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    $isAdmin = Test-IsAdmin
     if (-not $isAdmin) {
         Write-Host '[!] Administrator privileges are required to export system drivers.' -ForegroundColor Red
         Write-Host '    Please restart the panel as Administrator.' -ForegroundColor Yellow
@@ -52,8 +52,12 @@ function Invoke-RespaldoControladores {
 
     try {
         if (-not (Test-Path -LiteralPath $DestinationPath)) {
-            New-Item -ItemType Directory -Path $DestinationPath -Force | Out-Null
+            New-Item -ItemType Directory -Path $DestinationPath -Force -ErrorAction Stop | Out-Null
         }
+        $root=[IO.Path]::GetFullPath((Get-Item -LiteralPath $DestinationPath -Force -ErrorAction Stop).FullName)
+        Assert-AtlasPlainDirectory $root
+        $DestinationPath=Join-Path $root ('Export-'+[datetime]::UtcNow.ToString('yyyyMMdd-HHmmss')+'-'+[guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Path $DestinationPath -ErrorAction Stop | Out-Null
     } catch {
         Write-Host "[X] Could not create destination directory '$DestinationPath': $($_.Exception.Message)" -ForegroundColor Red
         return
@@ -63,30 +67,25 @@ function Invoke-RespaldoControladores {
     Write-Host '    Please wait, this operation may take a few minutes...' -ForegroundColor Gray
 
     $exportSuccess = $false
-    $exportedCount = 0
 
     # Primary method: Export-WindowsDriver cmdlet
     if (Get-Command Export-WindowsDriver -ErrorAction SilentlyContinue) {
         try {
-            $drivers = Export-WindowsDriver -Online -Destination $DestinationPath -ErrorAction Stop
-            $exportedCount = $drivers.Count
+            Export-WindowsDriver -Online -Destination $DestinationPath -ErrorAction Stop | Out-Null
             $exportSuccess = $true
-            Write-Host "[+] Successfully exported $exportedCount driver package(s) via Export-WindowsDriver." -ForegroundColor Green
         } catch {
-            Write-Host "[!] Export-WindowsDriver failed: $($_.Exception.Message). Falling back to DISM.exe..." -ForegroundColor Yellow
+            Write-Host "[X] Export-WindowsDriver failed: $($_.Exception.Message). Partial attempt preserved at $DestinationPath; no automatic second export." -ForegroundColor Red
+            return
         }
     }
 
     # Fallback method: DISM.exe CLI
     if (-not $exportSuccess) {
         try {
-            $dismArgs = @('/Online', '/Export-Driver', ('/Destination:"{0}"' -f $DestinationPath))
-            $proc = Invoke-AtlasNativeProcess -FilePath 'dism.exe' -Arguments ($dismArgs -join ' ') -TimeoutSeconds 3600
+            $dismArgs = @('/Online', '/Export-Driver', ('/Destination:{0}' -f $DestinationPath))
+            $proc = Invoke-AtlasNativeProcess -FilePath (Join-Path $env:SystemRoot 'System32/dism.exe') -ArgumentList $dismArgs -TimeoutSeconds 3600
             if ($proc.State -eq 'Correct') {
                 $exportSuccess = $true
-                $infFiles = Get-ChildItem -Path $DestinationPath -Filter '*.inf' -Recurse -ErrorAction SilentlyContinue
-                $exportedCount = $infFiles.Count
-                Write-Host "[+] DISM.exe completed successfully. Found $exportedCount driver INF file(s)." -ForegroundColor Green
             } else {
                 Write-Host "[X] DISM.exe $($proc.State), exit $($proc.ExitCode). Inspect any partial export before retrying." -ForegroundColor Red
             }
@@ -98,32 +97,14 @@ function Invoke-RespaldoControladores {
     if ($exportSuccess) {
         # Generate manifest inventory
         try {
-            $manifestPath = Join-Path $DestinationPath 'driver-backup-manifest.json'
-            $infList = Get-ChildItem -Path $DestinationPath -Filter '*.inf' -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
-                [ordered]@{
-                    Name = $_.Name
-                    RelativePath = $_.FullName.Substring($DestinationPath.Length).TrimStart('\', '/')
-                    Size = $_.Length
-                    LastWriteTime = $_.LastWriteTime.ToString('o')
-                }
-            }
-
-            $manifest = [ordered]@{
-                BackupDate = (Get-Date).ToString('o')
-                MachineName = $env:COMPUTERNAME
-                OSVersion = (Get-CimInstance Win32_OperatingSystem).Caption
-                TotalDrivers = $exportedCount
-                Drivers = $infList
-            }
-
-            $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
-            [System.IO.File]::WriteAllText($manifestPath, ($manifest | ConvertTo-Json -Depth 5), $utf8NoBom)
+            $manifestPath = Write-AtlasDriverManifest -Directory $DestinationPath
             Write-Host "[+] Backup manifest saved to: $manifestPath" -ForegroundColor Cyan
         } catch {
-            Write-Host "[!] Manifest creation warning: $($_.Exception.Message)" -ForegroundColor Yellow
+            Write-Host "[X] Export inventory not verified: $($_.Exception.Message). Preserve this attempt for inspection." -ForegroundColor Red
+            return
         }
 
         Write-Host ""
-        Write-Host "Driver backup completed successfully at: $DestinationPath" -ForegroundColor Green
+        Write-Host "Driver export and file hashes verified at: $DestinationPath. Restoration has NOT been tested." -ForegroundColor Green
     }
 }
