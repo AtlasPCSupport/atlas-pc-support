@@ -1,0 +1,376 @@
+{
+  "SchemaVersion": 1,
+  "Date": "2026-10-27",
+  "AuditedHead": "e19256ffa3c499ec884b1e546571f2506df49326",
+  "PublishedSource": "7537149aaae109993022de3a4a8840fc0509c35e",
+  "PublishedVersion": "1.5.12",
+  "ManifestSha256": "4b01287480ec9b0b0a8adcfb70364f0c5c0a7179ae8b27d960a443df6d046eb6",
+  "Method": "UTF8 AST inspection and synthetic isolated fixtures; no tool entry point or hardware operation executed",
+  "Tools": [
+    {
+      "Id": "fase-0",
+      "Source": "src/tools/Invoke-Fase0.ps1",
+      "Lines": 290,
+      "Functions": 11,
+      "Sha256": "14e7d9f9498853c4dc98d392cb022e21681064208cb208a88baff5f15d1e1966",
+      "Parsed": true
+    },
+    {
+      "Id": "parts-upgrade",
+      "Source": "src/tools/Invoke-PartsUpgrade.ps1",
+      "Lines": 894,
+      "Functions": 7,
+      "Sha256": "ac447e5450c8cdee9c00f6bdcd739d0f720422da24fd6ca847d9ec75845fff90",
+      "Parsed": true
+    },
+    {
+      "Id": "diagnostico-master",
+      "Source": "src/tools/Invoke-DiagnosticoMaster.ps1",
+      "Lines": 1903,
+      "Functions": 27,
+      "Sha256": "a19d7604238904d87e666290e05c35bab5937bf0b67d417517e97682a792a964",
+      "Parsed": true
+    },
+    {
+      "Id": "diagnostico-eventos",
+      "Source": "src/tools/Invoke-DiagnosticoEventos.ps1",
+      "Lines": 573,
+      "Functions": 10,
+      "Sha256": "6e3b3763abcfe0e8f975c23f69d2bcdc716f6cd478e03b372f4602123552ccf3",
+      "Parsed": true
+    },
+    {
+      "Id": "printer-doctor",
+      "Source": "src/tools/Invoke-PrinterDoctor.ps1",
+      "Lines": 628,
+      "Functions": 22,
+      "Sha256": "f27fbed8ff8725a0a460a6a78964b4c5f6ccd374f59486596ef18abb5f5841a4",
+      "Parsed": true
+    },
+    {
+      "Id": "keyboard-doctor",
+      "Source": "src/tools/Invoke-KeyboardDoctor.ps1",
+      "Lines": 699,
+      "Functions": 24,
+      "Sha256": "ee6b0d31e41874aa98e427e6d3adadc89490f1c900bb41568a023689e3b6d28b",
+      "Parsed": true
+    },
+    {
+      "Id": "ai-readiness",
+      "Source": "src/tools/Invoke-AIReadiness.ps1",
+      "Lines": 659,
+      "Functions": 16,
+      "Sha256": "97748d251357e39bb40fd490b0940a5f6a475b7c0061f5465eaaf7d2bd4a1a65",
+      "Parsed": true
+    },
+    {
+      "Id": "gpu-check",
+      "Source": "src/tools/Invoke-GPUCheck.ps1",
+      "Lines": 712,
+      "Functions": 23,
+      "Sha256": "31c10a8e7800714a7ff53ddf1bb01b6fa4de9a6bea049c439c5db3a8bb36faca",
+      "Parsed": true
+    },
+    {
+      "Id": "mantenimiento-pro",
+      "Source": "src/tools/Invoke-MantenimientoPRO.ps1",
+      "Lines": 29,
+      "Functions": 1,
+      "Sha256": "226545d07cf4f201e958670f8c49168785b838320ddbc8959d2fc65751582931",
+      "Parsed": true
+    },
+    {
+      "Id": "instalar-paquetes",
+      "Source": "src/tools/Invoke-InstalarPaquetes.ps1",
+      "Lines": 1355,
+      "Functions": 8,
+      "Sha256": "d0d98a1e0d02271bcee8b03076b4bf2dd17cc252984390dbf5e24e510737ac43",
+      "Parsed": true
+    },
+    {
+      "Id": "instalar-ms-store",
+      "Source": "src/tools/Invoke-InstalarMicrosoftStore.ps1",
+      "Lines": 32,
+      "Functions": 1,
+      "Sha256": "d2d73a1a359585c13e09cf2eafe89fe588d5cdb9a89872730ab7a4e9de5a09de",
+      "Parsed": true
+    },
+    {
+      "Id": "instalar-runtimes",
+      "Source": "src/tools/Invoke-InstalarRuntimes.ps1",
+      "Lines": 41,
+      "Functions": 1,
+      "Sha256": "0d973d2105d0468ad15e05543d10cf24d168beb4363df3dd261444a067812ef5",
+      "Parsed": true
+    },
+    {
+      "Id": "actualizar-powershell",
+      "Source": "src/tools/Invoke-ActualizarPowerShell.ps1",
+      "Lines": 345,
+      "Functions": 11,
+      "Sha256": "d3442c5a70802d84f8925586d79daee61772de70795673744141963dd6c41e58",
+      "Parsed": true
+    },
+    {
+      "Id": "mod-personalizacion",
+      "Source": "src/tools/Invoke-Personalizacion.ps1",
+      "Lines": 15,
+      "Functions": 2,
+      "Sha256": "57f979ffe953aaed57632b004b687d5651cb41b21e0313ea3d23c423a6dcf1c4",
+      "Parsed": true
+    },
+    {
+      "Id": "stop-services",
+      "Source": "src/tools/Invoke-StopServices.ps1",
+      "Lines": 41,
+      "Functions": 1,
+      "Sha256": "9cb88839b1e350bcee6ce63b5809ccc7c4ff4d11ee773ca3715b2d5386f1212b",
+      "Parsed": true
+    },
+    {
+      "Id": "fastcopy",
+      "Source": "src/tools/Invoke-FastCopy.ps1",
+      "Lines": 1041,
+      "Functions": 24,
+      "Sha256": "af30d5dc46ac9f4e69592729d2f5f663cef6fbbf532a86d354694efc98a27e9f",
+      "Parsed": true
+    },
+    {
+      "Id": "preparar-usb",
+      "Source": "src/tools/Invoke-PrepararUSB.ps1",
+      "Lines": 1249,
+      "Functions": 25,
+      "Sha256": "4a3f4ef6a9ef85ca80f6789ecaecfc38c3cd6425d658f5e9147f3fce5541e0b2",
+      "Parsed": true
+    },
+    {
+      "Id": "respaldo-controladores",
+      "Source": "src/tools/Invoke-RespaldoControladores.ps1",
+      "Lines": 130,
+      "Functions": 2,
+      "Sha256": "c5817dc1e4b03b751bed7ff6b029a6a6e4a3b08da8fad8e2aba549dc4e30435d",
+      "Parsed": true
+    },
+    {
+      "Id": "robocopy",
+      "Source": "src/tools/Invoke-Robocopy.ps1",
+      "Lines": 779,
+      "Functions": 15,
+      "Sha256": "c55b58493fea3ce82d867c961c8fb94626121682c12e6bd444833cee2f5ad927",
+      "Parsed": true
+    },
+    {
+      "Id": "selector-dns",
+      "Source": "src/tools/Invoke-SelectorDNS.ps1",
+      "Lines": 600,
+      "Functions": 17,
+      "Sha256": "1dee53c8a288e5b76eacd96241771052ee05478c840795deebdd9907c3a89cae",
+      "Parsed": true
+    },
+    {
+      "Id": "hosts",
+      "Source": "src/tools/Invoke-HostsManager.ps1",
+      "Lines": 429,
+      "Functions": 4,
+      "Sha256": "21bb6ec2607f7b35f4651c0fb061b6ac0f45db8c1d4683bd4ca96cf85f2d8dc2",
+      "Parsed": true
+    },
+    {
+      "Id": "auditoria-router",
+      "Source": "src/tools/Invoke-AuditoriaRouter.ps1",
+      "Lines": 1932,
+      "Functions": 27,
+      "Sha256": "c60b60203f6a7627d91a13d64bc592e36ea2fd5d552d0a83b4f6a9394d1119bb",
+      "Parsed": true
+    },
+    {
+      "Id": "gestor-bitlocker",
+      "Source": "src/tools/Invoke-GestorBitLocker.ps1",
+      "Lines": 1071,
+      "Functions": 15,
+      "Sha256": "7a1867eedf5e1438ac314025182488788a43be02a8d7dfa81afe33e1e8093522",
+      "Parsed": true
+    },
+    {
+      "Id": "menor-privilegio",
+      "Source": "src/tools/Invoke-MenorPrivilegio.ps1",
+      "Lines": 805,
+      "Functions": 13,
+      "Sha256": "93d6d30992dc2abb8cc9b044c2c9f457feff87011431238a9d47ecf683da435c",
+      "Parsed": true
+    },
+    {
+      "Id": "extraer-licencias",
+      "Source": "src/tools/Invoke-ExtraerLicencias.ps1",
+      "Lines": 55,
+      "Functions": 2,
+      "Sha256": "bd8436451e725c872ac155aa948a1af5e3fb0734a9f479fac220b3ba52f43871",
+      "Parsed": true
+    },
+    {
+      "Id": "deduplicador",
+      "Source": "src/tools/Invoke-Deduplicador.ps1",
+      "Lines": 8,
+      "Functions": 1,
+      "Sha256": "2147b9d475f36f93c2908bb3c1701b35c5e4a144eb1b5356653e90af322c1a01",
+      "Parsed": true
+    },
+    {
+      "Id": "entrega-pc",
+      "Source": "src/tools/Invoke-EntregaPC.ps1",
+      "Lines": 1025,
+      "Functions": 17,
+      "Sha256": "b6a7326be8dc1d7edf9c556e5ebaaaae5d43efb2c9936d111ac803f72a5c9ac8",
+      "Parsed": true
+    }
+  ],
+  "Runs": [
+    {
+      "Runtime": "5.1.26100.9711",
+      "Observations": [
+        {
+          "Id": "parts-generation",
+          "Fixture": "Intel Core i7-8700",
+          "Observed": 87,
+          "Expected": 8,
+          "Reproduced": true
+        },
+        {
+          "Id": "keyboard-monitor",
+          "ActualKeys": 0,
+          "ConsumerCount": 1,
+          "SpuriousObservation": true,
+          "Reproduced": true
+        },
+        {
+          "Id": "ai-names",
+          "ControlClientRedacted": true,
+          "ClientNameRetained": true,
+          "ConsultantNameRetained": true,
+          "Reproduced": true
+        },
+        {
+          "Id": "ai-client-directory",
+          "Fixture": "..",
+          "OutsideAiRoot": true,
+          "WroteFiles": false,
+          "Reproduced": true
+        },
+        {
+          "Id": "dependency-multiple-command",
+          "Observed": {
+            "Threw": false,
+            "SelectedSingle": false,
+            "ErrorType": null
+          },
+          "Mocked": true,
+          "Reproduced": true
+        },
+        {
+          "Id": "gpu-score-upper-bound",
+          "MaximumFromCurrentBranches": 63,
+          "HighRiskThreshold": 70,
+          "Reachable": false,
+          "Reproduced": true
+        },
+        {
+          "Id": "router-changed-mac",
+          "SameIp": true,
+          "MacChanged": true,
+          "AlgorithmDeclaresNoChange": true,
+          "Reproduced": true
+        }
+      ],
+      "AllObservationsReproduced": true
+    },
+    {
+      "Runtime": "7.6.9",
+      "Observations": [
+        {
+          "Id": "parts-generation",
+          "Fixture": "Intel Core i7-8700",
+          "Observed": 87,
+          "Expected": 8,
+          "Reproduced": true
+        },
+        {
+          "Id": "keyboard-monitor",
+          "ActualKeys": 0,
+          "ConsumerCount": 1,
+          "SpuriousObservation": true,
+          "Reproduced": true
+        },
+        {
+          "Id": "ai-names",
+          "ControlClientRedacted": true,
+          "ClientNameRetained": true,
+          "ConsultantNameRetained": true,
+          "Reproduced": true
+        },
+        {
+          "Id": "ai-client-directory",
+          "Fixture": "..",
+          "OutsideAiRoot": true,
+          "WroteFiles": false,
+          "Reproduced": true
+        },
+        {
+          "Id": "dependency-multiple-command",
+          "Observed": {
+            "Threw": false,
+            "SelectedSingle": false,
+            "ErrorType": null
+          },
+          "Mocked": true,
+          "Reproduced": true
+        },
+        {
+          "Id": "gpu-score-upper-bound",
+          "MaximumFromCurrentBranches": 63,
+          "HighRiskThreshold": 70,
+          "Reachable": false,
+          "Reproduced": true
+        },
+        {
+          "Id": "router-changed-mac",
+          "SameIp": true,
+          "MacChanged": true,
+          "AlgorithmDeclaresNoChange": true,
+          "Reproduced": true
+        }
+      ],
+      "AllObservationsReproduced": true
+    }
+  ],
+  "MissingLocalMarkdownLinksBeforeReport": [],
+  "Checks": {
+    "WorkerTestsPassed": 24,
+    "CiPolicyTestsPassed": 9,
+    "NpmKnownVulnerabilities": 0,
+    "GeneratedInventory": "Passed",
+    "SecurityGuards": "Passed",
+    "ReproducibleDistribution": "Passed",
+    "PublicDescriptor": "Unchanged",
+    "DefenderFlags": {
+      "BehaviorMonitorEnabled": true,
+      "AntivirusEnabled": true,
+      "AMServiceEnabled": true,
+      "RealTimeProtectionEnabled": true
+    }
+  },
+  "Versions": {
+    "PowerShellPinned": "7.6.8",
+    "PowerShellOfficialLatest": "7.6.9",
+    "FastCopyPinned": "5.12.0",
+    "FastCopyOfficialWebsite": "5.12.0",
+    "WranglerPinned": "4.152.0",
+    "WranglerRegistry": "4.154.0",
+    "WorkersTypesConsulted": "5.20261027.1"
+  },
+  "Limitations": [
+    "No VM or hardware qualification",
+    "No tool entry point execution",
+    "No install, account, network or disk changes",
+    "Synthetic observations do not certify operational acceptance"
+  ]
+}
