@@ -1,6 +1,6 @@
 # Robocopy: aceptacion manual de archivos ficticios
 
-Ejecuciones manuales desde el panel Atlas 1.5.10 del 26 y 27/10/2026.
+Ejecuciones manuales desde el panel Atlas 1.5.10 y 1.5.11 del 26 y 27/10/2026.
 El agente preparo fixtures aislados y verifico los resultados por separado.
 No se utilizaron documentos de clientes ni VMs.
 
@@ -44,14 +44,32 @@ explicita que es una muestra. No cambia el algoritmo, el tamano de muestra ni
 los argumentos de Robocopy. Las pruebas manuales anteriores son de 1.5.10,
 no se atribuyen a una ejecucion manual de 1.5.11.
 
-## Limites y siguiente paso
+## Restauracion aislada de archivos, 27/10, 1.5.11
 
-Ambas copias usaron el mismo volumen del host y archivos pequenos. Los 0,1 s
-mostrados no son un benchmark de velocidad ni permiten predecir otro equipo.
+- Se utilizo como origen el respaldo incremental verificado, con los seis
+  archivos del origen y el extra ficticio conservado. El destino era una
+  carpeta nueva y vacia, separada del origen y del respaldo.
+- Desde el panel, modo FULL, sin exclusiones: `COPIED SUCCESSFULLY` y muestra
+  SHA-256 7/7, cero fallos o faltantes. El usuario observo el prompt corregido
+  `Verify a SHA-256 sample?` de 1.5.11.
+- El log nativo `Log_Atlas_2026-10-27_1413.txt` registro siete archivos copiados,
+  cero omitidos, discrepancias, fallos o extras.
+- Una comprobacion independiente comparo los siete hashes y longitudes con el
+  manifiesto previo al ensayo. Todos coincidieron. La subcarpeta vacia se
+  restauro; origen y respaldo conservaron sus hashes esperados.
+- Evidencia local: `atlas-manual-restore-result-f382e0cb41984d548ebcbe3e88cb15ec.json`.
+  El [resumen verificable](RESTAURACION-ARCHIVOS-2026-10-27.json) conserva
+  resultados y hashes de archivos ficticios, sin rutas personales.
+
+## Limites y trabajo restante
+
+Las tres operaciones usaron el mismo volumen del host y archivos pequenos.
+Los 0,1/0,2 s mostrados no son un benchmark ni permiten predecir otro equipo.
 No cubren ACL, disco lleno, cortes de energia, USB adicional, restauracion del
 sistema, instalaciones reales o Windows 10. Las VMs siguen pausadas.
 
-Siguiente ensayo: restaurar el contenido de la copia verificada (los seis archivos
-del origen y el extra ficticio conservado) a una carpeta nueva, sin borrar ni
-sobrescribir el origen, y contrastar los siete hashes.
-La recuperacion de archivos en ese alcance tampoco certifica recuperar Windows.
+Se cierra el ensayo basico de copia completa, incremental y restauracion aislada
+de archivos ficticios. No se provoco perdida de datos ni se recupero un sistema
+Windows danado. Los pendientes de hardware, fallos de alimentacion/espacio,
+instalaciones y recuperacion del sistema conservan su propio alcance en
+[PENDIENTES](PENDIENTES-2026-10-25.md).

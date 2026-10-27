@@ -29,6 +29,11 @@ edicion o parche de Windows 10.
   Atlas con archivos ficticios del host, contrastadas con SHA-256 y log nativo.
   La incremental copio dos archivos, omitio cuatro y conservo el extra; cero
   fallos. [Evidencia y limites](audits/COPIA-MANUAL-2026-10-27.md).
+- Robocopy 1.5.11: restauracion manual desde ese respaldo a una carpeta nueva.
+  Siete archivos copiados, siete hashes y longitudes verificados por separado,
+  carpeta vacia restaurada, origen y respaldo intactos; cero fallos nativos.
+  [Evidencia](audits/RESTAURACION-ARCHIVOS-2026-10-27.json). No certifica
+  recuperacion del sistema, ACL, perdida de energia o Windows 10.
 
 ## Decisiones ya tomadas
 
@@ -38,10 +43,9 @@ edicion o parche de Windows 10.
   siguen pendientes; la disponibilidad de las apps no los acredita.
 - La [adquisicion de firma publica](audits/FIRMA-OPCIONES-2026-10-26.md) esta
   aplazada. No se generan certificados ni se cambia la confianza del host.
-- El siguiente ensayo de archivos puede ser una restauracion a una carpeta
-  nueva y aislada a partir de la copia ya verificada. No requiere VMs, borrar
-  el origen ni modificar cuentas, servicios o proteccion del equipo. Esto no
-  sustituye recuperacion del sistema, BitLocker o recuperacion tras reinicio.
+- El ensayo basico de copia completa, incremental y restauracion aislada de
+  archivos ya tiene evidencia. No sustituye recuperacion del sistema, BitLocker
+  o recuperacion tras reinicio, que siguen pendientes de un entorno desechable.
 
 ## Una decision por vez para retomar lo manual
 

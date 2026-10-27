@@ -1,0 +1,90 @@
+{
+  "SchemaVersion": 1,
+  "VerifiedUtc": "2026-10-27T19:14:12.4393863Z",
+  "ApplicationVersion": "1.5.11",
+  "Tool": "Robocopy",
+  "Execution": "Manual through Atlas panel",
+  "Fixture": "Synthetic files in isolated directories on the same host volume",
+  "UserReportedResult": "COPIED SUCCESSFULLY",
+  "UserReportedSample": {
+    "Checked": 7,
+    "Passed": 7,
+    "Failed": 0,
+    "Missing": 0
+  },
+  "Files": [
+    {
+      "Relative": "conservar-destino.txt",
+      "Length": 59,
+      "Sha256": "ba38149e7923c34e53e517255cbeb852d380f550849e89ff4201ba0c13916fa4",
+      "BackupMatchesBaseline": true,
+      "RestoredMatchesBaseline": true,
+      "LengthMatches": true
+    },
+    {
+      "Relative": "documento con espacios.txt",
+      "Length": 63,
+      "Sha256": "9aea9296805080de07dec05eebac4958eeb3eeb59680d76b9c87cdcb3ecb55dc",
+      "BackupMatchesBaseline": true,
+      "RestoredMatchesBaseline": true,
+      "LengthMatches": true
+    },
+    {
+      "Relative": "leerme.txt",
+      "Length": 111,
+      "Sha256": "bc354fdff2547301ca2357e203d6b32569d7b1a5e3f99a11a12d81f54dbc01fe",
+      "BackupMatchesBaseline": true,
+      "RestoredMatchesBaseline": true,
+      "LengthMatches": true
+    },
+    {
+      "Relative": "nuevo_fase2.txt",
+      "Length": 65,
+      "Sha256": "864cc3a131505900c2e481f2676580df89e045f7c2595aeb55af552cb3842b70",
+      "BackupMatchesBaseline": true,
+      "RestoredMatchesBaseline": true,
+      "LengthMatches": true
+    },
+    {
+      "Relative": "vacio.txt",
+      "Length": 0,
+      "Sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "BackupMatchesBaseline": true,
+      "RestoredMatchesBaseline": true,
+      "LengthMatches": true
+    },
+    {
+      "Relative": "Subcarpeta\\datos.csv",
+      "Length": 32,
+      "Sha256": "99840da3cb8dc65aff4e48c6c6b7befbea0a4575e63ee74613379ee0aa59ad2b",
+      "BackupMatchesBaseline": true,
+      "RestoredMatchesBaseline": true,
+      "LengthMatches": true
+    },
+    {
+      "Relative": "Subcarpeta\\muestra.bin",
+      "Length": 65536,
+      "Sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+      "BackupMatchesBaseline": true,
+      "RestoredMatchesBaseline": true,
+      "LengthMatches": true
+    }
+  ],
+  "NativeLogName": "Log_Atlas_2026-10-27_1413.txt",
+  "NativeSummary": {
+    "TotalFiles": 7,
+    "CopiedFiles": 7,
+    "SkippedFiles": 0,
+    "Mismatches": 0,
+    "FailedFiles": 0,
+    "ExtraFiles": 0
+  },
+  "OriginalSourcePreserved": true,
+  "BackupPreserved": true,
+  "EmptyDirectoryRestored": true,
+  "DestinationFileCount": 7,
+  "AllChecksPassed": true,
+  "Windows10Qualified": false,
+  "SystemRecoveryQualified": false,
+  "Scope": "Synthetic file round-trip restoration to a new directory on the same host volume; not system recovery, power-loss, ACL, hardware or Windows 10 qualification."
+}
