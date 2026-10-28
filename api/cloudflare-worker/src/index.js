@@ -24,7 +24,7 @@ async function sha256(bytes) {
   return [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))].map(b => b.toString(16).padStart(2, "0")).join("");
 }
 function canonical(text) { return text.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n"); }
-async function readLimited(upstream, limit) {
+async function readLimited(upstream, limit, signal) {
   if (!upstream.ok) {
     if (upstream.body) await upstream.body.cancel();
     throw new HttpError(502, `Atlas upstream unavailable (${upstream.status}).`);
@@ -35,27 +35,51 @@ async function readLimited(upstream, limit) {
   }
   if (!upstream.body) throw new HttpError(502, "Empty Atlas upstream response.");
   const reader = upstream.body.getReader();
+  const cancel = () => { void reader.cancel().catch(() => {}); };
+  signal.addEventListener("abort", cancel, { once: true });
   const chunks = [];
   let size = 0;
   try {
     for (;;) {
       const { value, done } = await reader.read();
+      if (signal.aborted) throw new HttpError(504, "Atlas upstream timed out.");
       if (done) break;
       size += value.byteLength;
       if (size > limit) { await reader.cancel(); throw new HttpError(502, "Atlas upstream response exceeds its size limit."); }
       chunks.push(value);
     }
-  } finally { reader.releaseLock(); }
+  } finally { signal.removeEventListener("abort", cancel); reader.releaseLock(); }
   const bytes = new Uint8Array(size);
   let offset = 0;
   for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
   return bytes;
 }
+// The deadline includes headers and the full bounded body for either upstream.
+export async function fetchLimited(url, options, limit, timeoutMs = 15000) {
+  const controller = new AbortController();
+  let timer;
+  const deadline = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new HttpError(504, "Atlas upstream timed out."));
+      controller.abort();
+    }, timeoutMs);
+  });
+  const load = async () => {
+    const upstream = await fetch(url, { ...options, signal: controller.signal });
+    if (controller.signal.aborted) {
+      if (upstream.body) void upstream.body.cancel().catch(() => {});
+      throw new HttpError(504, "Atlas upstream timed out.");
+    }
+    return readLimited(upstream, limit, controller.signal);
+  };
+  try { return await Promise.race([load(), deadline]); }
+  finally { clearTimeout(timer); }
+}
 async function publicFile(path, commit, limit = 1024 * 1024) {
-  return readLimited(await fetch(`https://raw.githubusercontent.com/${PUBLIC_REPO}/${commit}/${path}`, {
+  return fetchLimited(`https://raw.githubusercontent.com/${PUBLIC_REPO}/${commit}/${path}`, {
     headers: { "User-Agent": "atlas-launcher-worker" },
     cf: { cacheTtlByStatus: { "200-299": 86400, "400-599": 0 }, cacheEverything: true }
-  }), limit);
+  }, limit);
 }
 async function publication(env, ref) {
   const approved = selectRelease(env, ref);
@@ -83,11 +107,10 @@ async function route(request, env) {
     const commit = env.ATLAS_ONBOARDING_COMMIT;
     const expected = env.ATLAS_ONBOARDING_SHA256;
     if (!env.GITHUB_PAT || !/^[a-f0-9]{40}$/.test(commit || "") || !/^[a-f0-9]{64}$/.test(expected || "")) return response(503, "Atlas onboarding is not configured.\n");
-    const upstream = await fetch(`https://api.github.com/repos/${PRIVATE_REPO}/contents/install-rustdesk.ps1?ref=${commit}`, {
+    const bytes = await fetchLimited(`https://api.github.com/repos/${PRIVATE_REPO}/contents/install-rustdesk.ps1?ref=${commit}`, {
       headers: { Accept: "application/vnd.github.v3.raw", "User-Agent": "atlas-launcher-worker", Authorization: `Bearer ${env.GITHUB_PAT}`, "Cache-Control": "no-store" },
       cf: { cacheTtl: 0, cacheEverything: false }
-    });
-    const bytes = await readLimited(upstream, 2 * 1024 * 1024);
+    }, 2 * 1024 * 1024);
     if (await sha256(bytes) !== expected) throw new HttpError(502, "Atlas onboarding failed verification.");
     const headers = { "X-Atlas-Onboarding-Ref": commit, "X-Atlas-Onboarding-Sha256": expected };
     return response(200, path.endsWith(".sha256") ? `${expected}  install-rustdesk.ps1\n` : bytes, headers);

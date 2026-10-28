@@ -20,7 +20,7 @@ if ($PSVersionTable.PSEdition -eq 'Desktop') {
 }
 
 
-$script:AtlasVersion = '1.5.16'
+$script:AtlasVersion = '1.5.17'
 $script:AtlasBuildDate = '2026-10-27'
 $script:AtlasToolsManifest = '{
   "$comment": "Tool manifest. Each entry describes one tool. The launcher uses this to render the panel''s tool tiles.",
@@ -873,7 +873,7 @@ $script:AtlasToolsManifest = '{
   ]
 }
 '
-$script:AtlasToolHashesJson = '{"generatedAt":"2026-10-27","algorithm":"SHA256","files":{"Invoke-AIReadiness.ps1":"0cc69f023d29584cfb59404458d1b47d864b6dd915aee1a37419e734f02a0346","Invoke-ActualizarPowerShell.ps1":"f0a1f77e1b3a341628916798a4bfd63de5a27ae1ee83c6ad3fbd8e510f665562","Invoke-AuditoriaRouter.ps1":"c60b60203f6a7627d91a13d64bc592e36ea2fd5d552d0a83b4f6a9394d1119bb","Invoke-Deduplicador.ps1":"2147b9d475f36f93c2908bb3c1701b35c5e4a144eb1b5356653e90af322c1a01","Invoke-DiagnosticoEventos.ps1":"6e3b3763abcfe0e8f975c23f69d2bcdc716f6cd478e03b372f4602123552ccf3","Invoke-DiagnosticoMaster.ps1":"cb3d7edc902a738aaf6479b3aaf0f5d85a7c31d8a037b1b48e064e7ceeeea0a4","Invoke-EntregaPC.ps1":"b6a7326be8dc1d7edf9c556e5ebaaaae5d43efb2c9936d111ac803f72a5c9ac8","Invoke-ExtraerLicencias.ps1":"bd8436451e725c872ac155aa948a1af5e3fb0734a9f479fac220b3ba52f43871","Invoke-Fase0.ps1":"14e7d9f9498853c4dc98d392cb022e21681064208cb208a88baff5f15d1e1966","Invoke-FastCopy.ps1":"d2f156cd53d9d4758ded0c5a60d3ac63578e1ca7021a483049fd73ec0aacbfd1","Invoke-GPUCheck.ps1":"7d10790ac4811c5fdf1b563c6b1768c92bd7ce62f814050380ffb93b4e651de3","Invoke-GestorBitLocker.ps1":"93969ccbf4b2810c7e8f480c58de5af4e0d96d6c979eda8a1ac44bf14bd453a9","Invoke-HostsManager.ps1":"b352272840ec27ffd4141ff1d002ba869365283064d5515e58ad036775bbea62","Invoke-InstalarMicrosoftStore.ps1":"d2d73a1a359585c13e09cf2eafe89fe588d5cdb9a89872730ab7a4e9de5a09de","Invoke-InstalarPaquetes.ps1":"d0d98a1e0d02271bcee8b03076b4bf2dd17cc252984390dbf5e24e510737ac43","Invoke-InstalarRuntimes.ps1":"0d973d2105d0468ad15e05543d10cf24d168beb4363df3dd261444a067812ef5","Invoke-KeyboardDoctor.ps1":"d920a97f29735097226420624a85283ad80602a9576a5d787ae0054fa857b7a6","Invoke-MantenimientoPRO.ps1":"226545d07cf4f201e958670f8c49168785b838320ddbc8959d2fc65751582931","Invoke-MenorPrivilegio.ps1":"93cd195f8f47c02e4428763418e685e276f33fecb6cc9f3bedcb0e5a14aab565","Invoke-PartsUpgrade.ps1":"a328c3d6490323022f21bdb079e9fa7d34e7bd81c9288fa9d1c6222378c8ca61","Invoke-Personalizacion.ps1":"57f979ffe953aaed57632b004b687d5651cb41b21e0313ea3d23c423a6dcf1c4","Invoke-PrepararUSB.ps1":"8e24a10f979cc6d859e3b170997f675158c12d108227cf4de00372a0d7d7a56e","Invoke-PrinterDoctor.ps1":"4a16f46c9699d18cc54a7174037c618a9e2727edb27b0735947689e99e3d4e68","Invoke-RespaldoControladores.ps1":"2c8f4dda090fd620d99aad9b457213e8a4d748ea89b09e8380b68c0743e8efd1","Invoke-Robocopy.ps1":"1006d3a73f33923a19ab89949c34b3c66a4ef31c1ec2d6ad4b121c5db6c881b1","Invoke-SelectorDNS.ps1":"47101374664bacc1ed87f1f77bb3bb9dc57d8ee72961e8818328b86bad8dee1c","Invoke-StopServices.ps1":"9cb88839b1e350bcee6ce63b5809ccc7c4ff4d11ee773ca3715b2d5386f1212b"}}'
+$script:AtlasToolHashesJson = '{"generatedAt":"2026-10-27","algorithm":"SHA256","files":{"Invoke-AIReadiness.ps1":"0cc69f023d29584cfb59404458d1b47d864b6dd915aee1a37419e734f02a0346","Invoke-ActualizarPowerShell.ps1":"f0a1f77e1b3a341628916798a4bfd63de5a27ae1ee83c6ad3fbd8e510f665562","Invoke-AuditoriaRouter.ps1":"c60b60203f6a7627d91a13d64bc592e36ea2fd5d552d0a83b4f6a9394d1119bb","Invoke-Deduplicador.ps1":"2147b9d475f36f93c2908bb3c1701b35c5e4a144eb1b5356653e90af322c1a01","Invoke-DiagnosticoEventos.ps1":"6e3b3763abcfe0e8f975c23f69d2bcdc716f6cd478e03b372f4602123552ccf3","Invoke-DiagnosticoMaster.ps1":"f10590cdc23d7d51751076a5376fefcfa938f4e3ee9209dffed083320f04dbed","Invoke-EntregaPC.ps1":"b6a7326be8dc1d7edf9c556e5ebaaaae5d43efb2c9936d111ac803f72a5c9ac8","Invoke-ExtraerLicencias.ps1":"bd8436451e725c872ac155aa948a1af5e3fb0734a9f479fac220b3ba52f43871","Invoke-Fase0.ps1":"44a2a6bafc2f2dcb1a0e4e78b2062b7860147fb118fe5fdb9e1a4bcdcebada0c","Invoke-FastCopy.ps1":"d2f156cd53d9d4758ded0c5a60d3ac63578e1ca7021a483049fd73ec0aacbfd1","Invoke-GPUCheck.ps1":"7d10790ac4811c5fdf1b563c6b1768c92bd7ce62f814050380ffb93b4e651de3","Invoke-GestorBitLocker.ps1":"93969ccbf4b2810c7e8f480c58de5af4e0d96d6c979eda8a1ac44bf14bd453a9","Invoke-HostsManager.ps1":"b352272840ec27ffd4141ff1d002ba869365283064d5515e58ad036775bbea62","Invoke-InstalarMicrosoftStore.ps1":"d2d73a1a359585c13e09cf2eafe89fe588d5cdb9a89872730ab7a4e9de5a09de","Invoke-InstalarPaquetes.ps1":"823b287af3352698a76f6571d741ec38135e0d18e7685bb3255914d448696370","Invoke-InstalarRuntimes.ps1":"0d973d2105d0468ad15e05543d10cf24d168beb4363df3dd261444a067812ef5","Invoke-KeyboardDoctor.ps1":"d920a97f29735097226420624a85283ad80602a9576a5d787ae0054fa857b7a6","Invoke-MantenimientoPRO.ps1":"226545d07cf4f201e958670f8c49168785b838320ddbc8959d2fc65751582931","Invoke-MenorPrivilegio.ps1":"93cd195f8f47c02e4428763418e685e276f33fecb6cc9f3bedcb0e5a14aab565","Invoke-PartsUpgrade.ps1":"a328c3d6490323022f21bdb079e9fa7d34e7bd81c9288fa9d1c6222378c8ca61","Invoke-Personalizacion.ps1":"57f979ffe953aaed57632b004b687d5651cb41b21e0313ea3d23c423a6dcf1c4","Invoke-PrepararUSB.ps1":"8e24a10f979cc6d859e3b170997f675158c12d108227cf4de00372a0d7d7a56e","Invoke-PrinterDoctor.ps1":"4a16f46c9699d18cc54a7174037c618a9e2727edb27b0735947689e99e3d4e68","Invoke-RespaldoControladores.ps1":"2c8f4dda090fd620d99aad9b457213e8a4d748ea89b09e8380b68c0743e8efd1","Invoke-Robocopy.ps1":"1006d3a73f33923a19ab89949c34b3c66a4ef31c1ec2d6ad4b121c5db6c881b1","Invoke-SelectorDNS.ps1":"47101374664bacc1ed87f1f77bb3bb9dc57d8ee72961e8818328b86bad8dee1c","Invoke-StopServices.ps1":"9cb88839b1e350bcee6ce63b5809ccc7c4ff4d11ee773ca3715b2d5386f1212b"}}'
 $script:AtlasXamlTemplate = '<Window
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -1963,14 +1963,12 @@ function Get-AtlasBranding {
             tagline      = "Panel unificado de soporte técnico para Windows"
             version      = $(if ($script:AtlasVersion) { $script:AtlasVersion } else { ''1.0.0'' })
             companyUrl   = "https://github.com/mikepchelper-spec/atlas-pc-support"
-            supportEmail = ""
             copyright    = "© 2026 Atlas PC Support"
         }
         theme = @{
             accentColor      = "#FF5500"
             secondaryColor   = "#002147"
             darkMode         = $true
-            useSystemAccent  = $false
             cornerRadius     = 8
             fontFamily       = "Segoe UI Variable"
         }
@@ -1981,15 +1979,6 @@ function Get-AtlasBranding {
             height      = 720
             minWidth    = 900
             minHeight   = 600
-            showSearch  = $true
-            showFooter  = $true
-        }
-        behavior = @{
-            autoElevate        = $true
-            logPath            = "%LOCALAPPDATA%\AtlasPC\logs"
-            dependenciesPath   = "%LOCALAPPDATA%\AtlasPC\bin"
-            defaultCategory    = "Diagnóstico"
-            confirmBeforeRun   = $false
         }
         categories = @(
             @{ id = "diagnostico";    label = "Diagnóstico";    icon = "🔍"; order = 1 }
@@ -2018,7 +2007,7 @@ function Get-AtlasBranding {
     foreach ($path in $candidatePaths) {
         if ($path -and (Test-Path $path)) {
             try {
-                $userBranding = ConvertFrom-AtlasJson (Get-Content -Raw -Path $path)
+                $userBranding = ConvertFrom-AtlasJson (Get-Content -Raw -LiteralPath $path -Encoding UTF8 -ErrorAction Stop)
                 Write-Verbose "Branding cargado desde: $path"
                 return (Merge-AtlasBranding $defaultBranding $userBranding)
             } catch {
@@ -2699,30 +2688,6 @@ function Test-IsAdmin {
     $id = [Security.Principal.WindowsIdentity]::GetCurrent()
     $principal = New-Object Security.Principal.WindowsPrincipal($id)
     return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-}
-
-function Invoke-SelfElevate {
-    [CmdletBinding()]
-    param(
-        [string]$ScriptPath = $PSCommandPath
-    )
-    if (Test-IsAdmin) { return $true }
-
-    if (-not $ScriptPath) {
-        Write-Warning "No se puede auto-elevar: no hay ruta de script."
-        return $false
-    }
-
-    try {
-        Unblock-File -LiteralPath $ScriptPath -ErrorAction SilentlyContinue
-        Start-Process -FilePath "powershell.exe" `
-            -ArgumentList @("-NoProfile", "-ExecutionPolicy", "RemoteSigned", "-File", "`"$ScriptPath`"") `
-            -Verb RunAs | Out-Null
-        exit 0
-    } catch {
-        Write-Warning "No se pudo elevar: $_"
-        return $false
-    }
 }
 
 function Invoke-AsAdmin {
@@ -3825,7 +3790,7 @@ function Get-AtlasPlatformCapabilities {
     [CmdletBinding()]
     param([switch]$Refresh)
     if ($script:AtlasPlatformCapabilities -and -not $Refresh) { return $script:AtlasPlatformCapabilities }
-    $os = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction Stop
+    $os = Get-CimInstance -ClassName Win32_OperatingSystem -OperationTimeoutSec 10 -ErrorAction Stop
     $edition = (Get-ItemProperty -LiteralPath ''HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion'' -Name EditionID -ErrorAction Stop).EditionID
     $architecture = if ($env:PROCESSOR_ARCHITEW6432) { $env:PROCESSOR_ARCHITEW6432 } else { $env:PROCESSOR_ARCHITECTURE }
     $architecture = switch ($architecture) { ''AMD64'' {''x64''} ''ARM64'' {''arm64''} default {''x86''} }
@@ -4166,38 +4131,78 @@ function Stop-AtlasOwnedNativeProcess {
 function Invoke-AtlasNativeProcess {
     [CmdletBinding()]
     param([Parameter(Mandatory)][string]$FilePath,[string]$Arguments='''',
-        [string[]]$ArgumentList, [string]$WorkingDirectory,
+        [string[]]$ArgumentList,[string]$WorkingDirectory,
         [ValidateRange(1,86400)][int]$TimeoutSeconds=600,[int[]]$SuccessCodes=@(0),
-        [Threading.CancellationToken]$CancellationToken = [Threading.CancellationToken]::None,
-        [switch]$NoCapture)
-    if ($PSBoundParameters.ContainsKey(''ArgumentList'') -and $PSBoundParameters.ContainsKey(''Arguments'')) { throw ''Choose ArgumentList or raw Arguments, not both.'' }
-    if ($PSBoundParameters.ContainsKey(''ArgumentList'')) { $Arguments = (@($ArgumentList | ForEach-Object { ConvertTo-AtlasNativeArgument $_ }) -join '' '') }
-    if ($CancellationToken.IsCancellationRequested) {
-        return [pscustomobject]@{State=''Cancelled'';Started=$false;Completed=$false;Cancelled=$true;TimedOut=$false;ExitCode=$null;Stdout='''';Stderr='''';DurationSeconds=0;OutputCaptured=$false}
+        [Threading.CancellationToken]$CancellationToken=[Threading.CancellationToken]::None,
+        [switch]$NoCapture,[ValidateRange(1024,1048576)][int]$MaxCapturedCharacters=65536,
+        [string]$OutputLogPath)
+    if($PSBoundParameters.ContainsKey(''ArgumentList'') -and $PSBoundParameters.ContainsKey(''Arguments'')){throw ''Choose ArgumentList or raw Arguments, not both.''}
+    if($NoCapture -and $OutputLogPath){throw ''OutputLogPath requires capture.''}
+    if($PSBoundParameters.ContainsKey(''ArgumentList'')){$Arguments=(@($ArgumentList|ForEach-Object {ConvertTo-AtlasNativeArgument $_}) -join '' '')}
+    if($CancellationToken.IsCancellationRequested){
+        return [pscustomobject]@{State=''Cancelled'';Started=$false;Completed=$false;Cancelled=$true;TimedOut=$false;ExitCode=$null;Stdout='''';Stderr='''';DurationSeconds=0;OutputCaptured=$false;StdoutTruncated=$false;StderrTruncated=$false;OutputLogPath=$null}
     }
     $info=[Diagnostics.ProcessStartInfo]::new()
-    $info.FileName=$FilePath; $info.Arguments=$Arguments
-    if ($WorkingDirectory) { $info.WorkingDirectory = $WorkingDirectory }
-    $info.UseShellExecute=$false; $info.CreateNoWindow=$true
-    $info.RedirectStandardOutput=-not $NoCapture; $info.RedirectStandardError=-not $NoCapture
-    $watch=[Diagnostics.Stopwatch]::StartNew(); $process=$null
+    $info.FileName=$FilePath;$info.Arguments=$Arguments
+    if($WorkingDirectory){$info.WorkingDirectory=$WorkingDirectory}
+    $info.UseShellExecute=$false;$info.CreateNoWindow=$true
+    $info.RedirectStandardOutput=-not $NoCapture;$info.RedirectStandardError=-not $NoCapture
+    $watch=[Diagnostics.Stopwatch]::StartNew();$process=$null;$writer=$null
+    $pumps=@()
     try {
-        $process=[Diagnostics.Process]::Start($info)
-        $stdout=$null; $stderr=$null; $cancelled=$false; $timedOut=$false
-        if (-not $NoCapture) { $stdout=$process.StandardOutput.ReadToEndAsync(); $stderr=$process.StandardError.ReadToEndAsync() }
-        while (-not $process.WaitForExit(100)) {
-            if ($CancellationToken.IsCancellationRequested) { $cancelled=$true; break }
-            if ($watch.Elapsed.TotalSeconds -ge $TimeoutSeconds) { $timedOut=$true; break }
+        if($OutputLogPath){
+            $OutputLogPath=$ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputLogPath)
+            Assert-AtlasPlainDirectory (Split-Path -Parent $OutputLogPath)
+            # CreateNew refuses an existing file/link. Full verbose logs are explicit, not automatic.
+            $stream=[IO.File]::Open($OutputLogPath,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::Read)
+            $writer=[IO.StreamWriter]::new($stream,[Text.UTF8Encoding]::new($false))
         }
-        if ($cancelled -or $timedOut) { Stop-AtlasOwnedNativeProcess -Process $process }
-        $captured=$NoCapture -or ($stdout.Wait(3000) -and $stderr.Wait(3000))
-        [pscustomobject]@{State=$(if($cancelled){''Cancelled''}elseif($timedOut){''TimedOut''}elseif(-not $captured){''NotEvaluated''}elseif($SuccessCodes -contains $process.ExitCode){''Correct''}else{''Failed''});Started=$true;Completed=(-not($timedOut -or $cancelled));Cancelled=$cancelled;ExitCode=$process.ExitCode;TimedOut=$timedOut;Stdout=$(if($stdout -and $stdout.IsCompleted){$stdout.Result}else{''''});Stderr=$(if($stderr -and $stderr.IsCompleted){$stderr.Result}else{''''});DurationSeconds=$watch.Elapsed.TotalSeconds;OutputCaptured=([bool]$captured -and -not $NoCapture)}
+        $process=[Diagnostics.Process]::Start($info)
+        $cancelled=$false;$timedOut=$false;$drainUntil=$null
+        if(-not $NoCapture){
+            foreach($name in @(''Stdout'',''Stderr'')){
+                $reader=if($name -eq ''Stdout''){$process.StandardOutput}else{$process.StandardError}
+                $buffer=New-Object char[] 4096
+                $pumps+=@{Name=$name;Reader=$reader;Buffer=$buffer;Read=$reader.ReadAsync($buffer,0,$buffer.Length);Tail=[Text.StringBuilder]::new();Truncated=$false;Done=$false}
+            }
+        }
+        while($true){
+            # Drain both pipes progressively; neither channel buffers the entire output.
+            foreach($pump in $pumps){
+                $batches=0
+                while(-not $pump.Done -and $pump.Read.IsCompleted -and $batches -lt 32){
+                    $count=$pump.Read.GetAwaiter().GetResult()
+                    if($count -eq 0){$pump.Done=$true;break}
+                    if($writer){$writer.Write("[$($pump.Name)]");$writer.Write($pump.Buffer,0,$count)}
+                    [void]$pump.Tail.Append($pump.Buffer,0,$count)
+                    if($pump.Tail.Length -gt $MaxCapturedCharacters){
+                        [void]$pump.Tail.Remove(0,$pump.Tail.Length-$MaxCapturedCharacters);$pump.Truncated=$true
+                    }
+                    $pump.Read=$pump.Reader.ReadAsync($pump.Buffer,0,$pump.Buffer.Length);$batches++
+                }
+            }
+            $exited=$process.WaitForExit(20)
+            if(-not $exited){
+                if($CancellationToken.IsCancellationRequested){$cancelled=$true;Stop-AtlasOwnedNativeProcess -Process $process;$exited=$true}
+                elseif($watch.Elapsed.TotalSeconds -ge $TimeoutSeconds){$timedOut=$true;Stop-AtlasOwnedNativeProcess -Process $process;$exited=$true}
+            }
+            if($exited){
+                if(-not $drainUntil){$drainUntil=[datetime]::UtcNow.AddSeconds(3)}
+                if($NoCapture -or @($pumps|Where-Object {-not $_.Done}).Count -eq 0 -or [datetime]::UtcNow -ge $drainUntil){break}
+            }
+        }
+        $captured=$NoCapture -or @($pumps|Where-Object {-not $_.Done}).Count -eq 0
+        if($writer){$writer.Flush()}
+        $out=$pumps|Where-Object Name -eq ''Stdout'';$err=$pumps|Where-Object Name -eq ''Stderr''
+        [pscustomobject]@{State=$(if($cancelled){''Cancelled''}elseif($timedOut){''TimedOut''}elseif(-not $captured){''NotEvaluated''}elseif($SuccessCodes -contains $process.ExitCode){''Correct''}else{''Failed''});
+            Started=$true;Completed=(-not($timedOut -or $cancelled));Cancelled=$cancelled;TimedOut=$timedOut;ExitCode=$process.ExitCode;
+            Stdout=$(if($out){$out.Tail.ToString()}else{''''});Stderr=$(if($err){$err.Tail.ToString()}else{''''});
+            DurationSeconds=$watch.Elapsed.TotalSeconds;OutputCaptured=([bool]$captured -and -not $NoCapture);
+            StdoutTruncated=[bool]$out.Truncated;StderrTruncated=[bool]$err.Truncated;OutputLogPath=$OutputLogPath}
     } finally {
         $watch.Stop()
-        if($process){
-            try { if (-not $process.HasExited) { Stop-AtlasOwnedNativeProcess -Process $process } }
-            finally { $process.Dispose() }
-        }
+        if($process){try{if(-not $process.HasExited){Stop-AtlasOwnedNativeProcess -Process $process}}finally{$process.Dispose()}}
+        if($writer){$writer.Dispose()}
     }
 }
 
@@ -4764,14 +4769,12 @@ function Get-AtlasBranding {
             tagline      = "Panel unificado de soporte técnico para Windows"
             version      = $(if ($script:AtlasVersion) { $script:AtlasVersion } else { '1.0.0' })
             companyUrl   = "https://github.com/mikepchelper-spec/atlas-pc-support"
-            supportEmail = ""
             copyright    = "© 2026 Atlas PC Support"
         }
         theme = @{
             accentColor      = "#FF5500"
             secondaryColor   = "#002147"
             darkMode         = $true
-            useSystemAccent  = $false
             cornerRadius     = 8
             fontFamily       = "Segoe UI Variable"
         }
@@ -4782,15 +4785,6 @@ function Get-AtlasBranding {
             height      = 720
             minWidth    = 900
             minHeight   = 600
-            showSearch  = $true
-            showFooter  = $true
-        }
-        behavior = @{
-            autoElevate        = $true
-            logPath            = "%LOCALAPPDATA%\AtlasPC\logs"
-            dependenciesPath   = "%LOCALAPPDATA%\AtlasPC\bin"
-            defaultCategory    = "Diagnóstico"
-            confirmBeforeRun   = $false
         }
         categories = @(
             @{ id = "diagnostico";    label = "Diagnóstico";    icon = "🔍"; order = 1 }
@@ -4819,7 +4813,7 @@ function Get-AtlasBranding {
     foreach ($path in $candidatePaths) {
         if ($path -and (Test-Path $path)) {
             try {
-                $userBranding = ConvertFrom-AtlasJson (Get-Content -Raw -Path $path)
+                $userBranding = ConvertFrom-AtlasJson (Get-Content -Raw -LiteralPath $path -Encoding UTF8 -ErrorAction Stop)
                 Write-Verbose "Branding cargado desde: $path"
                 return (Merge-AtlasBranding $defaultBranding $userBranding)
             } catch {
@@ -5500,30 +5494,6 @@ function Test-IsAdmin {
     $id = [Security.Principal.WindowsIdentity]::GetCurrent()
     $principal = New-Object Security.Principal.WindowsPrincipal($id)
     return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-}
-
-function Invoke-SelfElevate {
-    [CmdletBinding()]
-    param(
-        [string]$ScriptPath = $PSCommandPath
-    )
-    if (Test-IsAdmin) { return $true }
-
-    if (-not $ScriptPath) {
-        Write-Warning "No se puede auto-elevar: no hay ruta de script."
-        return $false
-    }
-
-    try {
-        Unblock-File -LiteralPath $ScriptPath -ErrorAction SilentlyContinue
-        Start-Process -FilePath "powershell.exe" `
-            -ArgumentList @("-NoProfile", "-ExecutionPolicy", "RemoteSigned", "-File", "`"$ScriptPath`"") `
-            -Verb RunAs | Out-Null
-        exit 0
-    } catch {
-        Write-Warning "No se pudo elevar: $_"
-        return $false
-    }
 }
 
 function Invoke-AsAdmin {
@@ -6626,7 +6596,7 @@ function Get-AtlasPlatformCapabilities {
     [CmdletBinding()]
     param([switch]$Refresh)
     if ($script:AtlasPlatformCapabilities -and -not $Refresh) { return $script:AtlasPlatformCapabilities }
-    $os = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction Stop
+    $os = Get-CimInstance -ClassName Win32_OperatingSystem -OperationTimeoutSec 10 -ErrorAction Stop
     $edition = (Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion' -Name EditionID -ErrorAction Stop).EditionID
     $architecture = if ($env:PROCESSOR_ARCHITEW6432) { $env:PROCESSOR_ARCHITEW6432 } else { $env:PROCESSOR_ARCHITECTURE }
     $architecture = switch ($architecture) { 'AMD64' {'x64'} 'ARM64' {'arm64'} default {'x86'} }
@@ -6967,38 +6937,78 @@ function Stop-AtlasOwnedNativeProcess {
 function Invoke-AtlasNativeProcess {
     [CmdletBinding()]
     param([Parameter(Mandatory)][string]$FilePath,[string]$Arguments='',
-        [string[]]$ArgumentList, [string]$WorkingDirectory,
+        [string[]]$ArgumentList,[string]$WorkingDirectory,
         [ValidateRange(1,86400)][int]$TimeoutSeconds=600,[int[]]$SuccessCodes=@(0),
-        [Threading.CancellationToken]$CancellationToken = [Threading.CancellationToken]::None,
-        [switch]$NoCapture)
-    if ($PSBoundParameters.ContainsKey('ArgumentList') -and $PSBoundParameters.ContainsKey('Arguments')) { throw 'Choose ArgumentList or raw Arguments, not both.' }
-    if ($PSBoundParameters.ContainsKey('ArgumentList')) { $Arguments = (@($ArgumentList | ForEach-Object { ConvertTo-AtlasNativeArgument $_ }) -join ' ') }
-    if ($CancellationToken.IsCancellationRequested) {
-        return [pscustomobject]@{State='Cancelled';Started=$false;Completed=$false;Cancelled=$true;TimedOut=$false;ExitCode=$null;Stdout='';Stderr='';DurationSeconds=0;OutputCaptured=$false}
+        [Threading.CancellationToken]$CancellationToken=[Threading.CancellationToken]::None,
+        [switch]$NoCapture,[ValidateRange(1024,1048576)][int]$MaxCapturedCharacters=65536,
+        [string]$OutputLogPath)
+    if($PSBoundParameters.ContainsKey('ArgumentList') -and $PSBoundParameters.ContainsKey('Arguments')){throw 'Choose ArgumentList or raw Arguments, not both.'}
+    if($NoCapture -and $OutputLogPath){throw 'OutputLogPath requires capture.'}
+    if($PSBoundParameters.ContainsKey('ArgumentList')){$Arguments=(@($ArgumentList|ForEach-Object {ConvertTo-AtlasNativeArgument $_}) -join ' ')}
+    if($CancellationToken.IsCancellationRequested){
+        return [pscustomobject]@{State='Cancelled';Started=$false;Completed=$false;Cancelled=$true;TimedOut=$false;ExitCode=$null;Stdout='';Stderr='';DurationSeconds=0;OutputCaptured=$false;StdoutTruncated=$false;StderrTruncated=$false;OutputLogPath=$null}
     }
     $info=[Diagnostics.ProcessStartInfo]::new()
-    $info.FileName=$FilePath; $info.Arguments=$Arguments
-    if ($WorkingDirectory) { $info.WorkingDirectory = $WorkingDirectory }
-    $info.UseShellExecute=$false; $info.CreateNoWindow=$true
-    $info.RedirectStandardOutput=-not $NoCapture; $info.RedirectStandardError=-not $NoCapture
-    $watch=[Diagnostics.Stopwatch]::StartNew(); $process=$null
+    $info.FileName=$FilePath;$info.Arguments=$Arguments
+    if($WorkingDirectory){$info.WorkingDirectory=$WorkingDirectory}
+    $info.UseShellExecute=$false;$info.CreateNoWindow=$true
+    $info.RedirectStandardOutput=-not $NoCapture;$info.RedirectStandardError=-not $NoCapture
+    $watch=[Diagnostics.Stopwatch]::StartNew();$process=$null;$writer=$null
+    $pumps=@()
     try {
-        $process=[Diagnostics.Process]::Start($info)
-        $stdout=$null; $stderr=$null; $cancelled=$false; $timedOut=$false
-        if (-not $NoCapture) { $stdout=$process.StandardOutput.ReadToEndAsync(); $stderr=$process.StandardError.ReadToEndAsync() }
-        while (-not $process.WaitForExit(100)) {
-            if ($CancellationToken.IsCancellationRequested) { $cancelled=$true; break }
-            if ($watch.Elapsed.TotalSeconds -ge $TimeoutSeconds) { $timedOut=$true; break }
+        if($OutputLogPath){
+            $OutputLogPath=$ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputLogPath)
+            Assert-AtlasPlainDirectory (Split-Path -Parent $OutputLogPath)
+            # CreateNew refuses an existing file/link. Full verbose logs are explicit, not automatic.
+            $stream=[IO.File]::Open($OutputLogPath,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::Read)
+            $writer=[IO.StreamWriter]::new($stream,[Text.UTF8Encoding]::new($false))
         }
-        if ($cancelled -or $timedOut) { Stop-AtlasOwnedNativeProcess -Process $process }
-        $captured=$NoCapture -or ($stdout.Wait(3000) -and $stderr.Wait(3000))
-        [pscustomobject]@{State=$(if($cancelled){'Cancelled'}elseif($timedOut){'TimedOut'}elseif(-not $captured){'NotEvaluated'}elseif($SuccessCodes -contains $process.ExitCode){'Correct'}else{'Failed'});Started=$true;Completed=(-not($timedOut -or $cancelled));Cancelled=$cancelled;ExitCode=$process.ExitCode;TimedOut=$timedOut;Stdout=$(if($stdout -and $stdout.IsCompleted){$stdout.Result}else{''});Stderr=$(if($stderr -and $stderr.IsCompleted){$stderr.Result}else{''});DurationSeconds=$watch.Elapsed.TotalSeconds;OutputCaptured=([bool]$captured -and -not $NoCapture)}
+        $process=[Diagnostics.Process]::Start($info)
+        $cancelled=$false;$timedOut=$false;$drainUntil=$null
+        if(-not $NoCapture){
+            foreach($name in @('Stdout','Stderr')){
+                $reader=if($name -eq 'Stdout'){$process.StandardOutput}else{$process.StandardError}
+                $buffer=New-Object char[] 4096
+                $pumps+=@{Name=$name;Reader=$reader;Buffer=$buffer;Read=$reader.ReadAsync($buffer,0,$buffer.Length);Tail=[Text.StringBuilder]::new();Truncated=$false;Done=$false}
+            }
+        }
+        while($true){
+            # Drain both pipes progressively; neither channel buffers the entire output.
+            foreach($pump in $pumps){
+                $batches=0
+                while(-not $pump.Done -and $pump.Read.IsCompleted -and $batches -lt 32){
+                    $count=$pump.Read.GetAwaiter().GetResult()
+                    if($count -eq 0){$pump.Done=$true;break}
+                    if($writer){$writer.Write("[$($pump.Name)]");$writer.Write($pump.Buffer,0,$count)}
+                    [void]$pump.Tail.Append($pump.Buffer,0,$count)
+                    if($pump.Tail.Length -gt $MaxCapturedCharacters){
+                        [void]$pump.Tail.Remove(0,$pump.Tail.Length-$MaxCapturedCharacters);$pump.Truncated=$true
+                    }
+                    $pump.Read=$pump.Reader.ReadAsync($pump.Buffer,0,$pump.Buffer.Length);$batches++
+                }
+            }
+            $exited=$process.WaitForExit(20)
+            if(-not $exited){
+                if($CancellationToken.IsCancellationRequested){$cancelled=$true;Stop-AtlasOwnedNativeProcess -Process $process;$exited=$true}
+                elseif($watch.Elapsed.TotalSeconds -ge $TimeoutSeconds){$timedOut=$true;Stop-AtlasOwnedNativeProcess -Process $process;$exited=$true}
+            }
+            if($exited){
+                if(-not $drainUntil){$drainUntil=[datetime]::UtcNow.AddSeconds(3)}
+                if($NoCapture -or @($pumps|Where-Object {-not $_.Done}).Count -eq 0 -or [datetime]::UtcNow -ge $drainUntil){break}
+            }
+        }
+        $captured=$NoCapture -or @($pumps|Where-Object {-not $_.Done}).Count -eq 0
+        if($writer){$writer.Flush()}
+        $out=$pumps|Where-Object Name -eq 'Stdout';$err=$pumps|Where-Object Name -eq 'Stderr'
+        [pscustomobject]@{State=$(if($cancelled){'Cancelled'}elseif($timedOut){'TimedOut'}elseif(-not $captured){'NotEvaluated'}elseif($SuccessCodes -contains $process.ExitCode){'Correct'}else{'Failed'});
+            Started=$true;Completed=(-not($timedOut -or $cancelled));Cancelled=$cancelled;TimedOut=$timedOut;ExitCode=$process.ExitCode;
+            Stdout=$(if($out){$out.Tail.ToString()}else{''});Stderr=$(if($err){$err.Tail.ToString()}else{''});
+            DurationSeconds=$watch.Elapsed.TotalSeconds;OutputCaptured=([bool]$captured -and -not $NoCapture);
+            StdoutTruncated=[bool]$out.Truncated;StderrTruncated=[bool]$err.Truncated;OutputLogPath=$OutputLogPath}
     } finally {
         $watch.Stop()
-        if($process){
-            try { if (-not $process.HasExited) { Stop-AtlasOwnedNativeProcess -Process $process } }
-            finally { $process.Dispose() }
-        }
+        if($process){try{if(-not $process.HasExited){Stop-AtlasOwnedNativeProcess -Process $process}}finally{$process.Dispose()}}
+        if($writer){$writer.Dispose()}
     }
 }
 
@@ -7719,23 +7729,7 @@ function Invoke-AtlasTool {
         $runInNew = [bool]$Tool.runsInNewWindow
     }
 
-    if (-not $runInNew) {
-        # Inline (sin nueva ventana): cargar el script en el scope actual y llamar la funcion.
-        $toolPath = Get-AtlasToolScript -FunctionName $function
-        if (-not $toolPath) {
-            $msg = "No se pudo obtener la tool '$function'."
-            [System.Windows.MessageBox]::Show($msg, 'Atlas PC Support', 'OK', 'Error') | Out-Null
-            return
-        }
-        try {
-            . $toolPath
-            & $function
-        } catch {
-            Write-AtlasLog "Error en ${function}: $_" -Level ERROR -Tool 'Runner'
-            [System.Windows.MessageBox]::Show("Error: $_", 'Atlas PC Support', 'OK', 'Error') | Out-Null
-        }
-        return
-    }
+    if (-not $runInNew) { throw 'Inline tool execution is not supported; use a verified isolated child.' }
 
     # ----------- Obtener ruta del script de la tool -----------
     $toolScriptPath = Get-AtlasToolScript -FunctionName $function
@@ -8425,6 +8419,67 @@ function Initialize-AtlasDashboard {
     $Window.Tag = [pscustomobject]@{ DashboardState=$state; DashboardTimer=$timer; DashboardPoll=$poll; DashboardStart=$startRead }
 }
 
+function Initialize-AtlasAvailability {
+    param([Parameter(Mandatory)]$Window,[Parameter(Mandatory)][object[]]$Cards)
+    $state=@{Worker=$null;Pending=$null;StopPending=$null;Closed=$false;Started=$false;StartedAt=[datetime]::MinValue}
+    $collector="function Resolve-AtlasPlatform {"+(Get-Command Resolve-AtlasPlatform -CommandType Function).Definition+"}"+[Environment]::NewLine+
+        "function Get-AtlasPlatformCapabilities {"+(Get-Command Get-AtlasPlatformCapabilities -CommandType Function).Definition+"}"+[Environment]::NewLine+
+        'Get-AtlasPlatformCapabilities -Refresh'
+    $evaluate=(Get-Command Test-AtlasToolAvailability -CommandType Function).ScriptBlock
+    $runLabel=Get-AtlasString 'button.run'
+    $unavailableLabel=if($script:AtlasCurrentLang -eq 'es'){'No disponible'}else{'Unavailable'}
+    $timer=[Windows.Threading.DispatcherTimer]::new()
+    $timer.Interval=[timespan]::FromMilliseconds(150)
+    $start={
+        if($state.Closed -or $state.Started){return}
+        $state.Started=$true;$state.StartedAt=[datetime]::UtcNow
+        $state.Worker=[powershell]::Create()
+        [void]$state.Worker.AddScript($collector)
+        $state.Pending=$state.Worker.BeginInvoke()
+        $timer.Start()
+    }.GetNewClosure()
+    $poll={
+        if($state.Closed){return}
+        if($state.StopPending) {
+            if(-not $state.StopPending.IsCompleted){return}
+            try {$state.Worker.EndStop($state.StopPending)} catch {Write-Verbose $_}
+            $state.Worker.Dispose();$state.Worker=$null;$timer.Stop();return
+        }
+        if(-not $state.Pending -or -not $state.Pending.IsCompleted) {
+            if($state.Started -and ([datetime]::UtcNow-$state.StartedAt).TotalSeconds -gt 20) {
+                $state.StopPending=$state.Worker.BeginStop($null,$null)
+                foreach($entry in $Cards){$entry.Button.Content=$unavailableLabel;$entry.Button.ToolTip='Platform query did not complete. Close/reopen to retry; no tool has run.'}
+            }
+            return
+        }
+        try {
+            $capabilities=@($state.Worker.EndInvoke($state.Pending))|Select-Object -Last 1
+            if(-not $capabilities -or -not $capabilities.PSObject.Properties['Baseline']){throw 'Platform capabilities unavailable.'}
+            foreach($entry in $Cards) {
+                $availability=& $evaluate -Tool $entry.Tool -Capabilities $capabilities
+                $entry.Tool._availability=$availability
+                $entry.Button.IsEnabled=[bool]$availability.Available
+                $entry.Button.Content=if($availability.Available){$runLabel}else{$unavailableLabel}
+                $entry.Button.ToolTip=$availability.Reason
+            }
+        } catch {
+            foreach($entry in $Cards){$entry.Button.Content=$unavailableLabel;$entry.Button.ToolTip='Platform could not be evaluated. No tool has run.'}
+        } finally {$state.Worker.Dispose();$state.Worker=$null;$timer.Stop()}
+    }.GetNewClosure()
+    $timer.Add_Tick($poll)
+    $Window.Add_ContentRendered($start)
+    $Window.Add_Closed({
+        $state.Closed=$true;$timer.Stop()
+        if($state.Worker) {
+            if($state.Pending.IsCompleted){$state.Worker.Dispose();$state.Worker=$null}
+            elseif(-not $state.StopPending){$state.StopPending=$state.Worker.BeginStop($null,$null)}
+        }
+    }.GetNewClosure())
+    # Per-window state permits lifecycle checks without launching tools.
+    if(-not $Window.Tag){$Window.Tag=[pscustomobject]@{}}
+    $Window.Tag|Add-Member -NotePropertyName Availability -NotePropertyValue ([pscustomobject]@{State=$state;Start=$start;Poll=$poll;Timer=$timer})
+}
+
 function Set-AtlasInitialWindowBounds {
     param([Windows.Window]$Window, [Windows.Rect]$WorkArea = [Windows.SystemParameters]::WorkArea)
     if ($WorkArea.IsEmpty -or $WorkArea.Width -le 0 -or $WorkArea.Height -le 0) { throw 'Desktop work area is unavailable.' }
@@ -8498,8 +8553,7 @@ function Show-AtlasWindow {
     # Renderizar tools
     $script:AllCards = @()
     foreach ($tool in $Tools) {
-        try { $tool._availability = Test-AtlasToolAvailability -Tool $tool }
-        catch { $tool._availability = [pscustomobject]@{ Available=$false; Reason="Platform could not be evaluated: $_" } }
+        $tool._availability = [pscustomobject]@{Available=$false;Reason='Checking platform capabilities / Comprobando capacidades'}
         $cardXaml = New-AtlasToolCard -Tool $tool -Branding $Branding -Palette $palette
         [xml]$cardDoc = $cardXaml
         $cardReader = New-Object System.Xml.XmlNodeReader $cardDoc
@@ -8509,6 +8563,7 @@ function Show-AtlasWindow {
         # Walk visual tree robustly para encontrar el boton "Run"
         $btn = Find-AtlasDescendant -Root $card -Type ([System.Windows.Controls.Button])
         if ($btn) {
+            $btn.Content=if($script:AtlasCurrentLang -eq 'es'){'Comprobando...'}else{'Checking...'}
             # Guardar el tool completo en el Tag del boton, evita depender de scope compartido
             $btn.Tag = $tool
             Write-AtlasLog ("Bound click handler: tool={0}" -f $tool.id) -Level DEBUG
@@ -8543,7 +8598,7 @@ function Show-AtlasWindow {
             Write-AtlasLog ("NO se encontro el boton Run para tool={0}" -f $tool.id) -Level ERROR
         }
 
-        $script:AllCards += [pscustomobject]@{ Card = $card; Tool = $tool }
+        $script:AllCards += [pscustomobject]@{ Card = $card; Tool = $tool; Button=$btn }
         [void]$toolsGrid.Items.Add($card)
     }
 
@@ -8658,6 +8713,7 @@ $(Get-AtlasString 'about.description')
     # Populate dashboard + sidebar and start the live refresh timer.
     try {
         Initialize-AtlasDashboard -Window $window
+        Initialize-AtlasAvailability -Window $window -Cards $script:AllCards
     } catch {
         Write-AtlasLog "Initialize-AtlasDashboard failed: $_" -Level WARN -Tool 'UI'
     }

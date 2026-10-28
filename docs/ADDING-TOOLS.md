@@ -73,7 +73,7 @@ Edita `config/tools.json` y añade una entrada:
 | `function` | string | Nombre exacto de la función PowerShell a invocar. |
 | `source` | string | Archivo obligatorio; su nombre debe coincidir con `function`. |
 | `requiresAdmin` | bool | Si `true`, el launcher eleva al ejecutar. |
-| `runsInNewWindow` | bool | Si `true`, abre una nueva ventana de PowerShell. Recomendado para tools TUI. |
+| `runsInNewWindow` | bool | Debe ser true: proceso hijo verificado. Ejecución inline no admitida. |
 | `runtime` | objeto | Motor, versión mínima, arquitectura y bibliotecas; no hay fallback silencioso a otro motor. |
 | `availability` | objeto | Build mínimo, comandos y `disabledReason` cuando no está disponible. Se vuelve a comprobar en el hijo. |
 | `dependencies` | array | Lista de dependencias externas (`"FastCopy"`, `"winget"`, etc.). |
@@ -156,9 +156,9 @@ Si tu tool usa un binario externo (p. ej. `CrystalDiskInfo.exe`):
        Write-Host "No se encontró CrystalDiskInfo." -ForegroundColor Red
        return
    }
-   $result = Invoke-AtlasNativeProcess -FilePath $exe -Arguments '/Json reporte.json' -TimeoutSeconds 120
-   if ($result.State -ne 'Correct') { throw "Native operation failed: $($result.State), exit $($result.ExitCode)" }
-   # Comprobar además el estado/artefacto esperado: código cero no lo prueba todo.
+   # Resolver no ejecuta la herramienta. Contrastar CLI con versión y proveedor.
+   # CrystalDiskInfo necesita CdiResource; no hay aquí un contrato universal /Json.
+   Write-Host "Ejecutable observado: $exe"
    ```
 
 ## Convenciones de código
@@ -170,3 +170,7 @@ Si tu tool usa un binario externo (p. ej. `CrystalDiskInfo.exe`):
 - **Errores**: captúralos con `try/catch` y escribe a log con `Write-AtlasLog`.
 - **Informes compartidos**: usar `Write-AtlasShareableReport`; no redactar backups que deben restaurar estado. Revisión humana del texto libre antes de compartir.
 - **No uses** `exit`, `$Host.SetShouldExit()`, ni mates procesos del host.
+- **Procesos verbosos**: el ejecutor conserva colas de 64 Ki caracteres por canal.
+  Revisa StdoutTruncated/StderrTruncated y usa OutputLogPath nuevo para salida
+  completa explícita. Ese log puede contener datos sensibles. No interpretar una
+  cola truncada como documento JSON/CSV completo. Estado nativo y timeout se conservan.

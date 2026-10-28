@@ -566,6 +566,67 @@ function Initialize-AtlasDashboard {
     $Window.Tag = [pscustomobject]@{ DashboardState=$state; DashboardTimer=$timer; DashboardPoll=$poll; DashboardStart=$startRead }
 }
 
+function Initialize-AtlasAvailability {
+    param([Parameter(Mandatory)]$Window,[Parameter(Mandatory)][object[]]$Cards)
+    $state=@{Worker=$null;Pending=$null;StopPending=$null;Closed=$false;Started=$false;StartedAt=[datetime]::MinValue}
+    $collector="function Resolve-AtlasPlatform {"+(Get-Command Resolve-AtlasPlatform -CommandType Function).Definition+"}"+[Environment]::NewLine+
+        "function Get-AtlasPlatformCapabilities {"+(Get-Command Get-AtlasPlatformCapabilities -CommandType Function).Definition+"}"+[Environment]::NewLine+
+        'Get-AtlasPlatformCapabilities -Refresh'
+    $evaluate=(Get-Command Test-AtlasToolAvailability -CommandType Function).ScriptBlock
+    $runLabel=Get-AtlasString 'button.run'
+    $unavailableLabel=if($script:AtlasCurrentLang -eq 'es'){'No disponible'}else{'Unavailable'}
+    $timer=[Windows.Threading.DispatcherTimer]::new()
+    $timer.Interval=[timespan]::FromMilliseconds(150)
+    $start={
+        if($state.Closed -or $state.Started){return}
+        $state.Started=$true;$state.StartedAt=[datetime]::UtcNow
+        $state.Worker=[powershell]::Create()
+        [void]$state.Worker.AddScript($collector)
+        $state.Pending=$state.Worker.BeginInvoke()
+        $timer.Start()
+    }.GetNewClosure()
+    $poll={
+        if($state.Closed){return}
+        if($state.StopPending) {
+            if(-not $state.StopPending.IsCompleted){return}
+            try {$state.Worker.EndStop($state.StopPending)} catch {Write-Verbose $_}
+            $state.Worker.Dispose();$state.Worker=$null;$timer.Stop();return
+        }
+        if(-not $state.Pending -or -not $state.Pending.IsCompleted) {
+            if($state.Started -and ([datetime]::UtcNow-$state.StartedAt).TotalSeconds -gt 20) {
+                $state.StopPending=$state.Worker.BeginStop($null,$null)
+                foreach($entry in $Cards){$entry.Button.Content=$unavailableLabel;$entry.Button.ToolTip='Platform query did not complete. Close/reopen to retry; no tool has run.'}
+            }
+            return
+        }
+        try {
+            $capabilities=@($state.Worker.EndInvoke($state.Pending))|Select-Object -Last 1
+            if(-not $capabilities -or -not $capabilities.PSObject.Properties['Baseline']){throw 'Platform capabilities unavailable.'}
+            foreach($entry in $Cards) {
+                $availability=& $evaluate -Tool $entry.Tool -Capabilities $capabilities
+                $entry.Tool._availability=$availability
+                $entry.Button.IsEnabled=[bool]$availability.Available
+                $entry.Button.Content=if($availability.Available){$runLabel}else{$unavailableLabel}
+                $entry.Button.ToolTip=$availability.Reason
+            }
+        } catch {
+            foreach($entry in $Cards){$entry.Button.Content=$unavailableLabel;$entry.Button.ToolTip='Platform could not be evaluated. No tool has run.'}
+        } finally {$state.Worker.Dispose();$state.Worker=$null;$timer.Stop()}
+    }.GetNewClosure()
+    $timer.Add_Tick($poll)
+    $Window.Add_ContentRendered($start)
+    $Window.Add_Closed({
+        $state.Closed=$true;$timer.Stop()
+        if($state.Worker) {
+            if($state.Pending.IsCompleted){$state.Worker.Dispose();$state.Worker=$null}
+            elseif(-not $state.StopPending){$state.StopPending=$state.Worker.BeginStop($null,$null)}
+        }
+    }.GetNewClosure())
+    # Per-window state permits lifecycle checks without launching tools.
+    if(-not $Window.Tag){$Window.Tag=[pscustomobject]@{}}
+    $Window.Tag|Add-Member -NotePropertyName Availability -NotePropertyValue ([pscustomobject]@{State=$state;Start=$start;Poll=$poll;Timer=$timer})
+}
+
 function Set-AtlasInitialWindowBounds {
     param([Windows.Window]$Window, [Windows.Rect]$WorkArea = [Windows.SystemParameters]::WorkArea)
     if ($WorkArea.IsEmpty -or $WorkArea.Width -le 0 -or $WorkArea.Height -le 0) { throw 'Desktop work area is unavailable.' }
@@ -639,8 +700,7 @@ function Show-AtlasWindow {
     # Renderizar tools
     $script:AllCards = @()
     foreach ($tool in $Tools) {
-        try { $tool._availability = Test-AtlasToolAvailability -Tool $tool }
-        catch { $tool._availability = [pscustomobject]@{ Available=$false; Reason="Platform could not be evaluated: $_" } }
+        $tool._availability = [pscustomobject]@{Available=$false;Reason='Checking platform capabilities / Comprobando capacidades'}
         $cardXaml = New-AtlasToolCard -Tool $tool -Branding $Branding -Palette $palette
         [xml]$cardDoc = $cardXaml
         $cardReader = New-Object System.Xml.XmlNodeReader $cardDoc
@@ -650,6 +710,7 @@ function Show-AtlasWindow {
         # Walk visual tree robustly para encontrar el boton "Run"
         $btn = Find-AtlasDescendant -Root $card -Type ([System.Windows.Controls.Button])
         if ($btn) {
+            $btn.Content=if($script:AtlasCurrentLang -eq 'es'){'Comprobando...'}else{'Checking...'}
             # Guardar el tool completo en el Tag del boton, evita depender de scope compartido
             $btn.Tag = $tool
             Write-AtlasLog ("Bound click handler: tool={0}" -f $tool.id) -Level DEBUG
@@ -684,7 +745,7 @@ function Show-AtlasWindow {
             Write-AtlasLog ("NO se encontro el boton Run para tool={0}" -f $tool.id) -Level ERROR
         }
 
-        $script:AllCards += [pscustomobject]@{ Card = $card; Tool = $tool }
+        $script:AllCards += [pscustomobject]@{ Card = $card; Tool = $tool; Button=$btn }
         [void]$toolsGrid.Items.Add($card)
     }
 
@@ -799,6 +860,7 @@ $(Get-AtlasString 'about.description')
     # Populate dashboard + sidebar and start the live refresh timer.
     try {
         Initialize-AtlasDashboard -Window $window
+        Initialize-AtlasAvailability -Window $window -Cards $script:AllCards
     } catch {
         Write-AtlasLog "Initialize-AtlasDashboard failed: $_" -Level WARN -Tool 'UI'
     }

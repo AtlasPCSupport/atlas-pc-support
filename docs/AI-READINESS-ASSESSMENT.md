@@ -29,8 +29,8 @@ The audit is read-only and dependency-free. It checks:
 - Storage type and health via `Get-PhysicalDisk` or WMI fallback.
 - Local AI stack presence: Ollama, Python and winget.
 - Basic connectivity to Ollama.com, Hugging Face and OpenAI API.
-- Suggested Ollama models and copy/paste `ollama pull` commands based on detected RAM/VRAM.
-- Previous-scan delta for the same client.
+- Dated example Ollama models and copy/paste commands when essential inventory is complete; not a benchmark or performance guarantee. No model is downloaded automatically.
+- Previous-scan delta only when the operator explicitly reuses the same opaque report ID; client names do not select folders.
 
 ## Reports
 

@@ -1,0 +1,124 @@
+{
+  "MeasuredDateLima": "2026-10-27",
+  "Scope": "Local initialization and verified bundle only; fresh processes, OS cache not flushed; excludes network, power-on and all cards ready",
+  "Windows10Qualified": false,
+  "DefenderExclusionsAdded": false,
+  "BeforeAndAfter": [
+    {
+      "Set": "before",
+      "Samples": [
+        {
+          "Version": "1.5.15",
+          "Runtime": "5.1.26100.9711",
+          "VerifiedAtMs": 890.4100000000001,
+          "BeforeWindowMs": 1195.4484,
+          "FirstPaintMs": 6038.7877,
+          "DispatcherIdleMs": 6093.136600000001,
+          "ToolsLaunched": 0,
+          "Scope": "Local verified code initialization; new process, OS cache not flushed; excludes network/bootstrap download"
+        },
+        {
+          "Version": "1.5.15",
+          "Runtime": "5.1.26100.9711",
+          "VerifiedAtMs": 615.5028,
+          "BeforeWindowMs": 930.7003000000001,
+          "FirstPaintMs": 5791.179300000001,
+          "DispatcherIdleMs": 5831.346500000001,
+          "ToolsLaunched": 0,
+          "Scope": "Local verified code initialization; new process, OS cache not flushed; excludes network/bootstrap download"
+        },
+        {
+          "Version": "1.5.15",
+          "Runtime": "5.1.26100.9711",
+          "VerifiedAtMs": 541.1717,
+          "BeforeWindowMs": 797.7622,
+          "FirstPaintMs": 5431.3718,
+          "DispatcherIdleMs": 5477.3727,
+          "ToolsLaunched": 0,
+          "Scope": "Local verified code initialization; new process, OS cache not flushed; excludes network/bootstrap download"
+        },
+        {
+          "Version": "1.5.15",
+          "Runtime": "5.1.26100.9711",
+          "VerifiedAtMs": 557.8226000000001,
+          "BeforeWindowMs": 817.2516,
+          "FirstPaintMs": 5378.8366000000005,
+          "DispatcherIdleMs": 5423.7106,
+          "ToolsLaunched": 0,
+          "Scope": "Local verified code initialization; new process, OS cache not flushed; excludes network/bootstrap download"
+        },
+        {
+          "Version": "1.5.15",
+          "Runtime": "5.1.26100.9711",
+          "VerifiedAtMs": 553.207,
+          "BeforeWindowMs": 813.3169,
+          "FirstPaintMs": 6157.9026,
+          "DispatcherIdleMs": 6198.1101,
+          "ToolsLaunched": 0,
+          "Scope": "Local verified code initialization; new process, OS cache not flushed; excludes network/bootstrap download"
+        }
+      ],
+      "MedianFirstPaintMs": 5791.179300000001,
+      "P95NearestRankFirstPaintMs": 6157.9026,
+      "MedianDispatcherIdleMs": 5831.346500000001
+    },
+    {
+      "Set": "after",
+      "Samples": [
+        {
+          "Version": "1.5.16",
+          "Runtime": "5.1.26100.9711",
+          "VerifiedAtMs": 1023.7341,
+          "BeforeWindowMs": 1322.6546,
+          "FirstPaintMs": 2594.2535000000003,
+          "DispatcherIdleMs": 2665.4601000000002,
+          "ToolsLaunched": 0,
+          "Scope": "Local verified code initialization; new process, OS cache not flushed; excludes network/bootstrap download"
+        },
+        {
+          "Version": "1.5.16",
+          "Runtime": "5.1.26100.9711",
+          "VerifiedAtMs": 696.9988000000001,
+          "BeforeWindowMs": 992.2581,
+          "FirstPaintMs": 2329.2178,
+          "DispatcherIdleMs": 2368.4782,
+          "ToolsLaunched": 0,
+          "Scope": "Local verified code initialization; new process, OS cache not flushed; excludes network/bootstrap download"
+        },
+        {
+          "Version": "1.5.16",
+          "Runtime": "5.1.26100.9711",
+          "VerifiedAtMs": 652.3844,
+          "BeforeWindowMs": 934.5247,
+          "FirstPaintMs": 2240.7324000000003,
+          "DispatcherIdleMs": 2272.5494000000003,
+          "ToolsLaunched": 0,
+          "Scope": "Local verified code initialization; new process, OS cache not flushed; excludes network/bootstrap download"
+        },
+        {
+          "Version": "1.5.16",
+          "Runtime": "5.1.26100.9711",
+          "VerifiedAtMs": 728.6902,
+          "BeforeWindowMs": 1053.0175000000002,
+          "FirstPaintMs": 2393.2685,
+          "DispatcherIdleMs": 2443.3426,
+          "ToolsLaunched": 0,
+          "Scope": "Local verified code initialization; new process, OS cache not flushed; excludes network/bootstrap download"
+        },
+        {
+          "Version": "1.5.16",
+          "Runtime": "5.1.26100.9711",
+          "VerifiedAtMs": 633.5740000000001,
+          "BeforeWindowMs": 923.7338000000001,
+          "FirstPaintMs": 2178.8563,
+          "DispatcherIdleMs": 2224.1889,
+          "ToolsLaunched": 0,
+          "Scope": "Local verified code initialization; new process, OS cache not flushed; excludes network/bootstrap download"
+        }
+      ],
+      "MedianFirstPaintMs": 2329.2178,
+      "P95NearestRankFirstPaintMs": 2594.2535000000003,
+      "MedianDispatcherIdleMs": 2368.4782
+    }
+  ]
+}

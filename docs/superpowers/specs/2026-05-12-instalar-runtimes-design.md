@@ -1,5 +1,11 @@
 # Install Runtimes — Design Spec
 
+> Histórico, sustituido: este diseño de mayo no es el contrato vigente ni un
+> plan pendiente autorizado. Store registra paquetes existentes y respeta la
+> edición/políticas; no hay cascada de descarga/instalación universal. Runtimes
+> usa selección y comprobaciones de capacidades. Consultar [matriz actual](../../SUPPORT-MATRIX.md)
+> y [trabajo/aceptación](../../TRABAJO-AUTONOMO-Y-ACEPTACION.md).
+
 ## Goal
 
 Add a new tool `Invoke-InstalarRuntimes` to the **Software** tab that installs the most common Windows runtime dependencies in bulk — Visual C++ Redistributables, .NET Framework 3.5, DirectX, and gaming-specific packages.

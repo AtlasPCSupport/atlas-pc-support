@@ -1,5 +1,11 @@
 # Install Runtimes Implementation Plan
 
+> Histórico, sustituido: este diseño de mayo no es el contrato vigente ni un
+> plan pendiente autorizado. Store registra paquetes existentes y respeta la
+> edición/políticas; no hay cascada de descarga/instalación universal. Runtimes
+> usa selección y comprobaciones de capacidades. Consultar [matriz actual](../../SUPPORT-MATRIX.md)
+> y [trabajo/aceptación](../../TRABAJO-AUTONOMO-Y-ACEPTACION.md).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Create `Invoke-InstalarRuntimes` — a self-contained PowerShell tool that installs common Windows runtime dependencies (VC++ Redistributables, .NET 3.5, DirectX, XNA, OpenAL) in two modes: Minimum and Full/Gaming.

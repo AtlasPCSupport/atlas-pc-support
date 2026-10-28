@@ -1,5 +1,11 @@
 # Install Microsoft Store — Design Spec
 
+> Histórico, sustituido: este diseño de mayo no es el contrato vigente ni un
+> plan pendiente autorizado. Store registra paquetes existentes y respeta la
+> edición/políticas; no hay cascada de descarga/instalación universal. Runtimes
+> usa selección y comprobaciones de capacidades. Consultar [matriz actual](../../SUPPORT-MATRIX.md)
+> y [trabajo/aceptación](../../TRABAJO-AUTONOMO-Y-ACEPTACION.md).
+
 ## Goal
 
 Add a new tool `Invoke-InstalarMicrosoftStore` to the **Software** tab that installs the Microsoft Store on systems where it is absent by default (Windows 10/11 IoT Enterprise LTSC, corporate images, etc.).

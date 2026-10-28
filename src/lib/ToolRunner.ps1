@@ -200,23 +200,7 @@ function Invoke-AtlasTool {
         $runInNew = [bool]$Tool.runsInNewWindow
     }
 
-    if (-not $runInNew) {
-        # Inline (sin nueva ventana): cargar el script en el scope actual y llamar la funcion.
-        $toolPath = Get-AtlasToolScript -FunctionName $function
-        if (-not $toolPath) {
-            $msg = "No se pudo obtener la tool '$function'."
-            [System.Windows.MessageBox]::Show($msg, 'Atlas PC Support', 'OK', 'Error') | Out-Null
-            return
-        }
-        try {
-            . $toolPath
-            & $function
-        } catch {
-            Write-AtlasLog "Error en ${function}: $_" -Level ERROR -Tool 'Runner'
-            [System.Windows.MessageBox]::Show("Error: $_", 'Atlas PC Support', 'OK', 'Error') | Out-Null
-        }
-        return
-    }
+    if (-not $runInNew) { throw 'Inline tool execution is not supported; use a verified isolated child.' }
 
     # ----------- Obtener ruta del script de la tool -----------
     $toolScriptPath = Get-AtlasToolScript -FunctionName $function

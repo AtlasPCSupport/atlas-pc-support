@@ -84,3 +84,19 @@ respuesta, métodos, caché y compatibilidad del onboarding. CI añade `npm audi
 una compilación Wrangler sin despliegue. La verificación pública posterior a la
 promoción es de lectura; el ensayo online/offline usa `-NoLaunch` y carpetas
 temporales. No equivale a una homologación de Windows 10 o medios FAT/exFAT reales.
+
+## Medición de primer pintado
+
+Desde la raíz, en Windows, tras build y sobre una copia de confianza:
+
+```powershell
+powershell -NoProfile -STA -ExecutionPolicy RemoteSigned -File tests/Measure-AtlasStartup.ps1 -RepoRoot (Get-Location).Path -Output "$env:TEMP\atlas-startup.json"
+```
+
+Abre una ventana y la cierra automáticamente después del primer pintado/dispatcher
+idle; no pulsa herramientas. Valida el bundle y usa las definiciones generadas,
+instrumentando solo ese proceso. Incluye inicialización local y verificación,
+excluye red/bootstrap, inicio del proceso PowerShell y arranque desde apagado.
+No vacía cachés. Las tarjetas siguen comprobándose en segundo plano: ventana
+dibujada no significa todas las herramientas listas. Repetir secuencialmente y
+guardar los resultados para comparar; no ejecutar ventanas concurrentes.
