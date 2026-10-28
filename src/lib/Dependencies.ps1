@@ -79,7 +79,9 @@ function Resolve-AtlasDependency {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)][ValidatePattern('^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$')][string]$Name,
-        [switch]$InstallIfMissing
+        [switch]$InstallIfMissing,
+        [string[]]$AdditionalSearchPaths = @(),
+        [string[]]$CommandNames = @()
     )
 
     if (-not $script:AtlasDepsRegistry.ContainsKey($Name)) {
@@ -88,16 +90,21 @@ function Resolve-AtlasDependency {
     }
     $dep = $script:AtlasDepsRegistry[$Name]
 
-    foreach ($p in $dep.SearchPaths) {
+    foreach ($p in @($AdditionalSearchPaths) + @($dep.SearchPaths)) {
+        if ([string]::IsNullOrWhiteSpace($p)) { continue }
         $expanded = Expand-AtlasPath $p
         foreach($file in @(Get-ChildItem -Path $expanded -File -ErrorAction SilentlyContinue | Sort-Object FullName)) {
             $candidate=Get-AtlasDependencyCandidate -Name $Name -Path $file.FullName
             if($candidate){return $candidate}
         }
     }
-    foreach($command in @(Get-Command $dep.ExecutableName -CommandType Application -ErrorAction SilentlyContinue)) {
-        $candidate=Get-AtlasDependencyCandidate -Name $Name -Path $command.Source -Origin PATH
-        if($candidate){return $candidate}
+    foreach($commandName in @($dep.ExecutableName) + @($CommandNames)) {
+        if ([string]::IsNullOrWhiteSpace($commandName)) { continue }
+        foreach($command in @(Get-Command $commandName -CommandType Application -ErrorAction SilentlyContinue)) {
+            if(-not $command -or -not $command.Source){continue}
+            $candidate=Get-AtlasDependencyCandidate -Name $Name -Path $command.Source -Origin PATH
+            if($candidate){return $candidate}
+        }
     }
 
     if (-not $InstallIfMissing) {
@@ -105,16 +112,17 @@ function Resolve-AtlasDependency {
         return $null
     }
 
-    if ($dep.WingetId -and (Get-Command 'winget' -ErrorAction SilentlyContinue)) {
+    $winget = if ($dep.WingetId) { Get-AtlasWingetPath } else { $null }
+    if ($winget) {
         Write-AtlasLog "Instalando $Name vía winget ($($dep.WingetId))" -Tool 'Deps'
         try {
-            $result = Invoke-AtlasNativeProcess -FilePath 'winget.exe' -ArgumentList @('install','--id',$dep.WingetId,'--exact','--source','winget','--accept-source-agreements','--accept-package-agreements','--silent') -TimeoutSeconds 1800
+            $result = Invoke-AtlasNativeProcess -FilePath $winget -ArgumentList @('install','--id',$dep.WingetId,'--exact','--source','winget','--accept-source-agreements','--accept-package-agreements','--silent') -TimeoutSeconds 1800
             if ($result.State -ne 'Correct') { Write-AtlasLog "Dependency installation $($result.State), exit $($result.ExitCode); no second installer is started." -Level ERROR -Tool Deps; return $null }
         } catch {
             Write-AtlasLog "winget failed: $_; no second installer is started." -Level ERROR -Tool Deps
             return $null
         }
-        return Resolve-AtlasDependency -Name $Name
+        return Resolve-AtlasDependency -Name $Name -AdditionalSearchPaths $AdditionalSearchPaths -CommandNames $CommandNames
     }
 
     # Direct download is allowed only when no package-manager attempt was made.
@@ -134,7 +142,7 @@ function Resolve-AtlasDependency {
                 $result = Invoke-AtlasNativeProcess -FilePath $installerFile -ArgumentList @('/EXTRACT64','/NOSUBDIR','/AGREE_LICENSE',("/DIR=$targetDir")) -TimeoutSeconds 180
                 if ($result.State -ne 'Correct') { throw "Dependency extraction $($result.State), exit $($result.ExitCode). No alternative installer was started." }
                 Remove-Item -LiteralPath $installerFile -ErrorAction Stop
-                return Resolve-AtlasDependency -Name $Name
+                return Resolve-AtlasDependency -Name $Name -AdditionalSearchPaths $AdditionalSearchPaths -CommandNames $CommandNames
             }
         } catch {
             Write-AtlasLog "Descarga directa falló: $_" -Level WARN -Tool 'Deps'

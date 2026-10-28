@@ -161,6 +161,13 @@ Si tu tool usa un binario externo (p. ej. `CrystalDiskInfo.exe`):
    Write-Host "Ejecutable observado: $exe"
    ```
 
+Los candidatos locales/offline adicionales se pasan mediante
+`-AdditionalSearchPaths`; los nombres alternativos de PATH, mediante
+`-CommandNames`. Usar el mismo resolver para todos ellos, sin aceptar archivos
+por otra ruta después de un fallo de instalación. Resolver una ruta no certifica
+licencia, compatibilidad ni la versión instalada. Ejecutar aplicaciones con
+recursos desde su directorio; no copiar solamente su EXE.
+
 ## Convenciones de código
 
 - **Encoding de fuentes**: UTF-8/LF. El build añade BOM al launcher de archivo y al wrapper 5.1; no modifica los scripts verificados.

@@ -163,7 +163,7 @@ function Get-TPMStatus {
         $result.HasTPM = $tpm.TpmPresent
         $result.IsReady = $tpm.TpmReady
         try {
-            $tpmWMI = Get-CimInstance -Namespace "root\cimv2\Security\MicrosoftTpm" -ClassName Win32_Tpm -ErrorAction Stop
+            $tpmWMI = Get-CimInstance -OperationTimeoutSec 10 -Namespace "root\cimv2\Security\MicrosoftTpm" -ClassName Win32_Tpm -ErrorAction Stop
             if ($tpmWMI.SpecVersion) { $result.Version = ($tpmWMI.SpecVersion -split ',')[0].Trim() }
         } catch { }
         if ($result.HasTPM -and $result.IsReady) { $result.Summary = "TPM $($result.Version) presente y listo" }
@@ -301,7 +301,7 @@ function Test-PreEncryptionHealth {
     
     # 1. BATERIA (critico en laptops)
     Write-Host "    [1/5] Battery..." -NoNewline -ForegroundColor DarkGray
-    $battery = Get-CimInstance Win32_Battery -ErrorAction SilentlyContinue
+    $battery = Get-CimInstance -OperationTimeoutSec 10 Win32_Battery -ErrorAction SilentlyContinue
     if ($battery) {
         $charge = $battery.EstimatedChargeRemaining
         $plugged = $battery.BatteryStatus -eq 2
@@ -323,7 +323,7 @@ function Test-PreEncryptionHealth {
     
     # 2. ESPACIO EN DISCO
     Write-Host "    [2/5] Disk space..." -NoNewline -ForegroundColor DarkGray
-    $logDisk = Get-CimInstance Win32_LogicalDisk -ErrorAction SilentlyContinue | Where-Object { $_.DeviceID -eq $MountPoint }
+    $logDisk = Get-CimInstance -OperationTimeoutSec 10 Win32_LogicalDisk -ErrorAction SilentlyContinue | Where-Object { $_.DeviceID -eq $MountPoint }
     if ($logDisk) {
         $freeGB = [math]::Round($logDisk.FreeSpace / 1GB, 1)
         $totalGB = [math]::Round($logDisk.Size / 1GB, 1)

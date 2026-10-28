@@ -33,7 +33,7 @@ function Invoke-InstalarRuntimes {
         $code=$install.ExitCode
         if ($install.State -ne 'Correct') { Write-Warning "$id $($install.State), native code $code. Inspect any partial installation before retrying."; continue }
         $verification = Invoke-AtlasNativeProcess -FilePath $winget -ArgumentList @('list','--id',$id,'--exact','--source','winget','--accept-source-agreements') -TimeoutSeconds 60
-        if ($verification.State -ne 'Correct' -or $verification.Stdout -notmatch [regex]::Escape($id)) { Write-Warning "${id}: operation returned $code but presence could not be verified." }
+        if ($verification.State -ne 'Correct' -or $verification.StdoutTruncated -or $verification.Stdout -notmatch [regex]::Escape($id)) { Write-Warning "${id}: operation returned $code but presence could not be verified." }
         else { Write-Host "$id present; native result $code. Review version/support for the requesting application." }
     }
     Wait-AtlasExit

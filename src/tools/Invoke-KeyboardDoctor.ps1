@@ -1,4 +1,4 @@
-function Invoke-KeyboardDoctor {
+﻿function Invoke-KeyboardDoctor {
     <#
     .SYNOPSIS
       Keyboard Doctor: safe ghost-typing / keyboard-fault triage.
@@ -285,12 +285,12 @@ function Invoke-KeyboardDoctor {
 
     function Get-KDSystemInfo {
         try {
-            $cs = Get-CimInstance Win32_ComputerSystem -ErrorAction Stop
+            $cs = Get-CimInstance -OperationTimeoutSec 10 Win32_ComputerSystem -ErrorAction Stop
             $script:KeyboardDoctorReport.Manufacturer = [string]$cs.Manufacturer
             $script:KeyboardDoctorReport.Model = [string]$cs.Model
         } catch {}
         try {
-            $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
+            $os = Get-CimInstance -OperationTimeoutSec 10 Win32_OperatingSystem -ErrorAction Stop
             $script:KeyboardDoctorReport.OS = ('{0} {1}' -f $os.Caption, $os.Version)
         } catch {}
     }

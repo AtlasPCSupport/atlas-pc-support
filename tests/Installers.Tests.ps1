@@ -165,6 +165,7 @@ Describe 'Dependency failure does not launch an alternative installer' {
         . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
         function Write-AtlasLog { param($Message,$Tool,$Level) }
         function Expand-AtlasPath { param($Path) $Path }
+        function Get-AtlasWingetPath { 'fixture-winget.exe' }
         function Invoke-AtlasNativeProcess { [CmdletBinding()]param($FilePath,$ArgumentList,$TimeoutSeconds)throw 'Real installation blocked' }
         function Invoke-WebRequest { [CmdletBinding()]param($Uri,$OutFile,$TimeoutSec,[switch]$UseBasicParsing)throw 'Network blocked' }
         foreach($name in @('Resolve-AtlasDependency','Resolve-SymlinkPath','Test-AtlasDependencyHash','Get-AtlasDependencyCandidate')){. (Get-TestFunction $script:RepoRoot 'src/lib/Dependencies.ps1' $name)}
@@ -172,7 +173,7 @@ Describe 'Dependency failure does not launch an alternative installer' {
     BeforeEach {
         $script:Candidate=Join-Path $TestDrive ('dependency-'+[guid]::NewGuid().ToString('N')+'.exe')
         $script:AtlasDepsRegistry=@{Fixture=@{SearchPaths=@($script:Candidate);ExecutableName='fixture-dependency.exe';WingetId='Vendor.Fixture';DownloadUrl='https://example.invalid/installer.exe'}}
-        Mock Get-Command {if($Name -eq 'winget'){[pscustomobject]@{Source='winget.exe'}}}
+        Mock Get-Command { $null }
         Mock Invoke-WebRequest {throw 'Network must not be reached after an installer attempt'}
         Mock Invoke-AtlasNativeProcess {[pscustomobject]@{State='Failed';ExitCode=1603}}
     }

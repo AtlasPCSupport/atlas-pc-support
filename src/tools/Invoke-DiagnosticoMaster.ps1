@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Invoke-DiagnosticoMaster  ->  Full System Report
 # i18n: Option A (en default + es secondary). Function name kept
 # as Invoke-DiagnosticoMaster for tools.json compatibility.
@@ -1259,30 +1259,9 @@ function Ensure-Dir {
     }
 }
 
-function Find-FirstExistingPath {
-    param([string[]]$Candidates)
-    foreach ($c in @($Candidates)) {
-        if ([string]::IsNullOrWhiteSpace($c)) { continue }
-        $p = [Environment]::ExpandEnvironmentVariables($c)
-        if (Test-Path -LiteralPath $p) { return $p }
-    }
-    return $null
-}
 
-function Find-ToolFileInRoots {
-    param(
-        [string[]]$Roots,
-        [string[]]$Names
-    )
-    foreach ($root in @($Roots)) {
-        if ([string]::IsNullOrWhiteSpace($root) -or -not (Test-Path -LiteralPath $root)) { continue }
-        foreach ($name in @($Names)) {
-            $hit = Get-ChildItem -Path $root -Filter $name -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ($hit) { return $hit.FullName }
-        }
-    }
-    return $null
-}
+
+
 
 function Get-OfflineDiagToolsRoot {
     if ([string]::IsNullOrWhiteSpace($env:ATLAS_OFFLINE_ROOT)) { return $null }
@@ -1291,277 +1270,43 @@ function Get-OfflineDiagToolsRoot {
     return $null
 }
 
-function Resolve-DiagDep {
-    param(
-        [Parameter(Mandatory)] [string]$WingetId,
-        [Parameter(Mandatory)] [string[]]$InstallPaths,
-        [string[]]$CommandNames
-    )
 
-    $resolved = Find-FirstExistingPath -Candidates $InstallPaths
-    $winget = if (-not $resolved) { Get-AtlasWingetPath } else { $null }
-    if (-not $resolved -and $winget) {
-        $installation = Invoke-AtlasNativeProcess -FilePath $winget -ArgumentList @('install','--id',$WingetId,'--exact','--source','winget','--accept-source-agreements','--accept-package-agreements','--silent') -TimeoutSeconds 600 -SuccessCodes @(0,-1978335189,-1978335135)
-        if ($installation.State -ne 'Correct') {
-            throw "Dependency $WingetId installation: $($installation.State) (exit $($installation.ExitCode)). Inspect before retrying."
-        }
-        if ($CommandNames) {
-            foreach ($cmdName in $CommandNames) {
-                $cmd = Get-Command $cmdName -ErrorAction SilentlyContinue
-                if ($cmd) { $resolved = $cmd.Source; break }
-            }
-        }
-        if (-not $resolved) {
-            $resolved = Find-FirstExistingPath -Candidates $InstallPaths
-        }
-    }
 
-    if ($resolved) {
-        $resolved = try {
-            $item = Get-Item -LiteralPath $resolved -ErrorAction Stop
-            if ($item.Attributes -match "ReparsePoint") {
-                if ($item.LinkTarget) { $item.LinkTarget }
-                elseif ($item.Target) {
-                    if ($item.Target -is [array]) { $item.Target[0] } else { $item.Target }
-                } else { $resolved }
-            } else { $resolved }
-        } catch { $resolved }
-    }
-    return $resolved
-}
 
-function Stage-DiagDep {
-    param(
-        [Parameter(Mandatory)] [string]$Source,
-        [Parameter(Mandatory)] [string]$ToolsDir,
-        [string]$TargetName
-    )
-    if (-not (Test-Path -LiteralPath $Source)) { return $null }
-    Ensure-Dir -Path $ToolsDir
-    $name = if ($TargetName) { $TargetName } else { Split-Path -Leaf $Source }
-    $dst = Join-Path $ToolsDir $name
-    Copy-Item -LiteralPath $Source -Destination $dst -Force
-    return $dst
+
+function Format-DiagnosticQuantity {
+    param($Value,[double]$Divisor=1,[int]$Decimals=0,[string]$Unit)
+    if($null -eq $Value -or $Divisor -le 0){return 'N/D'}
+    try {
+        $number=[double]$Value
+        if($number -le 0 -or [double]::IsNaN($number) -or [double]::IsInfinity($number)){return 'N/D'}
+        return ('{0} {1}' -f [math]::Round($number/$Divisor,$Decimals),$Unit).Trim()
+    } catch {return 'N/D'}
 }
 
 function Resolve-DiagnosticoMasterTools {
-    param(
-        [Parameter(Mandatory)] [string]$ToolsDir,
-        [string]$LegacyAppsDir,
-        [string]$SelMode = "3"
-    )
-
-    Ensure-Dir -Path $ToolsDir
-
-    # Clean up legacy standalone files in ToolsDir that cause crashes due to missing resources
-    foreach ($file in @('DiskInfo64.exe', 'DiskInfo32.exe', 'DiskMark64.exe')) {
-        $legacyPath = Join-Path $ToolsDir $file
-        if (Test-Path -LiteralPath $legacyPath) {
-            Remove-Item -LiteralPath $legacyPath -Force -ErrorAction SilentlyContinue
-        }
+    param([Parameter(Mandatory)][string]$ToolsDir,[string]$LegacyAppsDir,[string]$SelMode='3')
+    $roots=@($ToolsDir,$LegacyAppsDir,(Get-OfflineDiagToolsRoot))
+    if($env:ATLAS_OFFLINE_ROOT){$roots+=Join-Path $env:ATLAS_OFFLINE_ROOT 'apps';$roots+=Join-Path $env:ATLAS_OFFLINE_ROOT 'deps\GPUCheck\tools'}
+    $files=[ordered]@{
+        CPUZ=@('cpuz_x64.exe','cpuz_x32.exe','cpuz.exe')
+        BlueScreenView=@('BlueScreenView.exe')
+        BatteryInfoView=@('BatteryInfoView.exe')
+        CrystalDiskInfo=@('CrystalDiskInfo\DiskInfo64.exe','CrystalDiskInfo\DiskInfo32.exe','DiskInfo64.exe','DiskInfo32.exe')
+        CrystalDiskMark=@('CrystalDiskMark\DiskMark64.exe','DiskMark64.exe')
+        HWiNFO=@('HWiNFO64.exe')
     }
-
-    $offlineRoot = Get-OfflineDiagToolsRoot
-    if ($offlineRoot) {
-        # Copy standard single-file tools (added HWiNFO64.exe)
-        foreach ($name in @('cpuz_x64.exe', 'cpuz_x32.exe', 'cpuz.exe', 'BlueScreenView.exe', 'BatteryInfoView.exe', 'HWiNFO64.exe')) {
-            $src = Join-Path $offlineRoot $name
-            if (Test-Path -LiteralPath $src) {
-                Copy-Item -LiteralPath $src -Destination (Join-Path $ToolsDir $name) -Force
-            }
-        }
-        # Copy CrystalDiskInfo folder recursively (preserves CdiResource folder and avoids crashes)
-        $srcCdi = Join-Path $offlineRoot 'CrystalDiskInfo'
-        if (Test-Path -LiteralPath $srcCdi) {
-            $destCdi = Join-Path $ToolsDir 'CrystalDiskInfo'
-            Ensure-Dir -Path $destCdi
-            Copy-Item -Path (Join-Path $srcCdi "*") -Destination $destCdi -Recurse -Force -ErrorAction SilentlyContinue
-        }
-        # Copy CrystalDiskMark folder recursively (preserves CdmResource folder and avoids crashes)
-        $srcCdm = Join-Path $offlineRoot 'CrystalDiskMark'
-        if (Test-Path -LiteralPath $srcCdm) {
-            $destCdm = Join-Path $ToolsDir 'CrystalDiskMark'
-            Ensure-Dir -Path $destCdm
-            Copy-Item -Path (Join-Path $srcCdm "*") -Destination $destCdm -Recurse -Force -ErrorAction SilentlyContinue
-        }
+    $result=[ordered]@{}
+    foreach($name in $files.Keys) {
+        $result[$name]=$null
+        if($name -eq 'CPUZ' -and $SelMode -notin @('2','3')){continue}
+        if($name -in @('CrystalDiskInfo','CrystalDiskMark','HWiNFO') -and $SelMode -ne '3'){continue}
+        $paths=@(foreach($base in $roots){if($base){foreach($file in $files[$name]){Join-Path $base $file}}})
+        $result[$name]=Resolve-AtlasDependency -Name $name -AdditionalSearchPaths $paths -CommandNames @($files[$name]|ForEach-Object {Split-Path -Leaf $_}) -InstallIfMissing
     }
-
-    $cpuz = $null
-    if ($SelMode -eq "2" -or $SelMode -eq "3") {
-        $cpuz = Find-ToolFileInRoots -Roots @($ToolsDir) -Names @('cpuz_x64.exe', 'cpuz_x32.exe', 'cpuz.exe')
-        if (-not $cpuz) {
-            $cpuzSrc = Resolve-DiagDep -WingetId 'CPUID.CPU-Z' -CommandNames @('cpuz.exe', 'cpuz_x64.exe', 'cpuz_x32.exe') -InstallPaths @(
-                'C:\Program Files\CPUID\CPU-Z\cpuz_x64.exe',
-                'C:\Program Files\CPUID\CPU-Z\cpuz_x32.exe',
-                'C:\Program Files\CPUID\CPU-Z\cpuz.exe',
-                'C:\Program Files (x86)\CPUID\CPU-Z\cpuz_x64.exe',
-                'C:\Program Files (x86)\CPUID\CPU-Z\cpuz_x32.exe',
-                'C:\Program Files (x86)\CPUID\CPU-Z\cpuz.exe',
-                '%LOCALAPPDATA%\Microsoft\WinGet\Links\cpuz.exe'
-            )
-            if ($cpuzSrc) { $cpuz = Stage-DiagDep -Source $cpuzSrc -ToolsDir $ToolsDir }
-        }
-    }
-
-    $bsod = Find-FirstExistingPath -Candidates @(
-        (Join-Path $ToolsDir 'BlueScreenView.exe')
-    )
-    if (-not $bsod) {
-        $bsodSrc = Resolve-DiagDep -WingetId 'NirSoft.BlueScreenView' -CommandNames @('bluescreenview.exe', 'BlueScreenView.exe') -InstallPaths @(
-            'C:\Program Files\NirSoft\BlueScreenView\BlueScreenView.exe',
-            'C:\Program Files (x86)\NirSoft\BlueScreenView\BlueScreenView.exe',
-            '%LOCALAPPDATA%\Microsoft\WinGet\Links\bluescreenview.exe'
-        )
-        if ($bsodSrc) { $bsod = Stage-DiagDep -Source $bsodSrc -ToolsDir $ToolsDir -TargetName 'BlueScreenView.exe' }
-    }
-
-    $battery = Find-FirstExistingPath -Candidates @(
-        (Join-Path $ToolsDir 'BatteryInfoView.exe')
-    )
-    if (-not $battery) {
-        $batterySrc = Resolve-DiagDep -WingetId 'NirSoft.BatteryInfoView' -CommandNames @('batteryinfoview.exe', 'BatteryInfoView.exe') -InstallPaths @(
-            'C:\Program Files\NirSoft\BatteryInfoView\BatteryInfoView.exe',
-            'C:\Program Files (x86)\NirSoft\BatteryInfoView\BatteryInfoView.exe',
-            '%LOCALAPPDATA%\Microsoft\WinGet\Links\batteryinfoview.exe'
-        )
-        if ($batterySrc) { $battery = Stage-DiagDep -Source $batterySrc -ToolsDir $ToolsDir -TargetName 'BatteryInfoView.exe' }
-    }
-
-    $cdi = $null
-    if ($SelMode -eq "3") {
-        $cdiCandidates = @(
-            'C:\Program Files\CrystalDiskInfo\DiskInfo64.exe',
-            'C:\Program Files (x86)\CrystalDiskInfo\DiskInfo64.exe',
-            'C:\Program Files\CrystalDiskInfo\DiskInfo32.exe',
-            'C:\Program Files (x86)\CrystalDiskInfo\DiskInfo32.exe',
-            (Join-Path $LegacyAppsDir 'CrystalDiskInfo\DiskInfo64.exe'),
-            (Join-Path $LegacyAppsDir 'CrystalDiskInfo\DiskInfo32.exe'),
-            (Join-Path $ToolsDir 'CrystalDiskInfo\DiskInfo64.exe'),
-            (Join-Path $ToolsDir 'CrystalDiskInfo\DiskInfo32.exe'),
-            (Join-Path $ToolsDir 'DiskInfo64.exe'),
-            (Join-Path $ToolsDir 'DiskInfo32.exe')
-        )
-        if ($env:ATLAS_OFFLINE_ROOT) {
-            $cdiCandidates += Join-Path $env:ATLAS_OFFLINE_ROOT 'apps\CrystalDiskInfo\DiskInfo64.exe'
-            $cdiCandidates += Join-Path $env:ATLAS_OFFLINE_ROOT 'apps\CrystalDiskInfo\DiskInfo32.exe'
-            $cdiCandidates += Join-Path $env:ATLAS_OFFLINE_ROOT 'deps\DiagnosticoMaster\tools\CrystalDiskInfo\DiskInfo64.exe'
-            $cdiCandidates += Join-Path $env:ATLAS_OFFLINE_ROOT 'deps\DiagnosticoMaster\tools\CrystalDiskInfo\DiskInfo32.exe'
-        }
-        # Check only candidates that have the CdiResource folder
-        $validCdiCandidates = @()
-        foreach ($cand in $cdiCandidates) {
-            $candPath = [Environment]::ExpandEnvironmentVariables($cand)
-            if (Test-Path -LiteralPath $candPath) {
-                $parent = Split-Path -Parent $candPath
-                if (Test-Path -LiteralPath (Join-Path $parent "CdiResource")) {
-                    $validCdiCandidates += $candPath
-                }
-            }
-        }
-        $cdi = if ($validCdiCandidates.Count -gt 0) { $validCdiCandidates[0] } else { $null }
-
-        if (-not $cdi) {
-            $cdiSrc = Resolve-DiagDep -WingetId 'CrystalDewWorld.CrystalDiskInfo' -CommandNames @('diskinfo.exe', 'DiskInfo64.exe', 'DiskInfo32.exe') -InstallPaths @(
-                'C:\Program Files\CrystalDiskInfo\DiskInfo64.exe',
-                'C:\Program Files (x86)\CrystalDiskInfo\DiskInfo64.exe',
-                'C:\Program Files\CrystalDiskInfo\DiskInfo32.exe',
-                'C:\Program Files (x86)\CrystalDiskInfo\DiskInfo32.exe',
-                '%LOCALAPPDATA%\Microsoft\WinGet\Links\diskinfo.exe'
-            )
-            # Extra verification for Winget source
-            if ($cdiSrc -and (Test-Path -LiteralPath $cdiSrc)) {
-                $parent = Split-Path -Parent $cdiSrc
-                if (Test-Path -LiteralPath (Join-Path $parent "CdiResource")) {
-                    $cdi = $cdiSrc
-                }
-            }
-        }
-    }
-
-    $cdm = $null
-    if ($SelMode -eq "3") {
-        $cdmCandidates = @(
-            'C:\Program Files\CrystalDiskMark8\DiskMark64.exe',
-            'C:\Program Files\CrystalDiskMark9\DiskMark64.exe',
-            'C:\Program Files\CrystalDiskMark\DiskMark64.exe',
-            'C:\Program Files (x86)\CrystalDiskMark8\DiskMark64.exe',
-            'C:\Program Files (x86)\CrystalDiskMark9\DiskMark64.exe',
-            'C:\Program Files (x86)\CrystalDiskMark\DiskMark64.exe',
-            (Join-Path $LegacyAppsDir 'CrystalDiskMark\DiskMark64.exe'),
-            (Join-Path $ToolsDir 'CrystalDiskMark\DiskMark64.exe'),
-            (Join-Path $ToolsDir 'DiskMark64.exe')
-        )
-        if ($env:ATLAS_OFFLINE_ROOT) {
-            $cdmCandidates += Join-Path $env:ATLAS_OFFLINE_ROOT 'apps\CrystalDiskMark\DiskMark64.exe'
-            $cdmCandidates += Join-Path $env:ATLAS_OFFLINE_ROOT 'deps\DiagnosticoMaster\tools\CrystalDiskMark\DiskMark64.exe'
-        }
-        # Check only candidates that have the CdmResource folder
-        $validCdmCandidates = @()
-        foreach ($cand in $cdmCandidates) {
-            $candPath = [Environment]::ExpandEnvironmentVariables($cand)
-            if (Test-Path -LiteralPath $candPath) {
-                $parent = Split-Path -Parent $candPath
-                if (Test-Path -LiteralPath (Join-Path $parent "CdmResource")) {
-                    $validCdmCandidates += $candPath
-                }
-            }
-        }
-        $cdm = if ($validCdmCandidates.Count -gt 0) { $validCdmCandidates[0] } else { $null }
-
-        if (-not $cdm) {
-            $cdmSrc = Resolve-DiagDep -WingetId 'CrystalDewWorld.CrystalDiskMark' -CommandNames @('diskmark.exe', 'DiskMark64.exe') -InstallPaths @(
-                'C:\Program Files\CrystalDiskMark8\DiskMark64.exe',
-                'C:\Program Files\CrystalDiskMark9\DiskMark64.exe',
-                'C:\Program Files\CrystalDiskMark\DiskMark64.exe',
-                'C:\Program Files (x86)\CrystalDiskMark8\DiskMark64.exe',
-                'C:\Program Files (x86)\CrystalDiskMark9\DiskMark64.exe',
-                'C:\Program Files (x86)\CrystalDiskMark\DiskMark64.exe',
-                '%LOCALAPPDATA%\Microsoft\WinGet\Links\diskmark.exe'
-            )
-            # Extra verification for Winget source
-            if ($cdmSrc -and (Test-Path -LiteralPath $cdmSrc)) {
-                $parent = Split-Path -Parent $cdmSrc
-                if (Test-Path -LiteralPath (Join-Path $parent "CdmResource")) {
-                    $cdm = $cdmSrc
-                }
-            }
-        }
-    }
-
-    $hwinfo = $null
-    if ($SelMode -eq "3") {
-        $hwCandidates = @(
-            'C:\Program Files\HWiNFO64\HWiNFO64.exe',
-            'C:\Program Files (x86)\HWiNFO64\HWiNFO64.exe',
-            (Join-Path $LegacyAppsDir 'HWiNFO64.exe'),
-            (Join-Path $ToolsDir 'HWiNFO64.exe')
-        )
-        if ($env:ATLAS_OFFLINE_ROOT) {
-            $hwCandidates += Join-Path $env:ATLAS_OFFLINE_ROOT 'apps\HWiNFO64.exe'
-            $hwCandidates += Join-Path $env:ATLAS_OFFLINE_ROOT 'deps\GPUCheck\tools\HWiNFO64.exe'
-            $hwCandidates += Join-Path $env:ATLAS_OFFLINE_ROOT 'deps\DiagnosticoMaster\tools\HWiNFO64.exe'
-        }
-        $hwinfo = Find-FirstExistingPath -Candidates $hwCandidates
-        if (-not $hwinfo) {
-            $hwSrc = Resolve-DiagDep -WingetId 'REALiX.HWiNFO' -CommandNames @('HWiNFO64.exe') -InstallPaths @(
-                'C:\Program Files\HWiNFO64\HWiNFO64.exe',
-                'C:\Program Files (x86)\HWiNFO64\HWiNFO64.exe',
-                '%LOCALAPPDATA%\Microsoft\WinGet\Links\hwinfo64.exe'
-            )
-            if ($hwSrc) { $hwinfo = $hwSrc }
-        }
-    }
-
-    return [pscustomobject]@{
-        CPUZ = $cpuz
-        BlueScreenView = $bsod
-        BatteryInfoView = $battery
-        CrystalDiskInfo = $cdi
-        CrystalDiskMark = $cdm
-        HWiNFO = $hwinfo
-        ToolsDir = $ToolsDir
-        LegacyAppsDir = $LegacyAppsDir
-    }
+    $result.ToolsDir=$ToolsDir
+    $result.LegacyAppsDir=$LegacyAppsDir
+    return [pscustomobject]$result
 }
 
 do {
@@ -1635,15 +1380,16 @@ do {
         $htmlFile = Join-Path $dir "${nombreBase}.html"
 
         Write-Host "`n"; Escribir-Centrado $L.Step1 "Cyan"
-        $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
-        $cs = Get-CimInstance Win32_ComputerSystem -ErrorAction Stop
-        $proc = Get-CimInstance Win32_Processor -ErrorAction Stop
-        $csproduct = Get-CimInstance Win32_ComputerSystemProduct -ErrorAction SilentlyContinue
-        $ramSticks = Get-CimInstance Win32_PhysicalMemory -ErrorAction SilentlyContinue
-        $ramTotal="N/D"; $ramDetalleStr="N/A"
-        if ($ramSticks) { $ramTotal=[math]::Round(($ramSticks|Measure-Object Capacity -Sum).Sum/1GB,2); $ramDetalleStr=($ramSticks|ForEach-Object{"$([math]::Round($_.Capacity/1GB,0))GB"}) -join " + " }
+        $os = Get-CimInstance -OperationTimeoutSec 10 Win32_OperatingSystem -ErrorAction Stop
+        $cs = Get-CimInstance -OperationTimeoutSec 10 Win32_ComputerSystem -ErrorAction Stop
+        $proc = Get-CimInstance -OperationTimeoutSec 10 Win32_Processor -ErrorAction Stop
+        $csproduct = Get-CimInstance -OperationTimeoutSec 10 Win32_ComputerSystemProduct -ErrorAction SilentlyContinue
+        $ramSticks = Get-CimInstance -OperationTimeoutSec 10 Win32_PhysicalMemory -ErrorAction SilentlyContinue
+        $ramSummary=Get-AtlasMemorySummary -Modules @($ramSticks | Where-Object {$null -ne $_}) -Arrays @()
+        $ramTotal=Format-DiagnosticQuantity -Value $ramSummary.TotalGB -Decimals 2 -Unit GB
+        $ramDetalleStr=if($ramSticks){($ramSticks|ForEach-Object {Format-DiagnosticQuantity -Value $_.Capacity -Divisor 1GB -Decimals 2 -Unit GB}) -join ' + '}else{'N/D'}
         $modeloExacto = if ($csproduct -and $csproduct.Name) { $csproduct.Name } else { "N/A" }
-        $txtSys = "Alias: ${aliasPC}`nOS: $($os.Caption) ($($os.OSArchitecture))`n$($L.EquipoLbl): $($cs.Manufacturer) $($cs.Model)`nModel: ${modeloExacto}`nCPU: $($proc.Name)`nRAM Total: ${ramTotal} GB (${ramDetalleStr})`nPowerShell: $($PSVersionTable.PSVersion)"
+        $txtSys = "Alias: ${aliasPC}`nOS: $($os.Caption) ($($os.OSArchitecture))`n$($L.EquipoLbl): $($cs.Manufacturer) $($cs.Model)`nModel: ${modeloExacto}`nCPU: $($proc.Name)`nRAM Total: ${ramTotal} (${ramDetalleStr})`nPowerShell: $($PSVersionTable.PSVersion)"
 
         $htmlHardware = ""
         if ($selMode -eq "2" -or $selMode -eq "3") {
@@ -1651,10 +1397,6 @@ do {
             $exeCpuz = $null
             if ($diagDeps.CPUZ -and (Test-Path -LiteralPath $diagDeps.CPUZ)) {
                 $exeCpuz = Get-Item -LiteralPath $diagDeps.CPUZ -ErrorAction SilentlyContinue
-            }
-            if (-not $exeCpuz) {
-                $cpuzLegacy = Find-ToolFileInRoots -Roots @($appsLegacy) -Names @('cpuz_x64.exe', 'cpuz_x32.exe', 'cpuz.exe')
-                if ($cpuzLegacy) { $exeCpuz = Get-Item -LiteralPath $cpuzLegacy -ErrorAction SilentlyContinue }
             }
             if ($exeCpuz) {
                 Escribir-Centrado ($L.CpuzFound -f $exeCpuz.Name) "Green"
@@ -1727,7 +1469,7 @@ do {
         if ([string]::IsNullOrEmpty($htmlHardware)) {
             function Fmt-Line ($titulo, $valor) { return "<span class='categoria-resaltada'>$([Net.WebUtility]::HtmlEncode([string]$titulo)):</span> $([Net.WebUtility]::HtmlEncode([string]$valor))`n" }
             $inv=""
-            $bb=Get-CimInstance Win32_BaseBoard -ErrorAction SilentlyContinue; $bios=Get-CimInstance Win32_BIOS -ErrorAction SilentlyContinue
+            $bb=Get-CimInstance -OperationTimeoutSec 10 Win32_BaseBoard -ErrorAction SilentlyContinue; $bios=Get-CimInstance -OperationTimeoutSec 10 Win32_BIOS -ErrorAction SilentlyContinue
             $bbProduct=if($bb -and $bb.Product){$bb.Product}else{"N/A"}; $bbManuf=if($bb -and $bb.Manufacturer){$bb.Manufacturer}else{"N/A"}
             $bbSerial=if($bb -and $bb.SerialNumber){$bb.SerialNumber}else{"N/A"}; $biosSN=if($bios -and $bios.SerialNumber){$bios.SerialNumber}else{"N/A"}
             $biosVer=if($bios -and $bios.SMBIOSBIOSVersion){$bios.SMBIOSBIOSVersion}else{"N/A"}; $biosDate=if($bios -and $bios.ReleaseDate){$bios.ReleaseDate}else{"N/A"}
@@ -1736,10 +1478,10 @@ do {
             $inv += Fmt-Line $L.BiosLbl "${biosVer} (${biosDate})"; $inv += "`n"
             $inv += Fmt-Line $L.ProcLbl "$($proc.Name)"
             $socket=if($proc.SocketDesignation){$proc.SocketDesignation}else{"N/A"}; $inv += Fmt-Line $L.CpuSocket $socket; $inv += "`n"
-            $memS=Get-CimInstance Win32_PhysicalMemory -ErrorAction SilentlyContinue
-            if($memS){$mi=1;foreach($m in $memS){$cap=[math]::Round($m.Capacity/1GB,0);$manuf=if($m.Manufacturer){$m.Manufacturer}else{"N/A"};$spd=if($m.Speed){$m.Speed}else{0};$inv+=Fmt-Line ($L.RamDimm -f $mi) "${cap}GB - ${manuf} @ ${spd}MHz";$mi++}};$inv+="`n"
-            $dks=Get-CimInstance Win32_DiskDrive -ErrorAction SilentlyContinue|Where-Object{$_.MediaType -ne 'Removable Media'}
-            if($dks){foreach($d in $dks){$sz=if($d.Size){[math]::Round($d.Size/1GB,1)}else{0};$dm=if($d.Model){$d.Model}else{"N/A"};$inv+=Fmt-Line $L.DiskLbl "${dm} (${sz} GB)"}}
+            $memS=$ramSticks
+            if($memS){$mi=1;foreach($m in $memS){$cap=Format-DiagnosticQuantity -Value $m.Capacity -Divisor 1GB -Decimals 2 -Unit GB;$manuf=if($m.Manufacturer){$m.Manufacturer}else{"N/A"};$spd=Format-DiagnosticQuantity -Value $m.Speed -Unit MHz;$inv+=Fmt-Line ($L.RamDimm -f $mi) "${cap} - ${manuf} @ ${spd}";$mi++}}else{$inv+=Fmt-Line 'RAM' 'N/D'};$inv+="`n"
+            $dks=Get-CimInstance -OperationTimeoutSec 10 Win32_DiskDrive -ErrorAction SilentlyContinue|Where-Object{$_.MediaType -ne 'Removable Media'}
+            if($dks){foreach($d in $dks){$sz=Format-DiagnosticQuantity -Value $d.Size -Divisor 1GB -Decimals 1 -Unit GB;$dm=if($d.Model){$d.Model}else{"N/A"};$inv+=Fmt-Line $L.DiskLbl "${dm} (${sz})"}}else{$inv+=Fmt-Line $L.DiskLbl 'N/D'}
             $htmlHardware="<h2>$($L.H2HardwareSimple)</h2><pre>${inv}</pre>"
         }
 
@@ -1862,7 +1604,7 @@ do {
                 for($i=0;$i -lt $appChoices.Count;$i++){Write-Host ("[{0}] {1}" -f ($i+1),$appChoices[$i])}
                 $pick=Read-Host '1-4 to open, ENTER to continue / ENTER para seguir'
                 if($pick -notmatch '^[1-4]$'){break}
-                $name=$appChoices[[int]$pick-1];$path=$diagDeps[$name]
+                $name=$appChoices[[int]$pick-1];$path=$diagDeps.$name
                 if(-not $path -or -not (Test-Path -LiteralPath $path -PathType Leaf)){Write-Warning "$name not available";continue}
                 if($name -eq 'CrystalDiskMark'){Escribir-Centrado $L.CdmHint 'Yellow'}
                 try {Start-Process -FilePath $path -WorkingDirectory (Split-Path -Parent $path) -Wait -ErrorAction Stop}

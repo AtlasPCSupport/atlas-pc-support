@@ -29,6 +29,24 @@ function Invoke-AtlasInventoryRead {
     }
 }
 
+function Resolve-AtlasDnsEntry {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Name,[ValidateRange(1,10000)][int]$TimeoutMilliseconds=1000)
+    # Framework 4.x cannot cancel this DNS API. Bound caller waits and outstanding tasks.
+    if(-not (Get-Variable -Name AtlasDnsPending -Scope Script -ErrorAction SilentlyContinue)){$script:AtlasDnsPending=@()}
+    $script:AtlasDnsPending=@($script:AtlasDnsPending | Where-Object {
+        if($null -eq $_){return $false}
+        if($_.IsCompleted){$null=$_.Exception;return $false};return $true
+    })
+    if($script:AtlasDnsPending.Count -ge 4){return [pscustomobject]@{State='NotEvaluated';Entry=$null}}
+    try {
+        $task=[Net.Dns]::GetHostEntryAsync($Name)
+        $script:AtlasDnsPending+=,$task
+        if(-not $task.Wait($TimeoutMilliseconds)){return [pscustomobject]@{State='TimedOut';Entry=$null}}
+        return [pscustomobject]@{State='Observed';Entry=$task.Result}
+    } catch {return [pscustomobject]@{State='Failed';Entry=$null}}
+}
+
 function Get-AtlasMemorySummary {
     [CmdletBinding()]
     param([object[]]$Modules=@(), [object[]]$Arrays=@())
@@ -265,15 +283,24 @@ $BodyHtml
 "@
 }
 
+function Get-AtlasApplicationPath {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string[]]$Name)
+    foreach ($application in $Name) {
+        foreach ($command in @(Get-Command $application -CommandType Application -ErrorAction SilentlyContinue)) {
+            if ($command.Source -and (Test-Path -LiteralPath $command.Source -PathType Leaf)) { return [string]$command.Source }
+        }
+    }
+    return $null
+}
+
 function Get-AtlasWingetPath {
     [CmdletBinding()]
     param()
 
     # 1) PATH normal
-    $cmd = Get-Command winget.exe -ErrorAction SilentlyContinue
-    if ($cmd -and $cmd.Source -and (Test-Path -LiteralPath $cmd.Source)) {
-        return $cmd.Source
-    }
+    $path = Get-AtlasApplicationPath -Name winget.exe
+    if ($path) { return $path }
 
     # 2) Ruta real del paquete Appx (evita el alias de WindowsApps de 0 bytes o faltante en admin elevacion)
     try {
@@ -283,7 +310,7 @@ function Get-AtlasWingetPath {
 
         if ($pkg -and $pkg.InstallLocation) {
             $exe = Join-Path $pkg.InstallLocation 'winget.exe'
-            if (Test-Path -LiteralPath $exe) { return $exe }
+            if (Test-Path -LiteralPath $exe -PathType Leaf) { return $exe }
         }
     } catch {}
 
@@ -320,6 +347,7 @@ function Get-AtlasWingetCapabilities {
     try {
         $probe = Invoke-AtlasNativeProcess -FilePath $WingetPath -ArgumentList @('--version') -TimeoutSeconds 10
         $caps.ProbeState = $probe.State
+        if ($probe.StdoutTruncated) { $caps.ProbeState='NotEvaluated'; return $caps }
         if ($probe.State -ne 'Correct') { return $caps }
         # Accept only WinGet's version response, never an error/banner or exit failure.
         $text = ([string]$probe.Stdout).Trim()

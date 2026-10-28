@@ -1,4 +1,4 @@
-function Invoke-AIReadiness {
+﻿function Invoke-AIReadiness {
     <#
     .SYNOPSIS
       AI Readiness Assessment: self-contained local/cloud AI readiness audit.
@@ -249,14 +249,10 @@ function Invoke-AIReadiness {
     }
 
     function Get-AIRCommandState {
-        param([string]$Name)
-        $cmd = Get-Command $Name -ErrorAction SilentlyContinue
-        if ($cmd) {
-            $path = if ($cmd.Source) { $cmd.Source } else { $cmd.Path }
-            return [pscustomobject]@{ Name=$Name; Installed=$true; Path=$path }
-        }
-        return [pscustomobject]@{ Name=$Name; Installed=$false; Path='' }
-    }
+    param([string]$Name)
+    $path=Get-AtlasApplicationPath -Name $Name
+    return [pscustomobject]@{Name=$Name;Installed=[bool]$path;Path=[string]$path}
+}
 
     function Test-AIREndpoint {
         param([string]$Name, [string]$Url)
@@ -317,12 +313,11 @@ function Invoke-AIReadiness {
     function Get-AIRNvidiaSmi {
         [CmdletBinding()]
         param()
-        $cmd = Get-Command 'nvidia-smi.exe' -ErrorAction SilentlyContinue
-        if (-not $cmd) { $cmd = Get-Command 'nvidia-smi' -ErrorAction SilentlyContinue }
-        if (-not $cmd) { return $null }
+        $path = Get-AtlasApplicationPath -Name @('nvidia-smi.exe','nvidia-smi')
+        if (-not $path) { return $null }
         try {
-            $probe = Invoke-AtlasNativeProcess -FilePath $cmd.Source -ArgumentList @('--query-gpu=name,memory.total,temperature.gpu,driver_version','--format=csv,noheader,nounits') -TimeoutSeconds 10
-            if ($probe.State -ne 'Correct') { throw 'NVIDIA telemetry query failed.' }
+            $probe = Invoke-AtlasNativeProcess -FilePath $path -ArgumentList @('--query-gpu=name,memory.total,temperature.gpu,driver_version','--format=csv,noheader,nounits') -TimeoutSeconds 10
+            if ($probe.State -ne 'Correct' -or $probe.StdoutTruncated) { throw 'NVIDIA telemetry query failed or was incomplete.' }
             $out = [string]$probe.Stdout
             if (-not $out) { return $null }
             $rows = @()

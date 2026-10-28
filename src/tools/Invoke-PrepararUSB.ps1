@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Invoke-PrepararUSB  ->  Build Offline USB
 #
 # i18n: Option A (en default + full es secondary). Function name
@@ -493,30 +493,12 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
             New-Item -ItemType Directory -Path $GpuToolsDir -Force | Out-Null
         }
 
-        function Find-FirstExistingPath {
-            param([string[]]$Candidates)
-            foreach ($c in $Candidates) {
-                if ([string]::IsNullOrWhiteSpace($c)) { continue }
-                $p = [Environment]::ExpandEnvironmentVariables($c)
-                if (Test-Path -LiteralPath $p) { return $p }
-            }
-            return $null
-        }
+
 
         function Resolve-DepPath {
-            param(
-                [string]$DepName,
-                [string[]]$FallbackPaths
-            )
-            $resolved = $null
-            if (Get-Command Resolve-AtlasDependency -ErrorAction SilentlyContinue) {
-                try { $resolved = Resolve-AtlasDependency -Name $DepName -InstallIfMissing } catch {}
-            }
-            if (-not $resolved) {
-                $resolved = Find-FirstExistingPath -Candidates $FallbackPaths
-            }
-            return $resolved
-        }
+    param([string]$DepName,[string[]]$FallbackPaths)
+    return Resolve-AtlasDependency -Name $DepName -AdditionalSearchPaths $FallbackPaths -InstallIfMissing
+}
 
         $copiedCount = 0
 
@@ -582,30 +564,12 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
             New-Item -ItemType Directory -Path $DiagToolsDir -Force | Out-Null
         }
 
-        function Find-FirstExistingPath {
-            param([string[]]$Candidates)
-            foreach ($c in $Candidates) {
-                if ([string]::IsNullOrWhiteSpace($c)) { continue }
-                $p = [Environment]::ExpandEnvironmentVariables($c)
-                if (Test-Path -LiteralPath $p) { return $p }
-            }
-            return $null
-        }
+
 
         function Resolve-DepPath {
-            param(
-                [string]$DepName,
-                [string[]]$FallbackPaths
-            )
-            $resolved = $null
-            if (Get-Command Resolve-AtlasDependency -ErrorAction SilentlyContinue) {
-                try { $resolved = Resolve-AtlasDependency -Name $DepName -InstallIfMissing } catch {}
-            }
-            if (-not $resolved) {
-                $resolved = Find-FirstExistingPath -Candidates $FallbackPaths
-            }
-            return $resolved
-        }
+    param([string]$DepName,[string[]]$FallbackPaths)
+    return Resolve-AtlasDependency -Name $DepName -AdditionalSearchPaths $FallbackPaths -InstallIfMissing
+}
 
         function Copy-TreeSafely {
             param([Parameter(Mandatory)][string]$SourceDir,[Parameter(Mandatory)][string]$DestinationDir,[string]$PackageKey)
