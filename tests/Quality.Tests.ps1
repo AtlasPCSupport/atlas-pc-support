@@ -3,6 +3,168 @@ BeforeAll {
     . (Join-Path (Split-Path -Parent $PSScriptRoot) 'src/lib/ToolKit.ps1')
 }
 
+Describe 'Audit phase 3: verified local policies and reversible UAC' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $script:RepoRoot 'src/lib/Release.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Reports.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Operations.ps1')
+        function Get-CimInstance {[CmdletBinding()]param($ClassName,$OperationTimeoutSec)throw 'Real inventory blocked'}
+        function Invoke-AtlasNativeProcess {param($FilePath,$ArgumentList,$TimeoutSeconds)throw 'Real policy mutation blocked'}
+        $script:OriginalPolicySystemRoot=$env:SystemRoot
+        if(-not $env:SystemRoot){$env:SystemRoot=$TestDrive}
+    }
+    AfterAll {$env:SystemRoot=$script:OriginalPolicySystemRoot}
+    BeforeEach {
+        $script:Policy=[pscustomobject]@{MinPasswordLength=8;MaxPasswordAge=90;MinPasswordAgeSeconds=0;LockoutThreshold=5}
+        Mock Get-AtlasLocalAccountPolicy {$script:Policy}
+        Mock Get-CimInstance {[pscustomobject]@{PartOfDomain=$false;DomainRole=0}}
+        Mock Invoke-AtlasNativeProcess {throw 'Policy mutation needs a fixture'}
+        Mock Write-Host {}
+    }
+    It 'validates every policy value before launching a native process' {
+        {Set-AtlasLocalAccountPolicy -Values @{MinPasswordLength=10;LockoutThreshold='3 /domain'} -SnapshotPath (Join-Path $TestDrive 'invalid.json')}|Should -Throw '*Invalid*'
+        Should -Invoke Invoke-AtlasNativeProcess -Times 0 -Exactly
+        Should -Invoke Get-CimInstance -Times 0 -Exactly
+    }
+    It 'blocks domain-managed computers without a policy mutation' {
+        Mock Get-CimInstance {[pscustomobject]@{PartOfDomain=$true;DomainRole=1}}
+        {Set-AtlasLocalAccountPolicy -Values @{MinPasswordLength=10} -SnapshotPath (Join-Path $TestDrive 'domain.json')}|Should -Throw '*domain-managed*'
+        Should -Invoke Invoke-AtlasNativeProcess -Times 0 -Exactly
+    }
+    It 'preserves recovery values and stops after a failed native result' {
+        $path=Join-Path $TestDrive 'partial.json'
+        Mock Invoke-AtlasNativeProcess {
+            if($ArgumentList[1] -like '/minpwlen:*'){$script:Policy.MinPasswordLength=10;return [pscustomobject]@{State='Correct';ExitCode=0}}
+            [pscustomobject]@{State='Failed';ExitCode=5;Stdout='denied';Stderr=''}
+        }
+        {Set-AtlasLocalAccountPolicy -Values @{MinPasswordLength=10;MaxPasswordAge=60;LockoutThreshold=4} -SnapshotPath $path}|Should -Throw '*1 verified*'
+        (Get-Content -LiteralPath $path -Raw|ConvertFrom-Json).Before.MinPasswordLength|Should -Be 8
+        Should -Invoke Invoke-AtlasNativeProcess -Times 2 -Exactly
+    }
+    It 'does not count native success without a matching policy readback' {
+        Mock Invoke-AtlasNativeProcess {[pscustomobject]@{State='Correct';ExitCode=0}}
+        {Set-AtlasLocalAccountPolicy -Values @{MinPasswordLength=10} -SnapshotPath (Join-Path $TestDrive 'mismatch.json')}|Should -Throw '*readback differs*'
+    }
+    It 'maps the existing zero-expiration UI to UNLIMITED and verifies it' {
+        Mock Invoke-AtlasNativeProcess {$script:Policy.MaxPasswordAge='UNLIMITED';[pscustomobject]@{State='Correct';ExitCode=0}}
+        $r=Set-AtlasLocalAccountPolicy -Values @{MaxPasswordAge=0} -SnapshotPath (Join-Path $TestDrive 'unlimited.json')
+        $r.VerifiedChanges|Should -Be 1
+        Should -Invoke Invoke-AtlasNativeProcess -Times 1 -Exactly -ParameterFilter {$ArgumentList[1] -eq '/maxpwage:UNLIMITED'}
+    }
+}
+
+Describe 'Audit phase 3: UAC snapshot boundaries' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $script:RepoRoot 'src/lib/Release.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Reports.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Operations.ps1')
+    }
+    BeforeEach {
+        $script:UacValues=@{EnableLUA=1;ConsentPromptBehaviorUser=3;ConsentPromptBehaviorAdmin=5}
+        $key=[pscustomobject]@{}
+        $key|Add-Member ScriptMethod GetValueKind {param($name)'DWord'}
+        Mock Get-Item {$key} -ParameterFilter {$LiteralPath -like 'HKLM:*'}
+        Mock Get-ItemProperty {[pscustomobject]$script:UacValues.Clone()}
+        Mock New-ItemProperty {$script:UacValues[$Name]=[int]$Value}
+        Mock Remove-ItemProperty {foreach($n in $Name){$script:UacValues.Remove($n)}}
+        Mock Write-Host {}
+    }
+    It 'saves before the preset and restores absent and existing values' {
+        $path=Join-Path $TestDrive 'uac.json'
+        Set-AtlasUacPreset -SnapshotPath $path
+        $script:UacValues.ConsentPromptBehaviorAdmin|Should -Be 2
+        Restore-AtlasUacSnapshot -Path $path
+        $script:UacValues.ConsentPromptBehaviorAdmin|Should -Be 5
+        $script:UacValues.ContainsKey('PromptOnSecureDesktop')|Should -BeFalse
+    }
+    It 'rejects unknown keys before the first write' {
+        $s=Get-AtlasUacSnapshot
+        $s.Values[3].Name='UnrelatedPolicy'
+        {Set-AtlasUacValues -Snapshot $s}|Should -Throw '*Invalid UAC*'
+        Should -Invoke New-ItemProperty -Times 0 -Exactly
+        Should -Invoke Remove-ItemProperty -Times 0 -Exactly
+    }
+    It 'preserves a snapshot and reports a partial preset on denied writes' {
+        $path=Join-Path $TestDrive 'uac-denied.json'
+        Mock New-ItemProperty {throw 'Registry denied'}
+        {Set-AtlasUacPreset -SnapshotPath $path}|Should -Throw '*incomplete*Recovery snapshot*'
+        Test-Path -LiteralPath $path|Should -BeTrue
+    }
+}
+
+Describe 'Audit phase 3: complete driver export evidence' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $script:RepoRoot 'src/lib/Release.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Reports.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Operations.ps1')
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-RespaldoControladores.ps1' 'Invoke-RespaldoControladores')
+        function Test-IsAdmin {throw 'Real token query blocked'}
+        function Export-WindowsDriver {[CmdletBinding()]param([switch]$Online,$Destination)throw 'Real export blocked'}
+        function Invoke-AtlasNativeProcess {param($FilePath,$ArgumentList,$TimeoutSeconds)throw 'Real DISM blocked'}
+    }
+    It 'records every member and detects same-length CAT corruption' {
+        $dir=Join-Path $TestDrive 'driver export'
+        New-Item -ItemType Directory -Path (Join-Path $dir 'package') -Force|Out-Null
+        foreach($name in @('driver.inf','driver.cat','driver.sys')){[IO.File]::WriteAllText((Join-Path $dir "package/$name"),'fixture')}
+        Push-Location $TestDrive
+        try {Write-AtlasDriverManifest -Directory 'driver export'|Out-Null} finally {Pop-Location}
+        $m=Test-AtlasDriverManifest -Directory $dir
+        $m.FileCount|Should -Be 3;$m.InfCount|Should -Be 1;$m.RestorationTested|Should -BeFalse
+        [IO.File]::WriteAllText((Join-Path $dir 'package/driver.cat'),'changed')
+        {Test-AtlasDriverManifest -Directory $dir}|Should -Throw '*verification failed*'
+    }
+    It 'rejects empty export and does not mix a previous attempt' {
+        $dir=Join-Path $TestDrive 'empty';New-Item -ItemType Directory -Path $dir|Out-Null
+        {Write-AtlasDriverManifest -Directory $dir}|Should -Throw '*No driver INF*'
+        [IO.File]::WriteAllText((Join-Path $dir 'driver.inf'),'fixture')
+        Write-AtlasDriverManifest -Directory $dir|Out-Null
+        {Write-AtlasDriverManifest -Directory $dir}|Should -Throw '*already exists*'
+    }
+    It 'does not run a second exporter or announce success after a partial cmdlet failure' {
+        Mock Test-IsAdmin {$true};Mock Write-Host {}
+        Mock Export-WindowsDriver {[IO.File]::WriteAllText((Join-Path $Destination 'partial.inf'),'partial');throw 'Export failed'}
+        Mock Invoke-AtlasNativeProcess {throw 'DISM must not run'}
+        Invoke-RespaldoControladores -DestinationPath $TestDrive
+        Should -Invoke Invoke-AtlasNativeProcess -Times 0 -Exactly
+        Should -Invoke Write-Host -Times 0 -Exactly -ParameterFilter {"$Object" -like '*file hashes verified*'}
+    }
+}
+
+Describe 'Audit phase 3: idempotent hosts block and exact restoration' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $script:RepoRoot 'src/lib/Release.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Reports.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Operations.ps1')
+    }
+    It 'preserves personal aliases and does not append a list twice' {
+        $path=Join-Path $TestDrive 'hosts'
+        [IO.File]::WriteAllText($path,'127.0.0.1 personal.test')
+        $list=@('127.0.0.1 localhost','fe80::1%lo0 localhost','0.0.0.0 ads.example.test','0.0.0.0 ADS.example.test') -join [Environment]::NewLine
+        $r=Set-AtlasManagedHostsBlock -Path $path -ListText $list -Source 'https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts'
+        $r.Changed|Should -BeTrue;$r.Entries|Should -Be 1
+        $r=Set-AtlasManagedHostsBlock -Path $path -ListText $list -Source 'https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts'
+        $r.Changed|Should -BeFalse
+        [IO.File]::ReadAllText($path)|Should -Match 'personal.test'
+    }
+    It 'rejects malformed or redirecting input before changing hosts' {
+        $path=Join-Path $TestDrive 'hosts-bad';[IO.File]::WriteAllText($path,'# untouched')
+        {Set-AtlasManagedHostsBlock -Path $path -ListText '1.2.3.4 bank.example.test' -Source 'https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts'}|Should -Throw
+        [IO.File]::ReadAllText($path)|Should -Be '# untouched'
+    }
+    It 'restores exact original bytes including BOM and newline convention' {
+        $path=Join-Path $TestDrive 'hosts-bytes'
+        $bytes=[byte[]](239,187,191,35,120,13,10);[IO.File]::WriteAllBytes($path,$bytes)
+        $backup=Set-AtlasHostsText -Path $path -Text '0.0.0.0 ads.example.test'
+        Restore-AtlasHostsBackup -Path $path -Backup $backup|Out-Null
+        [Convert]::ToBase64String([IO.File]::ReadAllBytes($path))|Should -Be ([Convert]::ToBase64String($bytes))
+    }
+}
+
 Describe 'Audit phase 2: shared memory and cautious PartsUpgrade output' {
     BeforeAll {
         $script:RepoRoot=Split-Path -Parent $PSScriptRoot
@@ -1379,6 +1541,21 @@ Describe 'DNS origin and dual-family restoration' {
         $path=Join-Path $TestDrive 'bad.json';Save-AtlasDnsSnapshot -AdapterNames Ethernet -Path $path|Out-Null
         $s=Get-Content $path -Raw|ConvertFrom-Json;$s.Adapters[1].Family='unknown';$s|ConvertTo-Json -Depth 8|Set-Content $path
         {Restore-AtlasDnsSnapshot -Path $path}|Should -Throw
+        Should -Invoke Set-DnsClientServerAddress -Times 0 -Exactly
+    }
+    It 'resolves every adapter before the first DNS mutation' {
+        $path=Join-Path $TestDrive 'missing-adapter.json';Save-AtlasDnsSnapshot -AdapterNames Ethernet -Path $path|Out-Null
+        $s=Get-Content $path -Raw|ConvertFrom-Json
+        $s.Adapters[1].Guid='a4c5366a-dae2-484e-a211-518ff110f126'
+        $s|ConvertTo-Json -Depth 8|Set-Content $path
+        {Restore-AtlasDnsSnapshot -Path $path}|Should -Throw '*cannot be identified*'
+        Should -Invoke Set-DnsClientServerAddress -Times 0 -Exactly
+    }
+    It 'rejects a mismatching IP family before any mutation' {
+        $path=Join-Path $TestDrive 'wrong-family.json';Save-AtlasDnsSnapshot -AdapterNames Ethernet -Path $path|Out-Null
+        $s=Get-Content $path -Raw|ConvertFrom-Json;$s.Adapters[1].Servers=@('1.1.1.1')
+        $s|ConvertTo-Json -Depth 8|Set-Content $path
+        {Restore-AtlasDnsSnapshot -Path $path}|Should -Throw '*address family*'
         Should -Invoke Set-DnsClientServerAddress -Times 0 -Exactly
     }
 }

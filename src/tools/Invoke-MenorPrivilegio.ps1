@@ -49,7 +49,7 @@ function Invoke-MenorPrivilegio {
             MenuRefText        = '5. Disable / Enable User Account'
             Opt1               = '1. Create NEW Administrator (Backup)'
             Opt2               = '2. Convert Current User to STANDARD'
-            Opt3               = '3. UAC Configuration - Maximum Security'
+            Opt3               = '3. UAC preset with recovery snapshot'
             Opt4               = '4. Audit System Users'
             Opt5               = '5. Disable / Enable User Account'
             Opt6               = '6. Configure Password Policy'
@@ -83,18 +83,18 @@ function Invoke-MenorPrivilegio {
             T2Done             = 'PERMISSIONS UPDATED. You are now a Standard user.'
             T2LogoffAsk        = 'Log off now to apply changes? (Y/N)'
             T3Title            = '>>> SECURITY HARDENING (UAC) <<<'
-            T3Que              = 'Enables User Account Control (UAC) at maximum level. Forces Admin credentials when installing software or changing critical system settings.'
-            T3Rec              = 'Always run after converting the user to Standard (option 2). Second most important defense layer. Apply on every PC handover.'
+            T3Que              = 'Enables UAC and the secure desktop. Standard users need credentials; administrators receive a consent prompt.'
+            T3Rec              = 'Review the existing policy and customer workflow first. The four previous values are saved for explicit restoration.'
             T3Warn             = 'Customer will see more confirmation prompts. Inform them this is for security. May interrupt workflows for users used to running without UAC.'
             T3RulesIntro       = 'These 4 registry rules will be applied:'
             T3Rule1            = '  [1] EnableLUA = 1              (UAC enabled)'
             T3Rule2            = '  [2] PromptOnSecureDesktop = 1  (Secure desktop)'
             T3Rule3            = '  [3] ConsentPromptBehaviorUser = 1  (Credentials for standard users)'
-            T3Rule4            = '  [4] ConsentPromptBehaviorAdmin = 2 (Credentials for admins)'
-            T3ApplyHint        = "(Enter to apply, 'N' to cancel)"
+            T3Rule4            = '  [4] ConsentPromptBehaviorAdmin = 2 (Consent on secure desktop)'
+            T3ApplyHint        = 'Type APPLY UAC to apply; any other input cancels'
             T3Applying         = 'Applying registry rules...'
             T3Applied          = 'CONFIGURATION APPLIED.'
-            T3WillAsk          = 'Windows will ask for credentials when installing software.'
+            T3WillAsk          = 'Standard users: credentials. Administrators: consent on secure desktop.'
             T3RebootHint       = 'A reboot is required to fully apply.'
             T4Title            = '>>> SYSTEM USER AUDIT <<<'
             T4Que              = 'Lists all local accounts on the machine showing name, role (Admin/Standard), state (enabled/disabled), and whether a password is required.'
@@ -124,7 +124,7 @@ function Invoke-MenorPrivilegio {
             T5Enabled          = "Account '{0}' ENABLED."
             T6Title            = '>>> PASSWORD POLICY <<<'
             T6Que              = 'Configures global system password rules: minimum length, days until expiration, and number of failed attempts before lockout.'
-            T6Rec              = 'Recommended values: minimum length 10, expiration 90 days, lockout after 5 attempts. For home use you can set expiration 0 (never).'
+            T6Rec              = 'Choose values for the customer policy; no universal expiration or lockout preset is applied. Length 0-14; expiration 0 (never) or 1-999 days; attempts 0-999.'
             T6Warn             = 'These changes affect ALL accounts on the machine. A very aggressive lockout (3 attempts) can lock the customer out if they often forget their password.'
             T6CurrentLbl       = 'Current policy:'
             T6NewLbl           = '--- Configure new policy ---'
@@ -175,7 +175,7 @@ function Invoke-MenorPrivilegio {
             MenuRefText        = '5. Deshabilitar / Habilitar Cuenta de Usuario'
             Opt1               = '1. Crear NUEVO Administrador (Respaldo)'
             Opt2               = '2. Convertir Usuario Actual a ESTANDAR'
-            Opt3               = '3. Configuracion del UAC - Seguridad Maxima'
+            Opt3               = '3. Preset UAC con snapshot de recuperacion'
             Opt4               = '4. Auditoria de Usuarios del Sistema'
             Opt5               = '5. Deshabilitar / Habilitar Cuenta de Usuario'
             Opt6               = '6. Configurar Politica de Contrasenas'
@@ -209,18 +209,18 @@ function Invoke-MenorPrivilegio {
             T2Done             = 'PERMISOS ACTUALIZADOS. Ahora eres usuario Estandar.'
             T2LogoffAsk        = 'Cerrar sesion ahora para aplicar cambios? (S/N)'
             T3Title            = '>>> BLINDAJE DE SEGURIDAD (UAC) <<<'
-            T3Que              = 'Activa el Control de Cuentas de Usuario (UAC) al nivel maximo. Obliga a introducir credenciales de Admin para instalar software o cambiar configuraciones criticas del sistema.'
-            T3Rec              = 'Ejecutar siempre despues de convertir al usuario a Estandar (opcion 2). Es la segunda capa de defensa mas importante. Aplica en cada entrega de equipo.'
+            T3Que              = 'Activa UAC y el escritorio seguro. El usuario estandar necesita credenciales; el administrador recibe una solicitud de consentimiento.'
+            T3Rec              = 'Revisa primero la politica actual y el flujo del cliente. Se guardan los cuatro valores anteriores para restauracion explicita.'
             T3Warn             = 'El cliente vera mas ventanas de confirmacion. Informa que es por seguridad. Puede interrumpir flujos de trabajo de usuarios acostumbrados a trabajar sin UAC activo.'
             T3RulesIntro       = 'Se aplicaran estas 4 reglas de registro:'
             T3Rule1            = '  [1] EnableLUA = 1              (UAC activo)'
             T3Rule2            = '  [2] PromptOnSecureDesktop = 1  (Escritorio seguro)'
             T3Rule3            = '  [3] ConsentPromptBehaviorUser = 1  (Credenciales para estandar)'
-            T3Rule4            = '  [4] ConsentPromptBehaviorAdmin = 2 (Credenciales para admins)'
-            T3ApplyHint        = "(Enter para aplicar, 'N' para cancelar)"
+            T3Rule4            = '  [4] ConsentPromptBehaviorAdmin = 2 (Consentimiento en escritorio seguro)'
+            T3ApplyHint        = 'Escribe APPLY UAC para aplicar; cualquier otra entrada cancela'
             T3Applying         = 'Aplicando reglas de registro...'
             T3Applied          = 'CONFIGURACION APLICADA.'
-            T3WillAsk          = 'Windows pedira credenciales para instalar software.'
+            T3WillAsk          = 'Usuario estandar: credenciales. Administrador: consentimiento en escritorio seguro.'
             T3RebootHint       = 'Se requiere reinicio para aplicar completamente.'
             T4Title            = '>>> AUDITORIA DE USUARIOS DEL SISTEMA <<<'
             T4Que              = 'Lista todas las cuentas locales del equipo mostrando nombre, rol (Admin/Estandar), estado (activa/desactivada) y si tienen contrasena requerida.'
@@ -250,7 +250,7 @@ function Invoke-MenorPrivilegio {
             T5Enabled          = "Cuenta '{0}' HABILITADA."
             T6Title            = '>>> POLITICA DE CONTRASENAS <<<'
             T6Que              = 'Configura las reglas globales de contrasenas del sistema: longitud minima, dias hasta caducidad y numero de intentos fallidos antes de bloquear la cuenta.'
-            T6Rec              = 'Valores recomendados: longitud minima 10, expiracion 90 dias, bloqueo tras 5 intentos. Para uso domestico puedes poner expiracion 0 (nunca caduca).'
+            T6Rec              = 'Elige valores segun la politica del cliente, sin preset universal. Longitud 0-14; expiracion 0 (nunca) o 1-999 dias; intentos 0-999.'
             T6Warn             = 'Estos cambios afectan a TODAS las cuentas del equipo. Un lockout muy agresivo (3 intentos) puede bloquear al cliente si olvida su contrasena con frecuencia.'
             T6CurrentLbl       = 'Politica actual:'
             T6NewLbl           = '--- Configurar nueva politica ---'
@@ -457,6 +457,7 @@ do {
     Write-Host "$espacio" -NoNewline; Write-Host $L.Opt5 -ForegroundColor Magenta
     Write-Host "$espacio" -NoNewline; Write-Host $L.Opt6 -ForegroundColor DarkCyan
     Write-Host "$espacio" -NoNewline; Write-Host $L.Opt7 -ForegroundColor DarkYellow
+    Write-Host "$espacio" -NoNewline; Write-Host '9. Restore UAC from an Atlas snapshot / Restaurar UAC desde snapshot' -ForegroundColor Yellow
     Write-Host "$espacio" -NoNewline; Write-Host $L.Opt8 -ForegroundColor DarkGray
     Write-Host ""
 
@@ -584,16 +585,12 @@ do {
             Escribir-Centrado $L.T3ApplyHint "Gray"
             Write-Host (" " * $padInput) -NoNewline
             $uacConf = Read-Host ""
-            if ($uacConf -eq "N" -or $uacConf -eq "n") { break }
+            if ($uacConf -cne 'APPLY UAC') { break }
 
             try {
-                $regPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
                 Escribir-Centrado $L.T3Applying "DarkGray"
-
-                Set-ItemProperty -Path $regPath -Name "EnableLUA"                    -Value 1 -ErrorAction Stop
-                Set-ItemProperty -Path $regPath -Name "PromptOnSecureDesktop"        -Value 1 -ErrorAction Stop
-                Set-ItemProperty -Path $regPath -Name "ConsentPromptBehaviorUser"    -Value 1 -ErrorAction Stop
-                Set-ItemProperty -Path $regPath -Name "ConsentPromptBehaviorAdmin"   -Value 2 -ErrorAction Stop
+                $snapshotPath=Join-Path (Get-AtlasReportDir -SubFolder UacSnapshots) ('uac-'+[guid]::NewGuid().ToString('N')+'.json')
+                Set-AtlasUacPreset -SnapshotPath $snapshotPath
 
                 Write-Host ""
                 Escribir-Centrado $L.T3Applied "Green"
@@ -613,7 +610,7 @@ do {
 
             try {
                 $usuarios = Get-LocalUser -ErrorAction Stop
-                $admins   = @(Get-LocalGroupMember -SID "S-1-5-32-544" -ErrorAction SilentlyContinue | ForEach-Object { $_.Name.Split("\")[-1] })
+                $admins   = @(Get-LocalGroupMember -SID "S-1-5-32-544" -ErrorAction Stop | ForEach-Object { [string]$_.SID })
 
                 $anchoPantalla2 = $Host.UI.RawUI.WindowSize.Width
                 $lineaEncabezado = $L.T4Header -f $L.T4HUser, $L.T4HRole, $L.T4HState, $L.T4HKey
@@ -624,13 +621,13 @@ do {
                 Write-Host "$spc$("-" * $lineaEncabezado.Length)" -ForegroundColor DarkGray
 
                 foreach ($u in $usuarios) {
-                    $rol    = if ($admins -contains $u.Name) { 'Admin' } else { $L.RoleStd }
+                    $rol    = if ($admins -contains [string]$u.SID) { 'Admin' } else { $L.RoleStd }
                     $estado = if ($u.Enabled) { $L.T4StateOn } else { $L.T4StateOff }
                     $clave  = if ($u.PasswordRequired) { $L.T4PwdReq } else { $L.T4PwdNo }
                     $linea  = $L.T4Header -f $u.Name, $rol, $estado, $clave
 
                     $color = if (!$u.Enabled) { "DarkGray" }
-                             elseif ($admins -contains $u.Name) { "Cyan" }
+                             elseif ($admins -contains [string]$u.SID) { "Cyan" }
                              else { "White" }
                     Write-Host "$spc$linea" -ForegroundColor $color
                 }
@@ -708,10 +705,10 @@ do {
             Escribir-Descripcion -Que $L.T6Que -Recomendacion $L.T6Rec -Precaucion $L.T6Warn
 
             try {
-                $politicaActual = net accounts 2>$null | Select-String "Minimum|Maximum|Lockout" | ForEach-Object { "  " + $_.Line.Trim() }
+                $politicaActual = Get-AtlasLocalAccountPolicy | ConvertTo-Json
                 Escribir-Centrado $L.T6CurrentLbl "DarkGray"
                 $politicaActual | ForEach-Object { Escribir-Centrado $_ "Gray" }
-            } catch {}
+            } catch { Escribir-Centrado 'Current local policy not evaluated; changes require a successful read.' 'Yellow' }
 
             Write-Host ""
             Escribir-Centrado $L.T6NewLbl "DarkCyan"
@@ -726,18 +723,17 @@ do {
             Write-Host (" " * ($padInput - 8)) -NoNewline
             $lockout = Read-Host $L.T6AskLock
 
-            $cambios = 0
             try {
-                if (![string]::IsNullOrWhiteSpace($minLen) -and $minLen -match '^\d+$') {
-                    net accounts /minpwlen:$minLen | Out-Null; $cambios++
+                $values=@{}
+                if (![string]::IsNullOrWhiteSpace($minLen)) {$values.MinPasswordLength=$minLen}
+                if (![string]::IsNullOrWhiteSpace($maxAge)) {$values.MaxPasswordAge=$maxAge}
+                if (![string]::IsNullOrWhiteSpace($lockout)) {$values.LockoutThreshold=$lockout}
+                if ($values.Count) {
+                    $snapshotPath=Join-Path (Get-AtlasReportDir -SubFolder AccountPolicySnapshots) ('policy-'+[guid]::NewGuid().ToString('N')+'.json')
+                    $result=Set-AtlasLocalAccountPolicy -Values $values -SnapshotPath $snapshotPath
+                    Escribir-Centrado ($L.T6Applied -f $result.VerifiedChanges) "Green"
+                    Write-Host ($result | ConvertTo-Json -Depth 5)
                 }
-                if (![string]::IsNullOrWhiteSpace($maxAge) -and $maxAge -match '^\d+$') {
-                    net accounts /maxpwage:$maxAge | Out-Null; $cambios++
-                }
-                if (![string]::IsNullOrWhiteSpace($lockout) -and $lockout -match '^\d+$') {
-                    net accounts /lockoutthreshold:$lockout | Out-Null; $cambios++
-                }
-                if ($cambios -gt 0) { Escribir-Centrado ($L.T6Applied -f $cambios) "Green" }
                 else { Escribir-Centrado $L.T6NoChanges "DarkGray" }
             } catch {
                 Escribir-Centrado ($L.ErrGeneric -f $_.Exception.Message) "Red"
@@ -755,8 +751,8 @@ do {
             try {
                 $uac      = Obtener-EstadoUAC
                 $usuarios = Get-LocalUser -ErrorAction Stop
-                $admins   = @(Get-LocalGroupMember -SID "S-1-5-32-544" -ErrorAction SilentlyContinue | ForEach-Object { $_.Name.Split("\")[-1] })
-                $politica = net accounts 2>$null
+                $admins   = @(Get-LocalGroupMember -SID "S-1-5-32-544" -ErrorAction Stop | ForEach-Object { [string]$_.SID })
+                $politica = Get-AtlasLocalAccountPolicy | ConvertTo-Json
 
                 $lineas = @()
                 $lineas += "=========================================================="
@@ -773,7 +769,7 @@ do {
                 $lineas += "  {0,-22} {1,-14} {2,-12} {3}" -f $L.T4HUser, $L.T4HRole, $L.T4HState, $L.T4HKey
                 $lineas += "  " + ("-" * 60)
                 foreach ($u in $usuarios) {
-                    $rol    = if ($admins -contains $u.Name) { 'Admin' } else { $L.RoleStd }
+                    $rol    = if ($admins -contains [string]$u.SID) { 'Admin' } else { $L.RoleStd }
                     $estado = if ($u.Enabled) { $L.T4StateOn } else { $L.T4StateOff }
                     $clave  = if ($u.PasswordRequired) { $L.T4PwdReq } else { $L.T4PwdNo }
                     $lineas += "  {0,-22} {1,-14} {2,-12} {3}" -f '[REDACTED]', $rol, $estado, $clave
@@ -796,6 +792,15 @@ do {
             Wait-AtlasContinue -Message $L.EnterContinue
         }
 
+        "9" {
+            Write-Host 'Restores only four UAC values on this computer. Previous values may reduce protection. Requires review and a restart / Puede reducir proteccion; revisar antes.'
+            $path=(Read-Host 'Atlas UAC snapshot path / Ruta del snapshot').Trim('"')
+            if((Read-Host 'Type RESTORE UAC to confirm / Escribe RESTORE UAC') -ceq 'RESTORE UAC') {
+                try {Restore-AtlasUacSnapshot -Path $path; Write-Host 'UAC snapshot restored and read back. Restart required.' -ForegroundColor Yellow}
+                catch {Write-Host $_.Exception.Message -ForegroundColor Red}
+            }
+            Wait-AtlasContinue -Message $L.EnterContinue
+        }
         "8" { return }
     }
 
