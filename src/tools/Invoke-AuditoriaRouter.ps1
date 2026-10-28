@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Invoke-AuditoriaRouter
 # Migrado de: AuditoriaRouter.ps1
 # Atlas PC Support — v1.0
@@ -797,6 +797,7 @@ function Modulo-Escaneo {
     $Ping        = New-Object System.Net.NetworkInformation.Ping
     $Encontrados = [System.Collections.Generic.List[hashtable]]::new()
     $MACVisto    = @{}
+    $dnsWindow=[Diagnostics.Stopwatch]::StartNew()
     $Log         = @("=== ESCANEO DE DISPOSITIVOS === $(Get-Date)", "Subred: ${Sub}.x", "")
 
     for ($i = 1; $i -le 254; $i++) {
@@ -805,7 +806,10 @@ function Modulo-Escaneo {
             if ($Ping.Send($IP, 150).Status -eq 'Success') {
 
                 $Host_ = "Oculto"
-                try { $H = [System.Net.Dns]::GetHostEntry($IP); if ($H.HostName) { $Host_ = $H.HostName } } catch { }
+                if($dnsWindow.ElapsedMilliseconds -lt 10000) {
+                    $dns=Resolve-AtlasDnsEntry -Name $IP -TimeoutMilliseconds 300
+                    if($dns.State -eq 'Observed' -and $dns.Entry.HostName){$Host_=$dns.Entry.HostName}
+                }
 
                 $null = arp -a 2>$null
                 Start-Sleep -Milliseconds 80
@@ -1064,28 +1068,30 @@ function Modulo-TestDNS {
     foreach ($D in $Doms) {
         $T0 = Get-Date
         try {
-            $R  = [System.Net.Dns]::GetHostEntry($D)
+            $dns=Resolve-AtlasDnsEntry -Name $D -TimeoutMilliseconds 3000
+            if($dns.State -ne 'Observed'){throw "DNS result: $($dns.State); no answer observed within the wait budget."}
+            $R=$dns.Entry
             $Ms = [Math]::Round((New-TimeSpan -Start $T0 -End (Get-Date)).TotalMilliseconds)
             $IP = ($R.AddressList | Select-Object -First 2 | ForEach-Object { $_.IPAddressToString }) -join ", "
             $C  = if ($Ms -gt 500) { "Yellow" } else { "Green" }
             Write-Host "  [OK]    $D" -NoNewline -ForegroundColor $C
             Write-Host "   ${Ms}ms  ->  $IP" -ForegroundColor DarkGray
-            if ($Ms -gt 500) { Write-Host "          WARNING: slow resolution. Router DNS may be congested." -ForegroundColor DarkYellow }
+            if ($Ms -gt 500) { Write-Host "          WARNING: slow resolution observed; cause not established." -ForegroundColor DarkYellow }
             $Log += "  [OK]    $D : ${Ms}ms -> $IP"
         } catch {
             $Ms = [Math]::Round((New-TimeSpan -Start $T0 -End (Get-Date)).TotalMilliseconds)
-            Write-Host "  [FALLO] $D  (${Ms}ms)" -ForegroundColor Red
-            $Log += "  [FALLO] $D : ${Ms}ms"
+            Write-Host "  [$($dns.State)] $D  (${Ms}ms); cause not established" -ForegroundColor Yellow
+            $Log += "  [$($dns.State)] $D : ${Ms}ms; cause not established"
             $F++
         }
     }
 
     Write-Host ""
     if ($F -eq $Doms.Count) {
-        Write-Host "  WARNING: All domains failed. No Internet or DNS completely down." -ForegroundColor Red
-        Write-Host "  Quick fix: change DNS to 1.1.1.1 in the adapter configuration." -ForegroundColor Yellow
+        Write-Host "  WARNING: no successful DNS answers observed; check connectivity and DNS. Cause not established." -ForegroundColor Red
+        Write-Host "  No adapter settings were changed." -ForegroundColor Yellow
     } elseif ($F -gt 0) {
-        Write-Host "  WARNING: $F domain(s) fallaron. Posible filtracion o cache DNS corrupta." -ForegroundColor Yellow
+        Write-Host "  WARNING: $F domain(s) without an observed answer. Cause not established." -ForegroundColor Yellow
     }
 
     $script:HistorialSesion.Add("[F] Test DNS: $($Doms.Count - $F)/$($Doms.Count) domains OK")
@@ -1429,6 +1435,7 @@ function Modulo-Comparativa {
     $Ping = New-Object System.Net.NetworkInformation.Ping
 
     $Actual = @{}
+    $dnsWindow=[Diagnostics.Stopwatch]::StartNew()
     for ($i = 1; $i -le 254; $i++) {
         $IP = "$Sub.$i"
         try {
@@ -1436,7 +1443,10 @@ function Modulo-Comparativa {
                 $null = arp -a 2>$null; Start-Sleep -Milliseconds 60
                 $MAC    = Get-MACDesdeARP -IP $IP
                 $HostN  = "Oculto"
-                try { $H = [System.Net.Dns]::GetHostEntry($IP); if ($H.HostName) { $HostN = $H.HostName } } catch { }
+                if($dnsWindow.ElapsedMilliseconds -lt 10000) {
+                    $dns=Resolve-AtlasDnsEntry -Name $IP -TimeoutMilliseconds 300
+                    if($dns.State -eq 'Observed' -and $dns.Entry.HostName){$HostN=$dns.Entry.HostName}
+                }
                 $Actual[$IP] = @{ MAC = $MAC; Host = $HostN }
             }
         } catch { }

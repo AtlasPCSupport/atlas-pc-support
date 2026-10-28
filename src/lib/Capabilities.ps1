@@ -96,7 +96,7 @@ function Get-AtlasStoreState {
     [pscustomobject]@{
         State=$(if($blocked){'BlockedByPolicy'} elseif($store){'RegisteredForCurrentUser'} elseif($provisioned){'PresentNotRegisteredForCurrentUser'} elseif($errorMessage){'NotEvaluated'} else {'NotInstalled'})
         Store=$store; ExistingPackage=$provisioned; AppInstaller=$appInstaller
-        WingetAvailable=[bool](Get-Command winget.exe -ErrorAction SilentlyContinue)
+        WingetAvailable=[bool](Get-Command winget.exe -CommandType Application -ErrorAction SilentlyContinue)
         LTSC=$platform.LTSC; Error=$errorMessage
     }
 }

@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Invoke-FastCopy
 # Migrado de: FastCopy.ps1
 # Atlas PC Support — v1.0
@@ -10,7 +10,7 @@ function Invoke-FastCopy {
 # ========================================================
 # ATLAS PC SUPPORT - FASTCOPY EDITION v3 (PowerShell)
 # Multi-origen + Perfiles + Comparar + Notificacion
-# MD5 + Speed adapt + Summary exportable + Exclusiones
+# SHA-256 sample + Speed adapt + Summary exportable + Exclusiones
 # ========================================================
 
 $Host.UI.RawUI.BackgroundColor = "Black"
@@ -23,38 +23,16 @@ $atlasToolkitReady = [bool](Get-Command Write-AtlasHeader -ErrorAction SilentlyC
 # ==================== BUSCAR FASTCOPY ====================
 
 function Find-FastCopy {
-    $searchPaths = @(
-        "C:\Program Files\FastCopy\FastCopy.exe",
-        "C:\Program Files (x86)\FastCopy\FastCopy.exe",
-        (Join-Path $env:LOCALAPPDATA "FastCopy\FastCopy.exe"),
-        (Join-Path $env:LOCALAPPDATA 'AtlasPC\apps\FastCopy\FastCopy.exe')
-    )
-    # USB offline root (set by run-launcher.ps1 on USB launch)
-    if ($env:ATLAS_OFFLINE_ROOT) {
-        $searchPaths += (Join-Path $env:ATLAS_OFFLINE_ROOT 'apps\FastCopy\FastCopy.exe')
-    }
-    foreach ($path in $searchPaths) {
-        if ($path -and (Test-Path $path)) { return (Resolve-Path $path).Path }
-    }
-    $inPath = Get-Command "FastCopy.exe" -ErrorAction SilentlyContinue
-    if ($inPath) { return $inPath.Source }
-    return $null
+    param([switch]$InstallIfMissing)
+    $paths=@((Join-Path $env:LOCALAPPDATA 'AtlasPC\apps\FastCopy\FastCopy.exe'))
+    if($env:ATLAS_OFFLINE_ROOT){$paths+=Join-Path $env:ATLAS_OFFLINE_ROOT 'apps\FastCopy\FastCopy.exe'}
+    return Resolve-AtlasDependency -Name FastCopy -AdditionalSearchPaths $paths -InstallIfMissing:$InstallIfMissing
 }
 
 function Install-FastCopyAuto {
-    # Resolve FastCopy via dependency manager with SHA-256 validation
-    if (Get-Command Resolve-AtlasDependency -ErrorAction SilentlyContinue) {
-        try {
-            $depPath = Resolve-AtlasDependency -Name 'FastCopy' -InstallIfMissing
-            if ($depPath -and (Test-Path $depPath)) { return $depPath }
-        } catch {
-            Write-Host "    [!] Dependency manager notice: $($_.Exception.Message)" -ForegroundColor Yellow
-        }
-    }
-
-    $existing = Find-FastCopy
-    if ($existing) { return $existing }
-    throw "FastCopy dependency could not be resolved."
+    $path=Find-FastCopy -InstallIfMissing
+    if(-not $path){throw 'FastCopy dependency could not be resolved. Inspect the installation result before retrying.'}
+    return $path
 }
 
 # ==================== FUNCIONES BASE ====================
@@ -78,7 +56,7 @@ function _Write-AtlasHeaderCompat {
     Write-Host "`n"
     Write-Centered "==========================================================" "Cyan"
     Write-Centered "           FASTCOPY EDITION v3" "Yellow"
-    Write-Centered "     Multi-source Copy · Profiles · MD5 Verify" "DarkGray"
+    Write-Centered "     Multi-source Copy · Profiles · SHA-256 sample" "DarkGray"
     Write-Centered "==========================================================" "Cyan"
     Write-Host ""
 }
@@ -657,7 +635,7 @@ if (-not $fastCopyExe) {
 
 do {
     Clear-Host
-    _Write-AtlasHeaderCompat -Title "FASTCOPY EDITION v3" -Subtitle "Multi-source Copy · Profiles · MD5 Verify"
+    _Write-AtlasHeaderCompat -Title "FASTCOPY EDITION v3" -Subtitle "Multi-source Copy · Profiles · SHA-256 sample"
     Write-Host "    Motor: $(Split-Path $fastCopyExe -Leaf)" -ForegroundColor DarkGray
     Write-Host ""
     Write-Centered "[ 1 ] Copia normal (un origen)" "White"
@@ -919,12 +897,12 @@ do {
     }
 
     # =============================================
-    # VERIFICACION MD5
+    # MUESTREO SHA-256
     # =============================================
     $integrity = $null
     if ($result.OK -and $modo -ne "MOVER") {
         Write-Host ""
-        Write-Host "    Verificar integridad MD5? [Y/N]" -ForegroundColor DarkGray
+        Write-Host "    Verificar una muestra SHA-256? [Y/N]" -ForegroundColor DarkGray
         $verSel = Read-Host "    >"
         if ($verSel -match '^[SsYy]$') {
             # Verificar el primer origen (el más importante)
@@ -977,7 +955,7 @@ do {
                     Send-Notification -Title "Atlas - Copia $(if ($r2.OK) {'OK'} else {'Error'})" -Message $n2Msg -Success $r2.OK
 
                     if ($r2.OK -and $modo -ne "MOVER") {
-                        Write-Host "    Verificar MD5? [Y/N]" -ForegroundColor DarkGray
+                        Write-Host "    Verificar una muestra SHA-256? [Y/N]" -ForegroundColor DarkGray
                         $v2 = Read-Host "    >"
                         if ($v2 -match '^[SsYy]$') { Test-CopyIntegrity -Origen $origenes[0] -Destino $newRutaFinal -ExcludeFiles $exclusions.Files -ExcludeDirs $exclusions.Dirs | Out-Null }
                     }

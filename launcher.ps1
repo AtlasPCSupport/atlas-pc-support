@@ -20,7 +20,7 @@ if ($PSVersionTable.PSEdition -eq 'Desktop') {
 }
 
 
-$script:AtlasVersion = '1.5.17'
+$script:AtlasVersion = '1.5.18'
 $script:AtlasBuildDate = '2026-10-27'
 $script:AtlasToolsManifest = '{
   "$comment": "Tool manifest. Each entry describes one tool. The launcher uses this to render the panel''s tool tiles.",
@@ -873,7 +873,7 @@ $script:AtlasToolsManifest = '{
   ]
 }
 '
-$script:AtlasToolHashesJson = '{"generatedAt":"2026-10-27","algorithm":"SHA256","files":{"Invoke-AIReadiness.ps1":"0cc69f023d29584cfb59404458d1b47d864b6dd915aee1a37419e734f02a0346","Invoke-ActualizarPowerShell.ps1":"f0a1f77e1b3a341628916798a4bfd63de5a27ae1ee83c6ad3fbd8e510f665562","Invoke-AuditoriaRouter.ps1":"c60b60203f6a7627d91a13d64bc592e36ea2fd5d552d0a83b4f6a9394d1119bb","Invoke-Deduplicador.ps1":"2147b9d475f36f93c2908bb3c1701b35c5e4a144eb1b5356653e90af322c1a01","Invoke-DiagnosticoEventos.ps1":"6e3b3763abcfe0e8f975c23f69d2bcdc716f6cd478e03b372f4602123552ccf3","Invoke-DiagnosticoMaster.ps1":"f10590cdc23d7d51751076a5376fefcfa938f4e3ee9209dffed083320f04dbed","Invoke-EntregaPC.ps1":"b6a7326be8dc1d7edf9c556e5ebaaaae5d43efb2c9936d111ac803f72a5c9ac8","Invoke-ExtraerLicencias.ps1":"bd8436451e725c872ac155aa948a1af5e3fb0734a9f479fac220b3ba52f43871","Invoke-Fase0.ps1":"44a2a6bafc2f2dcb1a0e4e78b2062b7860147fb118fe5fdb9e1a4bcdcebada0c","Invoke-FastCopy.ps1":"d2f156cd53d9d4758ded0c5a60d3ac63578e1ca7021a483049fd73ec0aacbfd1","Invoke-GPUCheck.ps1":"7d10790ac4811c5fdf1b563c6b1768c92bd7ce62f814050380ffb93b4e651de3","Invoke-GestorBitLocker.ps1":"93969ccbf4b2810c7e8f480c58de5af4e0d96d6c979eda8a1ac44bf14bd453a9","Invoke-HostsManager.ps1":"b352272840ec27ffd4141ff1d002ba869365283064d5515e58ad036775bbea62","Invoke-InstalarMicrosoftStore.ps1":"d2d73a1a359585c13e09cf2eafe89fe588d5cdb9a89872730ab7a4e9de5a09de","Invoke-InstalarPaquetes.ps1":"823b287af3352698a76f6571d741ec38135e0d18e7685bb3255914d448696370","Invoke-InstalarRuntimes.ps1":"0d973d2105d0468ad15e05543d10cf24d168beb4363df3dd261444a067812ef5","Invoke-KeyboardDoctor.ps1":"d920a97f29735097226420624a85283ad80602a9576a5d787ae0054fa857b7a6","Invoke-MantenimientoPRO.ps1":"226545d07cf4f201e958670f8c49168785b838320ddbc8959d2fc65751582931","Invoke-MenorPrivilegio.ps1":"93cd195f8f47c02e4428763418e685e276f33fecb6cc9f3bedcb0e5a14aab565","Invoke-PartsUpgrade.ps1":"a328c3d6490323022f21bdb079e9fa7d34e7bd81c9288fa9d1c6222378c8ca61","Invoke-Personalizacion.ps1":"57f979ffe953aaed57632b004b687d5651cb41b21e0313ea3d23c423a6dcf1c4","Invoke-PrepararUSB.ps1":"8e24a10f979cc6d859e3b170997f675158c12d108227cf4de00372a0d7d7a56e","Invoke-PrinterDoctor.ps1":"4a16f46c9699d18cc54a7174037c618a9e2727edb27b0735947689e99e3d4e68","Invoke-RespaldoControladores.ps1":"2c8f4dda090fd620d99aad9b457213e8a4d748ea89b09e8380b68c0743e8efd1","Invoke-Robocopy.ps1":"1006d3a73f33923a19ab89949c34b3c66a4ef31c1ec2d6ad4b121c5db6c881b1","Invoke-SelectorDNS.ps1":"47101374664bacc1ed87f1f77bb3bb9dc57d8ee72961e8818328b86bad8dee1c","Invoke-StopServices.ps1":"9cb88839b1e350bcee6ce63b5809ccc7c4ff4d11ee773ca3715b2d5386f1212b"}}'
+$script:AtlasToolHashesJson = '{"generatedAt":"2026-10-27","algorithm":"SHA256","files":{"Invoke-AIReadiness.ps1":"ad611ac74ad30e957b57eebe429c686b9990e122f5fc68a98b726f8cf77ab1b0","Invoke-ActualizarPowerShell.ps1":"f0a1f77e1b3a341628916798a4bfd63de5a27ae1ee83c6ad3fbd8e510f665562","Invoke-AuditoriaRouter.ps1":"122ee6637ea2baf53e8baed565a0dc3095d81fe96b523aabdae707dd508d65ae","Invoke-Deduplicador.ps1":"2147b9d475f36f93c2908bb3c1701b35c5e4a144eb1b5356653e90af322c1a01","Invoke-DiagnosticoEventos.ps1":"6e3b3763abcfe0e8f975c23f69d2bcdc716f6cd478e03b372f4602123552ccf3","Invoke-DiagnosticoMaster.ps1":"3929e586401de5ee7305d5b1c5b0aea819c60cb151669574ffa969ea7e1c7c75","Invoke-EntregaPC.ps1":"5a9664ce72d014fc293d65970796b868d868aff71ce804bf930b1c780f19db7c","Invoke-ExtraerLicencias.ps1":"cf28633813aab81a375645b28e0b7f1e58230727a887fb07b34403c4da679248","Invoke-Fase0.ps1":"44a2a6bafc2f2dcb1a0e4e78b2062b7860147fb118fe5fdb9e1a4bcdcebada0c","Invoke-FastCopy.ps1":"16ff4df182e65a34f4a905553692c9c92e3539312d96b278ce356b8d242a7d96","Invoke-GPUCheck.ps1":"c827d37006de7fa10307fecf9dd8654f162bacca3d8c3544f3943dd513f0553a","Invoke-GestorBitLocker.ps1":"a6a35d810e003e046553035636e3c2d5308693123ee1409979e802ff2f07e2e2","Invoke-HostsManager.ps1":"b352272840ec27ffd4141ff1d002ba869365283064d5515e58ad036775bbea62","Invoke-InstalarMicrosoftStore.ps1":"d2d73a1a359585c13e09cf2eafe89fe588d5cdb9a89872730ab7a4e9de5a09de","Invoke-InstalarPaquetes.ps1":"b72aa75294584e23c5d4bf52039ec14cc6750602b6fb4d922361156537d73d42","Invoke-InstalarRuntimes.ps1":"42b6bef717111e92f694b22da6cae836e8e470b6831df907b0333ee30c74fe49","Invoke-KeyboardDoctor.ps1":"2ae35f549cfba85bac602d27c9d805a803c5f0e5337b8419030dc727b5b4cdd9","Invoke-MantenimientoPRO.ps1":"226545d07cf4f201e958670f8c49168785b838320ddbc8959d2fc65751582931","Invoke-MenorPrivilegio.ps1":"93cd195f8f47c02e4428763418e685e276f33fecb6cc9f3bedcb0e5a14aab565","Invoke-PartsUpgrade.ps1":"b5eaf5ea1aaa4b57809f46b4d0d77b5982bf9a0a1a87a307e57cf0c80d9b691f","Invoke-Personalizacion.ps1":"57f979ffe953aaed57632b004b687d5651cb41b21e0313ea3d23c423a6dcf1c4","Invoke-PrepararUSB.ps1":"85ff0f50609c9d3a447c3c493882b3e40652229e4e4fd4d6ca1e1425ad603bc5","Invoke-PrinterDoctor.ps1":"0c393a5bd64178ca8e5325b4982199415937b794579b318201d13cccc01499a0","Invoke-RespaldoControladores.ps1":"2c8f4dda090fd620d99aad9b457213e8a4d748ea89b09e8380b68c0743e8efd1","Invoke-Robocopy.ps1":"1006d3a73f33923a19ab89949c34b3c66a4ef31c1ec2d6ad4b121c5db6c881b1","Invoke-SelectorDNS.ps1":"47101374664bacc1ed87f1f77bb3bb9dc57d8ee72961e8818328b86bad8dee1c","Invoke-StopServices.ps1":"9cb88839b1e350bcee6ce63b5809ccc7c4ff4d11ee773ca3715b2d5386f1212b"}}'
 $script:AtlasXamlTemplate = '<Window
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -2849,6 +2849,24 @@ function Invoke-AtlasInventoryRead {
     }
 }
 
+function Resolve-AtlasDnsEntry {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Name,[ValidateRange(1,10000)][int]$TimeoutMilliseconds=1000)
+    # Framework 4.x cannot cancel this DNS API. Bound caller waits and outstanding tasks.
+    if(-not (Get-Variable -Name AtlasDnsPending -Scope Script -ErrorAction SilentlyContinue)){$script:AtlasDnsPending=@()}
+    $script:AtlasDnsPending=@($script:AtlasDnsPending | Where-Object {
+        if($null -eq $_){return $false}
+        if($_.IsCompleted){$null=$_.Exception;return $false};return $true
+    })
+    if($script:AtlasDnsPending.Count -ge 4){return [pscustomobject]@{State=''NotEvaluated'';Entry=$null}}
+    try {
+        $task=[Net.Dns]::GetHostEntryAsync($Name)
+        $script:AtlasDnsPending+=,$task
+        if(-not $task.Wait($TimeoutMilliseconds)){return [pscustomobject]@{State=''TimedOut'';Entry=$null}}
+        return [pscustomobject]@{State=''Observed'';Entry=$task.Result}
+    } catch {return [pscustomobject]@{State=''Failed'';Entry=$null}}
+}
+
 function Get-AtlasMemorySummary {
     [CmdletBinding()]
     param([object[]]$Modules=@(), [object[]]$Arrays=@())
@@ -3085,15 +3103,24 @@ $BodyHtml
 "@
 }
 
+function Get-AtlasApplicationPath {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string[]]$Name)
+    foreach ($application in $Name) {
+        foreach ($command in @(Get-Command $application -CommandType Application -ErrorAction SilentlyContinue)) {
+            if ($command.Source -and (Test-Path -LiteralPath $command.Source -PathType Leaf)) { return [string]$command.Source }
+        }
+    }
+    return $null
+}
+
 function Get-AtlasWingetPath {
     [CmdletBinding()]
     param()
 
     # 1) PATH normal
-    $cmd = Get-Command winget.exe -ErrorAction SilentlyContinue
-    if ($cmd -and $cmd.Source -and (Test-Path -LiteralPath $cmd.Source)) {
-        return $cmd.Source
-    }
+    $path = Get-AtlasApplicationPath -Name winget.exe
+    if ($path) { return $path }
 
     # 2) Ruta real del paquete Appx (evita el alias de WindowsApps de 0 bytes o faltante en admin elevacion)
     try {
@@ -3103,7 +3130,7 @@ function Get-AtlasWingetPath {
 
         if ($pkg -and $pkg.InstallLocation) {
             $exe = Join-Path $pkg.InstallLocation ''winget.exe''
-            if (Test-Path -LiteralPath $exe) { return $exe }
+            if (Test-Path -LiteralPath $exe -PathType Leaf) { return $exe }
         }
     } catch {}
 
@@ -3140,6 +3167,7 @@ function Get-AtlasWingetCapabilities {
     try {
         $probe = Invoke-AtlasNativeProcess -FilePath $WingetPath -ArgumentList @(''--version'') -TimeoutSeconds 10
         $caps.ProbeState = $probe.State
+        if ($probe.StdoutTruncated) { $caps.ProbeState=''NotEvaluated''; return $caps }
         if ($probe.State -ne ''Correct'') { return $caps }
         # Accept only WinGet''s version response, never an error/banner or exit failure.
         $text = ([string]$probe.Stdout).Trim()
@@ -3243,7 +3271,9 @@ function Resolve-AtlasDependency {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)][ValidatePattern(''^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$'')][string]$Name,
-        [switch]$InstallIfMissing
+        [switch]$InstallIfMissing,
+        [string[]]$AdditionalSearchPaths = @(),
+        [string[]]$CommandNames = @()
     )
 
     if (-not $script:AtlasDepsRegistry.ContainsKey($Name)) {
@@ -3252,16 +3282,21 @@ function Resolve-AtlasDependency {
     }
     $dep = $script:AtlasDepsRegistry[$Name]
 
-    foreach ($p in $dep.SearchPaths) {
+    foreach ($p in @($AdditionalSearchPaths) + @($dep.SearchPaths)) {
+        if ([string]::IsNullOrWhiteSpace($p)) { continue }
         $expanded = Expand-AtlasPath $p
         foreach($file in @(Get-ChildItem -Path $expanded -File -ErrorAction SilentlyContinue | Sort-Object FullName)) {
             $candidate=Get-AtlasDependencyCandidate -Name $Name -Path $file.FullName
             if($candidate){return $candidate}
         }
     }
-    foreach($command in @(Get-Command $dep.ExecutableName -CommandType Application -ErrorAction SilentlyContinue)) {
-        $candidate=Get-AtlasDependencyCandidate -Name $Name -Path $command.Source -Origin PATH
-        if($candidate){return $candidate}
+    foreach($commandName in @($dep.ExecutableName) + @($CommandNames)) {
+        if ([string]::IsNullOrWhiteSpace($commandName)) { continue }
+        foreach($command in @(Get-Command $commandName -CommandType Application -ErrorAction SilentlyContinue)) {
+            if(-not $command -or -not $command.Source){continue}
+            $candidate=Get-AtlasDependencyCandidate -Name $Name -Path $command.Source -Origin PATH
+            if($candidate){return $candidate}
+        }
     }
 
     if (-not $InstallIfMissing) {
@@ -3269,16 +3304,17 @@ function Resolve-AtlasDependency {
         return $null
     }
 
-    if ($dep.WingetId -and (Get-Command ''winget'' -ErrorAction SilentlyContinue)) {
+    $winget = if ($dep.WingetId) { Get-AtlasWingetPath } else { $null }
+    if ($winget) {
         Write-AtlasLog "Instalando $Name vía winget ($($dep.WingetId))" -Tool ''Deps''
         try {
-            $result = Invoke-AtlasNativeProcess -FilePath ''winget.exe'' -ArgumentList @(''install'',''--id'',$dep.WingetId,''--exact'',''--source'',''winget'',''--accept-source-agreements'',''--accept-package-agreements'',''--silent'') -TimeoutSeconds 1800
+            $result = Invoke-AtlasNativeProcess -FilePath $winget -ArgumentList @(''install'',''--id'',$dep.WingetId,''--exact'',''--source'',''winget'',''--accept-source-agreements'',''--accept-package-agreements'',''--silent'') -TimeoutSeconds 1800
             if ($result.State -ne ''Correct'') { Write-AtlasLog "Dependency installation $($result.State), exit $($result.ExitCode); no second installer is started." -Level ERROR -Tool Deps; return $null }
         } catch {
             Write-AtlasLog "winget failed: $_; no second installer is started." -Level ERROR -Tool Deps
             return $null
         }
-        return Resolve-AtlasDependency -Name $Name
+        return Resolve-AtlasDependency -Name $Name -AdditionalSearchPaths $AdditionalSearchPaths -CommandNames $CommandNames
     }
 
     # Direct download is allowed only when no package-manager attempt was made.
@@ -3298,7 +3334,7 @@ function Resolve-AtlasDependency {
                 $result = Invoke-AtlasNativeProcess -FilePath $installerFile -ArgumentList @(''/EXTRACT64'',''/NOSUBDIR'',''/AGREE_LICENSE'',("/DIR=$targetDir")) -TimeoutSeconds 180
                 if ($result.State -ne ''Correct'') { throw "Dependency extraction $($result.State), exit $($result.ExitCode). No alternative installer was started." }
                 Remove-Item -LiteralPath $installerFile -ErrorAction Stop
-                return Resolve-AtlasDependency -Name $Name
+                return Resolve-AtlasDependency -Name $Name -AdditionalSearchPaths $AdditionalSearchPaths -CommandNames $CommandNames
             }
         } catch {
             Write-AtlasLog "Descarga directa falló: $_" -Level WARN -Tool ''Deps''
@@ -3866,7 +3902,7 @@ function Get-AtlasStoreState {
     [pscustomobject]@{
         State=$(if($blocked){''BlockedByPolicy''} elseif($store){''RegisteredForCurrentUser''} elseif($provisioned){''PresentNotRegisteredForCurrentUser''} elseif($errorMessage){''NotEvaluated''} else {''NotInstalled''})
         Store=$store; ExistingPackage=$provisioned; AppInstaller=$appInstaller
-        WingetAvailable=[bool](Get-Command winget.exe -ErrorAction SilentlyContinue)
+        WingetAvailable=[bool](Get-Command winget.exe -CommandType Application -ErrorAction SilentlyContinue)
         LTSC=$platform.LTSC; Error=$errorMessage
     }
 }
@@ -3940,6 +3976,16 @@ function Copy-AtlasUsbExecutable {
     $script:AtlasUsbVerifiedFiles[$PackageKey]=@(@{Path=$Destination;Sha256=$digest.ToLowerInvariant()})
 }
 
+function Get-AtlasPowerShellVersion {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Path)
+    $result=Invoke-AtlasNativeProcess -FilePath $Path -ArgumentList @(''-NoLogo'',''-NoProfile'',''-Command'',''$PSVersionTable.PSVersion.ToString()'') -TimeoutSeconds 15
+    if($result.State -ne ''Correct'' -or $result.StdoutTruncated){throw ''Installed PowerShell version could not be evaluated.''}
+    $text=([string]$result.Stdout).Trim()
+    if($text -notmatch ''^\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?$''){throw ''Unexpected PowerShell version output.''}
+    return [version]($text -split ''-'',2)[0]
+}
+
 function Get-AtlasLocalAccountPolicy {
     [CmdletBinding()]
     param()
@@ -3966,15 +4012,6 @@ namespace Atlas {
   }
 }
 
-function Get-AtlasPowerShellVersion {
-    [CmdletBinding()]
-    param([Parameter(Mandatory)][string]$Path)
-    $result=Invoke-AtlasNativeProcess -FilePath $Path -ArgumentList @(''-NoLogo'',''-NoProfile'',''-Command'',''$PSVersionTable.PSVersion.ToString()'') -TimeoutSeconds 15
-    if($result.State -ne ''Correct''){throw ''Installed PowerShell version could not be evaluated.''}
-    $text=([string]$result.Stdout).Trim()
-    if($text -notmatch ''^\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?$''){throw ''Unexpected PowerShell version output.''}
-    return [version]($text -split ''-'',2)[0]
-}
 ''@ -ErrorAction Stop
     }
     $password=[Atlas.LocalPolicyReader]::Read(0,5)
@@ -4547,7 +4584,7 @@ function Get-AtlasServiceSnapshot {
     $service=Get-Service -Name $Name -ErrorAction Stop
     if($service.Status.ToString() -notin @(''Running'',''Stopped'')){throw ''Wait for the service to reach a stable state.''}
     if(@($service.DependentServices | Where-Object Status -ne ''Stopped'').Count){throw ''Running dependents exist. Atlas will not force-stop them.''}
-    $cim=Get-CimInstance -ClassName Win32_Service -Filter "Name=''$Name''" -ErrorAction Stop
+    $cim=Get-CimInstance -OperationTimeoutSec 10 -ClassName Win32_Service -Filter "Name=''$Name''" -ErrorAction Stop
     if($cim.StartMode -notin @(''Auto'',''Manual'',''Disabled'')){throw ''Unknown startup mode; no change allowed.''}
     $key="HKLM:\SYSTEM\CurrentControlSet\Services\$Name"
     $properties=Get-ItemProperty -LiteralPath $key -ErrorAction Stop
@@ -4575,7 +4612,7 @@ function Restore-AtlasServiceSnapshot {
     if($Snapshot.DelayedPresent){Set-ItemProperty -LiteralPath $key -Name DelayedAutostart -Value $Snapshot.DelayedValue -Type DWord -ErrorAction Stop}
     elseif((Get-ItemProperty -LiteralPath $key -ErrorAction Stop).PSObject.Properties[''DelayedAutostart'']){Remove-ItemProperty -LiteralPath $key -Name DelayedAutostart -ErrorAction Stop}
     $after=Get-Service -Name $name -ErrorAction Stop
-    $cim=Get-CimInstance -ClassName Win32_Service -Filter "Name=''$name''" -ErrorAction Stop
+    $cim=Get-CimInstance -OperationTimeoutSec 10 -ClassName Win32_Service -Filter "Name=''$name''" -ErrorAction Stop
     if($after.Status.ToString() -ne $Snapshot.Status -or $cim.StartMode -ne $Snapshot.StartMode){throw ''Service restoration could not be verified.''}
     $properties=Get-ItemProperty -LiteralPath $key -ErrorAction Stop
     $delayed=$properties.PSObject.Properties[''DelayedAutostart'']
@@ -5655,6 +5692,24 @@ function Invoke-AtlasInventoryRead {
     }
 }
 
+function Resolve-AtlasDnsEntry {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Name,[ValidateRange(1,10000)][int]$TimeoutMilliseconds=1000)
+    # Framework 4.x cannot cancel this DNS API. Bound caller waits and outstanding tasks.
+    if(-not (Get-Variable -Name AtlasDnsPending -Scope Script -ErrorAction SilentlyContinue)){$script:AtlasDnsPending=@()}
+    $script:AtlasDnsPending=@($script:AtlasDnsPending | Where-Object {
+        if($null -eq $_){return $false}
+        if($_.IsCompleted){$null=$_.Exception;return $false};return $true
+    })
+    if($script:AtlasDnsPending.Count -ge 4){return [pscustomobject]@{State='NotEvaluated';Entry=$null}}
+    try {
+        $task=[Net.Dns]::GetHostEntryAsync($Name)
+        $script:AtlasDnsPending+=,$task
+        if(-not $task.Wait($TimeoutMilliseconds)){return [pscustomobject]@{State='TimedOut';Entry=$null}}
+        return [pscustomobject]@{State='Observed';Entry=$task.Result}
+    } catch {return [pscustomobject]@{State='Failed';Entry=$null}}
+}
+
 function Get-AtlasMemorySummary {
     [CmdletBinding()]
     param([object[]]$Modules=@(), [object[]]$Arrays=@())
@@ -5891,15 +5946,24 @@ $BodyHtml
 "@
 }
 
+function Get-AtlasApplicationPath {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string[]]$Name)
+    foreach ($application in $Name) {
+        foreach ($command in @(Get-Command $application -CommandType Application -ErrorAction SilentlyContinue)) {
+            if ($command.Source -and (Test-Path -LiteralPath $command.Source -PathType Leaf)) { return [string]$command.Source }
+        }
+    }
+    return $null
+}
+
 function Get-AtlasWingetPath {
     [CmdletBinding()]
     param()
 
     # 1) PATH normal
-    $cmd = Get-Command winget.exe -ErrorAction SilentlyContinue
-    if ($cmd -and $cmd.Source -and (Test-Path -LiteralPath $cmd.Source)) {
-        return $cmd.Source
-    }
+    $path = Get-AtlasApplicationPath -Name winget.exe
+    if ($path) { return $path }
 
     # 2) Ruta real del paquete Appx (evita el alias de WindowsApps de 0 bytes o faltante en admin elevacion)
     try {
@@ -5909,7 +5973,7 @@ function Get-AtlasWingetPath {
 
         if ($pkg -and $pkg.InstallLocation) {
             $exe = Join-Path $pkg.InstallLocation 'winget.exe'
-            if (Test-Path -LiteralPath $exe) { return $exe }
+            if (Test-Path -LiteralPath $exe -PathType Leaf) { return $exe }
         }
     } catch {}
 
@@ -5946,6 +6010,7 @@ function Get-AtlasWingetCapabilities {
     try {
         $probe = Invoke-AtlasNativeProcess -FilePath $WingetPath -ArgumentList @('--version') -TimeoutSeconds 10
         $caps.ProbeState = $probe.State
+        if ($probe.StdoutTruncated) { $caps.ProbeState='NotEvaluated'; return $caps }
         if ($probe.State -ne 'Correct') { return $caps }
         # Accept only WinGet's version response, never an error/banner or exit failure.
         $text = ([string]$probe.Stdout).Trim()
@@ -6049,7 +6114,9 @@ function Resolve-AtlasDependency {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)][ValidatePattern('^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$')][string]$Name,
-        [switch]$InstallIfMissing
+        [switch]$InstallIfMissing,
+        [string[]]$AdditionalSearchPaths = @(),
+        [string[]]$CommandNames = @()
     )
 
     if (-not $script:AtlasDepsRegistry.ContainsKey($Name)) {
@@ -6058,16 +6125,21 @@ function Resolve-AtlasDependency {
     }
     $dep = $script:AtlasDepsRegistry[$Name]
 
-    foreach ($p in $dep.SearchPaths) {
+    foreach ($p in @($AdditionalSearchPaths) + @($dep.SearchPaths)) {
+        if ([string]::IsNullOrWhiteSpace($p)) { continue }
         $expanded = Expand-AtlasPath $p
         foreach($file in @(Get-ChildItem -Path $expanded -File -ErrorAction SilentlyContinue | Sort-Object FullName)) {
             $candidate=Get-AtlasDependencyCandidate -Name $Name -Path $file.FullName
             if($candidate){return $candidate}
         }
     }
-    foreach($command in @(Get-Command $dep.ExecutableName -CommandType Application -ErrorAction SilentlyContinue)) {
-        $candidate=Get-AtlasDependencyCandidate -Name $Name -Path $command.Source -Origin PATH
-        if($candidate){return $candidate}
+    foreach($commandName in @($dep.ExecutableName) + @($CommandNames)) {
+        if ([string]::IsNullOrWhiteSpace($commandName)) { continue }
+        foreach($command in @(Get-Command $commandName -CommandType Application -ErrorAction SilentlyContinue)) {
+            if(-not $command -or -not $command.Source){continue}
+            $candidate=Get-AtlasDependencyCandidate -Name $Name -Path $command.Source -Origin PATH
+            if($candidate){return $candidate}
+        }
     }
 
     if (-not $InstallIfMissing) {
@@ -6075,16 +6147,17 @@ function Resolve-AtlasDependency {
         return $null
     }
 
-    if ($dep.WingetId -and (Get-Command 'winget' -ErrorAction SilentlyContinue)) {
+    $winget = if ($dep.WingetId) { Get-AtlasWingetPath } else { $null }
+    if ($winget) {
         Write-AtlasLog "Instalando $Name vía winget ($($dep.WingetId))" -Tool 'Deps'
         try {
-            $result = Invoke-AtlasNativeProcess -FilePath 'winget.exe' -ArgumentList @('install','--id',$dep.WingetId,'--exact','--source','winget','--accept-source-agreements','--accept-package-agreements','--silent') -TimeoutSeconds 1800
+            $result = Invoke-AtlasNativeProcess -FilePath $winget -ArgumentList @('install','--id',$dep.WingetId,'--exact','--source','winget','--accept-source-agreements','--accept-package-agreements','--silent') -TimeoutSeconds 1800
             if ($result.State -ne 'Correct') { Write-AtlasLog "Dependency installation $($result.State), exit $($result.ExitCode); no second installer is started." -Level ERROR -Tool Deps; return $null }
         } catch {
             Write-AtlasLog "winget failed: $_; no second installer is started." -Level ERROR -Tool Deps
             return $null
         }
-        return Resolve-AtlasDependency -Name $Name
+        return Resolve-AtlasDependency -Name $Name -AdditionalSearchPaths $AdditionalSearchPaths -CommandNames $CommandNames
     }
 
     # Direct download is allowed only when no package-manager attempt was made.
@@ -6104,7 +6177,7 @@ function Resolve-AtlasDependency {
                 $result = Invoke-AtlasNativeProcess -FilePath $installerFile -ArgumentList @('/EXTRACT64','/NOSUBDIR','/AGREE_LICENSE',("/DIR=$targetDir")) -TimeoutSeconds 180
                 if ($result.State -ne 'Correct') { throw "Dependency extraction $($result.State), exit $($result.ExitCode). No alternative installer was started." }
                 Remove-Item -LiteralPath $installerFile -ErrorAction Stop
-                return Resolve-AtlasDependency -Name $Name
+                return Resolve-AtlasDependency -Name $Name -AdditionalSearchPaths $AdditionalSearchPaths -CommandNames $CommandNames
             }
         } catch {
             Write-AtlasLog "Descarga directa falló: $_" -Level WARN -Tool 'Deps'
@@ -6672,7 +6745,7 @@ function Get-AtlasStoreState {
     [pscustomobject]@{
         State=$(if($blocked){'BlockedByPolicy'} elseif($store){'RegisteredForCurrentUser'} elseif($provisioned){'PresentNotRegisteredForCurrentUser'} elseif($errorMessage){'NotEvaluated'} else {'NotInstalled'})
         Store=$store; ExistingPackage=$provisioned; AppInstaller=$appInstaller
-        WingetAvailable=[bool](Get-Command winget.exe -ErrorAction SilentlyContinue)
+        WingetAvailable=[bool](Get-Command winget.exe -CommandType Application -ErrorAction SilentlyContinue)
         LTSC=$platform.LTSC; Error=$errorMessage
     }
 }
@@ -6746,6 +6819,16 @@ function Copy-AtlasUsbExecutable {
     $script:AtlasUsbVerifiedFiles[$PackageKey]=@(@{Path=$Destination;Sha256=$digest.ToLowerInvariant()})
 }
 
+function Get-AtlasPowerShellVersion {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Path)
+    $result=Invoke-AtlasNativeProcess -FilePath $Path -ArgumentList @('-NoLogo','-NoProfile','-Command','$PSVersionTable.PSVersion.ToString()') -TimeoutSeconds 15
+    if($result.State -ne 'Correct' -or $result.StdoutTruncated){throw 'Installed PowerShell version could not be evaluated.'}
+    $text=([string]$result.Stdout).Trim()
+    if($text -notmatch '^\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?$'){throw 'Unexpected PowerShell version output.'}
+    return [version]($text -split '-',2)[0]
+}
+
 function Get-AtlasLocalAccountPolicy {
     [CmdletBinding()]
     param()
@@ -6772,15 +6855,6 @@ namespace Atlas {
   }
 }
 
-function Get-AtlasPowerShellVersion {
-    [CmdletBinding()]
-    param([Parameter(Mandatory)][string]$Path)
-    $result=Invoke-AtlasNativeProcess -FilePath $Path -ArgumentList @('-NoLogo','-NoProfile','-Command','$PSVersionTable.PSVersion.ToString()') -TimeoutSeconds 15
-    if($result.State -ne 'Correct'){throw 'Installed PowerShell version could not be evaluated.'}
-    $text=([string]$result.Stdout).Trim()
-    if($text -notmatch '^\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?$'){throw 'Unexpected PowerShell version output.'}
-    return [version]($text -split '-',2)[0]
-}
 '@ -ErrorAction Stop
     }
     $password=[Atlas.LocalPolicyReader]::Read(0,5)
@@ -7353,7 +7427,7 @@ function Get-AtlasServiceSnapshot {
     $service=Get-Service -Name $Name -ErrorAction Stop
     if($service.Status.ToString() -notin @('Running','Stopped')){throw 'Wait for the service to reach a stable state.'}
     if(@($service.DependentServices | Where-Object Status -ne 'Stopped').Count){throw 'Running dependents exist. Atlas will not force-stop them.'}
-    $cim=Get-CimInstance -ClassName Win32_Service -Filter "Name='$Name'" -ErrorAction Stop
+    $cim=Get-CimInstance -OperationTimeoutSec 10 -ClassName Win32_Service -Filter "Name='$Name'" -ErrorAction Stop
     if($cim.StartMode -notin @('Auto','Manual','Disabled')){throw 'Unknown startup mode; no change allowed.'}
     $key="HKLM:\SYSTEM\CurrentControlSet\Services\$Name"
     $properties=Get-ItemProperty -LiteralPath $key -ErrorAction Stop
@@ -7381,7 +7455,7 @@ function Restore-AtlasServiceSnapshot {
     if($Snapshot.DelayedPresent){Set-ItemProperty -LiteralPath $key -Name DelayedAutostart -Value $Snapshot.DelayedValue -Type DWord -ErrorAction Stop}
     elseif((Get-ItemProperty -LiteralPath $key -ErrorAction Stop).PSObject.Properties['DelayedAutostart']){Remove-ItemProperty -LiteralPath $key -Name DelayedAutostart -ErrorAction Stop}
     $after=Get-Service -Name $name -ErrorAction Stop
-    $cim=Get-CimInstance -ClassName Win32_Service -Filter "Name='$name'" -ErrorAction Stop
+    $cim=Get-CimInstance -OperationTimeoutSec 10 -ClassName Win32_Service -Filter "Name='$name'" -ErrorAction Stop
     if($after.Status.ToString() -ne $Snapshot.Status -or $cim.StartMode -ne $Snapshot.StartMode){throw 'Service restoration could not be verified.'}
     $properties=Get-ItemProperty -LiteralPath $key -ErrorAction Stop
     $delayed=$properties.PSObject.Properties['DelayedAutostart']

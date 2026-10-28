@@ -1,0 +1,24 @@
+{
+  "dateLocal": "2026-10-27",
+  "timeZone": "America/Lima",
+  "version": "1.5.18",
+  "manifestSha256": "84a429f8aa5f3b282fb2bb06fe997800652479b9df77128b75881cf12b9505ec",
+  "toolCount": 27,
+  "releaseMembers": 34,
+  "suites": [
+    { "runtime": "5.1.26100.9711", "passed": 411, "failed": 0, "skipped": 0, "analyzerErrors": 0, "analyzerWarnings": 280, "distributionArtifactsUnchanged": true },
+    { "runtime": "7.6.9", "passed": 411, "failed": 0, "skipped": 0, "analyzerErrors": 0, "analyzerWarnings": 298, "distributionArtifactsUnchanged": true }
+  ],
+  "localMarkdownFilesChecked": 50,
+  "newCimOperationTimeouts": 32,
+  "synchronousDnsConsumersReplaced": 3,
+  "policyCSharpCompiledFromActualSource": true,
+  "readOnlyLocalPolicySmokePassed": true,
+  "runtimeVersionReadThroughRealHelper": "7.6.9",
+  "hostPoliciesChanged": false,
+  "windows10Qualified": false,
+  "vmsResumed": false,
+  "coldBootMeasured": false,
+  "physicalUsbUpdated": false,
+  "publicationEvidenceLocation": "Pull request for this release: exact commit CI, Worker deployment and live bundle verification."
+}

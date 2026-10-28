@@ -993,7 +993,7 @@ function Invoke-InstalarPaquetes {
                     if ($SupportsNoInteract) { $searchArgs += '--disable-interactivity' }
                     $search = Invoke-AtlasNativeProcess -FilePath $exe -ArgumentList $searchArgs -TimeoutSeconds 45
                     if ($search.State -ne 'Correct' -and $search.ExitCode -ne -1978335212) { $searchErrors += "${src}: $($search.State), exit $($search.ExitCode)" }
-                    $out = if ($search.State -eq 'Correct') { $search.Stdout -split '\r?\n' } else { $null }
+                    $out = if ($search.State -eq 'Correct' -and -not $search.StdoutTruncated) { $search.Stdout -split '\r?\n' } else { $null }
                     if ($out) {
                         $lines = & $cleanLines @($out | ForEach-Object { [string]$_ })
                         $parsed = Parse-SearchOutputInner -Lines $lines -SourceTag $src

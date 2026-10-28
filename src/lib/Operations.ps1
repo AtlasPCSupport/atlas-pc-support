@@ -1,4 +1,4 @@
-# Small shared primitives for evidence and reversible Windows operations.
+﻿# Small shared primitives for evidence and reversible Windows operations.
 function Copy-AtlasDependencyTree {
             param(
                 [Parameter(Mandatory)][string]$SourceDir,
@@ -65,6 +65,16 @@ function Copy-AtlasUsbExecutable {
     $script:AtlasUsbVerifiedFiles[$PackageKey]=@(@{Path=$Destination;Sha256=$digest.ToLowerInvariant()})
 }
 
+function Get-AtlasPowerShellVersion {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Path)
+    $result=Invoke-AtlasNativeProcess -FilePath $Path -ArgumentList @('-NoLogo','-NoProfile','-Command','$PSVersionTable.PSVersion.ToString()') -TimeoutSeconds 15
+    if($result.State -ne 'Correct' -or $result.StdoutTruncated){throw 'Installed PowerShell version could not be evaluated.'}
+    $text=([string]$result.Stdout).Trim()
+    if($text -notmatch '^\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?$'){throw 'Unexpected PowerShell version output.'}
+    return [version]($text -split '-',2)[0]
+}
+
 function Get-AtlasLocalAccountPolicy {
     [CmdletBinding()]
     param()
@@ -91,15 +101,6 @@ namespace Atlas {
   }
 }
 
-function Get-AtlasPowerShellVersion {
-    [CmdletBinding()]
-    param([Parameter(Mandatory)][string]$Path)
-    $result=Invoke-AtlasNativeProcess -FilePath $Path -ArgumentList @('-NoLogo','-NoProfile','-Command','$PSVersionTable.PSVersion.ToString()') -TimeoutSeconds 15
-    if($result.State -ne 'Correct'){throw 'Installed PowerShell version could not be evaluated.'}
-    $text=([string]$result.Stdout).Trim()
-    if($text -notmatch '^\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?$'){throw 'Unexpected PowerShell version output.'}
-    return [version]($text -split '-',2)[0]
-}
 '@ -ErrorAction Stop
     }
     $password=[Atlas.LocalPolicyReader]::Read(0,5)
@@ -672,7 +673,7 @@ function Get-AtlasServiceSnapshot {
     $service=Get-Service -Name $Name -ErrorAction Stop
     if($service.Status.ToString() -notin @('Running','Stopped')){throw 'Wait for the service to reach a stable state.'}
     if(@($service.DependentServices | Where-Object Status -ne 'Stopped').Count){throw 'Running dependents exist. Atlas will not force-stop them.'}
-    $cim=Get-CimInstance -ClassName Win32_Service -Filter "Name='$Name'" -ErrorAction Stop
+    $cim=Get-CimInstance -OperationTimeoutSec 10 -ClassName Win32_Service -Filter "Name='$Name'" -ErrorAction Stop
     if($cim.StartMode -notin @('Auto','Manual','Disabled')){throw 'Unknown startup mode; no change allowed.'}
     $key="HKLM:\SYSTEM\CurrentControlSet\Services\$Name"
     $properties=Get-ItemProperty -LiteralPath $key -ErrorAction Stop
@@ -700,7 +701,7 @@ function Restore-AtlasServiceSnapshot {
     if($Snapshot.DelayedPresent){Set-ItemProperty -LiteralPath $key -Name DelayedAutostart -Value $Snapshot.DelayedValue -Type DWord -ErrorAction Stop}
     elseif((Get-ItemProperty -LiteralPath $key -ErrorAction Stop).PSObject.Properties['DelayedAutostart']){Remove-ItemProperty -LiteralPath $key -Name DelayedAutostart -ErrorAction Stop}
     $after=Get-Service -Name $name -ErrorAction Stop
-    $cim=Get-CimInstance -ClassName Win32_Service -Filter "Name='$name'" -ErrorAction Stop
+    $cim=Get-CimInstance -OperationTimeoutSec 10 -ClassName Win32_Service -Filter "Name='$name'" -ErrorAction Stop
     if($after.Status.ToString() -ne $Snapshot.Status -or $cim.StartMode -ne $Snapshot.StartMode){throw 'Service restoration could not be verified.'}
     $properties=Get-ItemProperty -LiteralPath $key -ErrorAction Stop
     $delayed=$properties.PSObject.Properties['DelayedAutostart']

@@ -1,9 +1,9 @@
-function Invoke-ExtraerLicencias {
+﻿function Invoke-ExtraerLicencias {
     [CmdletBinding()]
     param()
     function Get-LicenseInventory {
-        $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
-        $products = @(Get-CimInstance SoftwareLicensingProduct -Filter 'PartialProductKey IS NOT NULL' -Property Name,Description,LicenseStatus,PartialProductKey -ErrorAction Stop)
+        $os = Get-CimInstance -OperationTimeoutSec 10 Win32_OperatingSystem -ErrorAction Stop
+        $products = @(Get-CimInstance -OperationTimeoutSec 10 SoftwareLicensingProduct -Filter 'PartialProductKey IS NOT NULL' -Property Name,Description,LicenseStatus,PartialProductKey -ErrorAction Stop)
         [pscustomobject]@{
             Trace = Get-AtlasReportTrace -Tool 'License inventory'
             Windows = $os.Caption; Build = $os.BuildNumber
@@ -30,7 +30,7 @@ function Invoke-ExtraerLicencias {
                 '1' { Get-LicenseInventory | ConvertTo-Json -Depth 6 | Write-Host }
                 '2' {
                     if ((Read-Host 'La clave es sensible. Escribe REVEAL para verla en esta consola') -cne 'REVEAL') { continue }
-                    $key = [string](Get-CimInstance SoftwareLicensingService -Property OA3xOriginalProductKey -ErrorAction Stop).OA3xOriginalProductKey
+                    $key = [string](Get-CimInstance -OperationTimeoutSec 10 SoftwareLicensingService -Property OA3xOriginalProductKey -ErrorAction Stop).OA3xOriginalProductKey
                     if ($key -notmatch '^[A-Z0-9]{5}(?:-[A-Z0-9]{5}){4}$') { Write-AtlasWarn 'No se encontro una clave OEM. Una licencia digital puede no tener clave recuperable.'; continue }
                     Write-Host $key -ForegroundColor Yellow
                     Write-Host 'La presencia de esta clave no prueba activacion ni derecho de transferencia.'

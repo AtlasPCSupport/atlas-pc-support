@@ -1,6 +1,6 @@
 # Compatibilidad y homologación
 
-Estado del ciclo 1.5.13–1.5.17, 27 de octubre de 2026. «Objetivo» describe el contrato del
+Estado del ciclo 1.5.13–1.5.18, 27 de octubre de 2026. «Objetivo» describe el contrato del
 código, no una prueba ejecutada en ese sistema. La compatibilidad de Atlas tampoco
 extiende el ciclo de soporte de Microsoft ni sustituye la licencia de Windows.
 

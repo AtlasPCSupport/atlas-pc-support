@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Invoke-PartsUpgrade  ->  Parts Upgrade Advisor
 #
 # i18n: Option A (en default + full es secondary). Function name
@@ -337,10 +337,10 @@ function Invoke-PartsUpgrade {
     Log-Out ($L.DateLbl -f (Get-Date -Format 'yyyy-MM-dd HH:mm')) 'Gray'
     Log-Out ($L.CompLbl -f $env:COMPUTERNAME) 'Gray'
 
-    $cs = Get-CimInstance Win32_ComputerSystem -ErrorAction SilentlyContinue
-    $csp = Get-CimInstance Win32_ComputerSystemProduct -ErrorAction SilentlyContinue
-    $bb = Get-CimInstance Win32_BaseBoard -ErrorAction SilentlyContinue
-    $chassis = Get-CimInstance Win32_SystemEnclosure -ErrorAction SilentlyContinue
+    $cs = Get-CimInstance -OperationTimeoutSec 10 Win32_ComputerSystem -ErrorAction SilentlyContinue
+    $csp = Get-CimInstance -OperationTimeoutSec 10 Win32_ComputerSystemProduct -ErrorAction SilentlyContinue
+    $bb = Get-CimInstance -OperationTimeoutSec 10 Win32_BaseBoard -ErrorAction SilentlyContinue
+    $chassis = Get-CimInstance -OperationTimeoutSec 10 Win32_SystemEnclosure -ErrorAction SilentlyContinue
     $isLaptop = $false
     if ($chassis) { foreach ($ct in $chassis.ChassisTypes) { if ($ct -in @(9,10,14,31,32)) { $isLaptop = $true; break } } }
 
@@ -560,7 +560,7 @@ function Invoke-PartsUpgrade {
     # ================================================================
     Section-Header $L.SecOther
 
-    $gpus = @(Get-CimInstance Win32_VideoController -ErrorAction SilentlyContinue | Where-Object { $_.Name -notmatch 'Microsoft Basic|Remote' })
+    $gpus = @(Get-CimInstance -OperationTimeoutSec 10 Win32_VideoController -ErrorAction SilentlyContinue | Where-Object { $_.Name -notmatch 'Microsoft Basic|Remote' })
     if ($gpus.Count -gt 0) {
         Log-Out ($L.GPUHdr + ' - CIM VRAM is a legacy reported value, not validated GPU memory') 'Yellow'
         foreach ($g in $gpus) {
@@ -583,7 +583,7 @@ function Invoke-PartsUpgrade {
     Log-Out ''
     Log-Out $L.BIOSHdr 'Yellow'
     try {
-        $bios = Get-CimInstance Win32_BIOS -ErrorAction Stop
+        $bios = Get-CimInstance -OperationTimeoutSec 10 Win32_BIOS -ErrorAction Stop
         Log-Out ($L.BIOSVersion -f $bios.SMBIOSBIOSVersion)
         $biosDate = $null
         if ($bios.ReleaseDate) {

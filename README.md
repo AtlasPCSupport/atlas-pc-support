@@ -39,7 +39,7 @@ A live dashboard banner (CPU / RAM / Disk + alerts) sits above the tool grid, an
 
 The manifest retains **27 entries**. The deduplicator is unavailable; selected repair actions are restricted with an explanation.
 
-See the [generated tool/dependency inventory](docs/INVENTARIO.md), [support matrix and restrictions](docs/SUPPORT-MATRIX.md), and [plan closure with pending QA](docs/audits/CIERRE-PLAN-2026-10-24.md). CI checks inventory freshness against the manifest.
+See the [generated tool/dependency inventory](docs/INVENTARIO.md), [support matrix and restrictions](docs/SUPPORT-MATRIX.md), [audit deliveries](docs/audits/README.md), and [remaining acceptance work](docs/TRABAJO-AUTONOMO-Y-ACEPTACION.md). CI checks inventory freshness against the manifest.
 
 Current acceptance work and owner decisions: [autonomous work and remaining real-world checks](docs/TRABAJO-AUTONOMO-Y-ACEPTACION.md) (Spanish).
 

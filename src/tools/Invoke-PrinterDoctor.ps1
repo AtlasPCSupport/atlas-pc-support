@@ -1,4 +1,4 @@
-function Invoke-PrinterDoctor {
+﻿function Invoke-PrinterDoctor {
     <#
     .SYNOPSIS
       Printer Doctor: safe Windows printer diagnostics and optional repairs.
@@ -267,7 +267,7 @@ function Invoke-PrinterDoctor {
 
     function Get-PDSystemInfo {
         try {
-            $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
+            $os = Get-CimInstance -OperationTimeoutSec 10 Win32_OperatingSystem -ErrorAction Stop
             $script:PrinterDoctorReport.OS = "$($os.Caption) $($os.OSArchitecture)"
         } catch {
             $script:PrinterDoctorReport.OS = $L.Unknown
@@ -468,7 +468,7 @@ function Invoke-PrinterDoctor {
                     $name = Read-Host $L.AskPrinterName
                     if ([string]::IsNullOrWhiteSpace($name)) { Write-Host $L.Cancelled; Pause-PrinterDoctor; break }
                     try {
-                        $printer = Get-CimInstance Win32_Printer -Filter ("Name='{0}'" -f ($name.Replace("'","''"))) -ErrorAction Stop
+                        $printer = Get-CimInstance -OperationTimeoutSec 10 Win32_Printer -Filter ("Name='{0}'" -f ($name.Replace("'","''"))) -ErrorAction Stop
                         if ($printer) { $result = Invoke-CimMethod -InputObject $printer -MethodName PrintTestPage -ErrorAction Stop; if ($result.ReturnValue -ne 0) { throw "Test page failed: $($result.ReturnValue)" }; Write-Host $L.TestPageSent -ForegroundColor Green }
                     } catch { Write-Host $_.Exception.Message -ForegroundColor Red }
                     Pause-PrinterDoctor

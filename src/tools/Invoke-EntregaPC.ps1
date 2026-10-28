@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Invoke-EntregaPC  ->  PC Handover Report
 #
 # i18n: Option A (en default + full es secondary). Function name
@@ -450,7 +450,7 @@ function Get-AtlasLocalUsersList {
     try {
         return @(Get-LocalUser -ErrorAction Stop)
     } catch {
-        return @(Get-CimInstance Win32_UserAccount -Filter "LocalAccount=True" -ErrorAction SilentlyContinue | ForEach-Object {
+        return @(Get-CimInstance -OperationTimeoutSec 10 Win32_UserAccount -Filter "LocalAccount=True" -ErrorAction SilentlyContinue | ForEach-Object {
             [pscustomobject]@{ Name = $_.Name; SID = $_.SID; Enabled = -not $_.Disabled; FullName = $_.FullName }
         })
     }
@@ -714,9 +714,9 @@ function Generar-ChecklistEntrega {
 
     $equipoRows = @()
     try {
-        $cs   = Get-CimInstance Win32_ComputerSystem -ErrorAction Stop
-        $bios = Get-CimInstance Win32_BIOS -ErrorAction Stop
-        $os   = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
+        $cs   = Get-CimInstance -OperationTimeoutSec 10 Win32_ComputerSystem -ErrorAction Stop
+        $bios = Get-CimInstance -OperationTimeoutSec 10 Win32_BIOS -ErrorAction Stop
+        $os   = Get-CimInstance -OperationTimeoutSec 10 Win32_OperatingSystem -ErrorAction Stop
         $equipoRows += _Row $L.RowName  $hostName
         $equipoRows += _Row $L.RowMaker ($cs.Manufacturer)
         $equipoRows += _Row $L.RowModel ($cs.Model)
@@ -733,7 +733,7 @@ function Generar-ChecklistEntrega {
     $activacion = ''
     try {
         $activationProbe = Invoke-AtlasNativeProcess -FilePath (Join-Path $env:SystemRoot 'System32\cscript.exe') -Arguments ('//Nologo "{0}" /xpr' -f (Join-Path $env:SystemRoot 'System32\slmgr.vbs')) -TimeoutSeconds 20
-        if ($activationProbe.State -ne 'Correct') { throw 'Activation query not evaluated.' }
+        if ($activationProbe.State -ne 'Correct' -or $activationProbe.StdoutTruncated) { throw 'Activation query not evaluated or incomplete.' }
         $activacion = _Esc-Html ($activationProbe.Stdout.Trim() + "`nLocal report only; entitlement not verified.")
     } catch {
         $activacion = "<span class='err'>$($L.ErrAct)</span>"

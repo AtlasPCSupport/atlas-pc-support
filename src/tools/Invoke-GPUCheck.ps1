@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Invoke-GPUCheck
 # GPU diagnostics with optional stress test and report export.
 # Atlas PC Support
@@ -151,24 +151,9 @@ function Invoke-GPUCheck {
         return (Join-Path $env:TEMP 'AtlasPC')
     }
 
-    function Copy-FileSafe {
-        param(
-            [Parameter(Mandatory)] [string]$Source,
-            [Parameter(Mandatory)] [string]$Destination
-        )
-        $dstDir = Split-Path -Parent $Destination
-        Ensure-Dir -Path $dstDir
-        Copy-Item -LiteralPath $Source -Destination $Destination -Force
-    }
 
-    function Copy-DirSafe {
-        param(
-            [Parameter(Mandatory)] [string]$SourceDir,
-            [Parameter(Mandatory)] [string]$DestinationDir
-        )
-        Ensure-Dir -Path $DestinationDir
-        robocopy $SourceDir $DestinationDir /E /R:1 /W:1 /NFL /NDL /NJH /NJS /NP | Out-Null
-    }
+
+
 
     function Import-CsvAuto {
         param([string]$Path)
@@ -226,113 +211,23 @@ function Invoke-GPUCheck {
         return $null
     }
 
-    function Find-FirstExistingPath {
-        param([string[]]$Candidates)
-        foreach ($c in @($Candidates)) {
-            if ([string]::IsNullOrWhiteSpace($c)) { continue }
-            $p = [Environment]::ExpandEnvironmentVariables($c)
-            if (Test-Path -LiteralPath $p) { return $p }
-        }
-        return $null
-    }
 
-    function Resolve-DepPath {
-        param(
-            [Parameter(Mandatory)] [string]$DepName,
-            [Parameter(Mandatory)] [string[]]$InstallPaths,
-            [Parameter(Mandatory)] [string]$WingetId,
-            [string]$ExecutableName
-        )
 
-        if (Get-Command winget -ErrorAction SilentlyContinue) {
-            try {
-                winget install --id $WingetId --exact --accept-source-agreements --accept-package-agreements --silent | Out-Null
-            } catch {}
-        }
 
-        $resolved = Find-FirstExistingPath -Candidates $InstallPaths
-        if (-not $resolved -and $ExecutableName) {
-            $cmd = Get-Command $ExecutableName -ErrorAction SilentlyContinue
-            if ($cmd) { $resolved = $cmd.Source }
-        }
-        return $resolved
-    }
 
     function Resolve-GpuCheckTools {
-        param(
-            [Parameter(Mandatory)] [string]$ToolsDir,
-            [switch]$NeedStress
-        )
-        Ensure-Dir -Path $ToolsDir
-        $notes = New-Object System.Collections.Generic.List[string]
-        $offlineRoot = Get-OfflineToolsRoot
-
-        $gpuzLocal = Join-Path $ToolsDir 'GPU-Z.exe'
-        if (-not (Test-Path -LiteralPath $gpuzLocal) -and $offlineRoot) {
-            $off = Join-Path $offlineRoot 'GPU-Z.exe'
-            if (Test-Path -LiteralPath $off) { Copy-FileSafe -Source $off -Destination $gpuzLocal; $notes.Add('GPU-Z staged from offline pack.') | Out-Null }
-        }
-        if (-not (Test-Path -LiteralPath $gpuzLocal)) {
-            $gpuzSrc = Resolve-DepPath -DepName 'GPUZ' -WingetId 'TechPowerUp.GPU-Z' -ExecutableName 'GPU-Z.exe' -InstallPaths @(
-                'C:\Program Files (x86)\GPU-Z\GPU-Z.exe',
-                'C:\Program Files\GPU-Z\GPU-Z.exe',
-                '%LOCALAPPDATA%\AtlasPC\bin\GPUCheck\tools\GPU-Z.exe'
-            )
-            if ($gpuzSrc) { Copy-FileSafe -Source $gpuzSrc -Destination $gpuzLocal; $notes.Add('GPU-Z staged from system dependency.') | Out-Null }
-        }
-
-        $furLocal = Join-Path $ToolsDir 'FurMark2_x64\furmark.exe'
-        if ($NeedStress -and -not (Test-Path -LiteralPath $furLocal) -and $offlineRoot) {
-            $offDir = Join-Path $offlineRoot 'FurMark2_x64'
-            if (Test-Path -LiteralPath $offDir) {
-                Copy-DirSafe -SourceDir $offDir -DestinationDir (Join-Path $ToolsDir 'FurMark2_x64')
-                $notes.Add('FurMark staged from offline pack.') | Out-Null
-            }
-        }
-        if ($NeedStress -and -not (Test-Path -LiteralPath $furLocal)) {
-            $furSrc = Resolve-DepPath -DepName 'FurMark2' -WingetId 'Geeks3D.FurMark.2' -ExecutableName 'furmark.exe' -InstallPaths @(
-                'C:\Program Files\Geeks3D\FurMark2_x64\furmark.exe',
-                'C:\Program Files (x86)\Geeks3D\FurMark2_x64\furmark.exe',
-                '%LOCALAPPDATA%\AtlasPC\bin\GPUCheck\tools\FurMark2_x64\furmark.exe'
-            )
-            if ($furSrc) {
-                $furSrcDir = Split-Path -Parent $furSrc
-                Copy-DirSafe -SourceDir $furSrcDir -DestinationDir (Join-Path $ToolsDir 'FurMark2_x64')
-                $notes.Add('FurMark staged from system dependency.') | Out-Null
-            }
-        }
-
-        $hwLocal = Join-Path $ToolsDir 'HWiNFO64.exe'
-        if (-not (Test-Path -LiteralPath $hwLocal) -and $offlineRoot) {
-            $offHw = Join-Path $offlineRoot 'HWiNFO64.exe'
-            if (Test-Path -LiteralPath $offHw) { Copy-FileSafe -Source $offHw -Destination $hwLocal }
-        }
-        if (-not (Test-Path -LiteralPath $hwLocal)) {
-            $hwSrc = Resolve-DepPath -DepName 'HWiNFO' -WingetId 'REALiX.HWiNFO' -ExecutableName 'HWiNFO64.exe' -InstallPaths @(
-                'C:\Program Files\HWiNFO64\HWiNFO64.exe',
-                'C:\Program Files (x86)\HWiNFO64\HWiNFO64.exe',
-                '%LOCALAPPDATA%\AtlasPC\bin\GPUCheck\tools\HWiNFO64.exe'
-            )
-            if ($hwSrc) { Copy-FileSafe -Source $hwSrc -Destination $hwLocal }
-        }
-
-        $resolvedFur = $null
-        $furCandidates = @(
-            (Join-Path $ToolsDir 'FurMark2_x64\furmark.exe'),
-            (Join-Path $ToolsDir 'FurMark\FurMark.exe'),
-            (Join-Path $ToolsDir 'furmark.exe')
-        )
-        foreach ($c in $furCandidates) {
-            if (Test-Path -LiteralPath $c) { $resolvedFur = $c; break }
-        }
-
-        return [pscustomobject]@{
-            GPUZ = if (Test-Path -LiteralPath $gpuzLocal) { $gpuzLocal } else { $null }
-            FurMark = $resolvedFur
-            HWiNFO = if (Test-Path -LiteralPath $hwLocal) { $hwLocal } else { $null }
-            Notes = $notes.ToArray()
-        }
+    param([Parameter(Mandatory)][string]$ToolsDir,[switch]$NeedStress)
+    $roots=@($ToolsDir,(Get-OfflineToolsRoot))
+    $files=[ordered]@{GPUZ=@('GPU-Z.exe');HWiNFO=@('HWiNFO64.exe');FurMark2=@('FurMark2_x64\furmark.exe','FurMark\FurMark.exe','furmark.exe')}
+    $resolved=@{}
+    foreach($name in $files.Keys) {
+        if($name -eq 'FurMark2' -and -not $NeedStress){continue}
+        $paths=@(foreach($base in $roots){if($base){foreach($file in $files[$name]){Join-Path $base $file}}})
+        $resolved[$name]=Resolve-AtlasDependency -Name $name -AdditionalSearchPaths $paths -InstallIfMissing
     }
+    # Run the validated original in its own directory; keep its resources together.
+    return [pscustomobject]@{GPUZ=$resolved.GPUZ;HWiNFO=$resolved.HWiNFO;FurMark=$resolved.FurMark2;Notes=@()}
+}
 
     function Start-Stress {
         param(
@@ -342,7 +237,7 @@ function Invoke-GPUCheck {
         if (-not $ExePath) { return $null }
         $seconds = [Math]::Max(1, $Minutes * 60)
         $help = ''
-        try { $probe = Invoke-AtlasNativeProcess -FilePath $ExePath -Arguments '--help' -TimeoutSeconds 10; if ($probe.State -eq 'Correct') { $help = $probe.Stdout } } catch {}
+        try { $probe = Invoke-AtlasNativeProcess -FilePath $ExePath -Arguments '--help' -TimeoutSeconds 10; if ($probe.State -eq 'Correct' -and -not $probe.StdoutTruncated) { $help = $probe.Stdout } } catch {}
         $args = "/nogui /max_time=$seconds"
         if ($help -match '--max-time') {
             $args = "--benchmark --p1080 --max-time $seconds --no-score-box"
@@ -380,7 +275,7 @@ function Invoke-GPUCheck {
             $elapsed += 2
 
             try {
-                $gpuSensors = Get-CimInstance -Namespace root\wmi -ClassName MSAcpi_ThermalZoneTemperature -ErrorAction SilentlyContinue
+                $gpuSensors = Get-CimInstance -OperationTimeoutSec 10 -Namespace root\wmi -ClassName MSAcpi_ThermalZoneTemperature -ErrorAction SilentlyContinue
                 if ($gpuSensors) {
                     foreach ($sensor in $gpuSensors) {
                         $tempC = [Math]::Round(($sensor.CurrentTemperature / 10) - 273.15, 1)
@@ -419,8 +314,8 @@ function Invoke-GPUCheck {
 
     function Start-NvidiaSmiLoop {
         param([string]$CsvPath)
-        $cmd = Get-Command 'nvidia-smi.exe' -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
-        if (-not $cmd) { return $null }
+        $path = Get-AtlasApplicationPath -Name 'nvidia-smi.exe'
+        if (-not $path) { return $null }
         $query = @(
             'timestamp',
             'name',
@@ -433,7 +328,7 @@ function Invoke-GPUCheck {
             'clocks_throttle_reasons.sw_power_cap'
         ) -join ','
         $args = "--query-gpu=$query --format=csv,nounits -l 1"
-        return Start-Process -FilePath $cmd.Source -ArgumentList $args -RedirectStandardOutput $CsvPath -WindowStyle Hidden -PassThru
+        return Start-Process -FilePath $path -ArgumentList $args -RedirectStandardOutput $CsvPath -WindowStyle Hidden -PassThru
     }
 
     function Get-GpuEvents {
@@ -550,7 +445,7 @@ table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6p
     $jsonOut = Join-Path $outDir 'result.json'
     $htmlOut = Join-Path $outDir 'report.html'
 
-    Get-CimInstance Win32_VideoController |
+    Get-CimInstance -OperationTimeoutSec 10 Win32_VideoController |
         Select-Object Name, DriverVersion, DriverDate, AdapterRAM, VideoProcessor, PNPDeviceID |
         Export-Csv -LiteralPath $gpuCsv -NoTypeInformation -Encoding UTF8
     $inventory = Import-Csv -LiteralPath $gpuCsv
@@ -573,11 +468,11 @@ table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6p
     $sessionStart = Get-Date
     try {
         Write-Host ("[GPU Check] " + $L.StartGPUZ) -ForegroundColor Gray
-        $pG = Start-Process -FilePath $deps.GPUZ -ArgumentList "/minimized /log `"$gpuzLog`"" -PassThru
+        $pG = Start-Process -FilePath $deps.GPUZ -WorkingDirectory (Split-Path -Parent $deps.GPUZ) -ArgumentList "/minimized /log `"$gpuzLog`"" -PassThru
         Start-Sleep -Seconds 4
 
         if ($isNvidia) {
-            $cmdNv = Get-Command 'nvidia-smi.exe' -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+            $cmdNv = Get-AtlasApplicationPath -Name 'nvidia-smi.exe'
             if ($cmdNv) {
                 Write-Host ("[GPU Check] " + $L.StartNvidiaSmi) -ForegroundColor Gray
                 $pN = Start-NvidiaSmiLoop -CsvPath $nvidiaCsv

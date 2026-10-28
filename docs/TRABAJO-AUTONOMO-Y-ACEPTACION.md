@@ -59,6 +59,9 @@ Ese cierre describe 1.5.12. Para el ciclo posterior de auditoría, consultar el
   automáticamente: el preparador lo hace cuando el operador lo elige.
 - 1.5.17: [fase 5](audits/FASE-5-AUDITORIA-2026-10-27.md), inicio, captura de salida,
   documentación y Worker; comprobaciones de su SHA y publicación registradas en PR.
+- 1.5.18: [cierre transversal](audits/CIERRE-TRANSVERSAL-1.5.18-2026-10-27.md),
+  inventario simple de Master, todos los consumidores de dependencias, consultas
+  CIM/DNS restantes y compilación de políticas; resultados y promoción en su PR.
 
 ## Decisiones ya tomadas
 

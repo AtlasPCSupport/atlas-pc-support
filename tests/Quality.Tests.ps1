@@ -1,4 +1,4 @@
-#Requires -Modules Pester
+﻿#Requires -Modules Pester
 BeforeAll {
     . (Join-Path (Split-Path -Parent $PSScriptRoot) 'src/lib/ToolKit.ps1')
 }
@@ -1244,45 +1244,166 @@ Describe 'Fresh diagnostic export evidence' {
     }
 }
 
-Describe 'Diagnostic dependency installation boundaries' {
+Describe 'Transversal dependency consumers' {
     BeforeAll {
         $script:RepoRoot=Split-Path -Parent $PSScriptRoot
         . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
-        . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-DiagnosticoMaster.ps1' 'Resolve-DiagDep')
-        function Find-FirstExistingPath { param($Candidates) }
-        function Get-AtlasWingetPath { 'fixture-winget.exe' }
-        function Invoke-AtlasNativeProcess { [CmdletBinding()]param($FilePath,$ArgumentList,$TimeoutSeconds,$SuccessCodes) throw 'Real installation blocked' }
+        function Write-AtlasLog {param($Message,$Tool,$Level)}
+        function Expand-AtlasPath {param($Path)[Environment]::ExpandEnvironmentVariables($Path)}
+        function Invoke-AtlasNativeProcess {[CmdletBinding()]param($FilePath,$ArgumentList,$TimeoutSeconds)throw 'Real installation blocked'}
+        function Invoke-WebRequest {[CmdletBinding()]param($Uri,$OutFile,$TimeoutSec,[switch]$UseBasicParsing)throw 'Network blocked'}
+        foreach($name in @('Resolve-AtlasDependency','Resolve-SymlinkPath','Get-AtlasDependencyCandidate')){. (Get-TestFunction $script:RepoRoot 'src/lib/Dependencies.ps1' $name)}
+        foreach($name in @('Get-OfflineDiagToolsRoot','Resolve-DiagnosticoMasterTools','Format-DiagnosticQuantity')){. (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-DiagnosticoMaster.ps1' $name)}
+        foreach($name in @('Get-OfflineToolsRoot','Resolve-GpuCheckTools')){. (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-GPUCheck.ps1' $name)}
+        foreach($name in @('Find-FastCopy','Install-FastCopyAuto')){. (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-FastCopy.ps1' $name)}
+        . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-PrepararUSB.ps1' 'Resolve-DepPath')
+        . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-AIReadiness.ps1' 'Get-AIRCommandState')
+        $script:OriginalOffline=$env:ATLAS_OFFLINE_ROOT
+        $script:OriginalLocalAppData=$env:LOCALAPPDATA
     }
     BeforeEach {
-        Mock Find-FirstExistingPath { $null }
-        Mock Invoke-AtlasNativeProcess { [pscustomobject]@{State='TimedOut';ExitCode=0} }
+        $env:ATLAS_OFFLINE_ROOT=Join-Path $TestDrive ([guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Path $env:ATLAS_OFFLINE_ROOT|Out-Null
+        $env:LOCALAPPDATA=$env:ATLAS_OFFLINE_ROOT
+        $script:AtlasDepsRegistry=@{}
+        foreach($name in @('CPUZ','BlueScreenView','BatteryInfoView','CrystalDiskInfo','CrystalDiskMark','HWiNFO','GPUZ','FurMark2','FastCopy')){
+            $script:AtlasDepsRegistry[$name]=@{SearchPaths=@();ExecutableName="$name.exe";WingetId="Fixture.$name"}
+        }
+        Mock Get-Command {$null}
+        Mock Get-AtlasWingetPath {'fixture-winget.exe'}
+        Mock Invoke-AtlasNativeProcess {[pscustomobject]@{State='TimedOut';ExitCode=0}}
+        Mock Invoke-WebRequest {throw 'No fallback download allowed'}
     }
-    It 'keeps an installed diagnostic dependency without starting an installer' {
-        Mock Find-FirstExistingPath { 'existing.exe' }
-        Mock Get-Item { [pscustomobject]@{Attributes=0} }
-        Resolve-DiagDep -WingetId 'Fixture.Tool' -InstallPaths @('existing.exe') | Should -Be existing.exe
+    AfterAll {$env:ATLAS_OFFLINE_ROOT=$script:OriginalOffline;$env:LOCALAPPDATA=$script:OriginalLocalAppData}
+    It 'resolves Master legacy candidates but rejects empty Crystal resources without staging files' {
+        $legacy=Join-Path $TestDrive 'legacy';$tools=Join-Path $TestDrive 'unused-staging'
+        New-Item -ItemType Directory -Path (Join-Path $legacy 'CrystalDiskInfo/CdiResource') -Force|Out-Null
+        $cpuz=Join-Path $legacy 'cpuz_x64.exe';[IO.File]::WriteAllText($cpuz,'fixture')
+        [IO.File]::WriteAllText((Join-Path $legacy 'CrystalDiskInfo/DiskInfo64.exe'),'fixture')
+        $r=Resolve-DiagnosticoMasterTools -ToolsDir $tools -LegacyAppsDir $legacy -SelMode 3
+        $r.CPUZ|Should -Be $cpuz;$r.CrystalDiskInfo|Should -BeNullOrEmpty
+        Test-Path -LiteralPath $tools|Should -BeFalse
+        Should -Invoke Invoke-AtlasNativeProcess -Times 5 -Exactly
+    }
+    It 'uses an existing offline GPU dependency and never installs FurMark for an idle session' {
+        $tools=Join-Path $env:ATLAS_OFFLINE_ROOT 'deps/GPUCheck/tools'
+        New-Item -ItemType Directory -Path $tools -Force|Out-Null
+        foreach($file in @('GPU-Z.exe','HWiNFO64.exe')){[IO.File]::WriteAllText((Join-Path $tools $file),'fixture')}
+        $r=Resolve-GpuCheckTools -ToolsDir (Join-Path $TestDrive 'not-created')
+        $r.GPUZ|Should -Be (Join-Path $tools 'GPU-Z.exe');$r.FurMark|Should -BeNullOrEmpty
         Should -Invoke Invoke-AtlasNativeProcess -Times 0 -Exactly
     }
-    It 'reports a timed out dependency before staging a partial installation' {
-        {Resolve-DiagDep -WingetId 'Fixture.Tool' -InstallPaths @('missing.exe')} | Should -Throw '*TimedOut*'
-        Should -Invoke Invoke-AtlasNativeProcess -Times 1 -Exactly -ParameterFilter {
-            $FilePath -eq 'fixture-winget.exe' -and $TimeoutSeconds -eq 600 -and
-            $ArgumentList[4] -eq '--source' -and $ArgumentList[5] -eq 'winget'
-        }
-        Should -Invoke Find-FirstExistingPath -Times 1 -Exactly
+    It 'retains caller paths after a successful install but rejects partial files after a timeout' {
+        $exe=Join-Path $TestDrive 'usb-candidate.exe'
+        Mock Invoke-AtlasNativeProcess {[IO.File]::WriteAllText($exe,'partial');[pscustomobject]@{State='TimedOut';ExitCode=0}}
+        Resolve-DepPath -DepName GPUZ -FallbackPaths @($exe)|Should -BeNullOrEmpty
+        Remove-Item -LiteralPath $exe
+        Mock Invoke-AtlasNativeProcess {[IO.File]::WriteAllText($exe,'complete');[pscustomobject]@{State='Correct';ExitCode=0}}
+        Resolve-DepPath -DepName GPUZ -FallbackPaths @($exe)|Should -Be $exe
+        Should -Invoke Invoke-WebRequest -Times 0 -Exactly
     }
-    It 'looks up the installed file only after an accepted process result' {
-        Mock Invoke-AtlasNativeProcess { [pscustomobject]@{State='Correct';ExitCode=0} }
-        Resolve-DiagDep -WingetId 'Fixture.Tool' -InstallPaths @('missing.exe') | Should -BeNullOrEmpty
-        Should -Invoke Find-FirstExistingPath -Times 2 -Exactly
+    It 'does not accept a partial FastCopy install on the fallback path' {
+        $exe=Join-Path $env:ATLAS_OFFLINE_ROOT 'apps/FastCopy/FastCopy.exe'
+        New-Item -ItemType Directory -Path (Split-Path -Parent $exe) -Force|Out-Null
+        Mock Invoke-AtlasNativeProcess {[IO.File]::WriteAllText($exe,'partial');[pscustomobject]@{State='Failed';ExitCode=1603}}
+        {Install-FastCopyAuto}|Should -Throw '*could not be resolved*'
+        Should -Invoke Invoke-AtlasNativeProcess -Times 1 -Exactly
+    }
+    It 'resolves one actual application for AI and rejects function or directory impostors' {
+        $exe=Join-Path $TestDrive 'runtime.exe';[IO.File]::WriteAllText($exe,'fixture')
+        Mock Get-Command {@([pscustomobject]@{Source=$TestDrive},[pscustomobject]@{Source=$exe})} -ParameterFilter {$CommandType -eq 'Application'}
+        $r=Get-AIRCommandState -Name fixture
+        $r.Installed|Should -BeTrue;$r.Path|Should -Be $exe
+        Should -Invoke Get-Command -Times 1 -Exactly -ParameterFilter {$CommandType -eq 'Application'}
+    }
+    It 'shows unknown quantities explicitly and keeps fractional module sizes' {
+        foreach($value in @($null,0,-1,[double]::NaN,[double]::PositiveInfinity,'unknown')){Format-DiagnosticQuantity -Value $value -Divisor 1GB -Unit GB|Should -Be 'N/D'}
+        Format-DiagnosticQuantity -Value 512MB -Divisor 1GB -Decimals 2 -Unit GB|Should -Be '0.5 GB'
+        $r=Get-AtlasMemorySummary -Modules @([pscustomobject]@{Capacity=8GB},[pscustomobject]@{Capacity=$null}) -Arrays @()
+        Format-DiagnosticQuantity -Value $r.TotalGB -Unit GB|Should -Be 'N/D'
+    }
+    It 'keeps the real Master application menu property lookup functional' {
+        $ast=Get-TestAst $script:RepoRoot 'src/tools/Invoke-DiagnosticoMaster.ps1'
+        $assignment=$ast.Find({param($n)$n -is [Management.Automation.Language.AssignmentStatementAst] -and $n.Left.Extent.Text -eq '$path' -and $n.Right.Extent.Text -match 'diagDeps'},$true)
+        $diagDeps=[pscustomobject]@{CPUZ='fixture-cpuz.exe'};$name='CPUZ'
+        & ([scriptblock]::Create($assignment.Right.Extent.Text))|Should -Be 'fixture-cpuz.exe'
     }
 }
 
+Describe 'Transversal inventory source boundaries' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+    }
+    It 'bounds every production CIM call explicitly, allowing only the audited AI query splat' {
+        $missing=@(foreach($file in Get-ChildItem (Join-Path $script:RepoRoot 'src') -Filter *.ps1 -Recurse -File){
+            $ast=[Management.Automation.Language.Parser]::ParseFile($file.FullName,[ref]$null,[ref]$null)
+            foreach($call in $ast.FindAll({param($n)$n -is [Management.Automation.Language.CommandAst] -and $n.GetCommandName() -in @('Get-CimInstance','Get-WmiObject')},$true)){
+                if($call.GetCommandName() -eq 'Get-WmiObject'){"Legacy WMI: $($file.Name)";continue}
+                $parameters=@($call.CommandElements|Where-Object {$_ -is [Management.Automation.Language.CommandParameterAst]}).ParameterName
+                if($parameters -contains 'OperationTimeoutSec'){continue}
+                if($file.Name -eq 'Invoke-AIReadiness.ps1' -and $call.Extent.Text -eq 'Get-CimInstance @query' -and $ast.Extent.Text -match 'OperationTimeoutSec\s*=\s*10'){continue}
+                "$($file.Name):$($call.Extent.StartLineNumber)"
+            }
+        })
+        $missing|Should -BeNullOrEmpty
+    }
+    It 'prevents direct winget and synchronous DNS regressions across every production script' {
+        foreach($file in Get-ChildItem (Join-Path $script:RepoRoot 'src') -Filter *.ps1 -Recurse -File){
+            $ast=[Management.Automation.Language.Parser]::ParseFile($file.FullName,[ref]$null,[ref]$null)
+            @($ast.FindAll({param($n)$n -is [Management.Automation.Language.CommandAst] -and $n.GetCommandName() -in @('winget','winget.exe')},$true)).Count|Should -Be 0 -Because $file.Name
+            @($ast.FindAll({param($n)$n -is [Management.Automation.Language.InvokeMemberExpressionAst] -and $n.Expression.Extent.Text -match '^\[(System\.)?Net\.Dns\]$' -and $n.Member.Value -in @('GetHostEntry','GetHostAddresses')},$true)).Count|Should -Be 0 -Because $file.Name
+        }
+    }
+    It 'bounds DNS task accumulation when Framework cannot cancel an outstanding lookup' {
+        $tasks=@(1..4|ForEach-Object {[Threading.Tasks.TaskCompletionSource[object]]::new()})
+        $script:AtlasDnsPending=@($tasks|ForEach-Object {$_.Task})
+        (Resolve-AtlasDnsEntry -Name 'should-not-be-queried.invalid' -TimeoutMilliseconds 1).State|Should -Be NotEvaluated
+        $script:AtlasDnsPending.Count|Should -Be 4
+        foreach($task in $tasks){$task.SetResult($null)}
+        $script:AtlasDnsPending=@()
+    }
+    It 'reports timed out DNS observations without inventing a cause or successful answer' {
+        . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-AuditoriaRouter.ps1' 'Modulo-TestDNS')
+        function Esperar-Enter {param([switch]$Silencioso)}
+        $script:HistorialSesion=[Collections.Generic.List[string]]::new()
+        Mock Clear-Host {};Mock Write-Host {}
+        Mock Resolve-AtlasDnsEntry {[pscustomobject]@{State='TimedOut';Entry=$null}}
+        $log=Modulo-TestDNS -Silencioso
+        @($log|Where-Object {$_ -match '\[TimedOut\]'}).Count|Should -Be 5
+        ($log -join "`n")|Should -Not -Match '\[OK\]|completely down|corrupt'
+        Should -Invoke Resolve-AtlasDnsEntry -Times 5 -Exactly -ParameterFilter {$TimeoutMilliseconds -eq 3000}
+    }
+}
+
+Describe 'Real local policy and runtime definitions' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        . (Get-TestFunction $script:RepoRoot 'src/lib/Operations.ps1' 'Get-AtlasPowerShellVersion')
+        function Invoke-AtlasNativeProcess {[CmdletBinding()]param($FilePath,$ArgumentList,$TimeoutSeconds)throw 'Real execution blocked'}
+    }
+    It 'compiles the actual policy CSharp source without invoking or changing account policies' {
+        $ast=Get-TestAst $script:RepoRoot 'src/lib/Operations.ps1'
+        $source=$ast.Find({param($n)$n -is [Management.Automation.Language.StringConstantExpressionAst] -and $n.Value -match 'static extern int NetUserModalsGet'},$true).Value
+        $source|Should -Not -BeNullOrEmpty
+        # Compile under a unique test namespace; never call the native policy API.
+        $source=$source.Replace('namespace Atlas {',('namespace AtlasPolicyTest'+[guid]::NewGuid().ToString('N')+' {'))
+        (Add-Type -TypeDefinition $source -PassThru -ErrorAction Stop).Name|Should -Contain LocalPolicyReader
+    }
+    It 'queries the runtime through the real available helper and rejects a truncated success tail' {
+        Mock Invoke-AtlasNativeProcess {[pscustomobject]@{State='Correct';Stdout='7.6.9';StdoutTruncated=$false}}
+        Get-AtlasPowerShellVersion -Path 'fixture-pwsh.exe'|Should -Be ([version]'7.6.9')
+        Should -Invoke Invoke-AtlasNativeProcess -Times 1 -Exactly -ParameterFilter {$TimeoutSeconds -eq 15 -and $FilePath -eq 'fixture-pwsh.exe'}
+        Mock Invoke-AtlasNativeProcess {[pscustomobject]@{State='Correct';Stdout='7.6.9';StdoutTruncated=$true}}
+        {Get-AtlasPowerShellVersion -Path 'fixture-pwsh.exe'}|Should -Throw '*not be evaluated*'
+    }
+}
 Describe 'Service restoration and dependent protection' {
     BeforeAll {
         . (Join-Path (Split-Path -Parent $PSScriptRoot) 'src/lib/Operations.ps1')
         function Get-Service {[CmdletBinding()]param($Name)throw 'Real service blocked'}
-        function Get-CimInstance {[CmdletBinding()]param($ClassName,$Filter)throw 'Real CIM blocked'}
+        function Get-CimInstance {[CmdletBinding()]param($ClassName,$Filter,$OperationTimeoutSec)throw 'Real CIM blocked'}
         function Set-Service {[CmdletBinding()]param($Name,$StartupType)throw 'Real service blocked'}
         function Start-Service {[CmdletBinding()]param($Name)throw 'Real service blocked'}
         function Stop-Service {[CmdletBinding()]param($Name)throw 'Real service blocked'}
@@ -1443,6 +1564,7 @@ Describe 'AI inventory without obsolete or unbounded fallbacks' {
         function Get-CimInstance { [CmdletBinding()]param($ClassName,$Namespace,$Filter,$OperationTimeoutSec) throw 'Real inventory blocked' }
         function Get-PhysicalDisk { [CmdletBinding()]param() throw 'Real disk read blocked' }
         function Invoke-AtlasNativeProcess { [CmdletBinding()]param($FilePath,$ArgumentList,$TimeoutSeconds) throw 'Real GPU query blocked' }
+        function Get-AtlasApplicationPath { param($Name) 'fixture-nvidia.exe' }
         function Get-AIRCommandState { param($Name) [pscustomobject]@{Installed=$false;Path=''} }
         function Test-AIREndpoint { param($Name,$Url) [pscustomobject]@{Reachable=$false} }
         function Get-AIRModelRecommendations { param($RamGB,$VramGB) }
@@ -1464,18 +1586,23 @@ Describe 'AI inventory without obsolete or unbounded fallbacks' {
         (Get-AIRDiskInfo).MediaType | Should -Be Unknown
     }
     It 'keeps a failed NVIDIA process from contributing telemetry' {
-        Mock Get-Command { [pscustomobject]@{Source='fixture-nvidia.exe'} }
+        Mock Get-AtlasApplicationPath { 'fixture-nvidia.exe' }
         Mock Invoke-AtlasNativeProcess { [pscustomobject]@{State='TimedOut';Stdout='Fixture, 8192, 30, 1'} }
         Get-AIRNvidiaSmi -WarningAction SilentlyContinue | Should -BeNullOrEmpty
         Should -Invoke Invoke-AtlasNativeProcess -Times 1 -Exactly -ParameterFilter {$TimeoutSeconds -eq 10}
     }
     It 'parses multiple GPUs and preserves unavailable sensor values' {
-        Mock Get-Command { [pscustomobject]@{Source='fixture-nvidia.exe'} }
+        Mock Get-AtlasApplicationPath { 'fixture-nvidia.exe' }
         Mock Invoke-AtlasNativeProcess { [pscustomobject]@{State='Correct';Stdout="Fixture1, 8192, 30, 1`r`nFixture2, 16384, N/A, 2`r`n"} }
         $rows=@(Get-AIRNvidiaSmi)
         $rows.Count | Should -Be 2
         $rows[0].MemoryMB | Should -Be 8192
         $rows[1].TemperatureC | Should -BeNullOrEmpty
+    }
+    It 'rejects a truncated NVIDIA success tail rather than parsing partial telemetry' {
+        Mock Get-AtlasApplicationPath { 'fixture-nvidia.exe' }
+        Mock Invoke-AtlasNativeProcess {[pscustomobject]@{State='Correct';Stdout='Fixture, 8192, 30, 1';StdoutTruncated=$true}}
+        Get-AIRNvidiaSmi -WarningAction SilentlyContinue|Should -BeNullOrEmpty
     }
     It 'does not recommend HDD replacement or fabricate a CPU benchmark from unknown media' {
         Mock Get-AIRCim {
