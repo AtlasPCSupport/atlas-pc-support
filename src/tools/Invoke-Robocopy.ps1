@@ -315,11 +315,8 @@ function Format-Duration {
 }
 
 function Get-FolderStats {
-    param([string]$Path)
-    $items = Get-ChildItem -Path $Path -Recurse -File -ErrorAction SilentlyContinue
-    $totalSize = ($items | Measure-Object Length -Sum -ErrorAction SilentlyContinue).Sum
-    if (-not $totalSize) { $totalSize = 0 }
-    return @{ Files = $items.Count; Size = $totalSize; SizeMB = [math]::Round($totalSize / 1MB, 1) }
+    param([string]$Path,[switch]$SkipCensus,[string[]]$ExcludeFiles=@(),[string[]]$ExcludeDirs=@())
+    Get-AtlasCopyInventory -Source $Path -SkipCensus:$SkipCensus -ExcludeFiles $ExcludeFiles -ExcludeDirs $ExcludeDirs
 }
 
 function Detect-DriveType {
@@ -441,7 +438,7 @@ function Start-SmartCopy {
     }
 
     $roboArgs += "/J"; $roboArgs += "/MT:${MT}"; $roboArgs += "/R:2"; $roboArgs += "/W:2"
-    $roboArgs += "/FFT"; $roboArgs += "/ETA"; $roboArgs += "/NP"; $roboArgs += "/TEE"; $roboArgs += "/DCOPY:DAT"
+    $roboArgs += "/ETA"; $roboArgs += "/NP"; $roboArgs += "/TEE"; $roboArgs += "/DCOPY:DAT"
 
     if (-not $IsFile) {
         $roboArgs += "/XJ"
@@ -527,15 +524,15 @@ do {
         if ($isFile) {
             $srcFileObj = Get-Item $origen
             $srcName = $srcFileObj.Name
-            $srcStats = @{ Files = 1; Size = $srcFileObj.Length; SizeMB = [math]::Round($srcFileObj.Length / 1MB, 1) }
+            $srcStats = @{ Files = 1; Size = $srcFileObj.Length; SizeMB = [math]::Round($srcFileObj.Length / 1MB, 1); Complete=$true }
             Write-Host ""
             Write-Host ($L.FileTag -f $srcName, (Format-Size $srcFileObj.Length)) -ForegroundColor Green
         } else {
             $srcName = Split-Path $origen -Leaf
             Write-Host $L.FolderScan -ForegroundColor DarkGray
-            $srcStats = Get-FolderStats $origen
+            $srcStats = Get-FolderStats $origen -SkipCensus
             Write-Host ($L.FolderTag -f $srcName) -ForegroundColor Green
-            Write-Host ($L.FolderInfo -f $srcStats.Files, (Format-Size $srcStats.Size)) -ForegroundColor Gray
+            Write-Host '      File census deferred; optional at preview / Censo opcional antes de copiar.' -ForegroundColor Gray
         }
         break
     }
@@ -612,6 +609,13 @@ do {
     $modoSel = Read-Host "      >"
     if ($modoSel -eq "B" -or $modoSel -eq "b") { continue }
     $modo = if ($modoSel -eq "2") { $L.ModeIncrL } else { $L.ModeFullL }
+    $existingBackup=''
+    if($modoSel -eq '2') {
+        Write-Host 'Incremental applies only to the exact destination. A new dated folder starts another backup / Una carpeta nueva inicia otro respaldo.'
+        $existingBackup=Read-Host 'Existing backup directory to continue (ENTER = dated default) / Carpeta existente'
+    }
+    try {$rutaFinal=Resolve-AtlasBackupDestination -DefaultDirectory $rutaFinal -ExistingDirectory $existingBackup -Sources @($origen)}
+    catch {Write-Host $_.Exception.Message -ForegroundColor Red;continue}
 
     $extraXD = @(); $extraXF = @()
 
@@ -655,6 +659,10 @@ do {
     Clear-Host
     Write-Host "`n"
     Write-Centered $L.PreviewHdr "White"
+    if(-not $isFile) {
+        $countSource=(Read-Host 'Optional census may take time: type COUNT, or ENTER to skip / Escribe COUNT para contar') -ceq 'COUNT'
+        $srcStats=Get-FolderStats $origen -SkipCensus:(-not $countSource) -ExcludeFiles (@('Pagefile.sys','Hiberfil.sys','swapfile.sys','Thumbs.db')+$extraXF) -ExcludeDirs (@('System Volume Information','$RECYCLE.BIN','Recovery')+$extraXD)
+    }
     Write-Host ""
 
     if ($isFile) {
@@ -664,7 +672,9 @@ do {
     } else {
         Write-Host $L.PrevType2 -ForegroundColor Gray
         Write-Host ($L.PrevSrc -f $srcName) -ForegroundColor White
-        Write-Host ($L.PrevFiles -f $srcStats.Files, (Format-Size $srcStats.Size)) -ForegroundColor Gray
+        if($srcStats.Complete){Write-Host ($L.PrevFiles -f $srcStats.Files, (Format-Size $srcStats.Size)) -ForegroundColor Gray}
+        else {Write-Host '    FILES/SIZE: N/D; census skipped or incomplete / Censo omitido o incompleto.' -ForegroundColor Yellow}
+        Write-Host $srcStats.Scope -ForegroundColor DarkGray
     }
 
     Write-Host ""
@@ -678,7 +688,7 @@ do {
     }
 
     $avgSpeed = switch ($driveInfo.Type) { "USB" { 25 } "HDD" { 80 } "SSD" { 300 } default { 50 } }
-    if ($srcStats.SizeMB -gt 0) {
+    if ($srcStats.Complete -and $srcStats.SizeMB -gt 0) {
         $etaSec = $srcStats.SizeMB / $avgSpeed
         $etaSpan = [TimeSpan]::FromSeconds($etaSec)
         Write-Host ($L.PrevETA -f (Format-Duration $etaSpan), $driveInfo.Type) -ForegroundColor DarkGray

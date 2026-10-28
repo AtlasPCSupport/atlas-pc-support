@@ -83,26 +83,14 @@ function Invoke-PrepararUSB {
             ToolsHeader      = '--- Downloading tool scripts (deps\tools\) ---'
             ToolsDone        = '[OK] Tool scripts on USB: {0} downloaded, {1} already present.'
             ToolsPartial     = '[!] Tool scripts: {0} ok, {1} failed (check internet).'
-            AskStore         = 'Download Microsoft Store bundle to USB for offline install? [Y/N] (recommended for LTSC/IoT)'
-            AskStoreNote     = 'Allows installing the Store without internet (~55 MB: VCLibs + UI.Xaml + Store bundle).'
-            StoreHeader      = '--- Downloading Microsoft Store bundle (deps\MicrosoftStore\) ---'
-            StoreDone        = '[OK] Store bundle on USB: {0} downloaded, {1} already present.'
-            StorePartial     = '[!] Store bundle: {0} ok, {1} failed (check internet).'
-            StorePartialSoft = '[!] Store bundle: {0} ok, {1} unavailable (source restrictions).'
-            StoreMixed       = '[!] Store bundle: {0} ok, {1} unavailable, {2} failed.'
-            StoreManifestAuth= '[!] {0}: source returned manifest/auth-required; skipping (best effort).'
-            StoreMirrorHint  = '  [i] Optional: set ATLAS_STORE_BUNDLE_URL to a direct .appxbundle mirror.'
-            StoreOnlineAuto  = '  [i] Store offline bundle unavailable: target tool will use automatic online install (winget).'
             StageETA         = '[ETA] {0}: {1}'
             StageReal        = '[REAL] {0}: {1}'
-            StageRealSpeed   = '[REAL] {0}: {1} @ {2}'
             StageLblLauncher = 'Launcher download'
             StageLblFastCopy = 'FastCopy package'
             StageLblPS7      = 'PowerShell 7 MSI'
             StageLblGPU      = 'GPU Check dependencies'
             StageLblDiag     = 'Full System Report dependencies'
             StageLblTools    = 'Tool scripts'
-            StageLblStore    = 'Microsoft Store bundle'
             UpdAll      = '[1] Copy this complete Atlas release + refresh optional packages'
             UpdMissing  = '[2] Copy this complete Atlas release + fill missing optional packages'
             DepSkipped  = '[=] Already on USB, skipped: {0}'
@@ -180,26 +168,14 @@ function Invoke-PrepararUSB {
             ToolsHeader      = '--- Descargando scripts de tools (deps\tools\) ---'
             ToolsDone        = '[OK] Scripts de tools en USB: {0} descargados, {1} ya estaban.'
             ToolsPartial     = '[!] Scripts de tools: {0} ok, {1} fallaron (verifica internet).'
-            AskStore         = 'Descargar bundle de Microsoft Store en USB para instalar offline? [S/N] (recomendado para LTSC/IoT)'
-            AskStoreNote     = 'Permite instalar la Store sin internet (~55 MB: VCLibs + UI.Xaml + bundle Store).'
-            StoreHeader      = '--- Descargando bundle de Microsoft Store (deps\MicrosoftStore\) ---'
-            StoreDone        = '[OK] Bundle Store en USB: {0} descargados, {1} ya estaban.'
-            StorePartial     = '[!] Bundle Store: {0} ok, {1} fallaron (verifica internet).'
-            StorePartialSoft = '[!] Bundle Store: {0} ok, {1} no disponibles (restricciones del origen).'
-            StoreMixed       = '[!] Bundle Store: {0} ok, {1} no disponibles, {2} fallaron.'
-            StoreManifestAuth= '[!] {0}: la fuente devolvio manifest/auth-required; se omite (best effort).'
-            StoreMirrorHint  = '  [i] Opcional: define ATLAS_STORE_BUNDLE_URL con un mirror .appxbundle directo.'
-            StoreOnlineAuto  = '  [i] Bundle offline no disponible: la tool destino usara instalacion online automatica (winget).'
             StageETA         = '[ETA] {0}: {1}'
             StageReal        = '[REAL] {0}: {1}'
-            StageRealSpeed   = '[REAL] {0}: {1} a {2}'
             StageLblLauncher = 'Descarga de launcher'
             StageLblFastCopy = 'Paquete FastCopy'
             StageLblPS7      = 'MSI de PowerShell 7'
             StageLblGPU      = 'Dependencias de GPU Check'
             StageLblDiag     = 'Dependencias de Full System Report'
             StageLblTools    = 'Scripts de tools'
-            StageLblStore    = 'Bundle de Microsoft Store'
             UpdAll      = '[1] Copiar este release completo de Atlas + renovar paquetes opcionales'
             UpdMissing  = '[2] Copiar este release completo de Atlas + completar opcionales ausentes'
             DepSkipped  = '[=] Ya existe en la USB, omitido: {0}'
@@ -277,26 +253,7 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
         return ("$Bytes B")
     }
 
-    function Get-PathSizeBytes {
-        param([string[]]$Paths)
 
-        [int64]$total = 0
-        foreach ($path in @($Paths)) {
-            if ([string]::IsNullOrWhiteSpace($path)) { continue }
-            if (-not (Test-Path -LiteralPath $path)) { continue }
-            try {
-                $item = Get-Item -LiteralPath $path -ErrorAction Stop
-                if ($item -is [System.IO.FileInfo]) {
-                    $total += [int64]$item.Length
-                } else {
-                    $sum = (Get-ChildItem -LiteralPath $path -Recurse -File -Force -ErrorAction SilentlyContinue |
-                            Measure-Object -Property Length -Sum).Sum
-                    if ($sum) { $total += [int64]$sum }
-                }
-            } catch {}
-        }
-        return $total
-    }
 
     function Format-Duration {
         param([double]$TotalSeconds)
@@ -345,7 +302,6 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
                 GPU      = @{ Min = 30;  Max = 180 }
                 Diag     = @{ Min = 120; Max = 600 }
                 Tools    = @{ Min = 20;  Max = 90  }
-                Store    = @{ Min = 90;  Max = 420 }
             }
             delta = @{
                 Launcher = @{ Min = 8;   Max = 30  }
@@ -354,7 +310,6 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
                 GPU      = @{ Min = 20;  Max = 120 }
                 Diag     = @{ Min = 60;  Max = 300 }
                 Tools    = @{ Min = 10;  Max = 45  }
-                Store    = @{ Min = 30;  Max = 180 }
             }
         }
 
@@ -364,54 +319,24 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
     }
 
     function Invoke-StageWithTelemetry {
-        param(
-            [Parameter(Mandatory)][string]$StageName,
-            [Parameter(Mandatory)][int]$EstimateMinSec,
-            [Parameter(Mandatory)][int]$EstimateMaxSec,
-            [string[]]$MeasurePaths,
-            [Parameter(Mandatory)][scriptblock]$Action
-        )
-
-        Write-Centered ($L.StageETA -f $StageName, (Format-EstimateRange -MinSeconds $EstimateMinSec -MaxSeconds $EstimateMaxSec)) 'DarkGray'
-
-        $beforeBytes = Get-PathSizeBytes -Paths $MeasurePaths
-        $sw = [System.Diagnostics.Stopwatch]::StartNew()
-        $result = & $Action
-        $sw.Stop()
-        $afterBytes = Get-PathSizeBytes -Paths $MeasurePaths
-
-        [int64]$transferred = [int64]($afterBytes - $beforeBytes)
-        if ($transferred -le 0 -and $beforeBytes -eq 0 -and $afterBytes -gt 0) {
-            $transferred = $afterBytes
-        }
-
-        $realTime = Format-Duration -TotalSeconds $sw.Elapsed.TotalSeconds
-        if ($transferred -gt 0 -and $sw.Elapsed.TotalSeconds -gt 0.01) {
-            $speedMBps = ($transferred / 1MB) / $sw.Elapsed.TotalSeconds
-            if ($speedMBps -ge 1) {
-                $speedTxt = ('{0:N2} MB/s' -f $speedMBps)
-            } else {
-                $speedKBps = ($transferred / 1KB) / $sw.Elapsed.TotalSeconds
-                $speedTxt = ('{0:N0} KB/s' -f $speedKBps)
-            }
-            Write-Centered ($L.StageRealSpeed -f $StageName, $realTime, $speedTxt) 'DarkGray'
-        } else {
-            Write-Centered ($L.StageReal -f $StageName, $realTime) 'DarkGray'
-        }
-
+        param([Parameter(Mandatory)][string]$StageName,[Parameter(Mandatory)][int]$EstimateMinSec,
+            [Parameter(Mandatory)][int]$EstimateMaxSec,[string[]]$MeasurePaths,[Parameter(Mandatory)][scriptblock]$Action)
+        Write-Centered ($L.StageETA -f $StageName,(Format-EstimateRange -MinSeconds $EstimateMinSec -MaxSeconds $EstimateMaxSec)) 'DarkGray'
+        $sw=[Diagnostics.Stopwatch]::StartNew()
+        try {$result=& $Action}
+        catch {Write-Centered ("[X] $StageName incomplete: "+$_.Exception.Message) 'Red';$result=$false}
+        finally {$sw.Stop();Write-Centered ($L.StageReal -f $StageName,(Format-Duration -TotalSeconds $sw.Elapsed.TotalSeconds)) 'DarkGray'}
         return $result
     }
 
+    $script:AtlasUsbVerifiedPackages=@{}
+    $script:AtlasUsbVerifiedFiles=@{}
+    $script:AtlasUsbAttemptFailures=@{}
     # Canonical URLs
     $FASTCOPY_URL = (Get-AtlasDependencyDefinition -Name 'FastCopy').DownloadUrl
     $PS7_VERSION = (Get-AtlasDependencyDefinition -Name 'PowerShell7').Version
     $PS7_URL = (Get-AtlasDependencyDefinition -Name 'PowerShell7').DownloadUrl
     $USB_ROOT_NAME          = 'ATLAS_PC_SUPPORT'
-    $STORE_PACKAGES = @(
-        @{ Name = 'VCLibs.x64.14.00.Desktop.appx';     Url = 'https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx'; SizeMB = 6 },
-        @{ Name = 'Microsoft.UI.Xaml.2.8.x64.appx';    Url = 'https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx'; SizeMB = 17 },
-        @{ Name = 'Microsoft.WindowsStore.appxbundle'; Url = 'https://storeedgefd.dsx.mp.microsoft.com/v9.0/packageManifests/9WZDNCRFJBMP'; SizeMB = 28 }
-    )
 
     function Show-Header {
         Clear-Host
@@ -486,63 +411,22 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
 
     function Download-FastCopy {
         param([string]$AppsDir)
-
-        Write-Host ''
-        Write-Centered $L.DLFastCopy 'Yellow'
-
-        if (-not (Test-Path $AppsDir)) {
-            New-Item -ItemType Directory -Path $AppsDir -Force | Out-Null
-        }
-        $installer = Join-Path $AppsDir 'FastCopy_installer.exe'
+        New-Item -ItemType Directory -Path $AppsDir -Force -ErrorAction Stop|Out-Null
+        Assert-AtlasPlainDirectory $AppsDir
+        $installer=Join-Path $AppsDir ('FastCopy-installer-'+[guid]::NewGuid().ToString('N')+'.exe')
         try {
-            $ProgressPreference = 'SilentlyContinue'
             Invoke-WebRequest -Uri $FASTCOPY_URL -OutFile $installer -UseBasicParsing -TimeoutSec 120 -ErrorAction Stop
-            $sz = (Get-Item $installer).Length
-            if ($sz -gt 200KB) {
-                if (-not (Get-Command Assert-AtlasInstaller -ErrorAction SilentlyContinue)) {
-                    throw 'Close and reopen the updated Atlas panel before preparing installers.'
-                }
-                Assert-AtlasInstaller -Path $installer -ExpectedSha256 ((Get-AtlasDependencyDefinition -Name 'FastCopy').DownloadSha256)
-                Write-Centered ($L.FCInstOk -f (Format-Size $sz)) 'Green'
-                Write-Centered $L.FCExtract 'DarkGray'
-                $extractResult = Invoke-ExternalProcessWithTimeout -FilePath $installer -ArgumentList @(
-                    '/EXTRACT64', '/NOSUBDIR', '/AGREE_LICENSE', ("/DIR=`"$AppsDir`"")
-                ) -TimeoutSec 180
-                if ($extractResult.TimedOut) {
-                    Write-Centered '[!] FastCopy extraction timed out (>180s). Trying /SILENT ...' 'Yellow'
-                } elseif (-not $extractResult.Started) {
-                    Write-Centered ("[!] Could not start extractor: {0}" -f $extractResult.Error) 'Yellow'
-                }
-
-                if ($extractResult.Completed -and $extractResult.ExitCode -eq 0 -and (Test-Path (Join-Path $AppsDir 'FastCopy.exe'))) {
-                    Write-Centered $L.FCExtractOk 'Green'
-                    Remove-Item $installer -ErrorAction SilentlyContinue
-                } else {
-                    # /EXTRACT64 failed or not supported — retry with /SILENT install
-                    Write-Centered $L.FCExtractF 'Yellow'
-                    $silentResult = Invoke-ExternalProcessWithTimeout -FilePath $installer -ArgumentList @(
-                        '/SILENT', '/AGREE_LICENSE', ("/DIR=`"$AppsDir`"")
-                    ) -TimeoutSec 180
-                    if ($silentResult.TimedOut) {
-                        Write-Centered '[!] /SILENT install timed out (>180s). Leaving installer for manual run.' 'Yellow'
-                    } elseif (-not $silentResult.Started) {
-                        Write-Centered ("[!] Could not start /SILENT install: {0}" -f $silentResult.Error) 'Yellow'
-                    }
-                    if ($silentResult.Completed -and $silentResult.ExitCode -eq 0 -and (Test-Path (Join-Path $AppsDir 'FastCopy.exe'))) {
-                        Write-Centered $L.FCExtractOk 'Green'
-                        Remove-Item $installer -ErrorAction SilentlyContinue
-                        return $true
-                    }
-                    # Keep installer on USB for manual install when auto-mode fails.
-                    Write-Centered ("[!] Installer kept for manual install: {0}" -f $installer) 'DarkGray'
-                    return $false
-                }
-                return $true
-            }
+            Assert-AtlasInstaller -Path $installer -ExpectedSha256 ((Get-AtlasDependencyDefinition -Name FastCopy).DownloadSha256)
+            $result=Invoke-AtlasNativeProcess -FilePath $installer -ArgumentList @('/EXTRACT64','/NOSUBDIR','/AGREE_LICENSE',("/DIR=$AppsDir")) -TimeoutSeconds 180
+            if($result.State -ne 'Correct' -or -not (Test-Path -LiteralPath (Join-Path $AppsDir 'FastCopy.exe') -PathType Leaf)){throw "Extraction $($result.State), exit $($result.ExitCode); inspect this partial attempt. No second installer will run."}
+            Remove-Item -LiteralPath $installer -ErrorAction Stop
+            Register-UsbInstallerFiles -Key FastCopy -Directory $AppsDir
+            return $true
         } catch {
-            Write-Centered ($L.FCDLFail -f $_.Exception.Message) 'Yellow'
+            $script:AtlasUsbAttemptFailures['FastCopy']=$true
+            Write-Centered ("[X] FastCopy not prepared: "+$_.Exception.Message) 'Red'
+            return $false
         }
-        return $false
     }
 
     function Download-PS7 {
@@ -569,6 +453,7 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
             if (-not $ForceRedownload -and (Test-Path -LiteralPath $msiFile)) {
                 Assert-AtlasInstaller -Path $msiFile -ExpectedSha256 $expectedHash -MicrosoftSignature
                 [IO.File]::WriteAllText("$msiFile.sha256", $expectedHash, [Text.UTF8Encoding]::new($false))
+                Register-UsbInstallerFiles -Key PowerShell7 -SingleFile $msiFile
                 Write-Centered ($L.PS7Exists -f $msiFile) 'Green'
                 return $true
             }
@@ -582,6 +467,7 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
                 Assert-AtlasInstaller -Path $tmpFile -ExpectedSha256 $expectedHash -MicrosoftSignature
                 Move-Item -LiteralPath $tmpFile -Destination $msiFile -Force
                 [IO.File]::WriteAllText("$msiFile.sha256", $expectedHash, [Text.UTF8Encoding]::new($false))
+                Register-UsbInstallerFiles -Key PowerShell7 -SingleFile $msiFile
                 Write-Centered ($L.PS7Ok -f (Format-Size $sz)) 'Green'
                 return $true
             } else {
@@ -639,7 +525,7 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
             'C:\Program Files\GPU-Z\GPU-Z.exe'
         )
         if ($gpuzSrc -and (Test-Path -LiteralPath $gpuzSrc)) {
-            Copy-Item -LiteralPath $gpuzSrc -Destination (Join-Path $GpuToolsDir 'GPU-Z.exe') -Force
+            Copy-AtlasUsbExecutable -Source $gpuzSrc -Destination (Join-Path $GpuToolsDir 'GPU-Z.exe') -PackageKey 'GPU/GPUZ'
             $copiedCount++
         }
 
@@ -648,7 +534,7 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
             'C:\Program Files (x86)\HWiNFO64\HWiNFO64.exe'
         )
         if ($hwSrc -and (Test-Path -LiteralPath $hwSrc)) {
-            Copy-Item -LiteralPath $hwSrc -Destination (Join-Path $GpuToolsDir 'HWiNFO64.exe') -Force
+            Copy-AtlasUsbExecutable -Source $hwSrc -Destination (Join-Path $GpuToolsDir 'HWiNFO64.exe') -PackageKey 'GPU/HWiNFO'
             $copiedCount++
         }
 
@@ -662,7 +548,7 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
             if (-not (Test-Path -LiteralPath $furDstDir)) {
                 New-Item -ItemType Directory -Path $furDstDir -Force | Out-Null
             }
-            robocopy $furSrcDir $furDstDir /E /R:1 /W:1 /NFL /NDL /NJH /NJS /NP | Out-Null
+            Copy-AtlasDependencyTree -SourceDir $furSrcDir -DestinationDir $furDstDir -PackageKey 'GPU/FurMark2' | Out-Null
             if (Test-Path -LiteralPath (Join-Path $furDstDir 'furmark.exe')) {
                 $copiedCount++
             }
@@ -672,14 +558,14 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
         $hasFur = Test-Path -LiteralPath (Join-Path $GpuToolsDir 'FurMark2_x64\furmark.exe')
         $hasHw = Test-Path -LiteralPath (Join-Path $GpuToolsDir 'HWiNFO64.exe')
 
-        if ($hasGpuZ -and $hasFur) {
+        if ($hasGpuZ -and $hasFur -and $hasHw) {
             Write-Centered $L.GPUDepsDone 'Green'
             return $true
         }
 
         if ($copiedCount -gt 0 -or $hasHw) {
             Write-Centered ($L.GPUDepsDone + ' (partial)') 'Yellow'
-            return $true
+            return $false
         }
 
         Write-Centered $L.GPUDepsNone 'Yellow'
@@ -722,51 +608,8 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
         }
 
         function Copy-TreeSafely {
-            param(
-                [Parameter(Mandatory)][string]$SourceDir,
-                [Parameter(Mandatory)][string]$DestinationDir
-            )
-
-            if (-not (Test-Path -LiteralPath $SourceDir -PathType Container)) { return $false }
-            Assert-AtlasCopyDestination -Source $SourceDir -Destination $DestinationDir
-            $sourceRoot=[IO.Path]::GetFullPath($SourceDir).TrimEnd([char[]]'\/')
-            $destRoot=[IO.Path]::GetFullPath($DestinationDir)
-            $sourceFiles=[Collections.Generic.List[IO.FileInfo]]::new()
-            $pending=[Collections.Generic.Stack[string]]::new();$pending.Push($sourceRoot)
-            # Preflight every selected path before any write. Never recurse through links.
-            while($pending.Count) {
-                $directory=$pending.Pop()
-                Assert-AtlasPlainDirectory $directory
-                foreach($item in @(Get-ChildItem -LiteralPath $directory -Force -ErrorAction Stop)) {
-                    if($item.Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'USB dependency paths cannot cross reparse points.'}
-                    $relative=$item.FullName.Substring($sourceRoot.Length).TrimStart([char[]]'\/')
-                    $target=Join-Path $destRoot $relative
-                    if($item.PSIsContainer) {
-                        Assert-AtlasCopyDestination -Source $item.FullName -Destination $target
-                        $pending.Push($item.FullName)
-                    } else {
-                        Assert-AtlasCopyDestination -Source $item.FullName -Destination (Split-Path -Parent $target)
-                        if(Test-Path -LiteralPath $target){Assert-AtlasPlainFile $target}
-                        $sourceFiles.Add($item)
-                    }
-                }
-            }
-            if($sourceFiles.Count -eq 0){return $false}
-            $robo=Get-Command robocopy.exe -CommandType Application -ErrorAction Stop
-            if(-not $robo){throw 'Robocopy is required for USB dependency copies.'}
-            if(-not (Test-Path -LiteralPath $destRoot)){New-Item -ItemType Directory -Path $destRoot -ErrorAction Stop | Out-Null}
-            $result=Invoke-AtlasNativeProcess -FilePath $robo.Source -ArgumentList @($sourceRoot,$destRoot,'/E','/R:1','/W:1','/NFL','/NDL','/NJH','/NJS','/NP','/XJ','/FFT','/COPY:DAT','/DCOPY:DAT') -TimeoutSeconds 86400 -SuccessCodes @(0,1,2,3)
-            if($result.State -ne 'Correct'){throw "USB copy $($result.State), exit $($result.ExitCode); inspect partial destination before retrying."}
-            # Delta metadata may skip damaged same-size/same-date files. Verify every resource.
-            foreach($file in $sourceFiles) {
-                $relative=$file.FullName.Substring($sourceRoot.Length).TrimStart([char[]]'\/')
-                $target=Join-Path $destRoot $relative
-                try {
-                    Assert-AtlasPlainFile $file.FullName;Assert-AtlasPlainFile $target
-                    if((Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256 -ErrorAction Stop).Hash -cne (Get-FileHash -LiteralPath $target -Algorithm SHA256 -ErrorAction Stop).Hash){throw 'Resource digest mismatch.'}
-                } catch {throw "USB dependency verification failed: $relative. Existing files were not removed; inspect before retrying."}
-            }
-            return $true
+            param([Parameter(Mandatory)][string]$SourceDir,[Parameter(Mandatory)][string]$DestinationDir,[string]$PackageKey)
+            Copy-AtlasDependencyTree -SourceDir $SourceDir -DestinationDir $DestinationDir -PackageKey $PackageKey
         }
 
         $copiedCount = 0
@@ -782,7 +625,7 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
         )
         if ($cpuzSrc -and (Test-Path -LiteralPath $cpuzSrc)) {
             $cpuzDstName = Split-Path -Leaf $cpuzSrc
-            Copy-Item -LiteralPath $cpuzSrc -Destination (Join-Path $DiagToolsDir $cpuzDstName) -Force
+            Copy-AtlasUsbExecutable -Source $cpuzSrc -Destination (Join-Path $DiagToolsDir $cpuzDstName) -PackageKey 'Diag/CPUZ'
             $copiedCount++
         }
 
@@ -792,7 +635,7 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
             '%LOCALAPPDATA%\Microsoft\WinGet\Links\bluescreenview.exe'
         )
         if ($bsodSrc -and (Test-Path -LiteralPath $bsodSrc)) {
-            Copy-Item -LiteralPath $bsodSrc -Destination (Join-Path $DiagToolsDir 'BlueScreenView.exe') -Force
+            Copy-AtlasUsbExecutable -Source $bsodSrc -Destination (Join-Path $DiagToolsDir 'BlueScreenView.exe') -PackageKey 'Diag/BlueScreenView'
             $copiedCount++
         }
 
@@ -802,7 +645,7 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
             '%LOCALAPPDATA%\Microsoft\WinGet\Links\batteryinfoview.exe'
         )
         if ($batSrc -and (Test-Path -LiteralPath $batSrc)) {
-            Copy-Item -LiteralPath $batSrc -Destination (Join-Path $DiagToolsDir 'BatteryInfoView.exe') -Force
+            Copy-AtlasUsbExecutable -Source $batSrc -Destination (Join-Path $DiagToolsDir 'BatteryInfoView.exe') -PackageKey 'Diag/BatteryInfoView'
             $copiedCount++
         }
 
@@ -811,7 +654,7 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
             'C:\Program Files (x86)\HWiNFO64\HWiNFO64.exe'
         )
         if ($hwSrc -and (Test-Path -LiteralPath $hwSrc)) {
-            Copy-Item -LiteralPath $hwSrc -Destination (Join-Path $DiagToolsDir 'HWiNFO64.exe') -Force
+            Copy-AtlasUsbExecutable -Source $hwSrc -Destination (Join-Path $DiagToolsDir 'HWiNFO64.exe') -PackageKey 'Diag/HWiNFO'
             $copiedCount++
         }
 
@@ -826,7 +669,7 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
             $cdiDir = Split-Path -Parent $cdiSrc
             $cdiDstDir = Join-Path $DiagToolsDir 'CrystalDiskInfo'
             if (Test-Path $cdiDir) {
-                $ok = Copy-TreeSafely -SourceDir $cdiDir -DestinationDir $cdiDstDir
+                $ok = Copy-TreeSafely -SourceDir $cdiDir -DestinationDir $cdiDstDir -PackageKey 'Diag/CrystalDiskInfo'
                 if ($ok -and (
                     (Test-Path -LiteralPath (Join-Path $cdiDstDir 'DiskInfo64.exe')) -or
                     (Test-Path -LiteralPath (Join-Path $cdiDstDir 'DiskInfo32.exe'))
@@ -849,7 +692,7 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
             $cdmDir = Split-Path -Parent $cdmSrc
             $cdmDstDir = Join-Path $DiagToolsDir 'CrystalDiskMark'
             if (Test-Path $cdmDir) {
-                $ok = Copy-TreeSafely -SourceDir $cdmDir -DestinationDir $cdmDstDir
+                $ok = Copy-TreeSafely -SourceDir $cdmDir -DestinationDir $cdmDstDir -PackageKey 'Diag/CrystalDiskMark'
                 if ($ok -and (Test-Path -LiteralPath (Join-Path $cdmDstDir 'DiskMark64.exe'))) {
                     $copiedCount++
                 }
@@ -873,7 +716,7 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
 
         if ($copiedCount -gt 0) {
             Write-Centered ($L.DiagDepsDone + ' (partial)') 'Yellow'
-            return $true
+            return $false
         }
 
         Write-Centered $L.DiagDepsNone 'Yellow'
@@ -882,136 +725,7 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
 
 
 
-    function Save-MicrosoftStoreBundle {
-        param(
-            [string]$BundleDir,
-            [switch]$ForceRedownload
-        )
 
-        Write-Host ''
-        Write-Centered $L.StoreHeader 'Yellow'
-
-        if (-not (Test-Path -LiteralPath $BundleDir)) {
-            New-Item -ItemType Directory -Path $BundleDir -Force | Out-Null
-        }
-
-        $onlineOnlyFlag = Join-Path $BundleDir 'ONLINE_MODE_REQUIRED.flag'
-        $ok = 0; $skipped = 0; $failed = 0; $unavailable = 0
-        $storeBundleUnavailable = $false
-        $ProgressPreference = 'SilentlyContinue'
-
-        foreach ($pkg in $STORE_PACKAGES) {
-            $dest = Join-Path $BundleDir $pkg.Name
-            if ((-not $ForceRedownload) -and (Test-Path -LiteralPath $dest)) {
-                $skipped++
-                continue
-            }
-            Write-Centered ("  [>] $($pkg.Name) (~$($pkg.SizeMB) MB)...") 'Gray'
-
-            $candidateUrls = @()
-            $mirrorUrl = [string]$env:ATLAS_STORE_BUNDLE_URL
-            if ($pkg.Name -ieq 'Microsoft.WindowsStore.appxbundle' -and -not [string]::IsNullOrWhiteSpace($mirrorUrl)) {
-                $candidateUrls += $mirrorUrl.Trim()
-            }
-            if ($pkg.Url) { $candidateUrls += [string]$pkg.Url }
-            $candidateUrls = @($candidateUrls | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique)
-
-            $downloaded = $false
-            $manifestBlocked = $false
-            $lastError = $null
-
-            foreach ($url in $candidateUrls) {
-                $tmp = "$dest.download"
-                try {
-                    if (Test-Path -LiteralPath $tmp) {
-                        Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue
-                    }
-
-                    $resp = Invoke-WebRequest -Uri $url -OutFile $tmp -UseBasicParsing -TimeoutSec 120 -ErrorAction Stop
-                    $len = (Get-Item -LiteralPath $tmp).Length
-                    $contentType = ''
-                    try { $contentType = [string]$resp.Headers['Content-Type'] } catch {}
-
-                    $isManifestResponse = $false
-                    if ($pkg.Name -ieq 'Microsoft.WindowsStore.appxbundle') {
-                        if ($contentType -match 'application/json') {
-                            $isManifestResponse = $true
-                        } elseif ($len -lt 100KB) {
-                            try {
-                                $probe = Get-Content -Raw -LiteralPath $tmp -Encoding UTF8
-                                $jsonProbe = $probe | ConvertFrom-Json -ErrorAction Stop
-                                if ($jsonProbe.Data -and $jsonProbe.Data.PackageIdentifier) {
-                                    $isManifestResponse = $true
-                                }
-                            } catch {}
-                        }
-                    }
-
-                    if ($isManifestResponse) {
-                        Remove-Item -LiteralPath $tmp -ErrorAction SilentlyContinue
-                        $manifestBlocked = $true
-                        Write-Centered ($L.StoreManifestAuth -f $pkg.Name) 'Yellow'
-                        continue
-                    }
-
-                    if ($len -gt 10KB) {
-                        Move-Item -LiteralPath $tmp -Destination $dest -Force
-                        $ok++
-                        $downloaded = $true
-                        break
-                    } else {
-                        Remove-Item -LiteralPath $tmp -ErrorAction SilentlyContinue
-                        $lastError = 'download incomplete'
-                    }
-                } catch {
-                    $lastError = $_.Exception.Message
-                    if (Test-Path -LiteralPath $tmp) {
-                        Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue
-                    }
-                }
-            }
-
-            if (-not $downloaded) {
-                if ($manifestBlocked -and $pkg.Name -ieq 'Microsoft.WindowsStore.appxbundle') {
-                    $unavailable++
-                    $storeBundleUnavailable = $true
-                    if ([string]::IsNullOrWhiteSpace([string]$env:ATLAS_STORE_BUNDLE_URL)) {
-                        Write-Centered $L.StoreMirrorHint 'DarkGray'
-                    }
-                } else {
-                    $failed++
-                    if ($lastError) {
-                        Write-Centered "  [!] $($pkg.Name): $lastError" 'Yellow'
-                    }
-                }
-            }
-        }
-
-        if ($failed -eq 0 -and $unavailable -eq 0) {
-            Write-Centered ($L.StoreDone -f $ok, $skipped) 'Green'
-        } elseif ($failed -eq 0) {
-            Write-Centered ($L.StorePartialSoft -f ($ok + $skipped), $unavailable) 'Yellow'
-        } elseif ($unavailable -eq 0) {
-            Write-Centered ($L.StorePartial -f ($ok + $skipped), $failed) 'Yellow'
-        } else {
-            Write-Centered ($L.StoreMixed -f ($ok + $skipped), $unavailable, $failed) 'Yellow'
-        }
-
-        if ($storeBundleUnavailable) {
-            $flagBody = @(
-                '# Atlas PC Support - Microsoft Store online fallback required'
-                '# Store appxbundle could not be obtained from source (manifest/auth-required).'
-                '# Invoke-InstalarMicrosoftStore will skip offline expectation and use winget online mode.'
-                ('# Generated: ' + (Get-Date).ToString('s'))
-            ) -join [Environment]::NewLine
-            [System.IO.File]::WriteAllText($onlineOnlyFlag, $flagBody, [System.Text.UTF8Encoding]::new($true))
-            Write-Centered $L.StoreOnlineAuto 'DarkGray'
-        } elseif (Test-Path -LiteralPath $onlineOnlyFlag) {
-            Remove-Item -LiteralPath $onlineOnlyFlag -Force -ErrorAction SilentlyContinue
-        }
-
-        return ($failed -eq 0)
-    }
 
 
 
@@ -1024,6 +738,70 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
         $body = $READMES[$lang]
         if (-not $body) { $body = $READMES['en'] }
         [System.IO.File]::WriteAllText($Path, $body, [System.Text.UTF8Encoding]::new($true))
+    }
+
+    function Register-UsbInstallerFiles {
+        param([Parameter(Mandatory)][string]$Key,[string]$Directory,[string]$SingleFile)
+        $files=if($SingleFile){@(Get-Item -LiteralPath $SingleFile -Force -ErrorAction Stop)}else{@(Get-AtlasPlainTreeFiles -Root $Directory)}
+        $script:AtlasUsbVerifiedFiles[$Key]=@($files|ForEach-Object {@{Path=$_.FullName;Sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant()}})
+        $script:AtlasUsbVerifiedPackages[$Key]=$true
+    }
+
+    function Get-UsbDependencyRows {
+        param([Parameter(Mandatory)][string]$Root)
+        $definitions=@(
+            @{Key='FastCopy';Group='FastCopy';Any=@('apps/FastCopy/FastCopy.exe');Resources=@();Scope='Verified installer extraction inventory, not runtime qualification'},
+            @{Key='PowerShell7';Group='PS7';Any=@("deps/PowerShell-$PS7_VERSION-win-x64.msi");Resources=@();Scope='Pinned Microsoft MSI, not an installed runtime'},
+            @{Key='GPU/GPUZ';Group='GPU';Any=@('deps/GPUCheck/tools/GPU-Z.exe');Resources=@();Scope='Executable copy only; sensors/runtime not qualified'},
+            @{Key='GPU/HWiNFO';Group='GPU';Any=@('deps/GPUCheck/tools/HWiNFO64.exe');Resources=@();Scope='Executable copy only; sensors/runtime not qualified'},
+            @{Key='GPU/FurMark2';Group='GPU';Any=@('deps/GPUCheck/tools/FurMark2_x64/furmark.exe');Resources=@();Scope='Recorded source tree copy, not runtime qualification'},
+            @{Key='Diag/CPUZ';Group='Diag';Any=@('deps/DiagnosticoMaster/tools/cpuz_x64.exe','deps/DiagnosticoMaster/tools/cpuz_x32.exe','deps/DiagnosticoMaster/tools/cpuz.exe');Resources=@();Scope='Executable copy only; runtime not qualified'},
+            @{Key='Diag/BlueScreenView';Group='Diag';Any=@('deps/DiagnosticoMaster/tools/BlueScreenView.exe');Resources=@();Scope='Executable copy only; runtime not qualified'},
+            @{Key='Diag/BatteryInfoView';Group='Diag';Any=@('deps/DiagnosticoMaster/tools/BatteryInfoView.exe');Resources=@();Scope='Executable copy only; runtime not qualified'},
+            @{Key='Diag/HWiNFO';Group='Diag';Any=@('deps/DiagnosticoMaster/tools/HWiNFO64.exe');Resources=@();Scope='Executable copy only; runtime not qualified'},
+            @{Key='Diag/CrystalDiskInfo';Group='Diag';Any=@('deps/DiagnosticoMaster/tools/CrystalDiskInfo/DiskInfo64.exe','deps/DiagnosticoMaster/tools/CrystalDiskInfo/DiskInfo32.exe');Resources=@('deps/DiagnosticoMaster/tools/CrystalDiskInfo/CdiResource');Scope='Recorded source tree copy, not disk qualification'},
+            @{Key='Diag/CrystalDiskMark';Group='Diag';Any=@('deps/DiagnosticoMaster/tools/CrystalDiskMark/DiskMark64.exe');Resources=@('deps/DiagnosticoMaster/tools/CrystalDiskMark/CdmResource');Scope='Recorded source tree copy, no benchmark executed'}
+        )
+        $rootPath=(Get-Item -LiteralPath $Root -Force -ErrorAction Stop).FullName.TrimEnd([char[]]'\/')+[IO.Path]::DirectorySeparatorChar
+        $previous=@()
+        $statusPath=Join-Path $Root 'usb-dependency-status.json'
+        if(Test-Path -LiteralPath $statusPath){
+            try {Assert-AtlasPlainFile $statusPath;if((Get-Item -LiteralPath $statusPath).Length -gt 16MB){throw 'Oversized dependency evidence'};$p=[IO.File]::ReadAllText($statusPath,[Text.Encoding]::UTF8)|ConvertFrom-Json -ErrorAction Stop;if($p.SchemaVersion -eq 1){$previous=@($p.Packages)}}
+            catch {Write-Warning 'Previous USB dependency evidence not evaluated.'}
+        }
+        foreach($definition in $definitions) {
+            $state='MissingOrIncomplete';$version=$null;$files=@()
+            $executable=@($definition.Any | ForEach-Object {Join-Path $Root $_} | Where-Object {Test-Path -LiteralPath $_ -PathType Leaf})|Select-Object -First 1
+            $resources=$true
+            foreach($resource in $definition.Resources) {
+                $resourcePath=Join-Path $Root $resource
+                if(-not (Test-Path -LiteralPath $resourcePath -PathType Container)){$resources=$false;continue}
+                if(-not @(Get-ChildItem -LiteralPath $resourcePath -Force -ErrorAction Stop|Select-Object -First 1).Count){$resources=$false}
+            }
+            if($executable -and $resources) {
+                $state='PresentNotEvaluated'
+                try {
+                    Assert-AtlasPlainFile $executable
+                    $version=(Get-Item -LiteralPath $executable -Force -ErrorAction Stop).VersionInfo.FileVersion
+                    $old=@($previous|Where-Object Key -eq $definition.Key)|Select-Object -First 1
+                    $records=if($script:AtlasUsbVerifiedFiles.ContainsKey($definition.Key)) {@($script:AtlasUsbVerifiedFiles[$definition.Key])} elseif($old.State -in @('CopiedAndHashVerified','RecordedFilesVerified')) {@($old.Files)} else {@()}
+                    foreach($record in $records) {
+                        $path=if([IO.Path]::IsPathRooted([string]$record.Path)){[string]$record.Path}else{Join-Path $Root $record.Path}
+                        $path=[IO.Path]::GetFullPath($path)
+                        if(-not $path.StartsWith($rootPath,[StringComparison]::OrdinalIgnoreCase) -or $record.Sha256 -cnotmatch '^[a-f0-9]{64}$'){throw 'Invalid recorded package path/hash.'}
+                        Assert-AtlasPlainFile $path
+                        if((Get-FileHash -LiteralPath $path -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant() -cne $record.Sha256){throw 'Recorded dependency member changed.'}
+                        $files+=@{Path=$path.Substring($rootPath.Length).Replace('\','/');Sha256=$record.Sha256}
+                    }
+                    $exeRelative=$executable.Substring($rootPath.Length).Replace('\','/')
+                    if($files.Count -and @($files|Where-Object Path -eq $exeRelative).Count) {
+                        $state=if($script:AtlasUsbVerifiedPackages.ContainsKey($definition.Key)){'CopiedAndHashVerified'}else{'RecordedFilesVerified'}
+                    }
+                } catch {$state='ChangedOrNotEvaluated';$files=@()}
+            }
+            if($script:AtlasUsbAttemptFailures.ContainsKey($definition.Key)){$state='FailedAttempt'}
+            [pscustomobject]@{Key=$definition.Key;Group=$definition.Group;State=$state;Version=$version;Scope=$definition.Scope;Files=@($files)}
+        }
     }
 
     # ====================== MAIN ======================
@@ -1101,14 +879,11 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
     $depsDir      = Join-Path $targetDir 'deps'
     $ps7Msi       = Join-Path $depsDir "PowerShell-$PS7_VERSION-win-x64.msi"
     $gpuToolsDir  = Join-Path $targetDir 'deps\GPUCheck\tools'
-    $gpuPresence  = Join-Path $gpuToolsDir 'GPU-Z.exe'
     $diagToolsDir = Join-Path $targetDir 'deps\DiagnosticoMaster\tools'
-    $diagPresence = Join-Path $diagToolsDir 'BlueScreenView.exe'
-    $usbToolsDir  = Join-Path $targetDir 'deps\tools'
 
     # FastCopy
     if ($isUpdate) {
-        if (Test-NeedsDownload $fcExe) {
+        if ($updateAll -or @(Get-UsbDependencyRows -Root $targetDir | Where-Object {$_.Group -eq 'FastCopy' -and $_.State -notin @('CopiedAndHashVerified','RecordedFilesVerified')}).Count) {
             $fcEst = Get-StageEstimate -StageKey 'FastCopy' -UseDeltaProfile:$useDeltaEstimate
             Invoke-StageWithTelemetry -StageName $L.StageLblFastCopy `
                 -EstimateMinSec $fcEst.Min -EstimateMaxSec $fcEst.Max `
@@ -1132,7 +907,7 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
 
     # PowerShell 7 MSI
     if ($isUpdate) {
-        if (Test-NeedsDownload $ps7Msi) {
+        if ($updateAll -or @(Get-UsbDependencyRows -Root $targetDir | Where-Object {$_.Group -eq 'PS7' -and $_.State -notin @('CopiedAndHashVerified','RecordedFilesVerified')}).Count) {
             $ps7Est = Get-StageEstimate -StageKey 'PS7' -UseDeltaProfile:$useDeltaEstimate
             Invoke-StageWithTelemetry -StageName $L.StageLblPS7 `
                 -EstimateMinSec $ps7Est.Min -EstimateMaxSec $ps7Est.Max `
@@ -1157,7 +932,7 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
 
     # GPU Check deps
     if ($isUpdate) {
-        if (Test-NeedsDownload $gpuPresence) {
+        if ($updateAll -or @(Get-UsbDependencyRows -Root $targetDir | Where-Object {$_.Group -eq 'GPU' -and $_.State -notin @('CopiedAndHashVerified','RecordedFilesVerified')}).Count) {
             $gpuEst = Get-StageEstimate -StageKey 'GPU' -UseDeltaProfile:$useDeltaEstimate
             Invoke-StageWithTelemetry -StageName $L.StageLblGPU `
                 -EstimateMinSec $gpuEst.Min -EstimateMaxSec $gpuEst.Max `
@@ -1182,10 +957,7 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
 
     # Full System Report deps
     if ($isUpdate) {
-        $hasCdiOffline = (Test-Path (Join-Path $diagToolsDir 'CrystalDiskInfo\DiskInfo64.exe')) -or (Test-Path (Join-Path $diagToolsDir 'DiskInfo64.exe'))
-        $hasCdmOffline = (Test-Path (Join-Path $diagToolsDir 'CrystalDiskMark\DiskMark64.exe')) -or (Test-Path (Join-Path $diagToolsDir 'DiskMark64.exe'))
-        $hasHwOffline = Test-Path (Join-Path $diagToolsDir 'HWiNFO64.exe')
-        if ((Test-NeedsDownload $diagPresence) -or -not $hasCdiOffline -or -not $hasCdmOffline -or -not $hasHwOffline) {
+        if ($updateAll -or @(Get-UsbDependencyRows -Root $targetDir | Where-Object {$_.Group -eq 'Diag' -and $_.State -notin @('CopiedAndHashVerified','RecordedFilesVerified')}).Count) {
             $diagEst = Get-StageEstimate -StageKey 'Diag' -UseDeltaProfile:$useDeltaEstimate
             Invoke-StageWithTelemetry -StageName $L.StageLblDiag `
                 -EstimateMinSec $diagEst.Min -EstimateMaxSec $diagEst.Max `
@@ -1208,36 +980,13 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
         }
     }
 
-    # Microsoft Store bundle (deps\MicrosoftStore\) — for Invoke-InstalarMicrosoftStore offline mode
-    $storeBundleDir  = Join-Path $targetDir 'deps\MicrosoftStore'
-    $storePresence   = Join-Path $storeBundleDir 'Microsoft.WindowsStore.appxbundle'
-    if ($isUpdate) {
-        if (Test-NeedsDownload $storePresence) {
-            $storeEst = Get-StageEstimate -StageKey 'Store' -UseDeltaProfile:$useDeltaEstimate
-            Invoke-StageWithTelemetry -StageName $L.StageLblStore `
-                -EstimateMinSec $storeEst.Min -EstimateMaxSec $storeEst.Max `
-                -MeasurePaths @($storeBundleDir) `
-                -Action { Save-MicrosoftStoreBundle -BundleDir $storeBundleDir -ForceRedownload:$updateAll } | Out-Null
-        } else {
-            Write-Centered ($L.DepSkipped -f 'Microsoft Store bundle') 'DarkGray'
-        }
-    } else {
-        Write-Host ''
-        Write-Centered $L.AskStore 'Yellow'
-        Write-Centered $L.AskStoreNote 'DarkGray'
-        $dms = Read-Host '  '
-        if ($dms -match '^[SsYy]$') {
-            $storeEst = Get-StageEstimate -StageKey 'Store' -UseDeltaProfile:$false
-            Invoke-StageWithTelemetry -StageName $L.StageLblStore `
-                -EstimateMinSec $storeEst.Min -EstimateMaxSec $storeEst.Max `
-                -MeasurePaths @($storeBundleDir) `
-                -Action { Save-MicrosoftStoreBundle -BundleDir $storeBundleDir } | Out-Null
-        }
-    }
-
     Write-Host ''
     Write-Centered $L.DoneSep 'Cyan'
-    Write-Centered $L.DoneTitle 'Green'
+    Write-Centered 'Atlas code ready; optional packages listed separately / Codigo Atlas listo; revisar paquetes opcionales.' 'Green'
+    $rows=@(Get-UsbDependencyRows -Root $targetDir)
+    $rows|Format-Table Key,State,Version,Scope -AutoSize|Out-Host
+    $status=[ordered]@{SchemaVersion=1;ObservedUtc=[datetime]::UtcNow.ToString('o');AtlasCodeVerified=$true;ReleaseCommit=$release.Commit;Packages=$rows;VendorRuntimeQualified=$false}
+    [IO.File]::WriteAllText((Join-Path $targetDir 'usb-dependency-status.json'),($status|ConvertTo-Json -Depth 8),[Text.UTF8Encoding]::new($false))
     Write-Centered $L.DoneSep 'Cyan'
     Write-Host ''
     Write-Centered ($L.DonePath -f $targetDir) 'White'

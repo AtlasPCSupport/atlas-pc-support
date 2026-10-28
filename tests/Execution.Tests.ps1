@@ -79,7 +79,7 @@ function Invoke-Fixture {
     foreach ($name in @('Resolve-AtlasDependency','Install-AtlasPS7','Test-AtlasRelease','Write-AtlasHeader','ConvertTo-AtlasNativeArgument','Stop-AtlasOwnedNativeProcess','Invoke-AtlasNativeProcess')) {
         if (-not (Get-Command $name -ErrorAction SilentlyContinue)) { throw "Missing helper: $name" }
     }
-    if ((Get-AtlasDependencyDefinition 'PowerShell7').Version -ne '7.6.8') { throw 'Missing catalog' }
+    if ((Get-AtlasDependencyDefinition 'PowerShell7').Version -ne '7.6.9') { throw 'Missing catalog' }
     Write-Output 'child-context-ok'
 }
 '@

@@ -172,15 +172,15 @@
   },
   "PowerShell7": {
     "DisplayName": "PowerShell 7 LTS",
-    "Version": "7.6.8",
+    "Version": "7.6.9",
     "Architecture": "x64",
     "InstallerType": "msi",
-    "MsiName": "PowerShell-7.6.8-win-x64.msi",
-    "DownloadUrl": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.8/PowerShell-7.6.8-win-x64.msi",
-    "HashesUrl": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.8/hashes.sha256",
+    "MsiName": "PowerShell-7.6.9-win-x64.msi",
+    "DownloadUrl": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.9/PowerShell-7.6.9-win-x64.msi",
+    "HashesUrl": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.9/hashes.sha256",
     "SignaturePolicy": "sha256-and-microsoft-authenticode",
     "License": "MIT; third-party notices apply",
     "VersionSource": "pinned",
-    "DownloadSha256": "079e7cecedd1e87fa7b4676e5c33ddfbe66859a44a97fbcd1db797245cbb93d2"
+    "DownloadSha256": "50d33c7494aaf82b987cfd4de3f232d04f91fdd4c0deeca8a669cced3e7cf8f9"
   }
 }
