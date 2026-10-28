@@ -11,30 +11,6 @@ function Test-IsAdmin {
     return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
-function Invoke-SelfElevate {
-    [CmdletBinding()]
-    param(
-        [string]$ScriptPath = $PSCommandPath
-    )
-    if (Test-IsAdmin) { return $true }
-
-    if (-not $ScriptPath) {
-        Write-Warning "No se puede auto-elevar: no hay ruta de script."
-        return $false
-    }
-
-    try {
-        Unblock-File -LiteralPath $ScriptPath -ErrorAction SilentlyContinue
-        Start-Process -FilePath "powershell.exe" `
-            -ArgumentList @("-NoProfile", "-ExecutionPolicy", "RemoteSigned", "-File", "`"$ScriptPath`"") `
-            -Verb RunAs | Out-Null
-        exit 0
-    } catch {
-        Write-Warning "No se pudo elevar: $_"
-        return $false
-    }
-}
-
 function Invoke-AsAdmin {
     <#
     .SYNOPSIS

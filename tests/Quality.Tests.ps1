@@ -1033,6 +1033,21 @@ Describe 'Native outcomes and copy coverage' {
         $result=Invoke-AtlasNativeProcess -FilePath (Get-Process -Id $PID).Path -ArgumentList @('-NoProfile','-Command','exit 7') -SuccessCodes @(0,7)
         $result.State|Should -Be Correct;$result.ExitCode|Should -Be 7
     }
+    It 'retains bounded tails of both verbose pipes and an explicit full log without losing exit status' {
+        $log=Join-Path $TestDrive 'verbose.log'
+        $code='for($i=0;$i -lt 512;$i++){[Console]::Out.Write(("x"*4096));[Console]::Error.Write(("y"*4096))};[Console]::Out.Write("OUT-END");[Console]::Error.Write("ERR-END");exit 7'
+        $result=Invoke-AtlasNativeProcess -FilePath (Get-Process -Id $PID).Path -ArgumentList @('-NoProfile','-Command',$code) -TimeoutSeconds 30 -MaxCapturedCharacters 2048 -OutputLogPath $log
+        $result.State|Should -Be Failed;$result.ExitCode|Should -Be 7
+        $result.Stdout.Length|Should -BeLessOrEqual 2048;$result.Stderr.Length|Should -BeLessOrEqual 2048
+        $result.Stdout|Should -Match 'OUT-END$';$result.Stderr|Should -Match 'ERR-END$'
+        $result.StdoutTruncated|Should -BeTrue;$result.StderrTruncated|Should -BeTrue
+        (Get-Item -LiteralPath $log).Length|Should -BeGreaterThan 4MB
+    }
+    It 'refuses to overwrite a previous verbose log before starting a child' {
+        $log=Join-Path $TestDrive 'previous.log';[IO.File]::WriteAllText($log,'keep')
+        {Invoke-AtlasNativeProcess -FilePath 'not-launched' -OutputLogPath $log}|Should -Throw
+        [IO.File]::ReadAllText($log)|Should -Be keep
+    }
 }
 
 Describe 'Real Robocopy integration confined to TestDrive' -Tag 'LocalFileIO' {

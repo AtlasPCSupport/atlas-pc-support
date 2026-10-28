@@ -10,7 +10,7 @@
     "test": "node --test"
   },
   "devDependencies": {
-    "wrangler": "4.152.0"
+    "wrangler": "4.154.0"
   },
   "type": "module",
   "overrides": {

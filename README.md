@@ -179,7 +179,7 @@ See [docs/ADDING-TOOLS.md](docs/ADDING-TOOLS.md) for the full reference.
 - **Logs**: `%LOCALAPPDATA%\AtlasPC\logs\atlas-YYYY-MM-DD.log`.
 - **External binaries** (FastCopy.exe, etc.): downloaded on demand to `%LOCALAPPDATA%\AtlasPC\bin\`.
 - **Versioned releases**: `%LOCALAPPDATA%\AtlasPC\releases\<commit>\`; `current.json` and `previous.json` select verified bundles.
-- **Client data / reports**: stored in `%USERPROFILE%\Documents\AtlasPC\` and never committed to the repo.
+- **Client data / reports**: location depends on the tool (Documents, Desktop or LocalAppData); the tool prints its output path. See [report locations](docs/INFORMES-Y-UBICACIONES.md). Never commit client data.
 
 ---
 

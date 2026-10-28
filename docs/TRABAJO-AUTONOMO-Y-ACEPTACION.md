@@ -6,6 +6,8 @@ edicion o parche de Windows 10.
 
 Resumen del bloque terminado y dependencias externas:
 [cierre autonomo del 27/10](audits/CIERRE-AUTONOMO-2026-10-27.md).
+Ese cierre describe 1.5.12. Para el ciclo posterior de auditoría, consultar el
+[índice de entregas y estado](audits/README.md); no sustituye los ensayos físicos.
 
 | Area | Trabajo que puede completar el agente ahora | Que necesita al propietario |
 |---|---|---|
@@ -48,6 +50,15 @@ Resumen del bloque terminado y dependencias externas:
   interpretacion de PartsUpgrade, memoria compartida, cobertura de consultas y
   senales GPU. Se valida y promueve mediante los checks del SHA de su entrega;
   no sustituye QA de hardware ni de Windows 10.
+- 1.5.15: [fase 3](audits/FASE-3-AUDITORIA-2026-10-27.md), políticas verificadas,
+  snapshot UAC, exportación de drivers y restauración DNS/hosts; 381 pruebas por
+  runtime, CI completo y bundle público verificado.
+- 1.5.16: [fase 4](audits/FASE-4-AUDITORIA-2026-10-27.md), copias con censo opcional,
+  muestra acotada, continuidad entre fechas y estado USB por paquete; 395 pruebas
+  por runtime, CI completo y publicación verificada. No actualiza el USB físico
+  automáticamente: el preparador lo hace cuando el operador lo elige.
+- 1.5.17: [fase 5](audits/FASE-5-AUDITORIA-2026-10-27.md), inicio, captura de salida,
+  documentación y Worker; comprobaciones de su SHA y publicación registradas en PR.
 
 ## Decisiones ya tomadas
 

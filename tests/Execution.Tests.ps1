@@ -46,6 +46,11 @@ Describe 'Quoted paths for the real launcher invocation' {
             $ArgumentList[-2] -eq '-File' -and $ArgumentList[-1] -match '^".*profile with spaces.*\.ps1"$'
         }
     }
+    It 'rejects inline execution before loading any tool or launching a process' {
+        {Invoke-AtlasTool -Tool @{name='Fixture';id='fixture';function='Invoke-Fixture';runsInNewWindow=$false}}|Should -Throw '*Inline*not supported*'
+        Should -Invoke Start-Process -Times 0 -Exactly
+        Should -Invoke Get-AtlasToolScript -Times 0 -Exactly
+    }
     It 'keeps the quoting when requesting elevation' {
         Invoke-AtlasTool -Tool @{name='Fixture'; id='fixture';function='Invoke-Fixture';requiresAdmin=$true}
         Should -Invoke Start-Process -Times 1 -Exactly -ParameterFilter {

@@ -1856,24 +1856,17 @@ do {
         Invoke-Item $dir
 
         if ($selMode -eq "3") {
-            Write-Host "`n"
-            Escribir-Centrado $L.OpeningTools "Cyan"
-            if ($diagDeps.CPUZ -and (Test-Path -LiteralPath $diagDeps.CPUZ)) {
-                $dirCpuZ = Split-Path -Parent $diagDeps.CPUZ
-                Start-Process -FilePath $diagDeps.CPUZ -WorkingDirectory $dirCpuZ -ErrorAction SilentlyContinue
-            }
-            if ($diagDeps.HWiNFO -and (Test-Path -LiteralPath $diagDeps.HWiNFO)) {
-                $dirHw = Split-Path -Parent $diagDeps.HWiNFO
-                Start-Process -FilePath $diagDeps.HWiNFO -WorkingDirectory $dirHw -ErrorAction SilentlyContinue
-            }
-            if ($diagDeps.CrystalDiskInfo -and (Test-Path -LiteralPath $diagDeps.CrystalDiskInfo)) {
-                $dirCdi = Split-Path -Parent $diagDeps.CrystalDiskInfo
-                Start-Process -FilePath $diagDeps.CrystalDiskInfo -WorkingDirectory $dirCdi -ErrorAction SilentlyContinue
-            }
-            if ($diagDeps.CrystalDiskMark -and (Test-Path -LiteralPath $diagDeps.CrystalDiskMark)) {
-                $dirCdm = Split-Path -Parent $diagDeps.CrystalDiskMark
-                Escribir-Centrado $L.CdmHint "Yellow"
-                Start-Process -FilePath $diagDeps.CrystalDiskMark -WorkingDirectory $dirCdm -ErrorAction SilentlyContinue
+            $appChoices=@('CPUZ','HWiNFO','CrystalDiskInfo','CrystalDiskMark')
+            while($true) {
+                Write-Host 'Optional applications: one at a time; close the selected app to return / Cierra la app para volver.'
+                for($i=0;$i -lt $appChoices.Count;$i++){Write-Host ("[{0}] {1}" -f ($i+1),$appChoices[$i])}
+                $pick=Read-Host '1-4 to open, ENTER to continue / ENTER para seguir'
+                if($pick -notmatch '^[1-4]$'){break}
+                $name=$appChoices[[int]$pick-1];$path=$diagDeps[$name]
+                if(-not $path -or -not (Test-Path -LiteralPath $path -PathType Leaf)){Write-Warning "$name not available";continue}
+                if($name -eq 'CrystalDiskMark'){Escribir-Centrado $L.CdmHint 'Yellow'}
+                try {Start-Process -FilePath $path -WorkingDirectory (Split-Path -Parent $path) -Wait -ErrorAction Stop}
+                catch {Write-Warning "$name could not be opened."}
             }
         }
 

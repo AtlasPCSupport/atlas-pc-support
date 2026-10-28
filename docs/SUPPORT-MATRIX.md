@@ -1,6 +1,6 @@
 # Compatibilidad y homologación
 
-Versión candidata 1.5.2, 25 de octubre de 2026. «Objetivo» describe el contrato del
+Estado del ciclo 1.5.13–1.5.17, 27 de octubre de 2026. «Objetivo» describe el contrato del
 código, no una prueba ejecutada en ese sistema. La compatibilidad de Atlas tampoco
 extiende el ciclo de soporte de Microsoft ni sustituye la licencia de Windows.
 
@@ -8,13 +8,16 @@ extiende el ciclo de soporte de Microsoft ni sustituye la licencia de Windows.
 |---|---|---|---|
 | Windows 10 22H2 Home x64, 19045 | Objetivo; funciones según capacidades | Fixtures de build/edición y casos negativos | VM, UAC, panel, Store/WinGet, red y copias |
 | Windows 10 22H2 Pro x64, 19045 | Objetivo; BitLocker depende de módulos y política | Fixtures y regresiones aisladas | Lo anterior + TPM, reinicio y recuperación desde otro disco |
-| Enterprise/IoT Enterprise LTSC 2021 x64, 19044 | Objetivo sin presuponer Store | Fixtures LTSC, paquete/registro/política separados | VM LTSC licenciada, App Installer y NetFx3 con origen matching |
+| Enterprise LTSC 2021 x64, EnterpriseS 19044 | Objetivo sin presuponer Store | Fixtures LTSC; instalación de laboratorio observada, sin aceptación completa | VM, App Installer/NetFx3 matching, operación/restauración real |
+| IoT Enterprise LTSC 2021 x64, IoTEnterpriseS 19044 | Objetivo independiente de EnterpriseS | Fixtures; medios de laboratorio pendientes | Medio/licencia apropiados, VM y matriz independiente |
 | Cliente Windows 11 x64 | Objetivo según capacidades | Host real 26100: PS5/PS7, WPF, entrada online/offline | Equipos y políticas adicionales; hardware real |
 | Server, x86, ARM64, build <19044 | No admitido por este contrato | Fixtures de rechazo | No se promociona como compatible |
 
 Todas las herramientas declaran Windows PowerShell 5.1 x64 como runtime. PowerShell
 7 se puede instalar con validación, pero no se selecciona como sustituto universal.
 CI `windows-latest` comprueba WPF y PowerShell 5.1; no es un runner Windows 10.
+El ensayo Home previo y sus resultados parciales no liberan esta matriz. Las VMs
+siguen pausadas por decisión del propietario.
 
 ## Diferencias visibles
 

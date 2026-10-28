@@ -1,6 +1,55 @@
 #Requires -Version 5.1
 #Requires -Modules Pester
 
+Describe 'Deferred capability cards lifecycle' -Tag Windows {
+    BeforeAll {
+        if($env:OS -eq 'Windows_NT') {
+            $root=Split-Path -Parent $PSScriptRoot
+            Add-Type -AssemblyName PresentationFramework
+            . ([scriptblock]::Create([IO.File]::ReadAllText((Join-Path $root 'src/gui/MainWindow.ps1'),[Text.Encoding]::UTF8)))
+            . ([scriptblock]::Create([IO.File]::ReadAllText((Join-Path $root 'src/lib/Capabilities.ps1'),[Text.Encoding]::UTF8)))
+            function Get-AtlasString {param($Key)$Key}
+            function Get-AtlasPlatformCapabilities {
+                param([switch]$Refresh)
+                Start-Sleep -Milliseconds 700
+                [pscustomobject]@{Baseline=$true;Build=19045;Commands=@();BitLocker=$false;SupportProfile='Fixture'}
+            }
+        }
+    }
+    It 'renders checking cards without synchronous inventory then enables only evaluated tools' -Skip:($env:OS -ne 'Windows_NT') {
+        $window=[Windows.Window]::new()
+        $button=[Windows.Controls.Button]::new();$button.IsEnabled=$false
+        $entry=[pscustomobject]@{Button=$button;Tool=@{id='fixture';availability=@{}}}
+        try {
+            Initialize-AtlasAvailability -Window $window -Cards @($entry)
+            $a=$window.Tag.Availability
+            $a.State.Started|Should -BeFalse;$button.IsEnabled|Should -BeFalse
+            $watch=[Diagnostics.Stopwatch]::StartNew();& $a.Start;$watch.Stop()
+            $watch.ElapsedMilliseconds|Should -BeLessThan 500
+            $a.State.Pending.IsCompleted|Should -BeFalse
+            $limit=[datetime]::UtcNow.AddSeconds(10)
+            while(-not $a.State.Pending.IsCompleted -and [datetime]::UtcNow -lt $limit){Start-Sleep -Milliseconds 30}
+            & $a.Poll
+            $button.IsEnabled|Should -BeTrue;$a.State.Worker|Should -BeNullOrEmpty
+            $window.Close();$a.State.Closed|Should -BeTrue;$a.Timer.IsEnabled|Should -BeFalse
+        } finally {$window.Close()}
+    }
+    It 'leaves a disabled card on failed inventory rather than treating failure as available' -Skip:($env:OS -ne 'Windows_NT') {
+        function Get-AtlasPlatformCapabilities {param([switch]$Refresh)throw 'Fixture denied'}
+        $window=[Windows.Window]::new()
+        $button=[Windows.Controls.Button]::new();$button.IsEnabled=$false
+        $entry=[pscustomobject]@{Button=$button;Tool=@{id='fixture';availability=@{}}}
+        try {
+            Initialize-AtlasAvailability -Window $window -Cards @($entry)
+            $a=$window.Tag.Availability;& $a.Start
+            $limit=[datetime]::UtcNow.AddSeconds(10)
+            while(-not $a.State.Pending.IsCompleted -and [datetime]::UtcNow -lt $limit){Start-Sleep -Milliseconds 30}
+            & $a.Poll
+            $button.IsEnabled|Should -BeFalse;$button.ToolTip|Should -Match 'could not be evaluated'
+        } finally {$window.Close()}
+    }
+}
+
 Describe 'WPF local smoke tests' -Tag 'Windows' {
     BeforeAll {
         $script:RepoRoot = Split-Path -Parent $PSScriptRoot

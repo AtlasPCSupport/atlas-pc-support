@@ -1,7 +1,7 @@
 import { test, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import worker from "../src/index.js";
+import worker, { fetchLimited } from "../src/index.js";
 
 const sha = text => createHash("sha256").update(text).digest("hex");
 const commit = "a".repeat(40);
@@ -24,6 +24,31 @@ beforeEach(() => {
 });
 afterEach(() => { globalThis.fetch = originalFetch; });
 const request = (path="/", options={}) => worker.fetch(new Request("https://toolspanel.atlaspcsupport.com"+path,options),env);
+
+test("upstream deadline cancels a connection that never supplies headers", async () => {
+  let signal;
+  globalThis.fetch = async (_, options) => { signal=options.signal; return new Promise(() => {}); };
+  await assert.rejects(fetchLimited("https://example.invalid",{},1024,20),error=>error.status===504);
+  assert.equal(signal.aborted,true);
+});
+test("the same deadline covers a stalled body and cancels its reader", async () => {
+  let cancelled=false;
+  globalThis.fetch = async () => new Response(new ReadableStream({
+    start(controller) { controller.enqueue(new TextEncoder().encode("partial")); },
+    cancel() { cancelled=true; }
+  }));
+  await assert.rejects(fetchLimited("https://example.invalid",{},1024,20),error=>error.status===504);
+  await new Promise(resolve=>setTimeout(resolve,0));
+  assert.equal(cancelled,true);
+});
+test("completed bodies release their deadline and preserve upstream options", async () => {
+  let signal, options;
+  globalThis.fetch=async(_, supplied)=>{options=supplied;signal=supplied.signal;return new Response("complete");};
+  assert.equal(new TextDecoder().decode(await fetchLimited("https://example.invalid",{cf:{cacheTtl:0}},1024,20)),"complete");
+  await new Promise(resolve=>setTimeout(resolve,35));
+  assert.equal(signal.aborted,false);
+  assert.equal(options.cf.cacheTtl,0);
+});
 
 test("root verifies the bootstrap and binds it to the approved immutable publication", async () => {
   const result=await request();

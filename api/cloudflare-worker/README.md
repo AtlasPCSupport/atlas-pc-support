@@ -38,3 +38,11 @@ pins the private source commit and exact byte digest independently. Promotion
 verifies those bytes using the existing gh credential and deploys the pins with
 the Worker. Both private routes fetch that commit and verify its digest; the
 checksum is derived from the same bytes, never a second mutable sidecar.
+
+Each upstream fetch has a 15-second deadline that includes headers and bounded
+body reading. Timeout aborts/cancels the request/reader and returns 504; bytes are
+still verified before serving code. A public route may fetch both manifest and
+member, so 15 seconds is not a total route-duration promise. No private cache or
+mutable-ref fallback is added. Tests cover missing headers, a stalled body and
+deadline cleanup after success. Wrangler is pinned with the lockfile; a version
+update does not implicitly change compatibility_date or add runtime flags.

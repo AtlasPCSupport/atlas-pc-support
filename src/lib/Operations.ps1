@@ -256,38 +256,78 @@ function Stop-AtlasOwnedNativeProcess {
 function Invoke-AtlasNativeProcess {
     [CmdletBinding()]
     param([Parameter(Mandatory)][string]$FilePath,[string]$Arguments='',
-        [string[]]$ArgumentList, [string]$WorkingDirectory,
+        [string[]]$ArgumentList,[string]$WorkingDirectory,
         [ValidateRange(1,86400)][int]$TimeoutSeconds=600,[int[]]$SuccessCodes=@(0),
-        [Threading.CancellationToken]$CancellationToken = [Threading.CancellationToken]::None,
-        [switch]$NoCapture)
-    if ($PSBoundParameters.ContainsKey('ArgumentList') -and $PSBoundParameters.ContainsKey('Arguments')) { throw 'Choose ArgumentList or raw Arguments, not both.' }
-    if ($PSBoundParameters.ContainsKey('ArgumentList')) { $Arguments = (@($ArgumentList | ForEach-Object { ConvertTo-AtlasNativeArgument $_ }) -join ' ') }
-    if ($CancellationToken.IsCancellationRequested) {
-        return [pscustomobject]@{State='Cancelled';Started=$false;Completed=$false;Cancelled=$true;TimedOut=$false;ExitCode=$null;Stdout='';Stderr='';DurationSeconds=0;OutputCaptured=$false}
+        [Threading.CancellationToken]$CancellationToken=[Threading.CancellationToken]::None,
+        [switch]$NoCapture,[ValidateRange(1024,1048576)][int]$MaxCapturedCharacters=65536,
+        [string]$OutputLogPath)
+    if($PSBoundParameters.ContainsKey('ArgumentList') -and $PSBoundParameters.ContainsKey('Arguments')){throw 'Choose ArgumentList or raw Arguments, not both.'}
+    if($NoCapture -and $OutputLogPath){throw 'OutputLogPath requires capture.'}
+    if($PSBoundParameters.ContainsKey('ArgumentList')){$Arguments=(@($ArgumentList|ForEach-Object {ConvertTo-AtlasNativeArgument $_}) -join ' ')}
+    if($CancellationToken.IsCancellationRequested){
+        return [pscustomobject]@{State='Cancelled';Started=$false;Completed=$false;Cancelled=$true;TimedOut=$false;ExitCode=$null;Stdout='';Stderr='';DurationSeconds=0;OutputCaptured=$false;StdoutTruncated=$false;StderrTruncated=$false;OutputLogPath=$null}
     }
     $info=[Diagnostics.ProcessStartInfo]::new()
-    $info.FileName=$FilePath; $info.Arguments=$Arguments
-    if ($WorkingDirectory) { $info.WorkingDirectory = $WorkingDirectory }
-    $info.UseShellExecute=$false; $info.CreateNoWindow=$true
-    $info.RedirectStandardOutput=-not $NoCapture; $info.RedirectStandardError=-not $NoCapture
-    $watch=[Diagnostics.Stopwatch]::StartNew(); $process=$null
+    $info.FileName=$FilePath;$info.Arguments=$Arguments
+    if($WorkingDirectory){$info.WorkingDirectory=$WorkingDirectory}
+    $info.UseShellExecute=$false;$info.CreateNoWindow=$true
+    $info.RedirectStandardOutput=-not $NoCapture;$info.RedirectStandardError=-not $NoCapture
+    $watch=[Diagnostics.Stopwatch]::StartNew();$process=$null;$writer=$null
+    $pumps=@()
     try {
-        $process=[Diagnostics.Process]::Start($info)
-        $stdout=$null; $stderr=$null; $cancelled=$false; $timedOut=$false
-        if (-not $NoCapture) { $stdout=$process.StandardOutput.ReadToEndAsync(); $stderr=$process.StandardError.ReadToEndAsync() }
-        while (-not $process.WaitForExit(100)) {
-            if ($CancellationToken.IsCancellationRequested) { $cancelled=$true; break }
-            if ($watch.Elapsed.TotalSeconds -ge $TimeoutSeconds) { $timedOut=$true; break }
+        if($OutputLogPath){
+            $OutputLogPath=$ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputLogPath)
+            Assert-AtlasPlainDirectory (Split-Path -Parent $OutputLogPath)
+            # CreateNew refuses an existing file/link. Full verbose logs are explicit, not automatic.
+            $stream=[IO.File]::Open($OutputLogPath,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::Read)
+            $writer=[IO.StreamWriter]::new($stream,[Text.UTF8Encoding]::new($false))
         }
-        if ($cancelled -or $timedOut) { Stop-AtlasOwnedNativeProcess -Process $process }
-        $captured=$NoCapture -or ($stdout.Wait(3000) -and $stderr.Wait(3000))
-        [pscustomobject]@{State=$(if($cancelled){'Cancelled'}elseif($timedOut){'TimedOut'}elseif(-not $captured){'NotEvaluated'}elseif($SuccessCodes -contains $process.ExitCode){'Correct'}else{'Failed'});Started=$true;Completed=(-not($timedOut -or $cancelled));Cancelled=$cancelled;ExitCode=$process.ExitCode;TimedOut=$timedOut;Stdout=$(if($stdout -and $stdout.IsCompleted){$stdout.Result}else{''});Stderr=$(if($stderr -and $stderr.IsCompleted){$stderr.Result}else{''});DurationSeconds=$watch.Elapsed.TotalSeconds;OutputCaptured=([bool]$captured -and -not $NoCapture)}
+        $process=[Diagnostics.Process]::Start($info)
+        $cancelled=$false;$timedOut=$false;$drainUntil=$null
+        if(-not $NoCapture){
+            foreach($name in @('Stdout','Stderr')){
+                $reader=if($name -eq 'Stdout'){$process.StandardOutput}else{$process.StandardError}
+                $buffer=New-Object char[] 4096
+                $pumps+=@{Name=$name;Reader=$reader;Buffer=$buffer;Read=$reader.ReadAsync($buffer,0,$buffer.Length);Tail=[Text.StringBuilder]::new();Truncated=$false;Done=$false}
+            }
+        }
+        while($true){
+            # Drain both pipes progressively; neither channel buffers the entire output.
+            foreach($pump in $pumps){
+                $batches=0
+                while(-not $pump.Done -and $pump.Read.IsCompleted -and $batches -lt 32){
+                    $count=$pump.Read.GetAwaiter().GetResult()
+                    if($count -eq 0){$pump.Done=$true;break}
+                    if($writer){$writer.Write("[$($pump.Name)]");$writer.Write($pump.Buffer,0,$count)}
+                    [void]$pump.Tail.Append($pump.Buffer,0,$count)
+                    if($pump.Tail.Length -gt $MaxCapturedCharacters){
+                        [void]$pump.Tail.Remove(0,$pump.Tail.Length-$MaxCapturedCharacters);$pump.Truncated=$true
+                    }
+                    $pump.Read=$pump.Reader.ReadAsync($pump.Buffer,0,$pump.Buffer.Length);$batches++
+                }
+            }
+            $exited=$process.WaitForExit(20)
+            if(-not $exited){
+                if($CancellationToken.IsCancellationRequested){$cancelled=$true;Stop-AtlasOwnedNativeProcess -Process $process;$exited=$true}
+                elseif($watch.Elapsed.TotalSeconds -ge $TimeoutSeconds){$timedOut=$true;Stop-AtlasOwnedNativeProcess -Process $process;$exited=$true}
+            }
+            if($exited){
+                if(-not $drainUntil){$drainUntil=[datetime]::UtcNow.AddSeconds(3)}
+                if($NoCapture -or @($pumps|Where-Object {-not $_.Done}).Count -eq 0 -or [datetime]::UtcNow -ge $drainUntil){break}
+            }
+        }
+        $captured=$NoCapture -or @($pumps|Where-Object {-not $_.Done}).Count -eq 0
+        if($writer){$writer.Flush()}
+        $out=$pumps|Where-Object Name -eq 'Stdout';$err=$pumps|Where-Object Name -eq 'Stderr'
+        [pscustomobject]@{State=$(if($cancelled){'Cancelled'}elseif($timedOut){'TimedOut'}elseif(-not $captured){'NotEvaluated'}elseif($SuccessCodes -contains $process.ExitCode){'Correct'}else{'Failed'});
+            Started=$true;Completed=(-not($timedOut -or $cancelled));Cancelled=$cancelled;TimedOut=$timedOut;ExitCode=$process.ExitCode;
+            Stdout=$(if($out){$out.Tail.ToString()}else{''});Stderr=$(if($err){$err.Tail.ToString()}else{''});
+            DurationSeconds=$watch.Elapsed.TotalSeconds;OutputCaptured=([bool]$captured -and -not $NoCapture);
+            StdoutTruncated=[bool]$out.Truncated;StderrTruncated=[bool]$err.Truncated;OutputLogPath=$OutputLogPath}
     } finally {
         $watch.Stop()
-        if($process){
-            try { if (-not $process.HasExited) { Stop-AtlasOwnedNativeProcess -Process $process } }
-            finally { $process.Dispose() }
-        }
+        if($process){try{if(-not $process.HasExited){Stop-AtlasOwnedNativeProcess -Process $process}}finally{$process.Dispose()}}
+        if($writer){$writer.Dispose()}
     }
 }
 

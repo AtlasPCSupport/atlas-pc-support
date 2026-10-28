@@ -45,14 +45,12 @@ function Get-AtlasBranding {
             tagline      = "Panel unificado de soporte técnico para Windows"
             version      = $(if ($script:AtlasVersion) { $script:AtlasVersion } else { '1.0.0' })
             companyUrl   = "https://github.com/mikepchelper-spec/atlas-pc-support"
-            supportEmail = ""
             copyright    = "© 2026 Atlas PC Support"
         }
         theme = @{
             accentColor      = "#FF5500"
             secondaryColor   = "#002147"
             darkMode         = $true
-            useSystemAccent  = $false
             cornerRadius     = 8
             fontFamily       = "Segoe UI Variable"
         }
@@ -63,15 +61,6 @@ function Get-AtlasBranding {
             height      = 720
             minWidth    = 900
             minHeight   = 600
-            showSearch  = $true
-            showFooter  = $true
-        }
-        behavior = @{
-            autoElevate        = $true
-            logPath            = "%LOCALAPPDATA%\AtlasPC\logs"
-            dependenciesPath   = "%LOCALAPPDATA%\AtlasPC\bin"
-            defaultCategory    = "Diagnóstico"
-            confirmBeforeRun   = $false
         }
         categories = @(
             @{ id = "diagnostico";    label = "Diagnóstico";    icon = "🔍"; order = 1 }
@@ -100,7 +89,7 @@ function Get-AtlasBranding {
     foreach ($path in $candidatePaths) {
         if ($path -and (Test-Path $path)) {
             try {
-                $userBranding = ConvertFrom-AtlasJson (Get-Content -Raw -Path $path)
+                $userBranding = ConvertFrom-AtlasJson (Get-Content -Raw -LiteralPath $path -Encoding UTF8 -ErrorAction Stop)
                 Write-Verbose "Branding cargado desde: $path"
                 return (Merge-AtlasBranding $defaultBranding $userBranding)
             } catch {

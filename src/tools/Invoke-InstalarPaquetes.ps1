@@ -61,10 +61,6 @@ function Invoke-InstalarPaquetes {
             InstallingBtn           = '[...] Installing...'
             LiveLog                 = 'Live Installation Log:'
             ClearLog                = 'Clear Log'
-            CleanTempName           = 'Clean Temporary Files'
-            CleanTempCategory       = 'Cleanup'
-            CleaningTemp            = 'Cleaning temporary files...'
-            CleanupSummary          = 'Total freed: {0:N1} MB'
             NoteRequiresLic         = 'requires license'
             CategoryBrowsers        = 'Browsers'
             CategoryMultimedia      = 'Multimedia'
@@ -115,10 +111,6 @@ function Invoke-InstalarPaquetes {
             InstallingBtn        = '[...] Instalando...'
             LiveLog              = 'Registro de instalación en vivo:'
             ClearLog             = 'Limpiar Log'
-            CleanTempName        = 'Limpiar archivos temporales'
-            CleanTempCategory    = 'Limpieza'
-            CleaningTemp         = 'Limpiando archivos temporales...'
-            CleanupSummary       = 'Total liberado: {0:N1} MB'
             NoteRequiresLic      = 'requiere licencia'
             CategoryBrowsers     = 'Navegadores'
             CategoryMultimedia   = 'Multimedia'
@@ -259,9 +251,6 @@ function Invoke-InstalarPaquetes {
         ($L.CategoryGaming) = @(
             @{ Id='Valve.Steam';                         Name='Steam' },
             @{ Id='EpicGames.EpicGamesLauncher';         Name='Epic Games Launcher' }
-        )
-        ($L.CleanTempCategory) = @(
-            @{ Id='__action:clean-temp'; Name=$L.CleanTempName; Type='action'; Handler='Clean-TempFiles' }
         )
     }
 
@@ -1157,7 +1146,7 @@ function Invoke-InstalarPaquetes {
             $ps.Runspace = $rs
 
             $null = $ps.AddScript({
-                param($packages, $logQueue, $progressQueue, $L_Installing, $L_InstalledOK, $L_AlreadyInstalled, $L_InstallFailed, $L_InstallTimeout, $L_InstallException, $ID_MIGRATIONS, $L_CleaningTemp, $L_CleanupSummary, $WingetExecutable, $SupportsNoInteract, $SupportsMsStore, $CancellationToken)
+                param($packages, $logQueue, $progressQueue, $L_Installing, $L_InstalledOK, $L_AlreadyInstalled, $L_InstallFailed, $L_InstallTimeout, $L_InstallException, $ID_MIGRATIONS, $WingetExecutable, $SupportsNoInteract, $SupportsMsStore, $CancellationToken)
 
                 function Resolve-PackageIdInner {
                     param([hashtable]$Pkg, [hashtable]$Migrations)
@@ -1173,50 +1162,12 @@ function Invoke-InstalarPaquetes {
                     return $resolved
                 }
 
-                function Clean-TempFilesInner {
-                    param($queue, $CleaningTemp, $CleanupSummary)
-                    $queue.Enqueue($CleaningTemp)
-                    $totalFreed = 0L
-                    $targets = @(
-                        @{ Path = $env:TEMP;                                   Label = 'User TEMP' },
-                        @{ Path = (Join-Path $env:LOCALAPPDATA 'Temp');        Label = 'LocalAppData Temp' },
-                        @{ Path = 'C:\Windows\Temp';                           Label = 'Windows TEMP' }
-                    )
-                    foreach ($t in $targets) {
-                        if (-not $t.Path -or -not (Test-Path -LiteralPath $t.Path)) { continue }
-                        try {
-                            $sizeBefore = 0L
-                            Get-ChildItem -LiteralPath $t.Path -Recurse -Force -ErrorAction SilentlyContinue |
-                                ForEach-Object { if ($_.PSIsContainer -eq $false) { $sizeBefore += $_.Length } }
-                            Get-ChildItem -LiteralPath $t.Path -Force -ErrorAction SilentlyContinue | ForEach-Object {
-                                Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction SilentlyContinue
-                            }
-                            $sizeAfter = 0L
-                            Get-ChildItem -LiteralPath $t.Path -Recurse -Force -ErrorAction SilentlyContinue |
-                                ForEach-Object { if ($_.PSIsContainer -eq $false) { $sizeAfter += $_.Length } }
-                            $freed = [math]::Max(0, $sizeBefore - $sizeAfter)
-                            $totalFreed += $freed
-                            $queue.Enqueue("   [OK] {0,-22} {1,10:N1} MB" -f $t.Label, ($freed / 1MB))
-                        } catch {
-                            $queue.Enqueue("   [!]  {0,-22} {1}" -f $t.Label, $_.Exception.Message)
-                        }
-                    }
-                    $queue.Enqueue($CleanupSummary -f ($totalFreed / 1MB))
-                }
-
                 $okCount = 0; $alreadyCount = 0; $failCount = 0
 
                 for ($i = 0; $i -lt $packages.Count; $i++) {
                     if ($CancellationToken.IsCancellationRequested) { $failCount += $packages.Count - $i; break }
                     $p = $packages[$i]
                     $logQueue.Enqueue(($L_Installing -f $p.Name, $p.Id))
-
-                    if ($p.Type -eq 'action' -and $p.Handler -eq 'Clean-TempFiles') {
-                        Clean-TempFilesInner -queue $logQueue -CleaningTemp $L_CleaningTemp -CleanupSummary $L_CleanupSummary
-                        $okCount++
-                        $progressQueue.Enqueue($i + 1)
-                        continue
-                    }
 
                     try {
                         $pkgToInstall = Resolve-PackageIdInner -Pkg $p -Migrations $ID_MIGRATIONS
@@ -1272,7 +1223,7 @@ function Invoke-InstalarPaquetes {
                 }
 
                 return @{ OK = $okCount; Already = $alreadyCount; Fail = $failCount }
-            }).AddArgument($selectedPkgs).AddArgument($logQueue).AddArgument($progressQueue).AddArgument($L.Installing).AddArgument($L.InstalledOK).AddArgument($L.AlreadyInstalled).AddArgument($L.InstallFailed).AddArgument($L.InstallTimeout).AddArgument($L.InstallException).AddArgument($ID_MIGRATIONS).AddArgument($L.CleaningTemp).AddArgument($L.CleanupSummary).AddArgument($script:WingetPath).AddArgument([bool]($script:WingetCaps -and $script:WingetCaps.SupportsNoInteract)).AddArgument([bool]($script:WingetCaps -and $script:WingetCaps.SupportsMsStore)).AddArgument($installOperation.Cancellation.Token)
+            }).AddArgument($selectedPkgs).AddArgument($logQueue).AddArgument($progressQueue).AddArgument($L.Installing).AddArgument($L.InstalledOK).AddArgument($L.AlreadyInstalled).AddArgument($L.InstallFailed).AddArgument($L.InstallTimeout).AddArgument($L.InstallException).AddArgument($ID_MIGRATIONS).AddArgument($script:WingetPath).AddArgument([bool]($script:WingetCaps -and $script:WingetCaps.SupportsNoInteract)).AddArgument([bool]($script:WingetCaps -and $script:WingetCaps.SupportsMsStore)).AddArgument($installOperation.Cancellation.Token)
 
             $asyncResult = $ps.BeginInvoke()
             $installOperation.Active = $true

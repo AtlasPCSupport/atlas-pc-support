@@ -20,7 +20,7 @@ function Get-AtlasPlatformCapabilities {
     [CmdletBinding()]
     param([switch]$Refresh)
     if ($script:AtlasPlatformCapabilities -and -not $Refresh) { return $script:AtlasPlatformCapabilities }
-    $os = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction Stop
+    $os = Get-CimInstance -ClassName Win32_OperatingSystem -OperationTimeoutSec 10 -ErrorAction Stop
     $edition = (Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion' -Name EditionID -ErrorAction Stop).EditionID
     $architecture = if ($env:PROCESSOR_ARCHITEW6432) { $env:PROCESSOR_ARCHITEW6432 } else { $env:PROCESSOR_ARCHITECTURE }
     $architecture = switch ($architecture) { 'AMD64' {'x64'} 'ARM64' {'arm64'} default {'x86'} }
