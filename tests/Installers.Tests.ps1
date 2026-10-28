@@ -5,6 +5,7 @@ Describe 'A01 installer verification regressions' {
     BeforeAll {
         $script:RepoRoot = Split-Path -Parent $PSScriptRoot
         . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Release.ps1')
         function Start-Process { [CmdletBinding()] param($FilePath, $ArgumentList, [switch]$Wait, [switch]$PassThru) throw 'Real process blocked' }
         function Invoke-AtlasNativeProcess { [CmdletBinding()] param($FilePath,$Arguments,$ArgumentList,$TimeoutSeconds,$SuccessCodes) throw 'Real native process blocked' }
         function Invoke-WebRequest { [CmdletBinding()] param($Uri, $OutFile, [switch]$UseBasicParsing, $TimeoutSec) throw 'Network blocked' }
@@ -12,6 +13,8 @@ Describe 'A01 installer verification regressions' {
         function _Write-AtlasStepCompat { param($Message) }
         function _Write-AtlasOkCompat { param($Message) }
         function _Get-PS7Path { 'mock-pwsh.exe' }
+        function Get-AtlasPowerShellVersion {param($Path)throw 'Real runtime execution blocked'}
+        function Register-UsbInstallerFiles {param($Key,$Directory,$SingleFile)throw 'Fixture registration required'}
         function Write-Centered { param($Text, $Color) }
         function Format-Size { param($Size) 'test size' }
         function Invoke-ExternalProcessWithTimeout { param($FilePath,$ArgumentList,$TimeoutSec) throw 'Real extractor blocked' }
@@ -30,6 +33,9 @@ Describe 'A01 installer verification regressions' {
         Mock Start-Process { [pscustomobject]@{ ExitCode = 0 } }
         Mock Invoke-AtlasNativeProcess { [pscustomobject]@{ State='Correct'; ExitCode=0 } }
         Mock Get-AtlasPS7Path { 'mock-pwsh.exe' }
+        Mock Get-AtlasPowerShellVersion {[version]'7.6.9'}
+        Mock Register-UsbInstallerFiles {}
+        $script:AtlasUsbAttemptFailures=@{}
         Mock Invoke-WebRequest { throw 'Network blocked' }
         Mock Get-AuthenticodeSignature {
             [pscustomobject]@{ Status = 'Valid'; SignerCertificate = [pscustomobject]@{ Subject = 'CN=Microsoft Corporation, O=Microsoft Corporation, C=US' } }
@@ -45,7 +51,7 @@ Describe 'A01 installer verification regressions' {
     It 'rejects an unsigned MSI before starting the standalone updater' {
         Set-Content -LiteralPath "$script:Msi.sha256" -Value $script:Hash
         Mock Get-AuthenticodeSignature { [pscustomobject]@{ Status='NotSigned'; SignerCertificate=$null } }
-        { _Install-PS7 -OfflineSource $script:Msi -L $script:L -Version 'test' -MsiName 'fixture.msi' } | Should -Throw '*signature*'
+        { _Install-PS7 -OfflineSource $script:Msi -L $script:L -Version '7.6.9' -MsiName 'fixture.msi' } | Should -Throw '*signature*'
         Should -Invoke Start-Process -Times 0 -Exactly
         Should -Invoke Get-AuthenticodeSignature -Times 1 -Exactly
     }
@@ -144,6 +150,13 @@ Describe 'A01 installer verification regressions' {
         _Install-PS7 -OfflineSource $script:Msi -L $script:L -MsiName 'fixture.msi'|Should -Be 'mock-pwsh.exe'
         Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -match 'restart' }
     }
+    It 'blocks a newer installed runtime before download or MSI execution in both callers' {
+        Mock Get-AtlasPowerShellVersion {[version]'7.7.0'}
+        {_Install-PS7 -OfflineSource $script:Msi -L $script:L -MsiName 'fixture.msi'}|Should -Throw '*newer*'
+        {Install-AtlasPS7 -OfflineSource $script:Msi}|Should -Throw '*newer*'
+        Should -Invoke Invoke-WebRequest -Times 0 -Exactly
+        Should -Invoke Invoke-AtlasNativeProcess -Times 0 -Exactly
+    }
 }
 
 Describe 'Dependency failure does not launch an alternative installer' {
@@ -154,7 +167,7 @@ Describe 'Dependency failure does not launch an alternative installer' {
         function Expand-AtlasPath { param($Path) $Path }
         function Invoke-AtlasNativeProcess { [CmdletBinding()]param($FilePath,$ArgumentList,$TimeoutSeconds)throw 'Real installation blocked' }
         function Invoke-WebRequest { [CmdletBinding()]param($Uri,$OutFile,$TimeoutSec,[switch]$UseBasicParsing)throw 'Network blocked' }
-        foreach($name in @('Resolve-AtlasDependency','Resolve-SymlinkPath','Test-AtlasDependencyHash')){. (Get-TestFunction $script:RepoRoot 'src/lib/Dependencies.ps1' $name)}
+        foreach($name in @('Resolve-AtlasDependency','Resolve-SymlinkPath','Test-AtlasDependencyHash','Get-AtlasDependencyCandidate')){. (Get-TestFunction $script:RepoRoot 'src/lib/Dependencies.ps1' $name)}
     }
     BeforeEach {
         $script:Candidate=Join-Path $TestDrive ('dependency-'+[guid]::NewGuid().ToString('N')+'.exe')

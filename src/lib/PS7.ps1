@@ -114,6 +114,8 @@ function Install-AtlasPS7 {
 
     $msi = $null
     $expectedHash = Get-AtlasPS7ExpectedHash
+    $existing=Get-AtlasPS7Path
+    if($existing -and (Get-AtlasPowerShellVersion -Path $existing) -gt [version]$script:AtlasPS7Version){throw 'Refusing to replace a newer PowerShell with the pinned older MSI.'}
     $downloadedFromWeb = $false
 
     if ($OfflineSource -and (Test-Path -LiteralPath $OfflineSource)) {
@@ -138,7 +140,7 @@ function Install-AtlasPS7 {
         try {
             $expectedHash = Get-AtlasPS7ExpectedHash
             $ProgressPreference = 'SilentlyContinue'
-            Invoke-WebRequest -Uri $script:AtlasPS7UrlX64 -OutFile $msi -UseBasicParsing
+            Invoke-WebRequest -Uri $script:AtlasPS7UrlX64 -OutFile $msi -UseBasicParsing -TimeoutSec 900 -ErrorAction Stop
             $downloadedFromWeb = $true
         } catch {
             throw "Fallo descarga de PS 7: $($_.Exception.Message)"
@@ -177,6 +179,7 @@ function Install-AtlasPS7 {
     if (-not $path) {
         throw "Instalacion reportada OK pero pwsh.exe no se encuentra en las rutas esperadas."
     }
+    if((Get-AtlasPowerShellVersion -Path $path) -lt [version]$script:AtlasPS7Version){throw 'Requested PowerShell version is not yet verified; check installer log/restart before retrying.'}
     Write-Host "  [OK] PowerShell 7 instalado: $path" -ForegroundColor Green
     return $path
 }

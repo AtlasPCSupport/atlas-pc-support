@@ -50,6 +50,26 @@ function Test-AtlasDependencyHash {
     }
 }
 
+function Get-AtlasDependencyCandidate {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Name,[Parameter(Mandatory)][string]$Path,[string]$Origin='configured path')
+    try {
+        $resolved=Resolve-SymlinkPath $Path
+        if(-not [IO.Path]::IsPathRooted($resolved)){$resolved=Join-Path (Split-Path -Parent $Path) $resolved}
+        $item=Get-Item -LiteralPath $resolved -Force -ErrorAction Stop
+        if($item.PSIsContainer -or $item.Extension -ine '.exe'){return $null}
+        $resource=switch($Name){'CrystalDiskInfo'{'CdiResource'};'CrystalDiskMark'{'CdmResource'}}
+        if($resource) {
+            $folder=Join-Path $item.DirectoryName $resource
+            if(-not (Test-Path -LiteralPath $folder -PathType Container) -or -not @(Get-ChildItem -LiteralPath $folder -Force -ErrorAction Stop | Select-Object -First 1).Count){return $null}
+        }
+        $version=$item.VersionInfo.FileVersion
+        if(-not $version){$version='not reported'}
+        Write-AtlasLog "Found $Name; origin=$Origin; path=$($item.FullName); file version=$version; installed version/support not certified." -Tool Deps
+        return $item.FullName
+    } catch {Write-AtlasLog "Candidate for $Name could not be read; origin=$Origin." -Level WARN -Tool Deps;return $null}
+}
+
 function Resolve-AtlasDependency {
     <#
     .SYNOPSIS
@@ -70,28 +90,15 @@ function Resolve-AtlasDependency {
 
     foreach ($p in $dep.SearchPaths) {
         $expanded = Expand-AtlasPath $p
-        if (Test-Path $expanded) {
-            # Ensure CrystalDiskInfo and CrystalDiskMark have their resource folders
-            if ($Name -eq 'CrystalDiskInfo') {
-                $parent = Split-Path -Parent $expanded
-                if (-not (Test-Path -LiteralPath (Join-Path $parent 'CdiResource'))) {
-                    Write-AtlasLog "Ignorando $Name en $expanded porque falta CdiResource" -Level WARN -Tool 'Deps'
-                    continue
-                }
-            }
-            if ($Name -eq 'CrystalDiskMark') {
-                $parent = Split-Path -Parent $expanded
-                if (-not (Test-Path -LiteralPath (Join-Path $parent 'CdmResource'))) {
-                    Write-AtlasLog "Ignorando $Name en $expanded porque falta CdmResource" -Level WARN -Tool 'Deps'
-                    continue
-                }
-            }
-            Write-AtlasLog "Encontrada $Name en $expanded" -Tool 'Deps'
-            return Resolve-SymlinkPath $expanded
+        foreach($file in @(Get-ChildItem -Path $expanded -File -ErrorAction SilentlyContinue | Sort-Object FullName)) {
+            $candidate=Get-AtlasDependencyCandidate -Name $Name -Path $file.FullName
+            if($candidate){return $candidate}
         }
     }
-    $inPath = Get-Command $dep.ExecutableName -ErrorAction SilentlyContinue
-    if ($inPath) { return Resolve-SymlinkPath $inPath.Source }
+    foreach($command in @(Get-Command $dep.ExecutableName -CommandType Application -ErrorAction SilentlyContinue)) {
+        $candidate=Get-AtlasDependencyCandidate -Name $Name -Path $command.Source -Origin PATH
+        if($candidate){return $candidate}
+    }
 
     if (-not $InstallIfMissing) {
         Write-AtlasLog "$Name no encontrada (no se pidió instalar)." -Level WARN -Tool 'Deps'
@@ -110,7 +117,7 @@ function Resolve-AtlasDependency {
         return Resolve-AtlasDependency -Name $Name
     }
 
-    # Fallback: direct download via DownloadUrl when winget is unavailable or failed
+    # Direct download is allowed only when no package-manager attempt was made.
     if ($dep.DownloadUrl) {
         Write-AtlasLog "Intentando descarga directa de $Name ($($dep.DownloadUrl))" -Tool 'Deps'
         $cacheDir = Join-Path $env:LOCALAPPDATA 'AtlasPC\bin'

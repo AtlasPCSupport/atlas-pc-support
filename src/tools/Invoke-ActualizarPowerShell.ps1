@@ -19,12 +19,8 @@ function Invoke-ActualizarPowerShell {
       msiexec. If a local MSI exists in deps\ (offline USB mode), it uses
       that instead of downloading.
 
-      After install, every tool launched from the panel runs in pwsh.exe
-      automatically thanks to ToolRunner.
-
-      IMPORTANT: this tool runs in an isolated window (temp .ps1) — it
-      does NOT have access to the launcher's libs, so all helpers (admin
-      check, detection, install) are inlined below. Do not remove.
+      Tools retain their declared runtime; Windows PowerShell 5.1 is the
+      default. Shared verified libraries are included in the isolated child.
     #>
 
     $ErrorActionPreference = 'Stop'
@@ -231,6 +227,9 @@ function Invoke-ActualizarPowerShell {
 
     function _Install-PS7 {
         param([string]$OfflineSource, $L, [string]$Version, [string]$Url, [string]$MsiName)
+        if(-not $Version){$Version=(Get-AtlasDependencyDefinition -Name PowerShell7).Version}
+        $existing=_Get-PS7Path
+        if($existing -and (Get-AtlasPowerShellVersion -Path $existing) -gt [version]$Version){throw 'Refusing to replace a newer PowerShell with the pinned older MSI.'}
         if (-not (Get-Command Assert-AtlasInstaller -ErrorAction SilentlyContinue)) {
             throw 'Close and reopen the updated Atlas panel before installing PowerShell.'
         }
@@ -268,6 +267,7 @@ function Invoke-ActualizarPowerShell {
         if (-not $path) {
             throw $L.InstalledButLost
         }
+        if((Get-AtlasPowerShellVersion -Path $path) -lt [version]$Version){throw 'Requested PowerShell version is not yet verified; check installer log/restart before retrying.'}
         _Write-AtlasOkCompat ($L.InstallOK -f $path)
         return $path
     }
@@ -284,7 +284,7 @@ function Invoke-ActualizarPowerShell {
     $ps7Path = _Get-PS7Path
     if ($ps7Path) {
         try {
-            $verOutput = & $ps7Path -NoProfile -Command '$PSVersionTable.PSVersion.ToString()'
+            $verOutput = Get-AtlasPowerShellVersion -Path $ps7Path
             Write-Host ('  ' + ($L.AlreadyInstalled -f $verOutput)) -ForegroundColor Green
             Write-Host ('  ' + ($L.PathLabel -f $ps7Path)) -ForegroundColor DarkGray
         } catch {

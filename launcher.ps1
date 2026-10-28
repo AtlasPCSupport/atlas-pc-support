@@ -20,7 +20,7 @@ if ($PSVersionTable.PSEdition -eq 'Desktop') {
 }
 
 
-$script:AtlasVersion = '1.5.15'
+$script:AtlasVersion = '1.5.16'
 $script:AtlasBuildDate = '2026-10-27'
 $script:AtlasToolsManifest = '{
   "$comment": "Tool manifest. Each entry describes one tool. The launcher uses this to render the panel''s tool tiles.",
@@ -873,7 +873,7 @@ $script:AtlasToolsManifest = '{
   ]
 }
 '
-$script:AtlasToolHashesJson = '{"generatedAt":"2026-10-27","algorithm":"SHA256","files":{"Invoke-AIReadiness.ps1":"0cc69f023d29584cfb59404458d1b47d864b6dd915aee1a37419e734f02a0346","Invoke-ActualizarPowerShell.ps1":"f3857d121fc6c702a4df8d4ae7b8ca8b0d1d87e166992272bfe957e7aadb8b15","Invoke-AuditoriaRouter.ps1":"c60b60203f6a7627d91a13d64bc592e36ea2fd5d552d0a83b4f6a9394d1119bb","Invoke-Deduplicador.ps1":"2147b9d475f36f93c2908bb3c1701b35c5e4a144eb1b5356653e90af322c1a01","Invoke-DiagnosticoEventos.ps1":"6e3b3763abcfe0e8f975c23f69d2bcdc716f6cd478e03b372f4602123552ccf3","Invoke-DiagnosticoMaster.ps1":"cb3d7edc902a738aaf6479b3aaf0f5d85a7c31d8a037b1b48e064e7ceeeea0a4","Invoke-EntregaPC.ps1":"b6a7326be8dc1d7edf9c556e5ebaaaae5d43efb2c9936d111ac803f72a5c9ac8","Invoke-ExtraerLicencias.ps1":"bd8436451e725c872ac155aa948a1af5e3fb0734a9f479fac220b3ba52f43871","Invoke-Fase0.ps1":"14e7d9f9498853c4dc98d392cb022e21681064208cb208a88baff5f15d1e1966","Invoke-FastCopy.ps1":"af30d5dc46ac9f4e69592729d2f5f663cef6fbbf532a86d354694efc98a27e9f","Invoke-GPUCheck.ps1":"7d10790ac4811c5fdf1b563c6b1768c92bd7ce62f814050380ffb93b4e651de3","Invoke-GestorBitLocker.ps1":"93969ccbf4b2810c7e8f480c58de5af4e0d96d6c979eda8a1ac44bf14bd453a9","Invoke-HostsManager.ps1":"b352272840ec27ffd4141ff1d002ba869365283064d5515e58ad036775bbea62","Invoke-InstalarMicrosoftStore.ps1":"d2d73a1a359585c13e09cf2eafe89fe588d5cdb9a89872730ab7a4e9de5a09de","Invoke-InstalarPaquetes.ps1":"d0d98a1e0d02271bcee8b03076b4bf2dd17cc252984390dbf5e24e510737ac43","Invoke-InstalarRuntimes.ps1":"0d973d2105d0468ad15e05543d10cf24d168beb4363df3dd261444a067812ef5","Invoke-KeyboardDoctor.ps1":"d920a97f29735097226420624a85283ad80602a9576a5d787ae0054fa857b7a6","Invoke-MantenimientoPRO.ps1":"226545d07cf4f201e958670f8c49168785b838320ddbc8959d2fc65751582931","Invoke-MenorPrivilegio.ps1":"93cd195f8f47c02e4428763418e685e276f33fecb6cc9f3bedcb0e5a14aab565","Invoke-PartsUpgrade.ps1":"a328c3d6490323022f21bdb079e9fa7d34e7bd81c9288fa9d1c6222378c8ca61","Invoke-Personalizacion.ps1":"57f979ffe953aaed57632b004b687d5651cb41b21e0313ea3d23c423a6dcf1c4","Invoke-PrepararUSB.ps1":"4a3f4ef6a9ef85ca80f6789ecaecfc38c3cd6425d658f5e9147f3fce5541e0b2","Invoke-PrinterDoctor.ps1":"4a16f46c9699d18cc54a7174037c618a9e2727edb27b0735947689e99e3d4e68","Invoke-RespaldoControladores.ps1":"2c8f4dda090fd620d99aad9b457213e8a4d748ea89b09e8380b68c0743e8efd1","Invoke-Robocopy.ps1":"c55b58493fea3ce82d867c961c8fb94626121682c12e6bd444833cee2f5ad927","Invoke-SelectorDNS.ps1":"47101374664bacc1ed87f1f77bb3bb9dc57d8ee72961e8818328b86bad8dee1c","Invoke-StopServices.ps1":"9cb88839b1e350bcee6ce63b5809ccc7c4ff4d11ee773ca3715b2d5386f1212b"}}'
+$script:AtlasToolHashesJson = '{"generatedAt":"2026-10-27","algorithm":"SHA256","files":{"Invoke-AIReadiness.ps1":"0cc69f023d29584cfb59404458d1b47d864b6dd915aee1a37419e734f02a0346","Invoke-ActualizarPowerShell.ps1":"f0a1f77e1b3a341628916798a4bfd63de5a27ae1ee83c6ad3fbd8e510f665562","Invoke-AuditoriaRouter.ps1":"c60b60203f6a7627d91a13d64bc592e36ea2fd5d552d0a83b4f6a9394d1119bb","Invoke-Deduplicador.ps1":"2147b9d475f36f93c2908bb3c1701b35c5e4a144eb1b5356653e90af322c1a01","Invoke-DiagnosticoEventos.ps1":"6e3b3763abcfe0e8f975c23f69d2bcdc716f6cd478e03b372f4602123552ccf3","Invoke-DiagnosticoMaster.ps1":"cb3d7edc902a738aaf6479b3aaf0f5d85a7c31d8a037b1b48e064e7ceeeea0a4","Invoke-EntregaPC.ps1":"b6a7326be8dc1d7edf9c556e5ebaaaae5d43efb2c9936d111ac803f72a5c9ac8","Invoke-ExtraerLicencias.ps1":"bd8436451e725c872ac155aa948a1af5e3fb0734a9f479fac220b3ba52f43871","Invoke-Fase0.ps1":"14e7d9f9498853c4dc98d392cb022e21681064208cb208a88baff5f15d1e1966","Invoke-FastCopy.ps1":"d2f156cd53d9d4758ded0c5a60d3ac63578e1ca7021a483049fd73ec0aacbfd1","Invoke-GPUCheck.ps1":"7d10790ac4811c5fdf1b563c6b1768c92bd7ce62f814050380ffb93b4e651de3","Invoke-GestorBitLocker.ps1":"93969ccbf4b2810c7e8f480c58de5af4e0d96d6c979eda8a1ac44bf14bd453a9","Invoke-HostsManager.ps1":"b352272840ec27ffd4141ff1d002ba869365283064d5515e58ad036775bbea62","Invoke-InstalarMicrosoftStore.ps1":"d2d73a1a359585c13e09cf2eafe89fe588d5cdb9a89872730ab7a4e9de5a09de","Invoke-InstalarPaquetes.ps1":"d0d98a1e0d02271bcee8b03076b4bf2dd17cc252984390dbf5e24e510737ac43","Invoke-InstalarRuntimes.ps1":"0d973d2105d0468ad15e05543d10cf24d168beb4363df3dd261444a067812ef5","Invoke-KeyboardDoctor.ps1":"d920a97f29735097226420624a85283ad80602a9576a5d787ae0054fa857b7a6","Invoke-MantenimientoPRO.ps1":"226545d07cf4f201e958670f8c49168785b838320ddbc8959d2fc65751582931","Invoke-MenorPrivilegio.ps1":"93cd195f8f47c02e4428763418e685e276f33fecb6cc9f3bedcb0e5a14aab565","Invoke-PartsUpgrade.ps1":"a328c3d6490323022f21bdb079e9fa7d34e7bd81c9288fa9d1c6222378c8ca61","Invoke-Personalizacion.ps1":"57f979ffe953aaed57632b004b687d5651cb41b21e0313ea3d23c423a6dcf1c4","Invoke-PrepararUSB.ps1":"8e24a10f979cc6d859e3b170997f675158c12d108227cf4de00372a0d7d7a56e","Invoke-PrinterDoctor.ps1":"4a16f46c9699d18cc54a7174037c618a9e2727edb27b0735947689e99e3d4e68","Invoke-RespaldoControladores.ps1":"2c8f4dda090fd620d99aad9b457213e8a4d748ea89b09e8380b68c0743e8efd1","Invoke-Robocopy.ps1":"1006d3a73f33923a19ab89949c34b3c66a4ef31c1ec2d6ad4b121c5db6c881b1","Invoke-SelectorDNS.ps1":"47101374664bacc1ed87f1f77bb3bb9dc57d8ee72961e8818328b86bad8dee1c","Invoke-StopServices.ps1":"9cb88839b1e350bcee6ce63b5809ccc7c4ff4d11ee773ca3715b2d5386f1212b"}}'
 $script:AtlasXamlTemplate = '<Window
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -1706,16 +1706,16 @@ $script:AtlasDependencyCatalog = '{
   },
   "PowerShell7": {
     "DisplayName": "PowerShell 7 LTS",
-    "Version": "7.6.8",
+    "Version": "7.6.9",
     "Architecture": "x64",
     "InstallerType": "msi",
-    "MsiName": "PowerShell-7.6.8-win-x64.msi",
-    "DownloadUrl": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.8/PowerShell-7.6.8-win-x64.msi",
-    "HashesUrl": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.8/hashes.sha256",
+    "MsiName": "PowerShell-7.6.9-win-x64.msi",
+    "DownloadUrl": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.9/PowerShell-7.6.9-win-x64.msi",
+    "HashesUrl": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.9/hashes.sha256",
     "SignaturePolicy": "sha256-and-microsoft-authenticode",
     "License": "MIT; third-party notices apply",
     "VersionSource": "pinned",
-    "DownloadSha256": "079e7cecedd1e87fa7b4676e5c33ddfbe66859a44a97fbcd1db797245cbb93d2"
+    "DownloadSha256": "50d33c7494aaf82b987cfd4de3f232d04f91fdd4c0deeca8a669cced3e7cf8f9"
   }
 }
 ' | ConvertFrom-Json
@@ -1902,16 +1902,16 @@ $script:AtlasDependencyCatalog = ''{
   },
   "PowerShell7": {
     "DisplayName": "PowerShell 7 LTS",
-    "Version": "7.6.8",
+    "Version": "7.6.9",
     "Architecture": "x64",
     "InstallerType": "msi",
-    "MsiName": "PowerShell-7.6.8-win-x64.msi",
-    "DownloadUrl": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.8/PowerShell-7.6.8-win-x64.msi",
-    "HashesUrl": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.8/hashes.sha256",
+    "MsiName": "PowerShell-7.6.9-win-x64.msi",
+    "DownloadUrl": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.9/PowerShell-7.6.9-win-x64.msi",
+    "HashesUrl": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.9/hashes.sha256",
     "SignaturePolicy": "sha256-and-microsoft-authenticode",
     "License": "MIT; third-party notices apply",
     "VersionSource": "pinned",
-    "DownloadSha256": "079e7cecedd1e87fa7b4676e5c33ddfbe66859a44a97fbcd1db797245cbb93d2"
+    "DownloadSha256": "50d33c7494aaf82b987cfd4de3f232d04f91fdd4c0deeca8a669cced3e7cf8f9"
   }
 }
 '' | ConvertFrom-Json
@@ -3249,6 +3249,26 @@ function Test-AtlasDependencyHash {
     }
 }
 
+function Get-AtlasDependencyCandidate {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Name,[Parameter(Mandatory)][string]$Path,[string]$Origin=''configured path'')
+    try {
+        $resolved=Resolve-SymlinkPath $Path
+        if(-not [IO.Path]::IsPathRooted($resolved)){$resolved=Join-Path (Split-Path -Parent $Path) $resolved}
+        $item=Get-Item -LiteralPath $resolved -Force -ErrorAction Stop
+        if($item.PSIsContainer -or $item.Extension -ine ''.exe''){return $null}
+        $resource=switch($Name){''CrystalDiskInfo''{''CdiResource''};''CrystalDiskMark''{''CdmResource''}}
+        if($resource) {
+            $folder=Join-Path $item.DirectoryName $resource
+            if(-not (Test-Path -LiteralPath $folder -PathType Container) -or -not @(Get-ChildItem -LiteralPath $folder -Force -ErrorAction Stop | Select-Object -First 1).Count){return $null}
+        }
+        $version=$item.VersionInfo.FileVersion
+        if(-not $version){$version=''not reported''}
+        Write-AtlasLog "Found $Name; origin=$Origin; path=$($item.FullName); file version=$version; installed version/support not certified." -Tool Deps
+        return $item.FullName
+    } catch {Write-AtlasLog "Candidate for $Name could not be read; origin=$Origin." -Level WARN -Tool Deps;return $null}
+}
+
 function Resolve-AtlasDependency {
     <#
     .SYNOPSIS
@@ -3269,28 +3289,15 @@ function Resolve-AtlasDependency {
 
     foreach ($p in $dep.SearchPaths) {
         $expanded = Expand-AtlasPath $p
-        if (Test-Path $expanded) {
-            # Ensure CrystalDiskInfo and CrystalDiskMark have their resource folders
-            if ($Name -eq ''CrystalDiskInfo'') {
-                $parent = Split-Path -Parent $expanded
-                if (-not (Test-Path -LiteralPath (Join-Path $parent ''CdiResource''))) {
-                    Write-AtlasLog "Ignorando $Name en $expanded porque falta CdiResource" -Level WARN -Tool ''Deps''
-                    continue
-                }
-            }
-            if ($Name -eq ''CrystalDiskMark'') {
-                $parent = Split-Path -Parent $expanded
-                if (-not (Test-Path -LiteralPath (Join-Path $parent ''CdmResource''))) {
-                    Write-AtlasLog "Ignorando $Name en $expanded porque falta CdmResource" -Level WARN -Tool ''Deps''
-                    continue
-                }
-            }
-            Write-AtlasLog "Encontrada $Name en $expanded" -Tool ''Deps''
-            return Resolve-SymlinkPath $expanded
+        foreach($file in @(Get-ChildItem -Path $expanded -File -ErrorAction SilentlyContinue | Sort-Object FullName)) {
+            $candidate=Get-AtlasDependencyCandidate -Name $Name -Path $file.FullName
+            if($candidate){return $candidate}
         }
     }
-    $inPath = Get-Command $dep.ExecutableName -ErrorAction SilentlyContinue
-    if ($inPath) { return Resolve-SymlinkPath $inPath.Source }
+    foreach($command in @(Get-Command $dep.ExecutableName -CommandType Application -ErrorAction SilentlyContinue)) {
+        $candidate=Get-AtlasDependencyCandidate -Name $Name -Path $command.Source -Origin PATH
+        if($candidate){return $candidate}
+    }
 
     if (-not $InstallIfMissing) {
         Write-AtlasLog "$Name no encontrada (no se pidió instalar)." -Level WARN -Tool ''Deps''
@@ -3309,7 +3316,7 @@ function Resolve-AtlasDependency {
         return Resolve-AtlasDependency -Name $Name
     }
 
-    # Fallback: direct download via DownloadUrl when winget is unavailable or failed
+    # Direct download is allowed only when no package-manager attempt was made.
     if ($dep.DownloadUrl) {
         Write-AtlasLog "Intentando descarga directa de $Name ($($dep.DownloadUrl))" -Tool ''Deps''
         $cacheDir = Join-Path $env:LOCALAPPDATA ''AtlasPC\bin''
@@ -3464,6 +3471,8 @@ function Install-AtlasPS7 {
 
     $msi = $null
     $expectedHash = Get-AtlasPS7ExpectedHash
+    $existing=Get-AtlasPS7Path
+    if($existing -and (Get-AtlasPowerShellVersion -Path $existing) -gt [version]$script:AtlasPS7Version){throw ''Refusing to replace a newer PowerShell with the pinned older MSI.''}
     $downloadedFromWeb = $false
 
     if ($OfflineSource -and (Test-Path -LiteralPath $OfflineSource)) {
@@ -3488,7 +3497,7 @@ function Install-AtlasPS7 {
         try {
             $expectedHash = Get-AtlasPS7ExpectedHash
             $ProgressPreference = ''SilentlyContinue''
-            Invoke-WebRequest -Uri $script:AtlasPS7UrlX64 -OutFile $msi -UseBasicParsing
+            Invoke-WebRequest -Uri $script:AtlasPS7UrlX64 -OutFile $msi -UseBasicParsing -TimeoutSec 900 -ErrorAction Stop
             $downloadedFromWeb = $true
         } catch {
             throw "Fallo descarga de PS 7: $($_.Exception.Message)"
@@ -3527,6 +3536,7 @@ function Install-AtlasPS7 {
     if (-not $path) {
         throw "Instalacion reportada OK pero pwsh.exe no se encuentra en las rutas esperadas."
     }
+    if((Get-AtlasPowerShellVersion -Path $path) -lt [version]$script:AtlasPS7Version){throw ''Requested PowerShell version is not yet verified; check installer log/restart before retrying.''}
     Write-Host "  [OK] PowerShell 7 instalado: $path" -ForegroundColor Green
     return $path
 }
@@ -3899,6 +3909,72 @@ function Get-AtlasStoreState {
 
 # ---- lib/Operations ----
 # Small shared primitives for evidence and reversible Windows operations.
+function Copy-AtlasDependencyTree {
+            param(
+                [Parameter(Mandatory)][string]$SourceDir,
+                [Parameter(Mandatory)][string]$DestinationDir,
+                [string]$PackageKey
+            )
+
+            if (-not (Test-Path -LiteralPath $SourceDir -PathType Container)) { return $false }
+            Assert-AtlasCopyDestination -Source $SourceDir -Destination $DestinationDir
+            $sourceRoot=[IO.Path]::GetFullPath($SourceDir).TrimEnd([char[]]''\/'')
+            $destRoot=[IO.Path]::GetFullPath($DestinationDir)
+            $sourceFiles=[Collections.Generic.List[IO.FileInfo]]::new()
+            $pending=[Collections.Generic.Stack[string]]::new();$pending.Push($sourceRoot)
+            # Preflight every selected path before any write. Never recurse through links.
+            while($pending.Count) {
+                $directory=$pending.Pop()
+                Assert-AtlasPlainDirectory $directory
+                foreach($item in @(Get-ChildItem -LiteralPath $directory -Force -ErrorAction Stop)) {
+                    if($item.Attributes -band [IO.FileAttributes]::ReparsePoint){throw ''USB dependency paths cannot cross reparse points.''}
+                    $relative=$item.FullName.Substring($sourceRoot.Length).TrimStart([char[]]''\/'')
+                    $target=Join-Path $destRoot $relative
+                    if($item.PSIsContainer) {
+                        Assert-AtlasCopyDestination -Source $item.FullName -Destination $target
+                        $pending.Push($item.FullName)
+                    } else {
+                        Assert-AtlasCopyDestination -Source $item.FullName -Destination (Split-Path -Parent $target)
+                        if(Test-Path -LiteralPath $target){Assert-AtlasPlainFile $target}
+                        $sourceFiles.Add($item)
+                    }
+                }
+            }
+            if($sourceFiles.Count -eq 0){return $false}
+            $robo=Get-Command robocopy.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1
+            if(-not $robo){throw ''Robocopy is required for USB dependency copies.''}
+            if(-not (Test-Path -LiteralPath $destRoot)){New-Item -ItemType Directory -Path $destRoot -ErrorAction Stop | Out-Null}
+            $result=Invoke-AtlasNativeProcess -FilePath $robo.Source -ArgumentList @($sourceRoot,$destRoot,''/E'',''/R:1'',''/W:1'',''/NFL'',''/NDL'',''/NJH'',''/NJS'',''/NP'',''/XJ'',''/FFT'',''/COPY:DAT'',''/DCOPY:DAT'') -TimeoutSeconds 86400 -SuccessCodes @(0,1,2,3)
+            if($result.State -ne ''Correct''){throw "USB copy $($result.State), exit $($result.ExitCode); inspect partial destination before retrying."}
+            # Delta metadata may skip damaged same-size/same-date files. Verify every resource.
+            $records=[Collections.Generic.List[object]]::new()
+            foreach($file in $sourceFiles) {
+                $relative=$file.FullName.Substring($sourceRoot.Length).TrimStart([char[]]''\/'')
+                $target=Join-Path $destRoot $relative
+                try {
+                    Assert-AtlasPlainFile $file.FullName;Assert-AtlasPlainFile $target
+                    $digest=(Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256 -ErrorAction Stop).Hash
+                    if($digest -cne (Get-FileHash -LiteralPath $target -Algorithm SHA256 -ErrorAction Stop).Hash){throw ''Resource digest mismatch.''}
+                    if($PackageKey){$records.Add(@{Path=$target;Sha256=$digest.ToLowerInvariant()})}
+                } catch {throw "USB dependency verification failed: $relative. Existing files were not removed; inspect before retrying."}
+            }
+            if($PackageKey){$script:AtlasUsbVerifiedPackages[$PackageKey]=$true;$script:AtlasUsbVerifiedFiles[$PackageKey]=$records.ToArray()}
+            return $true
+        }
+
+function Copy-AtlasUsbExecutable {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Source,[Parameter(Mandatory)][string]$Destination,[Parameter(Mandatory)][string]$PackageKey)
+    Assert-AtlasPlainFile $Source
+    Assert-AtlasCopyDestination -Source $Source -Destination (Split-Path -Parent $Destination)
+    if(Test-Path -LiteralPath $Destination){Assert-AtlasPlainFile $Destination}
+    Copy-Item -LiteralPath $Source -Destination $Destination -Force -ErrorAction Stop
+    $digest=(Get-FileHash -LiteralPath $Source -Algorithm SHA256 -ErrorAction Stop).Hash
+    if($digest -cne (Get-FileHash -LiteralPath $Destination -Algorithm SHA256 -ErrorAction Stop).Hash){throw ''USB executable copy hash mismatch.''}
+    $script:AtlasUsbVerifiedPackages[$PackageKey]=$true
+    $script:AtlasUsbVerifiedFiles[$PackageKey]=@(@{Path=$Destination;Sha256=$digest.ToLowerInvariant()})
+}
+
 function Get-AtlasLocalAccountPolicy {
     [CmdletBinding()]
     param()
@@ -3923,6 +3999,16 @@ namespace Atlas {
       } finally { if(p != IntPtr.Zero) NetApiBufferFree(p); }
     }
   }
+}
+
+function Get-AtlasPowerShellVersion {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Path)
+    $result=Invoke-AtlasNativeProcess -FilePath $Path -ArgumentList @(''-NoLogo'',''-NoProfile'',''-Command'',''$PSVersionTable.PSVersion.ToString()'') -TimeoutSeconds 15
+    if($result.State -ne ''Correct''){throw ''Installed PowerShell version could not be evaluated.''}
+    $text=([string]$result.Stdout).Trim()
+    if($text -notmatch ''^\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?$''){throw ''Unexpected PowerShell version output.''}
+    return [version]($text -split ''-'',2)[0]
 }
 ''@ -ErrorAction Stop
     }
@@ -4115,32 +4201,63 @@ function Invoke-AtlasNativeProcess {
     }
 }
 
+function Get-AtlasCopyInventory {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Source,[ValidateRange(0,1000)][int]$SampleSize=0,
+        [string[]]$ExcludeFiles=@(),[string[]]$ExcludeDirs=@(),[switch]$SkipCensus,[scriptblock]$FileAction)
+    $root=Get-Item -LiteralPath $Source -Force -ErrorAction Stop
+    $sourceRoot=if($root.PSIsContainer){$root.FullName}else{$root.DirectoryName}
+    Assert-AtlasPlainDirectory $sourceRoot
+    $sample=[Collections.Generic.SortedList[string,IO.FileInfo]]::new([StringComparer]::Ordinal)
+    $files=[long]0; $bytes=[long]0; $links=0; $errors=0; $excluded=0
+    $walk=[Collections.Generic.Stack[object]]::new()
+    if($SkipCensus){return [pscustomobject]@{Files=$null;Size=$null;SizeMB=$null;Sample=@();Complete=$false;Scope=''Census skipped; size/count not evaluated'';UnverifiedLinks=0;UnverifiedPaths=0;Excluded=0;SourceRoot=$sourceRoot}}
+    $item=$root
+    try {
+        while($item -or $walk.Count) {
+            if(-not $item) {
+                try {
+                    if($walk.Peek().MoveNext()){$item=$walk.Peek().Current}
+                    else {$e=$walk.Pop();if($e -is [IDisposable]){$e.Dispose()};continue}
+                } catch {$errors++;$e=$walk.Pop();if($e -is [IDisposable]){$e.Dispose()};continue}
+            }
+            $isDirectory=$item -is [IO.DirectoryInfo]
+            $patterns=if($isDirectory -and $item.FullName -ne $root.FullName){$ExcludeDirs}elseif(-not $isDirectory){$ExcludeFiles}else{@()}
+            $skip=$false
+            foreach($pattern in $patterns){if($item.Name -like $pattern){$skip=$true;break}}
+            if($skip){$excluded++;$item=$null;continue}
+            if($item.Attributes -band [IO.FileAttributes]::ReparsePoint){$links++;$item=$null;continue}
+            if($isDirectory) {
+                try {Assert-AtlasPlainDirectory $item.FullName;$walk.Push($item.EnumerateFileSystemInfos().GetEnumerator())}
+                catch {$errors++}
+            } else {
+                $files++;$bytes+=$item.Length
+                if($FileAction){& $FileAction $item | Out-Null}
+                if($SampleSize -gt 0) {
+                    if($sample.Count -lt $SampleSize){$sample.Add($item.FullName,$item)}
+                    elseif([StringComparer]::Ordinal.Compare($item.FullName,$sample.Keys[$sample.Count-1]) -lt 0){
+                        $sample.RemoveAt($sample.Count-1);$sample.Add($item.FullName,$item)
+                    }
+                }
+            }
+            $item=$null
+        }
+    } finally {while($walk.Count){$e=$walk.Pop();if($e -is [IDisposable]){$e.Dispose()}}}
+    $complete=($errors -eq 0 -and $links -eq 0)
+    [pscustomobject]@{Files=$files;Size=$bytes;SizeMB=[math]::Round($bytes/1MB,1);Sample=@($sample.Values);Complete=$complete;
+        Scope=$(if($complete){''Eligible plain files; hidden/system included; exclusions applied''}else{"Partial census: $errors unreadable path(s), $links link(s) not evaluated"});
+        UnverifiedLinks=$links;UnverifiedPaths=$errors;Excluded=$excluded;SourceRoot=$sourceRoot}
+}
+
 function Test-AtlasCopySample {
     [CmdletBinding()]
     param([string]$Source,[string]$Destination,[ValidateRange(1,1000)][int]$SampleSize=15,[string[]]$ExcludeFiles=@(),[string[]]$ExcludeDirs=@())
-    $sourceItem=Get-Item -LiteralPath $Source -Force -ErrorAction Stop
-    $sourceRoot=if($sourceItem.PSIsContainer){$sourceItem.FullName}else{$sourceItem.DirectoryName}
-    Assert-AtlasPlainDirectory $sourceRoot
-    $files=[Collections.Generic.List[IO.FileInfo]]::new(); $links=0
-    $pending=[Collections.Generic.Stack[IO.FileSystemInfo]]::new();$pending.Push($sourceItem)
-    while ($pending.Count) {
-        $item=$pending.Pop()
-        $isDirectory=$item -is [IO.DirectoryInfo]
-        $patterns=if($isDirectory -and $item.FullName -ne $sourceItem.FullName){$ExcludeDirs}elseif(-not $isDirectory){$ExcludeFiles}else{@()}
-        $excluded=$false
-        foreach($pattern in $patterns){if($item.Name -like $pattern){$excluded=$true;break}}
-        if($excluded){continue}
-        if($item.Attributes -band [IO.FileAttributes]::ReparsePoint){$links++;continue}
-        if($isDirectory){
-            Assert-AtlasPlainDirectory $item.FullName
-            foreach($child in @(Get-ChildItem -LiteralPath $item.FullName -Force -ErrorAction Stop)){$pending.Push($child)}
-        }else{$files.Add($item)}
-    }
-    if($files.Count -eq 0){return @{OK=$false;State=''NotEvaluated'';Coverage=''No eligible plain source files'';Checked=0;Passed=0;Failed=0;Missing=0;UnverifiedLinks=$links}}
-    $sample=@($files.ToArray() | Sort-Object FullName | Select-Object -First $SampleSize)
+    $inventory=Get-AtlasCopyInventory -Source $Source -SampleSize $SampleSize -ExcludeFiles $ExcludeFiles -ExcludeDirs $ExcludeDirs
+    $sample=@($inventory.Sample);$links=$inventory.UnverifiedLinks;$errors=$inventory.UnverifiedPaths
+    if(-not $sample.Count){return @{OK=$false;State=''NotEvaluated'';Coverage=''No eligible plain source files'';Checked=0;Passed=0;Failed=0;Missing=0;UnverifiedLinks=$links;UnverifiedPaths=$errors}}
     $passed=0;$failed=0;$missing=0
     foreach($file in $sample){
-        $relative=$file.FullName.Substring($sourceRoot.Length).TrimStart([char[]]''\/'')
+        $relative=$file.FullName.Substring($inventory.SourceRoot.Length).TrimStart([char[]]''\/'')
         $target=Join-Path $Destination $relative
         if(-not(Test-Path -LiteralPath $target -PathType Leaf)){$missing++;continue}
         try{
@@ -4148,7 +4265,49 @@ function Test-AtlasCopySample {
             if((Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256 -ErrorAction Stop).Hash -eq (Get-FileHash -LiteralPath $target -Algorithm SHA256 -ErrorAction Stop).Hash){$passed++}else{$failed++}
         }catch{$failed++}
     }
-    @{OK=($failed -eq 0 -and $missing -eq 0 -and $links -eq 0);State=$(if($failed -or $missing){''Failed''}elseif($links){''NotEvaluated''}else{''SampleVerified''});Coverage="SHA256 sample $($sample.Count)/$($files.Count) eligible plain files; $links links not evaluated; not full copy certification";Checked=$sample.Count;Passed=$passed;Failed=$failed;Missing=$missing;UnverifiedLinks=$links}
+    @{OK=($failed -eq 0 -and $missing -eq 0 -and $inventory.Complete);State=$(if($failed -or $missing){''Failed''}elseif(-not $inventory.Complete){''NotEvaluated''}else{''SampleVerified''});
+        Coverage="SHA256 sample $($sample.Count)/$($inventory.Files) eligible plain files (first ordinal paths); $links links and $errors unreadable paths not evaluated; not full copy certification";
+        Checked=$sample.Count;Passed=$passed;Failed=$failed;Missing=$missing;UnverifiedLinks=$links;UnverifiedPaths=$errors}
+}
+
+function Resolve-AtlasBackupDestination {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$DefaultDirectory,[string]$ExistingDirectory,[Parameter(Mandatory)][string[]]$Sources)
+    $target=$DefaultDirectory
+    if(-not [string]::IsNullOrWhiteSpace($ExistingDirectory)) {
+        $target=$ExistingDirectory.Trim().Trim(''"'')
+        if(-not (Test-Path -LiteralPath $target -PathType Container)){throw ''Select an existing backup directory, not its parent.''}
+    }
+    $target=$ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($target)
+    foreach($source in $Sources){Assert-AtlasCopyDestination -Source $source -Destination $target}
+    return $target
+}
+
+function Compare-AtlasCopyMetadata {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Source,[Parameter(Mandatory)][string]$Destination,[string[]]$ExcludeFiles=@(),[string[]]$ExcludeDirs=@())
+    Assert-AtlasCopyDestination -Source $Source -Destination $Destination
+    $sourceItem=Get-Item -LiteralPath $Source -Force -ErrorAction Stop
+    $comparisonRoot=if($sourceItem.PSIsContainer){$sourceItem.FullName}else{$sourceItem.DirectoryName}
+    $comparisonTarget=if($sourceItem.PSIsContainer -and $sourceItem.Name){Join-Path $Destination $sourceItem.Name}else{$Destination}
+    $counts=@{New=0;Modified=0;Equal=0;SizeTotal=[long]0;Errors=0}
+    $inspect={
+        param($file)
+        $relative=$file.FullName.Substring($comparisonRoot.Length).TrimStart([char[]]''\/'')
+        $target=Join-Path $comparisonTarget $relative
+        try {
+            if(-not (Test-Path -LiteralPath $target -PathType Leaf)){$counts.New++;$counts.SizeTotal+=$file.Length}
+            else {
+                Assert-AtlasPlainFile $target
+                $destinationFile=Get-Item -LiteralPath $target -Force -ErrorAction Stop
+                if($destinationFile.Length -ne $file.Length -or $destinationFile.LastWriteTimeUtc -ne $file.LastWriteTimeUtc){$counts.Modified++;$counts.SizeTotal+=$file.Length}
+                else {$counts.Equal++}
+            }
+        } catch {$counts.Errors++}
+    }
+    $inventory=Get-AtlasCopyInventory -Source $Source -ExcludeFiles $ExcludeFiles -ExcludeDirs $ExcludeDirs -FileAction $inspect
+    [pscustomobject]@{New=$counts.New;Modified=$counts.Modified;Equal=$counts.Equal;SizeTotal=$counts.SizeTotal;Complete=($inventory.Complete -and $counts.Errors -eq 0);
+        Scope=''Metadata candidates only; same size/date is not content integrity; native copy log is authoritative''}
 }
 
 function Remove-AtlasHostsAlias {
@@ -5891,6 +6050,26 @@ function Test-AtlasDependencyHash {
     }
 }
 
+function Get-AtlasDependencyCandidate {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Name,[Parameter(Mandatory)][string]$Path,[string]$Origin='configured path')
+    try {
+        $resolved=Resolve-SymlinkPath $Path
+        if(-not [IO.Path]::IsPathRooted($resolved)){$resolved=Join-Path (Split-Path -Parent $Path) $resolved}
+        $item=Get-Item -LiteralPath $resolved -Force -ErrorAction Stop
+        if($item.PSIsContainer -or $item.Extension -ine '.exe'){return $null}
+        $resource=switch($Name){'CrystalDiskInfo'{'CdiResource'};'CrystalDiskMark'{'CdmResource'}}
+        if($resource) {
+            $folder=Join-Path $item.DirectoryName $resource
+            if(-not (Test-Path -LiteralPath $folder -PathType Container) -or -not @(Get-ChildItem -LiteralPath $folder -Force -ErrorAction Stop | Select-Object -First 1).Count){return $null}
+        }
+        $version=$item.VersionInfo.FileVersion
+        if(-not $version){$version='not reported'}
+        Write-AtlasLog "Found $Name; origin=$Origin; path=$($item.FullName); file version=$version; installed version/support not certified." -Tool Deps
+        return $item.FullName
+    } catch {Write-AtlasLog "Candidate for $Name could not be read; origin=$Origin." -Level WARN -Tool Deps;return $null}
+}
+
 function Resolve-AtlasDependency {
     <#
     .SYNOPSIS
@@ -5911,28 +6090,15 @@ function Resolve-AtlasDependency {
 
     foreach ($p in $dep.SearchPaths) {
         $expanded = Expand-AtlasPath $p
-        if (Test-Path $expanded) {
-            # Ensure CrystalDiskInfo and CrystalDiskMark have their resource folders
-            if ($Name -eq 'CrystalDiskInfo') {
-                $parent = Split-Path -Parent $expanded
-                if (-not (Test-Path -LiteralPath (Join-Path $parent 'CdiResource'))) {
-                    Write-AtlasLog "Ignorando $Name en $expanded porque falta CdiResource" -Level WARN -Tool 'Deps'
-                    continue
-                }
-            }
-            if ($Name -eq 'CrystalDiskMark') {
-                $parent = Split-Path -Parent $expanded
-                if (-not (Test-Path -LiteralPath (Join-Path $parent 'CdmResource'))) {
-                    Write-AtlasLog "Ignorando $Name en $expanded porque falta CdmResource" -Level WARN -Tool 'Deps'
-                    continue
-                }
-            }
-            Write-AtlasLog "Encontrada $Name en $expanded" -Tool 'Deps'
-            return Resolve-SymlinkPath $expanded
+        foreach($file in @(Get-ChildItem -Path $expanded -File -ErrorAction SilentlyContinue | Sort-Object FullName)) {
+            $candidate=Get-AtlasDependencyCandidate -Name $Name -Path $file.FullName
+            if($candidate){return $candidate}
         }
     }
-    $inPath = Get-Command $dep.ExecutableName -ErrorAction SilentlyContinue
-    if ($inPath) { return Resolve-SymlinkPath $inPath.Source }
+    foreach($command in @(Get-Command $dep.ExecutableName -CommandType Application -ErrorAction SilentlyContinue)) {
+        $candidate=Get-AtlasDependencyCandidate -Name $Name -Path $command.Source -Origin PATH
+        if($candidate){return $candidate}
+    }
 
     if (-not $InstallIfMissing) {
         Write-AtlasLog "$Name no encontrada (no se pidió instalar)." -Level WARN -Tool 'Deps'
@@ -5951,7 +6117,7 @@ function Resolve-AtlasDependency {
         return Resolve-AtlasDependency -Name $Name
     }
 
-    # Fallback: direct download via DownloadUrl when winget is unavailable or failed
+    # Direct download is allowed only when no package-manager attempt was made.
     if ($dep.DownloadUrl) {
         Write-AtlasLog "Intentando descarga directa de $Name ($($dep.DownloadUrl))" -Tool 'Deps'
         $cacheDir = Join-Path $env:LOCALAPPDATA 'AtlasPC\bin'
@@ -6106,6 +6272,8 @@ function Install-AtlasPS7 {
 
     $msi = $null
     $expectedHash = Get-AtlasPS7ExpectedHash
+    $existing=Get-AtlasPS7Path
+    if($existing -and (Get-AtlasPowerShellVersion -Path $existing) -gt [version]$script:AtlasPS7Version){throw 'Refusing to replace a newer PowerShell with the pinned older MSI.'}
     $downloadedFromWeb = $false
 
     if ($OfflineSource -and (Test-Path -LiteralPath $OfflineSource)) {
@@ -6130,7 +6298,7 @@ function Install-AtlasPS7 {
         try {
             $expectedHash = Get-AtlasPS7ExpectedHash
             $ProgressPreference = 'SilentlyContinue'
-            Invoke-WebRequest -Uri $script:AtlasPS7UrlX64 -OutFile $msi -UseBasicParsing
+            Invoke-WebRequest -Uri $script:AtlasPS7UrlX64 -OutFile $msi -UseBasicParsing -TimeoutSec 900 -ErrorAction Stop
             $downloadedFromWeb = $true
         } catch {
             throw "Fallo descarga de PS 7: $($_.Exception.Message)"
@@ -6169,6 +6337,7 @@ function Install-AtlasPS7 {
     if (-not $path) {
         throw "Instalacion reportada OK pero pwsh.exe no se encuentra en las rutas esperadas."
     }
+    if((Get-AtlasPowerShellVersion -Path $path) -lt [version]$script:AtlasPS7Version){throw 'Requested PowerShell version is not yet verified; check installer log/restart before retrying.'}
     Write-Host "  [OK] PowerShell 7 instalado: $path" -ForegroundColor Green
     return $path
 }
@@ -6541,6 +6710,72 @@ function Get-AtlasStoreState {
 
 # ---- lib/Operations ----
 # Small shared primitives for evidence and reversible Windows operations.
+function Copy-AtlasDependencyTree {
+            param(
+                [Parameter(Mandatory)][string]$SourceDir,
+                [Parameter(Mandatory)][string]$DestinationDir,
+                [string]$PackageKey
+            )
+
+            if (-not (Test-Path -LiteralPath $SourceDir -PathType Container)) { return $false }
+            Assert-AtlasCopyDestination -Source $SourceDir -Destination $DestinationDir
+            $sourceRoot=[IO.Path]::GetFullPath($SourceDir).TrimEnd([char[]]'\/')
+            $destRoot=[IO.Path]::GetFullPath($DestinationDir)
+            $sourceFiles=[Collections.Generic.List[IO.FileInfo]]::new()
+            $pending=[Collections.Generic.Stack[string]]::new();$pending.Push($sourceRoot)
+            # Preflight every selected path before any write. Never recurse through links.
+            while($pending.Count) {
+                $directory=$pending.Pop()
+                Assert-AtlasPlainDirectory $directory
+                foreach($item in @(Get-ChildItem -LiteralPath $directory -Force -ErrorAction Stop)) {
+                    if($item.Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'USB dependency paths cannot cross reparse points.'}
+                    $relative=$item.FullName.Substring($sourceRoot.Length).TrimStart([char[]]'\/')
+                    $target=Join-Path $destRoot $relative
+                    if($item.PSIsContainer) {
+                        Assert-AtlasCopyDestination -Source $item.FullName -Destination $target
+                        $pending.Push($item.FullName)
+                    } else {
+                        Assert-AtlasCopyDestination -Source $item.FullName -Destination (Split-Path -Parent $target)
+                        if(Test-Path -LiteralPath $target){Assert-AtlasPlainFile $target}
+                        $sourceFiles.Add($item)
+                    }
+                }
+            }
+            if($sourceFiles.Count -eq 0){return $false}
+            $robo=Get-Command robocopy.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1
+            if(-not $robo){throw 'Robocopy is required for USB dependency copies.'}
+            if(-not (Test-Path -LiteralPath $destRoot)){New-Item -ItemType Directory -Path $destRoot -ErrorAction Stop | Out-Null}
+            $result=Invoke-AtlasNativeProcess -FilePath $robo.Source -ArgumentList @($sourceRoot,$destRoot,'/E','/R:1','/W:1','/NFL','/NDL','/NJH','/NJS','/NP','/XJ','/FFT','/COPY:DAT','/DCOPY:DAT') -TimeoutSeconds 86400 -SuccessCodes @(0,1,2,3)
+            if($result.State -ne 'Correct'){throw "USB copy $($result.State), exit $($result.ExitCode); inspect partial destination before retrying."}
+            # Delta metadata may skip damaged same-size/same-date files. Verify every resource.
+            $records=[Collections.Generic.List[object]]::new()
+            foreach($file in $sourceFiles) {
+                $relative=$file.FullName.Substring($sourceRoot.Length).TrimStart([char[]]'\/')
+                $target=Join-Path $destRoot $relative
+                try {
+                    Assert-AtlasPlainFile $file.FullName;Assert-AtlasPlainFile $target
+                    $digest=(Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256 -ErrorAction Stop).Hash
+                    if($digest -cne (Get-FileHash -LiteralPath $target -Algorithm SHA256 -ErrorAction Stop).Hash){throw 'Resource digest mismatch.'}
+                    if($PackageKey){$records.Add(@{Path=$target;Sha256=$digest.ToLowerInvariant()})}
+                } catch {throw "USB dependency verification failed: $relative. Existing files were not removed; inspect before retrying."}
+            }
+            if($PackageKey){$script:AtlasUsbVerifiedPackages[$PackageKey]=$true;$script:AtlasUsbVerifiedFiles[$PackageKey]=$records.ToArray()}
+            return $true
+        }
+
+function Copy-AtlasUsbExecutable {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Source,[Parameter(Mandatory)][string]$Destination,[Parameter(Mandatory)][string]$PackageKey)
+    Assert-AtlasPlainFile $Source
+    Assert-AtlasCopyDestination -Source $Source -Destination (Split-Path -Parent $Destination)
+    if(Test-Path -LiteralPath $Destination){Assert-AtlasPlainFile $Destination}
+    Copy-Item -LiteralPath $Source -Destination $Destination -Force -ErrorAction Stop
+    $digest=(Get-FileHash -LiteralPath $Source -Algorithm SHA256 -ErrorAction Stop).Hash
+    if($digest -cne (Get-FileHash -LiteralPath $Destination -Algorithm SHA256 -ErrorAction Stop).Hash){throw 'USB executable copy hash mismatch.'}
+    $script:AtlasUsbVerifiedPackages[$PackageKey]=$true
+    $script:AtlasUsbVerifiedFiles[$PackageKey]=@(@{Path=$Destination;Sha256=$digest.ToLowerInvariant()})
+}
+
 function Get-AtlasLocalAccountPolicy {
     [CmdletBinding()]
     param()
@@ -6565,6 +6800,16 @@ namespace Atlas {
       } finally { if(p != IntPtr.Zero) NetApiBufferFree(p); }
     }
   }
+}
+
+function Get-AtlasPowerShellVersion {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Path)
+    $result=Invoke-AtlasNativeProcess -FilePath $Path -ArgumentList @('-NoLogo','-NoProfile','-Command','$PSVersionTable.PSVersion.ToString()') -TimeoutSeconds 15
+    if($result.State -ne 'Correct'){throw 'Installed PowerShell version could not be evaluated.'}
+    $text=([string]$result.Stdout).Trim()
+    if($text -notmatch '^\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?$'){throw 'Unexpected PowerShell version output.'}
+    return [version]($text -split '-',2)[0]
 }
 '@ -ErrorAction Stop
     }
@@ -6757,32 +7002,63 @@ function Invoke-AtlasNativeProcess {
     }
 }
 
+function Get-AtlasCopyInventory {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Source,[ValidateRange(0,1000)][int]$SampleSize=0,
+        [string[]]$ExcludeFiles=@(),[string[]]$ExcludeDirs=@(),[switch]$SkipCensus,[scriptblock]$FileAction)
+    $root=Get-Item -LiteralPath $Source -Force -ErrorAction Stop
+    $sourceRoot=if($root.PSIsContainer){$root.FullName}else{$root.DirectoryName}
+    Assert-AtlasPlainDirectory $sourceRoot
+    $sample=[Collections.Generic.SortedList[string,IO.FileInfo]]::new([StringComparer]::Ordinal)
+    $files=[long]0; $bytes=[long]0; $links=0; $errors=0; $excluded=0
+    $walk=[Collections.Generic.Stack[object]]::new()
+    if($SkipCensus){return [pscustomobject]@{Files=$null;Size=$null;SizeMB=$null;Sample=@();Complete=$false;Scope='Census skipped; size/count not evaluated';UnverifiedLinks=0;UnverifiedPaths=0;Excluded=0;SourceRoot=$sourceRoot}}
+    $item=$root
+    try {
+        while($item -or $walk.Count) {
+            if(-not $item) {
+                try {
+                    if($walk.Peek().MoveNext()){$item=$walk.Peek().Current}
+                    else {$e=$walk.Pop();if($e -is [IDisposable]){$e.Dispose()};continue}
+                } catch {$errors++;$e=$walk.Pop();if($e -is [IDisposable]){$e.Dispose()};continue}
+            }
+            $isDirectory=$item -is [IO.DirectoryInfo]
+            $patterns=if($isDirectory -and $item.FullName -ne $root.FullName){$ExcludeDirs}elseif(-not $isDirectory){$ExcludeFiles}else{@()}
+            $skip=$false
+            foreach($pattern in $patterns){if($item.Name -like $pattern){$skip=$true;break}}
+            if($skip){$excluded++;$item=$null;continue}
+            if($item.Attributes -band [IO.FileAttributes]::ReparsePoint){$links++;$item=$null;continue}
+            if($isDirectory) {
+                try {Assert-AtlasPlainDirectory $item.FullName;$walk.Push($item.EnumerateFileSystemInfos().GetEnumerator())}
+                catch {$errors++}
+            } else {
+                $files++;$bytes+=$item.Length
+                if($FileAction){& $FileAction $item | Out-Null}
+                if($SampleSize -gt 0) {
+                    if($sample.Count -lt $SampleSize){$sample.Add($item.FullName,$item)}
+                    elseif([StringComparer]::Ordinal.Compare($item.FullName,$sample.Keys[$sample.Count-1]) -lt 0){
+                        $sample.RemoveAt($sample.Count-1);$sample.Add($item.FullName,$item)
+                    }
+                }
+            }
+            $item=$null
+        }
+    } finally {while($walk.Count){$e=$walk.Pop();if($e -is [IDisposable]){$e.Dispose()}}}
+    $complete=($errors -eq 0 -and $links -eq 0)
+    [pscustomobject]@{Files=$files;Size=$bytes;SizeMB=[math]::Round($bytes/1MB,1);Sample=@($sample.Values);Complete=$complete;
+        Scope=$(if($complete){'Eligible plain files; hidden/system included; exclusions applied'}else{"Partial census: $errors unreadable path(s), $links link(s) not evaluated"});
+        UnverifiedLinks=$links;UnverifiedPaths=$errors;Excluded=$excluded;SourceRoot=$sourceRoot}
+}
+
 function Test-AtlasCopySample {
     [CmdletBinding()]
     param([string]$Source,[string]$Destination,[ValidateRange(1,1000)][int]$SampleSize=15,[string[]]$ExcludeFiles=@(),[string[]]$ExcludeDirs=@())
-    $sourceItem=Get-Item -LiteralPath $Source -Force -ErrorAction Stop
-    $sourceRoot=if($sourceItem.PSIsContainer){$sourceItem.FullName}else{$sourceItem.DirectoryName}
-    Assert-AtlasPlainDirectory $sourceRoot
-    $files=[Collections.Generic.List[IO.FileInfo]]::new(); $links=0
-    $pending=[Collections.Generic.Stack[IO.FileSystemInfo]]::new();$pending.Push($sourceItem)
-    while ($pending.Count) {
-        $item=$pending.Pop()
-        $isDirectory=$item -is [IO.DirectoryInfo]
-        $patterns=if($isDirectory -and $item.FullName -ne $sourceItem.FullName){$ExcludeDirs}elseif(-not $isDirectory){$ExcludeFiles}else{@()}
-        $excluded=$false
-        foreach($pattern in $patterns){if($item.Name -like $pattern){$excluded=$true;break}}
-        if($excluded){continue}
-        if($item.Attributes -band [IO.FileAttributes]::ReparsePoint){$links++;continue}
-        if($isDirectory){
-            Assert-AtlasPlainDirectory $item.FullName
-            foreach($child in @(Get-ChildItem -LiteralPath $item.FullName -Force -ErrorAction Stop)){$pending.Push($child)}
-        }else{$files.Add($item)}
-    }
-    if($files.Count -eq 0){return @{OK=$false;State='NotEvaluated';Coverage='No eligible plain source files';Checked=0;Passed=0;Failed=0;Missing=0;UnverifiedLinks=$links}}
-    $sample=@($files.ToArray() | Sort-Object FullName | Select-Object -First $SampleSize)
+    $inventory=Get-AtlasCopyInventory -Source $Source -SampleSize $SampleSize -ExcludeFiles $ExcludeFiles -ExcludeDirs $ExcludeDirs
+    $sample=@($inventory.Sample);$links=$inventory.UnverifiedLinks;$errors=$inventory.UnverifiedPaths
+    if(-not $sample.Count){return @{OK=$false;State='NotEvaluated';Coverage='No eligible plain source files';Checked=0;Passed=0;Failed=0;Missing=0;UnverifiedLinks=$links;UnverifiedPaths=$errors}}
     $passed=0;$failed=0;$missing=0
     foreach($file in $sample){
-        $relative=$file.FullName.Substring($sourceRoot.Length).TrimStart([char[]]'\/')
+        $relative=$file.FullName.Substring($inventory.SourceRoot.Length).TrimStart([char[]]'\/')
         $target=Join-Path $Destination $relative
         if(-not(Test-Path -LiteralPath $target -PathType Leaf)){$missing++;continue}
         try{
@@ -6790,7 +7066,49 @@ function Test-AtlasCopySample {
             if((Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256 -ErrorAction Stop).Hash -eq (Get-FileHash -LiteralPath $target -Algorithm SHA256 -ErrorAction Stop).Hash){$passed++}else{$failed++}
         }catch{$failed++}
     }
-    @{OK=($failed -eq 0 -and $missing -eq 0 -and $links -eq 0);State=$(if($failed -or $missing){'Failed'}elseif($links){'NotEvaluated'}else{'SampleVerified'});Coverage="SHA256 sample $($sample.Count)/$($files.Count) eligible plain files; $links links not evaluated; not full copy certification";Checked=$sample.Count;Passed=$passed;Failed=$failed;Missing=$missing;UnverifiedLinks=$links}
+    @{OK=($failed -eq 0 -and $missing -eq 0 -and $inventory.Complete);State=$(if($failed -or $missing){'Failed'}elseif(-not $inventory.Complete){'NotEvaluated'}else{'SampleVerified'});
+        Coverage="SHA256 sample $($sample.Count)/$($inventory.Files) eligible plain files (first ordinal paths); $links links and $errors unreadable paths not evaluated; not full copy certification";
+        Checked=$sample.Count;Passed=$passed;Failed=$failed;Missing=$missing;UnverifiedLinks=$links;UnverifiedPaths=$errors}
+}
+
+function Resolve-AtlasBackupDestination {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$DefaultDirectory,[string]$ExistingDirectory,[Parameter(Mandatory)][string[]]$Sources)
+    $target=$DefaultDirectory
+    if(-not [string]::IsNullOrWhiteSpace($ExistingDirectory)) {
+        $target=$ExistingDirectory.Trim().Trim('"')
+        if(-not (Test-Path -LiteralPath $target -PathType Container)){throw 'Select an existing backup directory, not its parent.'}
+    }
+    $target=$ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($target)
+    foreach($source in $Sources){Assert-AtlasCopyDestination -Source $source -Destination $target}
+    return $target
+}
+
+function Compare-AtlasCopyMetadata {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Source,[Parameter(Mandatory)][string]$Destination,[string[]]$ExcludeFiles=@(),[string[]]$ExcludeDirs=@())
+    Assert-AtlasCopyDestination -Source $Source -Destination $Destination
+    $sourceItem=Get-Item -LiteralPath $Source -Force -ErrorAction Stop
+    $comparisonRoot=if($sourceItem.PSIsContainer){$sourceItem.FullName}else{$sourceItem.DirectoryName}
+    $comparisonTarget=if($sourceItem.PSIsContainer -and $sourceItem.Name){Join-Path $Destination $sourceItem.Name}else{$Destination}
+    $counts=@{New=0;Modified=0;Equal=0;SizeTotal=[long]0;Errors=0}
+    $inspect={
+        param($file)
+        $relative=$file.FullName.Substring($comparisonRoot.Length).TrimStart([char[]]'\/')
+        $target=Join-Path $comparisonTarget $relative
+        try {
+            if(-not (Test-Path -LiteralPath $target -PathType Leaf)){$counts.New++;$counts.SizeTotal+=$file.Length}
+            else {
+                Assert-AtlasPlainFile $target
+                $destinationFile=Get-Item -LiteralPath $target -Force -ErrorAction Stop
+                if($destinationFile.Length -ne $file.Length -or $destinationFile.LastWriteTimeUtc -ne $file.LastWriteTimeUtc){$counts.Modified++;$counts.SizeTotal+=$file.Length}
+                else {$counts.Equal++}
+            }
+        } catch {$counts.Errors++}
+    }
+    $inventory=Get-AtlasCopyInventory -Source $Source -ExcludeFiles $ExcludeFiles -ExcludeDirs $ExcludeDirs -FileAction $inspect
+    [pscustomobject]@{New=$counts.New;Modified=$counts.Modified;Equal=$counts.Equal;SizeTotal=$counts.SizeTotal;Complete=($inventory.Complete -and $counts.Errors -eq 0);
+        Scope='Metadata candidates only; same size/date is not content integrity; native copy log is authoritative'}
 }
 
 function Remove-AtlasHostsAlias {

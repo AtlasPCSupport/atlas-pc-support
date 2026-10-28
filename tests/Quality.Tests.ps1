@@ -3,6 +3,152 @@ BeforeAll {
     . (Join-Path (Split-Path -Parent $PSScriptRoot) 'src/lib/ToolKit.ps1')
 }
 
+Describe 'Audit phase 4: bounded copy census and destination continuity' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $script:RepoRoot 'src/lib/Release.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Reports.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Operations.ps1')
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-FastCopy.ps1' 'Test-CopyIntegrity')
+        . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-FastCopy.ps1' 'Start-FastCopy')
+        function _Write-AtlasStepCompat {param($Message,$FallbackColor)}
+    }
+    It 'keeps only the requested ordinal sample while counting every eligible file' {
+        $source=Join-Path $TestDrive 'many';New-Item -ItemType Directory -Path $source|Out-Null
+        foreach($i in 0..1001){[IO.File]::WriteAllText((Join-Path $source ('f{0:d4}.txt' -f $i)),'fixture')}
+        $r=Get-AtlasCopyInventory -Source $source -SampleSize 5
+        $r.Files|Should -Be 1002;$r.Sample.Count|Should -Be 5;$r.Sample[0].Name|Should -Be 'f0000.txt'
+        $r.Sample[4].Name|Should -Be 'f0004.txt';$r.Complete|Should -BeTrue
+    }
+    It 'includes hidden files, applies name exclusions and can skip the census explicitly' {
+        $source=Join-Path $TestDrive 'hidden';New-Item -ItemType Directory -Path (Join-Path $source 'excluded') -Force|Out-Null
+        [IO.File]::WriteAllText((Join-Path $source '.hidden.txt'),'fixture')
+        [IO.File]::WriteAllText((Join-Path $source 'skip.tmp'),'fixture')
+        [IO.File]::WriteAllText((Join-Path $source 'excluded/skip.txt'),'fixture')
+        if($env:OS -eq 'Windows_NT'){[IO.File]::SetAttributes((Join-Path $source '.hidden.txt'),[IO.FileAttributes]::Hidden)}
+        $r=Get-AtlasCopyInventory -Source $source -ExcludeFiles '*.tmp' -ExcludeDirs excluded -SampleSize 5
+        $r.Files|Should -Be 1;$r.Sample[0].Name|Should -Be '.hidden.txt'
+        $r=Get-AtlasCopyInventory -Source $source -SkipCensus -FileAction {throw 'Scan must be skipped'}
+        $r.Files|Should -BeNullOrEmpty;$r.Size|Should -BeNullOrEmpty;$r.Complete|Should -BeFalse
+    }
+    It 'marks an unreadable subtree as incomplete instead of healthy empty data' {
+        $source=Join-Path $TestDrive 'denied';$child=Join-Path $source 'blocked'
+        New-Item -ItemType Directory -Path $child -Force|Out-Null
+        Mock Assert-AtlasPlainDirectory {if($Path -eq $child){throw 'Access denied fixture'}}
+        $r=Get-AtlasCopyInventory -Source $source
+        $r.Complete|Should -BeFalse;$r.UnverifiedPaths|Should -Be 1
+    }
+    It 'continues the chosen existing backup rather than appending another date' {
+        $source=Join-Path $TestDrive 'source';$existing=Join-Path $TestDrive 'Backup_2026-10-20'
+        New-Item -ItemType Directory -Path $source,$existing|Out-Null
+        Resolve-AtlasBackupDestination -DefaultDirectory (Join-Path $TestDrive 'Backup_2026-10-27') -ExistingDirectory $existing -Sources @($source)|Should -Be $existing
+        {Resolve-AtlasBackupDestination -DefaultDirectory $existing -ExistingDirectory $source -Sources @($source)}|Should -Throw '*destination*'
+    }
+    It 'counts changed size/date as candidates, including an older source, without equating metadata to hashes' {
+        $source=Join-Path $TestDrive 'metadata';$dest=Join-Path $TestDrive 'backup'
+        New-Item -ItemType Directory -Path $source,(Join-Path $dest 'metadata') -Force|Out-Null
+        [IO.File]::WriteAllText((Join-Path $source 'file.txt'),'source')
+        [IO.File]::WriteAllText((Join-Path $dest 'metadata/file.txt'),'different')
+        [IO.File]::SetLastWriteTimeUtc((Join-Path $source 'file.txt'),[datetime]'2020-01-01')
+        $r=Compare-AtlasCopyMetadata -Source $source -Destination $dest
+        $r.Modified|Should -Be 1;$r.Equal|Should -Be 0;$r.Scope|Should -Match 'not content integrity'
+    }
+    It 'verifies the actual FastCopy folder layout rather than the destination parent' {
+        $source=Join-Path $TestDrive 'FastSource';$dest=Join-Path $TestDrive 'FastDestination'
+        New-Item -ItemType Directory -Path $source,(Join-Path $dest 'FastSource') -Force|Out-Null
+        [IO.File]::WriteAllText((Join-Path $source 'file.txt'),'fixture')
+        Copy-Item -LiteralPath (Join-Path $source 'file.txt') -Destination (Join-Path $dest 'FastSource/file.txt')
+        (Test-CopyIntegrity -Origen $source -Destino $dest).OK|Should -BeTrue
+    }
+    It 'rejects an invalid second FastCopy source before creating any destination or launching a process' {
+        $source=Join-Path $TestDrive 'safe';New-Item -ItemType Directory -Path $source|Out-Null
+        Mock Write-Host {};Mock New-Item {throw 'No write before validation'};Mock Invoke-AtlasNativeProcess {throw 'No process before validation'}
+        {Start-FastCopy -Origins @($source,$TestDrive) -Destino (Join-Path $TestDrive 'child') -Mode INCREMENTAL}|Should -Throw '*destination*'
+        Should -Invoke New-Item -Times 0 -Exactly
+        Should -Invoke Invoke-AtlasNativeProcess -Times 0 -Exactly
+    }
+}
+
+Describe 'Audit phase 4: one dependency executable and complete resources' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        function Write-AtlasLog {param($Message,$Tool,$Level)}
+        function Expand-AtlasPath {param($Path)$Path}
+        foreach($name in @('Resolve-AtlasDependency','Resolve-SymlinkPath','Get-AtlasDependencyCandidate')){. (Get-TestFunction $script:RepoRoot 'src/lib/Dependencies.ps1' $name)}
+    }
+    It 'selects one real application when PATH contains multiple matches' {
+        $first=Join-Path $TestDrive 'first.exe';$second=Join-Path $TestDrive 'second.exe'
+        [IO.File]::WriteAllText($first,'fixture');[IO.File]::WriteAllText($second,'fixture')
+        $script:AtlasDepsRegistry=@{Fixture=@{SearchPaths=@();ExecutableName='fixture.exe'}}
+        Mock Get-Command {@([pscustomobject]@{Source=$first},[pscustomobject]@{Source=$second})}
+        Resolve-AtlasDependency -Name Fixture|Should -Be $first
+        Should -Invoke Get-Command -Times 1 -Exactly -ParameterFilter {$CommandType -eq 'Application'}
+    }
+    It 'does not accept CrystalDiskInfo with a missing or empty resource directory' {
+        $exe=Join-Path $TestDrive 'DiskInfo64.exe';[IO.File]::WriteAllText($exe,'fixture')
+        Get-AtlasDependencyCandidate -Name CrystalDiskInfo -Path $exe|Should -BeNullOrEmpty
+        New-Item -ItemType Directory -Path (Join-Path $TestDrive 'CdiResource')|Out-Null
+        Get-AtlasDependencyCandidate -Name CrystalDiskInfo -Path $exe|Should -BeNullOrEmpty
+        [IO.File]::WriteAllText((Join-Path $TestDrive 'CdiResource/res.dat'),'resource')
+        Get-AtlasDependencyCandidate -Name CrystalDiskInfo -Path $exe|Should -Be $exe
+    }
+}
+
+Describe 'Audit phase 4: per-package USB evidence and no retry' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $script:RepoRoot 'src/lib/Release.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Reports.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Operations.ps1')
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        foreach($name in @('Get-UsbDependencyRows','Register-UsbInstallerFiles','Download-FastCopy')){. (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-PrepararUSB.ps1' $name)}
+        function Write-Centered {param($Text,$Color)}
+    }
+    BeforeEach {
+        $script:AtlasUsbVerifiedPackages=@{};$script:AtlasUsbVerifiedFiles=@{};$script:AtlasUsbAttemptFailures=@{}
+        $script:PS7_VERSION='7.6.9';$script:FASTCOPY_URL='https://example.invalid/fixture'
+        $script:Usb=Join-Path $TestDrive ([guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Path $script:Usb|Out-Null
+    }
+    It 'does not treat GPU-Z alone as a ready GPU group or an unqualified executable as verified' {
+        $folder=Join-Path $script:Usb 'deps/GPUCheck/tools';New-Item -ItemType Directory -Path $folder -Force|Out-Null
+        [IO.File]::WriteAllText((Join-Path $folder 'GPU-Z.exe'),'fixture')
+        $rows=@(Get-UsbDependencyRows -Root $script:Usb)
+        ($rows|Where-Object Key -eq 'GPU/GPUZ').State|Should -Be PresentNotEvaluated
+        @($rows|Where-Object {$_.Group -eq 'GPU' -and $_.State -notin @('CopiedAndHashVerified','RecordedFilesVerified')}).Count|Should -Be 3
+    }
+    It 'detects a missing Crystal resource independently of the executable' {
+        $folder=Join-Path $script:Usb 'deps/DiagnosticoMaster/tools/CrystalDiskInfo';New-Item -ItemType Directory -Path $folder -Force|Out-Null
+        [IO.File]::WriteAllText((Join-Path $folder 'DiskInfo64.exe'),'fixture')
+        (Get-UsbDependencyRows -Root $script:Usb|Where-Object Key -eq 'Diag/CrystalDiskInfo').State|Should -Be MissingOrIncomplete
+    }
+    It 'rechecks every recorded resource after transport and detects a same-length change' {
+        $folder=Join-Path $script:Usb 'deps/GPUCheck/tools/FurMark2_x64';New-Item -ItemType Directory -Path $folder -Force|Out-Null
+        foreach($name in @('furmark.exe','resource.dat')){[IO.File]::WriteAllText((Join-Path $folder $name),'fixture')}
+        Register-UsbInstallerFiles -Key 'GPU/FurMark2' -Directory $folder
+        $rows=@(Get-UsbDependencyRows -Root $script:Usb)
+        ($rows|Where-Object Key -eq 'GPU/FurMark2').State|Should -Be CopiedAndHashVerified
+        @{SchemaVersion=1;Packages=$rows}|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $script:Usb 'usb-dependency-status.json') -Encoding UTF8
+        $script:AtlasUsbVerifiedPackages=@{};$script:AtlasUsbVerifiedFiles=@{}
+        (Get-UsbDependencyRows -Root $script:Usb|Where-Object Key -eq 'GPU/FurMark2').State|Should -Be RecordedFilesVerified
+        [IO.File]::WriteAllText((Join-Path $folder 'resource.dat'),'changed')
+        (Get-UsbDependencyRows -Root $script:Usb|Where-Object Key -eq 'GPU/FurMark2').State|Should -Be ChangedOrNotEvaluated
+    }
+    It 'does not execute another installer after FastCopy extraction times out' {
+        Mock Invoke-WebRequest {[IO.File]::WriteAllText($OutFile,'fixture installer')}
+        Mock Get-AtlasDependencyDefinition {[pscustomobject]@{DownloadSha256=('0'*64)}}
+        Mock Assert-AtlasInstaller {}
+        Mock Invoke-AtlasNativeProcess {[pscustomobject]@{State='TimedOut';ExitCode=0}}
+        Mock Register-UsbInstallerFiles {throw 'No verified extraction'}
+        Download-FastCopy -AppsDir (Join-Path $script:Usb 'apps')|Should -BeFalse
+        Should -Invoke Invoke-AtlasNativeProcess -Times 1 -Exactly
+        Should -Invoke Register-UsbInstallerFiles -Times 0 -Exactly
+        $script:AtlasUsbAttemptFailures.FastCopy|Should -BeTrue
+    }
+}
+
 Describe 'Audit phase 3: verified local policies and reversible UAC' {
     BeforeAll {
         $script:RepoRoot=Split-Path -Parent $PSScriptRoot

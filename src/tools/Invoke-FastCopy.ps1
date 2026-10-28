@@ -119,11 +119,8 @@ function Format-Duration {
 }
 
 function Get-FolderStats {
-    param([string]$Path)
-    $items = Get-ChildItem -Path $Path -Recurse -File -ErrorAction SilentlyContinue
-    $totalSize = ($items | Measure-Object Length -Sum -ErrorAction SilentlyContinue).Sum
-    if (-not $totalSize) { $totalSize = 0 }
-    return @{ Files = $items.Count; Size = $totalSize; SizeMB = [math]::Round($totalSize / 1MB, 1) }
+    param([string]$Path,[switch]$SkipCensus,[string[]]$ExcludeFiles=@(),[string[]]$ExcludeDirs=@())
+    Get-AtlasCopyInventory -Source $Path -SkipCensus:$SkipCensus -ExcludeFiles $ExcludeFiles -ExcludeDirs $ExcludeDirs
 }
 
 function Detect-DriveType {
@@ -343,63 +340,16 @@ function Get-MultipleOrigins {
 # ==================== COMPARAR ANTES DE COPIAR ====================
 
 function Compare-BeforeCopy {
-    param([string[]]$Origins, [string]$Destino)
-    
-    Write-Host ""
-    _Write-AtlasStepCompat -Message "ANALIZANDO DIFERENCIAS..." -FallbackColor Yellow
-    Write-Host ""
-    
-    $totalNew = 0; $totalModified = 0; $totalEqual = 0; $totalSizeNew = 0; $totalSizeMod = 0
-    
-    foreach ($origen in $Origins) {
-        Assert-AtlasCopyDestination -Source $origen -Destination $Destino
-        $srcName = Split-Path $origen -Leaf
-        $isFile = -not (Test-Path $origen -PathType Container)
-        
-        if ($isFile) {
-            $srcFile = Get-Item $origen
-            $dstFile = Join-Path $Destino $srcFile.Name
-            if (-not (Test-Path $dstFile)) {
-                $totalNew++; $totalSizeNew += $srcFile.Length
-            } elseif ($srcFile.LastWriteTime -gt (Get-Item $dstFile).LastWriteTime) {
-                $totalModified++; $totalSizeMod += $srcFile.Length
-            } else {
-                $totalEqual++
-            }
-        } else {
-            $dstSubFolder = Join-Path $Destino $srcName
-            $srcFiles = Get-ChildItem -Path $origen -Recurse -File -ErrorAction SilentlyContinue
-            
-            foreach ($sf in $srcFiles) {
-                $relPath = $sf.FullName.Substring($origen.Length).TrimStart('\')
-                $df = Join-Path $dstSubFolder $relPath
-                
-                if (-not (Test-Path $df)) {
-                    $totalNew++; $totalSizeNew += $sf.Length
-                } elseif ($sf.LastWriteTime -gt (Get-Item $df -ErrorAction SilentlyContinue).LastWriteTime) {
-                    $totalModified++; $totalSizeMod += $sf.Length
-                } else {
-                    $totalEqual++
-                }
-            }
-        }
+    param([string[]]$Origins,[string]$Destino,[string[]]$ExcludeFiles=@(),[string[]]$ExcludeDirs=@())
+    $result=@{New=0;Modified=0;Equal=0;SizeTotal=[long]0;Complete=$true}
+    foreach($source in $Origins) {
+        $row=Compare-AtlasCopyMetadata -Source $source -Destination $Destino -ExcludeFiles $ExcludeFiles -ExcludeDirs $ExcludeDirs
+        foreach($name in @('New','Modified','Equal','SizeTotal')){$result[$name]+=$row.$name}
+        if(-not $row.Complete){$result.Complete=$false}
     }
-    
-    $totalTransfer = $totalSizeNew + $totalSizeMod
-    
-    Write-Host "    NUEVOS:      ${totalNew} archivos ($(Format-Size $totalSizeNew))" -ForegroundColor Green
-    Write-Host "    MODIFICADOS: ${totalModified} archivos ($(Format-Size $totalSizeMod))" -ForegroundColor Yellow
-    Write-Host "    EQUAL:       ${totalEqual} files (unchanged)" -ForegroundColor DarkGray
-    Write-Host ""
-    Write-Host "    TRANSFERIR:  $($totalNew + $totalModified) archivos ($(Format-Size $totalTransfer))" -ForegroundColor Cyan
-    
-    return @{
-        New = $totalNew; Modified = $totalModified; Equal = $totalEqual
-        SizeNew = $totalSizeNew; SizeModified = $totalSizeMod; SizeTotal = $totalTransfer
-    }
+    Write-Host 'Metadata candidates only; equal size/date does not verify content / Solo candidatos por metadatos.'
+    return $result
 }
-
-# ==================== EXCLUSIONES ====================
 
 function Get-Exclusions {
     Write-Host ""
@@ -550,7 +500,9 @@ function Export-CopyReport {
 
 function Test-CopyIntegrity {
     param([string]$Origen,[string]$Destino,[int]$SampleSize=15,[string[]]$ExcludeFiles=@(),[string[]]$ExcludeDirs=@())
-    $result=Test-AtlasCopySample -Source $Origen -Destination $Destino -SampleSize $SampleSize -ExcludeFiles $ExcludeFiles -ExcludeDirs $ExcludeDirs
+    $item=Get-Item -LiteralPath $Origen -Force -ErrorAction Stop
+    $sampleDestination=if($item.PSIsContainer -and $item.Name){Join-Path $Destino $item.Name}else{$Destino}
+    $result=Test-AtlasCopySample -Source $Origen -Destination $sampleDestination -SampleSize $SampleSize -ExcludeFiles $ExcludeFiles -ExcludeDirs $ExcludeDirs
     Write-Host $result.Coverage
     Write-Host "Checked=$($result.Checked); passed=$($result.Passed); failed=$($result.Failed); missing=$($result.Missing)"
     return $result
@@ -570,6 +522,7 @@ function Start-FastCopy {
     Write-Host ""
 
     if ($Mode -in @('MOVER','SINCRONIZAR')) { throw 'Destructive move/sync requires a separately verified backup and preview; use copy-only in this release.' }
+    foreach($source in $Origins){Assert-AtlasCopyDestination -Source $source -Destination $Destino}
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
     $allResults = @()
     $allOK = $true
@@ -766,9 +719,9 @@ do {
     foreach ($o in $origenes) {
         $oName = Split-Path $o -Leaf
         if (Test-Path $o -PathType Container) {
-            $stats = Get-FolderStats $o
+            $stats = Get-FolderStats $o -SkipCensus
             $totalSize += $stats.Size; $totalFiles += $stats.Files
-            Write-Host "      [OK] ${oName} ($($stats.Files) archivos, $(Format-Size $stats.Size))" -ForegroundColor Green
+            Write-Host "      ${oName}: census deferred / Censo opcional antes de copiar." -ForegroundColor Gray
         } else {
             $fi = Get-Item $o
             $totalSize += $fi.Length; $totalFiles++
@@ -777,7 +730,7 @@ do {
     }
     $srcStats = @{ Files = $totalFiles; Size = $totalSize; SizeMB = [math]::Round($totalSize / 1MB, 1) }
     Write-Host ""
-    Write-Host "      TOTAL: ${totalFiles} archivos | $(Format-Size $totalSize)" -ForegroundColor White
+    Write-Host '      Total count/size not evaluated yet / Total pendiente de censo opcional.' -ForegroundColor Gray
 
     # =============================================
     # DESTINO
@@ -860,6 +813,13 @@ do {
         default { "COMPLETA" }
     }
     if ($modo -eq "SKIP") { continue }
+    $existingBackup=''
+    if($modo -eq 'INCREMENTAL') {
+        Write-Host 'Incremental applies only to the exact destination. A new dated folder starts another backup / Una carpeta nueva inicia otro respaldo.'
+        $existingBackup=Read-Host 'Existing backup directory to continue (ENTER = dated default) / Carpeta existente'
+    }
+    try {$rutaFinal=Resolve-AtlasBackupDestination -DefaultDirectory $rutaFinal -ExistingDirectory $existingBackup -Sources $origenes}
+    catch {Write-Host $_.Exception.Message -ForegroundColor Red;continue}
 
     # =============================================
     # EXCLUSIONES
@@ -874,13 +834,20 @@ do {
     # =============================================
     # COMPARAR (only incremental o si hay destino previo)
     # =============================================
+    $countSource=(Read-Host 'Optional census may take time: type COUNT, or ENTER to skip / Escribe COUNT para contar') -ceq 'COUNT'
+    $totalSize=[long]0;$totalFiles=[long]0;$censusComplete=$true
+    foreach($source in $origenes) {
+        $inventory=Get-AtlasCopyInventory -Source $source -SkipCensus:(-not $countSource) -ExcludeFiles $exclusions.Files -ExcludeDirs $exclusions.Dirs
+        $totalSize+=$inventory.Size;$totalFiles+=$inventory.Files
+        if(-not $inventory.Complete){$censusComplete=$false}
+    }
     $comparison = $null
     if (Test-Path $rutaFinal) {
         Write-Host ""
         Write-Host "      Destino ya existe. Analizar diferencias? [Y/N]" -ForegroundColor Yellow
         $compSel = Read-Host "      >"
         if ($compSel -match '^[SsYy]$') {
-            $comparison = Compare-BeforeCopy -Origins $origenes -Destino $rutaFinal
+            $comparison = Compare-BeforeCopy -Origins $origenes -Destino $rutaFinal -ExcludeFiles $exclusions.Files -ExcludeDirs $exclusions.Dirs
         }
     }
 
@@ -899,7 +866,8 @@ do {
     foreach ($o in $origenes) {
         Write-Host "               $(Split-Path $o -Leaf)" -ForegroundColor White
     }
-    Write-Host "    TOTAL:     ${totalFiles} archivos | $(Format-Size $totalSize)" -ForegroundColor Gray
+    if($censusComplete){Write-Host "    TOTAL:     ${totalFiles} archivos | $(Format-Size $totalSize)" -ForegroundColor Gray}
+    else {Write-Host '    TOTAL: N/D; census skipped or incomplete / Censo omitido o incompleto.' -ForegroundColor Yellow}
     Write-Host ""
     Write-Host "    DESTINO:   ${rutaFinal}" -ForegroundColor White
     Write-Host "    DISCO:     $($driveInfo.Desc)" -ForegroundColor $driveInfo.Color
@@ -909,13 +877,13 @@ do {
 
     if ($comparison) {
         Write-Host ""
-        Write-Host "    ANALISIS:  $($comparison.New) nuevos, $($comparison.Modified) modificados, $($comparison.Equal) iguales" -ForegroundColor Cyan
-        Write-Host "    TRANSFERIR: $(Format-Size $comparison.SizeTotal)" -ForegroundColor Cyan
+        Write-Host "    METADATOS: $($comparison.New) nuevos, $($comparison.Modified) distintos, $($comparison.Equal) mismo tamano/fecha" -ForegroundColor Cyan
+        Write-Host "    CANDIDATOS: $(Format-Size $comparison.SizeTotal); censo completo=$($comparison.Complete); ver log nativo" -ForegroundColor Cyan
     }
 
     $avgSpeed = switch ($driveInfo.Type) { "USB" { 30 } "HDD" { 100 } "SSD" { 400 } default { 50 } }
     $estSize = if ($comparison) { $comparison.SizeTotal } else { $totalSize }
-    if ($estSize -gt 0) {
+    if (($censusComplete -or ($comparison -and $comparison.Complete)) -and $estSize -gt 0) {
         $etaSec = ($estSize / 1MB) / $avgSpeed
         $etaSpan = [TimeSpan]::FromSeconds($etaSec)
         Write-Host "    ETA:       ~$(Format-Duration $etaSpan)" -ForegroundColor DarkGray
