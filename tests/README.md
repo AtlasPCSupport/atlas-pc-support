@@ -17,8 +17,8 @@ Necesita **Pester 5.8.0** y **PSScriptAnalyzer 1.25.0** ya disponibles para el r
 Ejecutar desde Windows PowerShell 5.1 x64 o PowerShell 7 en Windows, en STA:
 
 ```powershell
-rtk proxy pwsh -NoProfile -STA -File ./tests/Invoke-LocalChecks.ps1
-rtk proxy powershell -NoProfile -STA -ExecutionPolicy RemoteSigned -File ./tests/Invoke-LocalChecks.ps1
+pwsh -NoProfile -STA -File ./tests/Invoke-LocalChecks.ps1
+powershell -NoProfile -STA -ExecutionPolicy RemoteSigned -File ./tests/Invoke-LocalChecks.ps1
 ```
 
 El estado de Defender y la política permanente de ejecución no se modifican.
@@ -31,11 +31,16 @@ artefactos de distribución originales conservaron su SHA-256. Guarda `summary.j
 `analyzer.json` y `pester.xml` en la carpeta temporal que imprime.
 
 En Windows crea la ventana WPF y todas las tarjetas sin mostrarlas, iniciar timers
-ni conectar botones. En Linux esas dos pruebas se omiten explícitamente. Esto no
+ni conectar botones. En Linux los casos que requieren Windows se omiten explícitamente. Esto no
 valida la experiencia visual ni equivale a probar Windows 10 en una VM.
 Las fuentes Unicode se leen como UTF-8 y se cargan desde copias con BOM en TestDrive
 para 5.1; no se altera el encoding de los originales. Esta prueba no certifica la
 invocación directa de fuentes sin BOM ni la descarga del bootstrap.
+
+`Language.Tests.ps1` comprueba el guardado de idioma sobre carpetas ficticias:
+preserva JSON inválido y valores anidados, distingue errores de escritura y
+ejercita el handler real sustituyendo únicamente el diálogo. No modifica las
+preferencias del perfil del operador. Está incluido en la suite local y CI.
 
 `Accounts.Tests.ps1` es parte de la comprobación obligatoria y del CI. Cubre
 retención de administradores habilitados, identidad por SID, creación y asignación

@@ -58,6 +58,7 @@ Invoke-CheckScript -Path (Join-Path $PSScriptRoot 'Update-ToolDocumentation.ps1'
 
 $testPaths = @(
     (Join-Path $PSScriptRoot 'Lib.Tests.ps1'),
+    (Join-Path $PSScriptRoot 'Language.Tests.ps1'),
     (Join-Path $PSScriptRoot 'Platform.Tests.ps1'),
     (Join-Path $PSScriptRoot 'Accounts.Tests.ps1'),
     (Join-Path $PSScriptRoot 'Installers.Tests.ps1'),

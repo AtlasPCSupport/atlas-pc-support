@@ -39,6 +39,7 @@ $script:AtlasStringsDict = @{
         'header.languageTooltip'  = 'Cambiar idioma del panel'
         'header.restartTooltip'   = 'Reiniciar el panel (aplica el cambio de idioma)'
         'language.restartRequired'= 'Reinicia el panel para aplicar el nuevo idioma.'
+        'language.saveFailed'     = 'No se pudo guardar el idioma. Se conserva la configuración anterior; no hace falta reiniciar.'
         'restart.instructions'    = "El panel se cerrará ahora.{NEWLINE}{NEWLINE}Para reabrirlo, vuelve a ejecutar:{NEWLINE}  irm ""https://toolspanel.atlaspcsupport.com"" | iex"
         'dash.cpu'                = 'CPU'
         'dash.ram'                = 'RAM'
@@ -104,6 +105,7 @@ $script:AtlasStringsDict = @{
         'header.languageTooltip'  = 'Change panel language'
         'header.restartTooltip'   = 'Restart the panel (apply language change)'
         'language.restartRequired'= 'Restart the panel to apply the new language.'
+        'language.saveFailed'     = 'Could not save the language. The previous configuration is preserved; no restart is needed.'
         'restart.instructions'    = "The panel will now close.{NEWLINE}{NEWLINE}To reopen it, run:{NEWLINE}  irm ""https://toolspanel.atlaspcsupport.com"" | iex"
         'dash.cpu'                = 'CPU'
         'dash.ram'                = 'RAM'
@@ -169,6 +171,7 @@ $script:AtlasStringsDict = @{
         'header.languageTooltip'  = 'Schimbă limba panoului'
         'header.restartTooltip'   = 'Repornește panoul (aplică schimbarea de limbă)'
         'language.restartRequired'= 'Repornește panoul pentru a aplica noua limbă.'
+        'language.saveFailed'     = 'Limba nu a putut fi salvată. Configurația anterioară se păstrează; nu este necesară repornirea.'
         'restart.instructions'    = "Panoul se va închide acum.{NEWLINE}{NEWLINE}Pentru a-l redeschide, rulează:{NEWLINE}  irm ""https://toolspanel.atlaspcsupport.com"" | iex"
         'dash.cpu'                = 'CPU'
         'dash.ram'                = 'RAM'
@@ -234,6 +237,7 @@ $script:AtlasStringsDict = @{
         'header.languageTooltip'  = 'Mudar idioma do painel'
         'header.restartTooltip'   = 'Reiniciar o painel (aplicar mudança de idioma)'
         'language.restartRequired'= 'Reinicia o painel para aplicar o novo idioma.'
+        'language.saveFailed'     = 'Não foi possível guardar o idioma. A configuração anterior é preservada; não é necessário reiniciar.'
         'restart.instructions'    = "O painel irá fechar agora.{NEWLINE}{NEWLINE}Para reabrir, executa:{NEWLINE}  irm ""https://toolspanel.atlaspcsupport.com"" | iex"
         'dash.cpu'                = 'CPU'
         'dash.ram'                = 'RAM'
@@ -299,6 +303,7 @@ $script:AtlasStringsDict = @{
         'header.languageTooltip'  = 'Changer la langue du panneau'
         'header.restartTooltip'   = 'Redémarrer le panneau (appliquer le changement de langue)'
         'language.restartRequired'= 'Redémarre le panneau pour appliquer la nouvelle langue.'
+        'language.saveFailed'     = "Impossible d'enregistrer la langue. La configuration précédente est conservée ; aucun redémarrage nécessaire."
         'restart.instructions'    = "Le panneau va se fermer maintenant.{NEWLINE}{NEWLINE}Pour le rouvrir, exécute :{NEWLINE}  irm ""https://toolspanel.atlaspcsupport.com"" | iex"
         'dash.cpu'                = 'CPU'
         'dash.ram'                = 'RAM'
@@ -364,6 +369,7 @@ $script:AtlasStringsDict = @{
         'header.languageTooltip'  = 'Panel-Sprache ändern'
         'header.restartTooltip'   = 'Panel neu starten (Sprache anwenden)'
         'language.restartRequired'= 'Starte das Panel neu, um die neue Sprache anzuwenden.'
+        'language.saveFailed'     = 'Die Sprache konnte nicht gespeichert werden. Die bisherige Konfiguration bleibt erhalten; kein Neustart erforderlich.'
         'restart.instructions'    = "Das Panel wird jetzt geschlossen.{NEWLINE}{NEWLINE}Zum erneuten Öffnen ausführen:{NEWLINE}  irm ""https://toolspanel.atlaspcsupport.com"" | iex"
         'dash.cpu'                = 'CPU'
         'dash.ram'                = 'RAM'
@@ -429,6 +435,7 @@ $script:AtlasStringsDict = @{
         'header.languageTooltip'  = 'Cambia lingua del pannello'
         'header.restartTooltip'   = 'Riavviare il pannello (applicare il cambio lingua)'
         'language.restartRequired'= 'Riavvia il pannello per applicare la nuova lingua.'
+        'language.saveFailed'     = 'Impossibile salvare la lingua. La configurazione precedente viene conservata; non occorre riavviare.'
         'restart.instructions'    = "Il pannello si chiuderà ora.{NEWLINE}{NEWLINE}Per riaprirlo, esegui:{NEWLINE}  irm ""https://toolspanel.atlaspcsupport.com"" | iex"
         'dash.cpu'                = 'CPU'
         'dash.ram'                = 'RAM'
@@ -542,11 +549,7 @@ function Get-AtlasLanguageName {
 
 # ----- Persistencia de preferencia de idioma -----
 function _Get-AtlasConfigPath {
-    $dir = Join-Path $env:LOCALAPPDATA 'AtlasPC'
-    if (-not (Test-Path -LiteralPath $dir)) {
-        try { New-Item -ItemType Directory -Path $dir -Force | Out-Null } catch {}
-    }
-    return (Join-Path $dir 'config.json')
+    return (Join-Path (Join-Path $env:LOCALAPPDATA 'AtlasPC') 'config.json')
 }
 
 function Get-AtlasLanguagePref {
@@ -565,22 +568,29 @@ function Get-AtlasLanguagePref {
 function Set-AtlasLanguagePref {
     [CmdletBinding()]
     param([Parameter(Mandatory)][string]$Language)
+    $temporary = $null
     try {
+        if (-not $script:AtlasStringsDict.ContainsKey($Language)) { return $false }
         $cfgPath = _Get-AtlasConfigPath
         $obj = [ordered]@{}
-        if (Test-Path -LiteralPath $cfgPath) {
-            try {
-                $existing = Get-Content -LiteralPath $cfgPath -Raw -Encoding UTF8 | ConvertFrom-Json -ErrorAction Stop
-                if ($existing) {
-                    foreach ($p in $existing.PSObject.Properties) { $obj[$p.Name] = $p.Value }
-                }
-            } catch {}
+        if (Test-Path -LiteralPath $cfgPath -ErrorAction Stop) {
+            $raw = Get-Content -LiteralPath $cfgPath -Raw -Encoding UTF8 -ErrorAction Stop
+            if ($raw -notmatch '^\s*\{') { throw 'Configuration must be a JSON object.' }
+            $existing = ConvertFrom-Json -InputObject $raw -ErrorAction Stop
+            foreach ($p in $existing.PSObject.Properties) { $obj[$p.Name] = $p.Value }
         }
         $obj['language'] = $Language
-        $json = $obj | ConvertTo-Json -Depth 5
-        Set-Content -LiteralPath $cfgPath -Value $json -Encoding UTF8
+        $json = $obj | ConvertTo-Json -Depth 100 -WarningAction Stop
+        New-Item -ItemType Directory -Path (Split-Path -Parent $cfgPath) -Force -ErrorAction Stop | Out-Null
+        $temporary = $cfgPath + '.' + [guid]::NewGuid().ToString('N') + '.tmp'
+        [IO.File]::WriteAllText($temporary, $json, [Text.UTF8Encoding]::new($false))
+        if ([IO.File]::Exists($cfgPath)) { [IO.File]::Replace($temporary, $cfgPath, [System.Management.Automation.Language.NullString]::Value) }
+        else { [IO.File]::Move($temporary, $cfgPath) }
         return $true
     } catch {
+        Write-Verbose ('Language preference could not be saved: ' + $_.Exception.Message)
         return $false
+    } finally {
+        if ($temporary -and (Test-Path -LiteralPath $temporary)) { Remove-Item -LiteralPath $temporary -Force -ErrorAction SilentlyContinue }
     }
 }
