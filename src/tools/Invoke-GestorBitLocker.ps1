@@ -10,11 +10,12 @@ function Invoke-GestorBitLocker {
         [ValidateSet("Extract","Status","")]
         [string]$Action = "",
         [string]$Output = "",
-        [string]$MountPoint = ""
+        [string]$MountPoint = "",
+        [switch]$Reveal
     )
 # =======================================================
 # Gestor de BitLocker v3 - Atlas PC Support
-# TPM + Progreso + Backup USB + QR + Health Check + Log
+# TPM + Progreso + Backup elegido + tarjeta imprimible + Health Check + Log
 # AD/Azure backup + CLI mode + Alerta disks sin proteger
 # =======================================================
 
@@ -38,7 +39,7 @@ function Write-Log {
     $user = "$env:USERDOMAIN\$env:USERNAME"
     $pc = $env:COMPUTERNAME
     $entry = "${timestamp} | ${Level} | ${pc} | ${user} | ${Message}"
-    try { $entry | Out-File -FilePath $script:logFile -Append -Encoding UTF8 } catch {}
+    try { $entry | Out-File -FilePath $logFile -Append -Encoding UTF8 -ErrorAction Stop } catch {Write-Warning 'BitLocker operation log could not be written; no password values were logged.'}
 }
 
 function Escribir-Centrado {
@@ -79,13 +80,13 @@ function Wait-AtlasReturnCompat {
 
 function Show-DiskTable {
     param([switch]$OnlyEncrypted, [switch]$Silent)
-    
+
     $volumes = Get-BitLockerVolume -ErrorAction SilentlyContinue
     if (-not $volumes) {
         if (-not $Silent) { Write-Host "    Could not access BitLocker." -ForegroundColor Red }
         return $null
     }
-    
+
     if ($OnlyEncrypted) {
         $volumes = $volumes | Where-Object { $_.VolumeStatus -ne 'FullyDecrypted' }
         if (-not $volumes) {
@@ -93,19 +94,19 @@ function Show-DiskTable {
             return $null
         }
     }
-    
+
     if (-not $Silent) {
         Write-Host ""
         Write-Host "    DISK    STATUS                  ENCRYPTED    SIZE      METHOD" -ForegroundColor DarkGray
         Write-Host "    -----   ------                  ----------   ------    ------" -ForegroundColor DarkGray
-        
+
         foreach ($v in $volumes) {
             $mount = $v.MountPoint
             $status = $v.VolumeStatus.ToString()
             $pct = "$($v.EncryptionPercentage)%"
             $capGB = if ($v.CapacityGB) { "{0:N1} GB" -f $v.CapacityGB } else { "N/A" }
             $method = if ($v.EncryptionMethod) { $v.EncryptionMethod.ToString() } else { "-" }
-            
+
             $statusColor = switch ($status) {
                 "FullyEncrypted" { "Green" }
                 "FullyDecrypted" { "Gray" }
@@ -127,7 +128,7 @@ function Show-DiskTable {
                 "DecryptionInProgress" { "[~]" }
                 default { "[?]" }
             }
-            
+
             Write-Host "    ${icon} ${mount}" -NoNewline -ForegroundColor $statusColor
             Write-Host ("   " + $statusLabel.PadRight(24)) -NoNewline -ForegroundColor $statusColor
             Write-Host ($pct.PadRight(13)) -NoNewline -ForegroundColor White
@@ -140,9 +141,9 @@ function Show-DiskTable {
 }
 
 function Validate-DriveLetter {
-    param([string]$Input, [array]$ValidVolumes)
-    if ([string]::IsNullOrWhiteSpace($Input)) { return $null }
-    $clean = $Input.Trim().ToUpper().Replace(":", "")
+    param([string]$DriveInput, [array]$ValidVolumes)
+    if ([string]::IsNullOrWhiteSpace($DriveInput)) { return $null }
+    $clean = $DriveInput.Trim().ToUpper().Replace(":", "")
     if ($clean.Length -ne 1 -or $clean -notmatch "^[A-Z]$") {
         Write-Host "    Invalid letter. Use a single letter (e.g.: C, D, E)." -ForegroundColor Red
         return $null
@@ -206,38 +207,102 @@ function Show-EncryptionProgress {
 
 # ==================== HEALTH CHECK PRE-ENCRIPTACION ====================
 
-function Save-AtlasRecoveryBackup {
+function Get-AtlasRecoveryBackupFolder {
     [CmdletBinding()]
-    param(
-        [Parameter(Mandatory)][string]$MountPoint,
-        [Parameter(Mandatory)][string]$Directory,
-        [Parameter(Mandatory)]$Protector
-    )
-    if (-not $Protector.KeyProtectorId -or $Protector.RecoveryPassword -notmatch '^\d{6}(-\d{6}){7}$') {
-        throw 'A readable recovery password and protector ID are required.'
-    }
-    $folder = Get-Item -LiteralPath $Directory -ErrorAction Stop
-    if (-not $folder.PSIsContainer -or $folder.PSProvider.Name -ne 'FileSystem' -or $folder.FullName -notmatch '^[A-Za-z]:\\') {
+    param([Parameter(Mandatory)][string]$MountPoint,[Parameter(Mandatory)][string]$Directory)
+    $folder=Get-Item -LiteralPath $Directory -ErrorAction Stop
+    if($MountPoint -notmatch '^[A-Za-z]:$' -or -not $folder.PSIsContainer -or $folder.PSProvider.Name -ne 'FileSystem' -or $folder.FullName -notmatch '^[A-Za-z]:\\'){
         throw 'Select an existing folder on a separate local backup disk.'
     }
-    $ancestor = $folder
-    while ($ancestor) {
-        if ($ancestor.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Recovery backup folders must not contain junctions or symbolic links.' }
-        $ancestor = $ancestor.Parent
-    }
-    $sourceDisk = @(Get-Partition -DriveLetter $MountPoint.Substring(0,1) -ErrorAction Stop)
-    $backupDisk = @(Get-Partition -DriveLetter $folder.FullName.Substring(0,1) -ErrorAction Stop)
-    if ($sourceDisk.Count -ne 1 -or $backupDisk.Count -ne 1 -or $null -eq $sourceDisk[0].DiskNumber -or
-        $null -eq $backupDisk[0].DiskNumber -or $sourceDisk[0].DiskNumber -eq $backupDisk[0].DiskNumber) {
+    $ancestor=$folder
+    while($ancestor){if($ancestor.Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Recovery backup folders must not contain junctions or symbolic links.'};$ancestor=$ancestor.Parent}
+    $sourceDisk=@(Get-Partition -DriveLetter $MountPoint.Substring(0,1) -ErrorAction Stop)
+    $backupDisk=@(Get-Partition -DriveLetter $folder.FullName.Substring(0,1) -ErrorAction Stop)
+    if($sourceDisk.Count -ne 1 -or $backupDisk.Count -ne 1 -or $null -eq $sourceDisk[0].DiskNumber -or $null -eq $backupDisk[0].DiskNumber -or $sourceDisk[0].DiskNumber -eq $backupDisk[0].DiskNumber){
         throw 'The recovery backup must be on a different physical disk from the encrypted volume.'
     }
-    $path = Join-Path $folder.FullName ('BitLocker-Recovery-' + [guid]::NewGuid().ToString('N') + '.txt')
-    $content = "BitLocker recovery / recuperacion`r`nVolume: $MountPoint`r`nKey ID: $($Protector.KeyProtectorId)`r`nRecovery password: $($Protector.RecoveryPassword)`r`n"
-    $bytes = [Text.UTF8Encoding]::new($false).GetBytes($content)
-    $stream = [IO.File]::Open($path, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
-    try { $stream.Write($bytes,0,$bytes.Length); $stream.Flush($true) } finally { $stream.Dispose() }
-    if ([IO.File]::ReadAllText($path, [Text.Encoding]::UTF8) -cne $content) { throw 'Recovery backup read-back failed. Encryption was not started.' }
-    return $path
+    return $folder.FullName
+}
+
+function Write-AtlasRecoveryText {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Path,[Parameter(Mandatory)][string]$Content)
+    Assert-AtlasPlainDirectory (Split-Path -Parent $Path)
+    $bytes=[Text.UTF8Encoding]::new($false).GetBytes($Content)
+    $stream=[IO.File]::Open($Path,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None)
+    try{$stream.Write($bytes,0,$bytes.Length);$stream.Flush($true)}finally{$stream.Dispose()}
+    if([IO.File]::ReadAllText($Path,[Text.Encoding]::UTF8) -cne $Content){throw 'Recovery backup read-back failed; do not rely on this file.'}
+    return $Path
+}
+
+function Save-AtlasRecoveryBackup {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$MountPoint,[Parameter(Mandatory)][string]$Directory,[Parameter(Mandatory)]$Protector)
+    if(-not $Protector.KeyProtectorId -or $Protector.RecoveryPassword -notmatch '^\d{6}(-\d{6}){7}$'){throw 'A readable recovery password and protector ID are required.'}
+    $folder=Get-AtlasRecoveryBackupFolder -MountPoint $MountPoint -Directory $Directory
+    $path=Join-Path $folder ('BitLocker-Recovery-'+[guid]::NewGuid().ToString('N')+'.txt')
+    $content="BitLocker recovery / recuperacion`r`nVolume: $MountPoint`r`nKey ID: $($Protector.KeyProtectorId)`r`nRecovery password: $($Protector.RecoveryPassword)`r`n"
+    return Write-AtlasRecoveryText -Path $path -Content $content
+}
+
+function Get-AtlasRecoveryRecords {
+    [CmdletBinding()]
+    param([string]$MountPoint)
+    $query=@{ErrorAction='Stop'}
+    if($MountPoint){if($MountPoint -notmatch '^[A-Za-z]:$'){throw 'Invalid volume letter.'};$query.MountPoint=$MountPoint}
+    foreach($volume in @(Get-BitLockerVolume @query)) {
+        if($volume.VolumeStatus -eq 'FullyDecrypted'){continue}
+        foreach($key in @($volume.KeyProtector | Where-Object {$_.KeyProtectorType -eq 'RecoveryPassword'})) {
+            if(-not $key.KeyProtectorId -or $key.RecoveryPassword -notmatch '^\d{6}(-\d{6}){7}$'){throw 'A recovery protector could not be read. No complete export can be claimed.'}
+            [pscustomobject]@{MountPoint=[string]$volume.MountPoint;KeyId=[string]$key.KeyProtectorId;RecoveryPassword=[string]$key.RecoveryPassword}
+        }
+    }
+}
+
+function Export-AtlasRecoveryKeys {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][AllowEmptyCollection()][object[]]$Records,[Parameter(Mandatory)][string]$OutputPath)
+    if(-not $Records.Count){throw 'No readable recovery passwords to export.'}
+    if($OutputPath -notmatch '^[A-Za-z]:\\' -or [IO.Path]::GetExtension($OutputPath) -ine '.txt'){throw 'Choose an explicit absolute .txt destination on a separate local disk.'}
+    $path=[IO.Path]::GetFullPath($OutputPath);$directory=Split-Path -Parent $path
+    # Validate every source and secret before the first write.
+    foreach($record in $Records){
+        if(-not $record.KeyId -or $record.RecoveryPassword -notmatch '^\d{6}(-\d{6}){7}$'){throw 'A readable recovery password and protector ID are required.'}
+        $null=Get-AtlasRecoveryBackupFolder -MountPoint $record.MountPoint -Directory $directory
+    }
+    $lines=@('ATLAS PC SUPPORT - BITLOCKER RECOVERY','Keep separately from the protected device.',('UTC: '+[datetime]::UtcNow.ToString('o')))
+    foreach($record in $Records){$lines+=@(('Volume: '+$record.MountPoint),('Key ID: '+$record.KeyId),('Recovery password: '+$record.RecoveryPassword),'')}
+    return Write-AtlasRecoveryText -Path $path -Content ($lines -join "`r`n")
+}
+
+function Invoke-AtlasRecoveryExportMenu {
+    $mount=Read-Host 'Volume to export, for example C:; Enter selects all; B cancels'
+    if($mount -ieq 'B'){return}
+    $records=@(Get-AtlasRecoveryRecords -MountPoint $mount)
+    if(-not $records.Count){Write-Host 'No readable recovery passwords observed.' -ForegroundColor Yellow;return}
+    Write-Host "$($records.Count) recovery password(s) found; values hidden."
+    $outputPath=Read-Host 'Full NEW .txt path on another physical disk; Enter cancels'
+    if([string]::IsNullOrWhiteSpace($outputPath)){return}
+    $saved=Export-AtlasRecoveryKeys -Records $records -OutputPath $outputPath
+    Write-Host "Verified recovery file: $saved" -ForegroundColor Green
+    Write-Log "Recovery export verified: $($records.Count) password(s); values omitted."
+    if((Read-Host 'Type REVEAL to show passwords here; Enter keeps them hidden') -ceq 'REVEAL'){
+        foreach($record in $records){Write-Host "$($record.MountPoint) -> $($record.RecoveryPassword)"}
+    }
+    if((Read-Host 'Type CARD to create printable cards in the chosen folder; Enter skips') -ceq 'CARD'){
+        foreach($record in $records){
+            $card=Join-Path (Split-Path -Parent $saved) ('BitLocker-Card-'+[guid]::NewGuid().ToString('N')+'.png')
+            $file=New-AtlasRecoveryCard -Data $record.RecoveryPassword -OutputPath $card -Label ("Volume: "+$record.MountPoint+" | Key ID: "+$record.KeyId)
+            Write-Host "Printable card saved: $file"
+        }
+    }
+    if((Read-Host 'Type BACKUP to request AD/Entra backup; Enter skips') -ceq 'BACKUP'){
+        foreach($letter in @($records.MountPoint|Select-Object -Unique)){$null=Backup-KeyToAD -MountPoint $letter}
+    }
+    if((Read-Host 'Type COPY to place passwords on the clipboard; Enter skips') -ceq 'COPY'){
+        ($records|ForEach-Object {"$($_.MountPoint) -> $($_.RecoveryPassword)"}) -join "`r`n" | Set-Clipboard -ErrorAction Stop
+        Write-Host 'Passwords copied. Clear clipboard history after use.'
+    }
 }
 
 function Enable-AtlasBitLockerSafely {
@@ -291,14 +356,14 @@ function Enable-AtlasBitLockerSafely {
 
 function Test-PreEncryptionHealth {
     param([string]$MountPoint)
-    
+
     $issues = @(); $warnings = @(); $canProceed = $true
     $driveLetter = $MountPoint.TrimEnd(':')
-    
+
     Write-Host ""
     Escribir-Centrado "PRE-ENCRYPTION HEALTH CHECK" "Yellow"
     Write-Host ""
-    
+
     # 1. BATERIA (critico en laptops)
     Write-Host "    [1/5] Battery..." -NoNewline -ForegroundColor DarkGray
     $battery = Get-CimInstance -OperationTimeoutSec 10 Win32_Battery -ErrorAction SilentlyContinue
@@ -320,7 +385,7 @@ function Test-PreEncryptionHealth {
     } else {
         Write-Host " N/A (desktop)" -ForegroundColor Gray
     }
-    
+
     # 2. ESPACIO EN DISCO
     Write-Host "    [2/5] Disk space..." -NoNewline -ForegroundColor DarkGray
     $logDisk = Get-CimInstance -OperationTimeoutSec 10 Win32_LogicalDisk -ErrorAction SilentlyContinue | Where-Object { $_.DeviceID -eq $MountPoint }
@@ -341,7 +406,7 @@ function Test-PreEncryptionHealth {
     } else {
         Write-Host " N/A" -ForegroundColor Gray
     }
-    
+
     # 3. ESTADO SMART DEL DISCO
     Write-Host "    [3/5] Disk health (SMART)..." -NoNewline -ForegroundColor DarkGray
     try {
@@ -364,7 +429,7 @@ function Test-PreEncryptionHealth {
         $warnings += 'Disk health could not be evaluated for this volume.'
         Write-Host " No verificable" -ForegroundColor Yellow
     }
-    
+
     # 4. SISTEMA DE ARCHIVOS
     Write-Host "    [4/5] File system..." -NoNewline -ForegroundColor DarkGray
     try {
@@ -380,7 +445,7 @@ function Test-PreEncryptionHealth {
     } catch {
         Write-Host " No verificable" -ForegroundColor Yellow
     }
-    
+
     # 5. PROCESOS CRITICOS
     Write-Host "    [5/5] Critical processes..." -NoNewline -ForegroundColor DarkGray
     $chkdsk = Get-Process -Name "chkdsk" -ErrorAction SilentlyContinue
@@ -392,7 +457,7 @@ function Test-PreEncryptionHealth {
     } else {
         Write-Host " OK" -ForegroundColor Green
     }
-    
+
     # RESUMEN
     Write-Host ""
     if ($issues.Count -gt 0) {
@@ -407,9 +472,9 @@ function Test-PreEncryptionHealth {
     if ($issues.Count -eq 0 -and $warnings.Count -eq 0) {
         Escribir-Centrado "ALL CHECKS PASSED" "Green"
     }
-    
+
     Write-Log "HealthCheck ${MountPoint}: Issues=${issues.Count}, Warnings=${warnings.Count}, CanProceed=${canProceed}"
-    
+
     return @{ CanProceed = $canProceed; Issues = $issues; Warnings = $warnings }
 }
 
@@ -418,7 +483,7 @@ function Test-PreEncryptionHealth {
 function Show-UnprotectedAlert {
     $allVols = Get-BitLockerVolume -ErrorAction SilentlyContinue
     if (-not $allVols) { return }
-    
+
     $unprotected = @()
     foreach ($v in $allVols) {
         # Only alertar disks del sistema y datos (no removibles)
@@ -431,7 +496,7 @@ function Show-UnprotectedAlert {
             }
         } catch { }
     }
-    
+
     if ($unprotected.Count -gt 0) {
         Write-Host ""
         $alertLine = "ALERTA: $($unprotected.Count) disk(s) fijo(s) UNPROTECTED: $($unprotected -join ', ')"
@@ -439,124 +504,61 @@ function Show-UnprotectedAlert {
     }
 }
 
-# ==================== GENERAR QR ====================
+# ==================== TARJETA IMPRIMIBLE ====================
 
-function Generate-QRCode {
-    param([string]$Data, [string]$OutputPath, [string]$Label = "")
-    
-    # Generar QR como HTML con tabla (funciona sin dependencias externas)
-    # Usa una representación simple que se puede imprimir
-    
-    $qrSize = 21  # QR Version 1
-    
-    # Método alternativo: generar imagen BMP usando .NET
+function New-AtlasRecoveryCard {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Data,[Parameter(Mandatory)][string]$OutputPath,[string]$Label='')
+    if($Data -notmatch '^\d{6}(-\d{6}){7}$' -or [IO.Path]::GetExtension($OutputPath) -ine '.png'){throw 'A readable recovery password and new .png path are required.'}
+    Assert-AtlasPlainDirectory (Split-Path -Parent $OutputPath)
+    if(Test-Path -LiteralPath $OutputPath){throw 'Printable card destination already exists.'}
+    $lines=@('ATLAS PC SUPPORT','BITLOCKER RECOVERY PASSWORD',$Label,'')
+    $groups=$Data -split '-'
+    for($i=0;$i -lt $groups.Count;$i+=2){$lines+=($groups[$i]+'-'+$groups[$i+1])}
+    $lines+=@('','Keep separately from the protected device.')
+    $bitmap=$graphics=$font=$stream=$null;$created=$false;$complete=$false
     try {
         Add-Type -AssemblyName System.Drawing -ErrorAction Stop
-        
-        $cellSize = 10
-        $margin = 40
-        $textHeight = if ($Label) { 60 } else { 0 }
-        
-        # Generar patrón QR simplificado (encode como texto legible en imagen)
-        $lines = @()
-        $lines += "ATLAS PC SUPPORT"
-        $lines += "BITLOCKER RECOVERY KEY"
-        $lines += ""
-        if ($Label) { $lines += $Label; $lines += "" }
-        
-        # Dividir la clave en grupos legibles
-        $lines += "CLAVE:"
-        if ($Data.Length -gt 20) {
-            $chunks = [regex]::Matches($Data, '.{1,12}') | ForEach-Object { $_.Value }
-            foreach ($chunk in $chunks) { $lines += "  $chunk" }
-        } else {
-            $lines += "  $Data"
-        }
-        $lines += ""
-        $lines += "Date: $(Get-Date -Format 'dd/MM/yyyy')"
-        $lines += "PC: $env:COMPUTERNAME"
-        
-        # Crear imagen
-        $imgWidth = 500
-        $lineHeight = 22
-        $imgHeight = ($lines.Count * $lineHeight) + 80
-        
-        $bmp = New-Object System.Drawing.Bitmap($imgWidth, $imgHeight)
-        $gfx = [System.Drawing.Graphics]::FromImage($bmp)
-        $gfx.Clear([System.Drawing.Color]::White)
-        
-        # Borde
-        $pen = New-Object System.Drawing.Pen([System.Drawing.Color]::Black, 2)
-        $gfx.DrawRectangle($pen, 5, 5, $imgWidth - 10, $imgHeight - 10)
-        
-        # Texto
-        $fontTitle = New-Object System.Drawing.Font("Consolas", 14, [System.Drawing.FontStyle]::Bold)
-        $fontNormal = New-Object System.Drawing.Font("Consolas", 12)
-        $fontKey = New-Object System.Drawing.Font("Consolas", 13, [System.Drawing.FontStyle]::Bold)
-        $brush = [System.Drawing.Brushes]::Black
-        $brushRed = [System.Drawing.Brushes]::DarkRed
-        
-        $y = 20
-        foreach ($line in $lines) {
-            $font = $fontNormal
-            $b = $brush
-            if ($line -match "^ATLAS|^BITLOCKER") { $font = $fontTitle }
-            if ($line -match "^\s{2}\d" -or $line -match "^\s{2}[A-F0-9]") { $font = $fontKey; $b = $brushRed }
-            $gfx.DrawString($line, $font, $b, 20, $y)
-            $y += $lineHeight
-        }
-        
-        $gfx.Dispose()
-        $bmp.Save($OutputPath, [System.Drawing.Imaging.ImageFormat]::Png)
-        $bmp.Dispose()
-        
-        return $true
-    } catch {
-        # Fallback: guardar como texto formateado para imprimir
-        $txtPath = $OutputPath -replace '\.png$', '.txt'
-        $border = "+" + ("-" * 48) + "+"
-        $content = @()
-        $content += $border
-        $content += "|  ATLAS PC SUPPORT - BITLOCKER RECOVERY KEY    |"
-        $content += $border
-        if ($Label) { $content += "|  ${Label}".PadRight(49) + "|" }
-        $content += "|  CLAVE:".PadRight(49) + "|"
-        $content += "|  ${Data}".PadRight(49) + "|"
-        $content += "|  PC: $env:COMPUTERNAME | $(Get-Date -Format 'dd/MM/yyyy')".PadRight(49) + "|"
-        $content += $border
-        $content += "  Store separately from the computer. Do not attach to the case."
-        
-        $content -join "`r`n" | Out-File -FilePath $txtPath -Encoding UTF8
-        return $txtPath
-    }
+        $bitmap=[Drawing.Bitmap]::new(800,($lines.Count*25+40))
+        $graphics=[Drawing.Graphics]::FromImage($bitmap);$graphics.Clear([Drawing.Color]::White)
+        $font=[Drawing.Font]::new('Consolas',12)
+        $y=15;foreach($line in $lines){$graphics.DrawString($line,$font,[Drawing.Brushes]::Black,15,$y);$y+=25}
+        $stream=[IO.File]::Open($OutputPath,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None);$created=$true
+        $bitmap.Save($stream,[Drawing.Imaging.ImageFormat]::Png);$stream.Flush($true);$complete=$true
+    } catch {Write-Warning 'Image could not be generated; attempting a new printable text file in the same folder.'}
+    finally {foreach($resource in @($stream,$font,$graphics,$bitmap)){if($null -ne $resource){$resource.Dispose()}}}
+    if($complete){return $OutputPath}
+    if($created){Remove-Item -LiteralPath $OutputPath -ErrorAction Stop}
+    return Write-AtlasRecoveryText -Path ([IO.Path]::ChangeExtension($OutputPath,'.txt')) -Content ($lines -join "`r`n")
 }
 
 # ==================== BACKUP A AD / AZURE ====================
 
 function Backup-KeyToAD {
     param([string]$MountPoint)
-    
-    $vol = Get-BitLockerVolume -MountPoint $MountPoint -ErrorAction SilentlyContinue
+
+    $vol = Get-BitLockerVolume -MountPoint $MountPoint -ErrorAction Stop
     if (-not $vol) { return $false }
-    
+
     $recoveryKeys = $vol.KeyProtector | Where-Object { $_.KeyProtectorType -eq 'RecoveryPassword' }
     if (-not $recoveryKeys) {
         Write-Host "    No recovery keys to back up." -ForegroundColor Yellow
         return $false
     }
-    
-    $success = $false
-    
+
+    $allAccepted = $true
+
     foreach ($key in $recoveryKeys) {
         $keyId = $key.KeyProtectorId
-        
-        # Intentar AD On-Premise
+
+        $accepted=$false
+        # La aceptación de una solicitud no comprueba recuperación ni escrow remoto.
         Write-Host "    Trying backup to Active Directory..." -ForegroundColor DarkGray
         try {
-            Backup-BitLockerKeyProtector -MountPoint $MountPoint -KeyProtectorId $keyId -ErrorAction Stop
-            Write-Host "    [OK] Key backed up to Active Directory." -ForegroundColor Green
-            Write-Log "AD Backup OK: ${MountPoint} KeyID: ${keyId}"
-            $success = $true
+            Backup-BitLockerKeyProtector -MountPoint $MountPoint -KeyProtectorId $keyId -ErrorAction Stop | Out-Null
+            Write-Host "    AD backup request accepted; confirm remote recovery separately." -ForegroundColor Yellow
+            Write-Log "AD backup request accepted: ${MountPoint}; remote recovery not verified."
+            $accepted = $true
         } catch {
             $adError = $_.Exception.Message
             if ($adError -match "not joined|domain|directory") {
@@ -565,27 +567,28 @@ function Backup-KeyToAD {
                 Write-Host "    [--] AD not available: $adError" -ForegroundColor DarkGray
             }
         }
-        
+
         # Intentar Azure AD
         Write-Host "    Trying backup to Azure AD / Entra ID..." -ForegroundColor DarkGray
         try {
-            $dsregStatus = dsregcmd /status 2>&1
-            $isAzureJoined = ($dsregStatus | Select-String "AzureAdJoined\s*:\s*YES" -Quiet)
-            
+            $joinProbe=Invoke-AtlasNativeProcess -FilePath (Join-Path $env:SystemRoot 'System32\dsregcmd.exe') -ArgumentList @('/status') -TimeoutSeconds 10
+            if($joinProbe.State -ne 'Correct' -or $joinProbe.StdoutTruncated){throw 'Entra join status was not evaluated.'}
+            $isAzureJoined = ([string]$joinProbe.Stdout -match 'AzureAdJoined\s*:\s*YES')
+
             if ($isAzureJoined) {
-                BackupToAAD-BitLockerKeyProtector -MountPoint $MountPoint -KeyProtectorId $keyId -ErrorAction Stop
-                Write-Host "    [OK] Key backed up to Azure AD / Entra ID." -ForegroundColor Green
-                Write-Log "Azure AD Backup OK: ${MountPoint} KeyID: ${keyId}"
-                $success = $true
+                BackupToAAD-BitLockerKeyProtector -MountPoint $MountPoint -KeyProtectorId $keyId -ErrorAction Stop | Out-Null
+                Write-Host "    Entra backup request accepted; confirm remote recovery separately." -ForegroundColor Yellow
+                Write-Log "Entra backup request accepted: ${MountPoint}; remote recovery not verified."
+                $accepted = $true
             } else {
                 Write-Host "    [--] Computer is not joined to Azure AD." -ForegroundColor DarkGray
             }
         } catch {
             Write-Host "    [--] Azure AD not available." -ForegroundColor DarkGray
         }
+        if(-not $accepted){$allAccepted=$false}
     }
-    
-    return $success
+    return $allAccepted
 }
 
 # ==================== MODO CLI ====================
@@ -593,22 +596,12 @@ function Backup-KeyToAD {
 if ($Action -ne "") {
     switch ($Action) {
         "Extract" {
-            $VolumenesBL = Get-BitLockerVolume -ErrorAction SilentlyContinue | Where-Object { $_.VolumeStatus -ne 'FullyDecrypted' }
-            if (-not $VolumenesBL) { Write-Host "No protected disks."; exit 1 }
-            
-            $outputPath = if ($Output) { $Output } else { Join-Path ([Environment]::GetFolderPath("Desktop")) "BL_$env:COMPUTERNAME_$(Get-Date -Format 'yyyyMMdd_HHmm').txt" }
-            
-            $content = "ATLAS PC SUPPORT - BITLOCKER KEYS`r`nPC: $env:COMPUTERNAME`r`nDate: $(Get-Date)`r`n---`r`n"
-            foreach ($Vol in $VolumenesBL) {
-                $keys = $Vol.KeyProtector | Where-Object { $_.KeyProtectorType -eq 'RecoveryPassword' }
-                foreach ($k in $keys) {
-                    $content += "$($Vol.MountPoint) -> $($k.RecoveryPassword)`r`n"
-                    Write-Host "$($Vol.MountPoint) -> $($k.RecoveryPassword)"
-                }
-            }
-            $content | Out-File -FilePath $outputPath -Encoding UTF8
-            Write-Host "Saved to: ${outputPath}"
-            Write-Log "CLI Extract: ${outputPath}"
+            if([string]::IsNullOrWhiteSpace($Output)){throw 'Extract requires an explicit -Output .txt path on another physical disk.'}
+            $records=@(Get-AtlasRecoveryRecords -MountPoint $MountPoint)
+            $saved=Export-AtlasRecoveryKeys -Records $records -OutputPath $Output
+            Write-Host "Verified recovery file: $saved; password values hidden by default."
+            if($Reveal){foreach($record in $records){Write-Host "$($record.MountPoint) -> $($record.RecoveryPassword)"}}
+            Write-Log "CLI recovery export verified: $($records.Count) password(s); values omitted."
             return
         }
         "Status" {
@@ -630,21 +623,21 @@ Clear-Host
 while ($true) {
     Clear-Host
     Write-AtlasHeaderCompat -Title "BITLOCKER MANAGER v3" -Subtitle "Encrypt · Backup Keys · Health Check · AD Sync"
-    
+
     # TPM status
     Write-Host ""
     $tpmInfo = Get-TPMStatus
     $tpmColor = if ($tpmInfo.HasTPM -and $tpmInfo.IsReady) { "Green" } elseif ($tpmInfo.HasTPM) { "Yellow" } else { "Red" }
     Escribir-Centrado "TPM: $($tpmInfo.Summary)" $tpmColor
-    
+
     # Disks protegidos
     $blVolumes = Get-BitLockerVolume -ErrorAction SilentlyContinue | Where-Object { $_.VolumeStatus -ne 'FullyDecrypted' }
     $blCount = if ($blVolumes) { @($blVolumes).Count } else { 0 }
     Escribir-Centrado "Disks protegidos: ${blCount}" $(if ($blCount -gt 0) { "Cyan" } else { "DarkGray" })
-    
+
     # ALERTA DISCOS SIN PROTEGER
     Show-UnprotectedAlert
-    
+
     Write-Host ""
     Escribir-Centrado "[ 1 ] Escanear y Guardar Claves" "White"
     Escribir-Centrado "[ 2 ] Activar BitLocker" "White"
@@ -655,180 +648,37 @@ while ($true) {
     Write-Host ""
     Escribir-Centrado "===================================================" "DarkGray"
     Write-Host ""
-    
+
     $Option = Read-Host "  Option"
 
     switch ($Option.ToUpper()) {
         # =============================================
-        # 1. EXTRAER CLAVES (+ USB + QR + AD + Clipboard)
+        # 1. EXTRAER CLAVES (destino explicito; revelado/copia opcionales)
         # =============================================
         "1" {
-            Clear-Host
-            Write-Host "`n"
-            Escribir-Centrado "=== EXTRACCION DE CLAVES BITLOCKER ===" "DarkYellow"
-            Write-Host ""
-            
-            $NombreComputer = $env:COMPUTERNAME
-            $UserActual = $env:USERNAME
-            $FechaHora = Get-Date -Format 'dd-MM-yyyy_HHmm'
-            $NombreArchivo = "BL_${NombreComputer}_${FechaHora}.txt"
-            
-            Write-Host "    Scanning disks protegidos..." -ForegroundColor DarkGray
-            $VolumenesBL = Get-BitLockerVolume -ErrorAction SilentlyContinue | Where-Object { $_.VolumeStatus -ne 'FullyDecrypted' }
-            
-            if (-not $VolumenesBL) {
-                Escribir-Centrado "No disks with BitLocker active found." "Red"
-            } else {
-                $Contenido = "===================================================`r`n"
-                $Contenido += "      ATLAS PC SUPPORT - RESPALDO DE BITLOCKER`r`n"
-                $Contenido += "===================================================`r`n"
-                $Contenido += "Fecha               : $(Get-Date -Format 'dd/MM/yyyy HH:mm:ss')`r`n"
-                $Contenido += "Nombre del Computer   : ${NombreComputer}`r`n"
-                $Contenido += "User Activo      : ${UserActual}`r`n"
-                $Contenido += "---------------------------------------------------`r`n`r`n"
-                
-                $ClavesEncontradas = 0
-                $clavesParaClipboard = @()
-                $clavesParaQR = @()
-                
-                foreach ($Vol in $VolumenesBL) {
-                    $Claves = $Vol.KeyProtector | Where-Object { $_.KeyProtectorType -eq 'RecoveryPassword' }
-                    if ($Claves) {
-                        foreach ($Clave in $Claves) {
-                            $mount = $Vol.MountPoint
-                            $key = $Clave.RecoveryPassword
-                            $keyId = $Clave.KeyProtectorId
-                            
-                            $Contenido += "UNIDAD: ${mount}`r`n"
-                            $Contenido += "ID:     ${keyId}`r`n"
-                            $Contenido += "CLAVE:  ${key}`r`n`r`n"
-                            
-                            $clavesParaClipboard += "${mount} -> ${key}"
-                            $clavesParaQR += @{ Mount = $mount; Key = $key; KeyId = $keyId }
-                            
-                            Write-Host "    [OK] ${mount} -> ${key}" -ForegroundColor Green
-                            $ClavesEncontradas++
-                        }
-                    }
-                }
-                
-                if ($ClavesEncontradas -eq 0) {
-                    Escribir-Centrado "No se encontraron recovery keys." "Red"
-                } else {
-                    $Contenido += "===================================================`r`n"
-                    $Contenido += "TOTAL: ${ClavesEncontradas} clave(s)`r`n"
-                    
-                    Write-Host ""
-                    Escribir-Centrado "${ClavesEncontradas} clave(s) found(s)" "Green"
-                    Write-Log "Extraccion: ${ClavesEncontradas} claves de ${NombreComputer}"
-                    
-                    $rutasGuardadas = @()
-                    
-                    # Guardar en desktop
-                    $RutaDesktop = [Environment]::GetFolderPath("Desktop")
-                    $RutaCompleta = Join-Path $RutaDesktop $NombreArchivo
-                    try {
-                        $Contenido | Out-File -FilePath $RutaCompleta -Encoding UTF8
-                        Write-Host "    [OK] Desktop: ${NombreArchivo}" -ForegroundColor Cyan
-                        $rutasGuardadas += $RutaCompleta
-                    } catch { Write-Host "    [ERROR] Could not save to desktop." -ForegroundColor Red }
-                    
-                    # USB
-                    $usbs = Get-Volume -ErrorAction SilentlyContinue | Where-Object { $_.DriveType -eq 'Removable' -and $_.DriveLetter -and $_.Size -gt 0 }
-                    if ($usbs) {
-                        Write-Host ""
-                        Write-Host "    USB detectado(s). Guardar copia? [Y/N]" -ForegroundColor Yellow
-                        $usbSel = Read-Host "    >"
-                        if ($usbSel -match '^[SsYy]$') {
-                            foreach ($u in $usbs) {
-                                try {
-                                    $usbPath = Join-Path ($u.DriveLetter + ":\") $NombreArchivo
-                                    $Contenido | Out-File -FilePath $usbPath -Encoding UTF8
-                                    Write-Host "    [OK] USB $($u.DriveLetter): ${NombreArchivo}" -ForegroundColor Green
-                                    $rutasGuardadas += $usbPath
-                                } catch { Write-Host "    [ERROR] USB $($u.DriveLetter): $($_.Exception.Message)" -ForegroundColor Red }
-                            }
-                        }
-                    }
-                    
-                    # QR / Imagen imprimible
-                    Write-Host ""
-                    Write-Host "    [!] SECURITY WARNING: Saving plaintext recovery keys as images on Desktop" -ForegroundColor Red
-                    Write-Host "        creates a physical security risk. Do NOT leave this file on client desktop." -ForegroundColor Yellow
-                    Write-Host "    Generate printable card image of keys? [Y/N]" -ForegroundColor Yellow
-                    $qrSel = Read-Host "    >"
-                    if ($qrSel -match '^[SsYy]$') {
-                        foreach ($kInfo in $clavesParaQR) {
-                            $qrFileName = "BL_KEY_${NombreComputer}_$($kInfo.Mount.TrimEnd(':'))_${FechaHora}.png"
-                            $qrPath = Join-Path $RutaDesktop $qrFileName
-                            $label = "Disk: $($kInfo.Mount) | PC: ${NombreComputer}"
-                            $qrResult = Generate-QRCode -Data $kInfo.Key -OutputPath $qrPath -Label $label
-                            if ($qrResult -eq $true) {
-                                Write-Host "    [OK] Imagen: ${qrFileName}" -ForegroundColor Green
-                                $rutasGuardadas += $qrPath
-                            } elseif ($qrResult) {
-                                Write-Host "    [OK] Texto imprimible: $(Split-Path $qrResult -Leaf)" -ForegroundColor Green
-                                $rutasGuardadas += $qrResult
-                            } else {
-                                Write-Host "    [ERROR] No se genero imagen." -ForegroundColor Red
-                            }
-                        }
-                        Write-Host ""
-                        Escribir-Centrado "Store the recovery printout separately from the computer. Never attach it to the case." "Yellow"
-                    }
-                    
-                    # AD / Azure AD backup
-                    Write-Host ""
-                    Write-Host "    Intentar backup a Active Directory / Azure AD? [Y/N]" -ForegroundColor Yellow
-                    $adSel = Read-Host "    >"
-                    if ($adSel -match '^[SsYy]$') {
-                        foreach ($Vol in $VolumenesBL) {
-                            $adOk = Backup-KeyToAD -MountPoint $Vol.MountPoint
-                        }
-                    }
-                    
-                    # Clipboard
-                    Write-Host ""
-                    Write-Host "    Copy keys to clipboard? [Y/N]" -ForegroundColor DarkGray
-                    $clipSel = Read-Host "    >"
-                    if ($clipSel -match '^[SsYy]$') {
-                        try {
-                            ($clavesParaClipboard -join "`r`n") | Set-Clipboard
-                            Write-Host "    [OK] Copied to clipboard." -ForegroundColor Green
-                        } catch { Write-Host "    [ERROR] Clipboard no disponible." -ForegroundColor Red }
-                    }
-                    
-                    # Summary
-                    Write-Host ""
-                    Escribir-Centrado "RESUMEN DE BACKUPS:" "White"
-                    foreach ($ruta in $rutasGuardadas) { Write-Host "    -> ${ruta}" -ForegroundColor Gray }
-                }
-            }
-            Write-Host "`n"; Wait-AtlasReturnCompat -Message "    ENTER to go back..."
+            try {Invoke-AtlasRecoveryExportMenu}
+            catch {Write-Warning 'Recovery export was not completed. Check the chosen destination, permissions and readable protectors; do not rely on unverified files.';Write-Log 'Recovery export interrupted; values omitted.' -Level ERROR}
+            Wait-AtlasReturnCompat -Message 'ENTER to go back...'
         }
-
-        # =============================================
-        # 2. ACTIVAR BITLOCKER (con Health Check)
-        # =============================================
         "2" {
             Clear-Host
             Write-Host "`n"
             Escribir-Centrado "=== ACTIVAR BITLOCKER ===" "DarkYellow"
             Write-Host ""
-            
+
             Write-Host ""
             $allVolumes = Show-DiskTable
             if (-not $allVolumes) { Wait-AtlasReturnCompat -Message "    ENTER to go back..."; continue }
-            
+
             Write-Host "    Disk to encrypt (or [B] to go back):" -ForegroundColor White
-            $input = Read-Host "    >"
-            if ($input -eq "B" -or $input -eq "b") { continue }
-            
-            $validated = Validate-DriveLetter -Input $input -ValidVolumes $allVolumes
+            $driveInput = Read-Host "    >"
+            if ($driveInput -ieq "B") { continue }
+
+            $validated = Validate-DriveLetter -DriveInput $driveInput -ValidVolumes $allVolumes
             if (-not $validated) { Wait-AtlasReturnCompat -Message "    ENTER to go back..."; continue }
-            
+
             $disk = $validated.Letter; $vol = $validated.Volume
-            
+
             if ($vol.VolumeStatus -eq 'FullyEncrypted') {
                 Write-Host "    ${disk} YA esta encriptado." -ForegroundColor Yellow
                 Wait-AtlasReturnCompat -Message "    ENTER to go back..."; continue
@@ -838,10 +688,10 @@ while ($true) {
                 Show-EncryptionProgress -MountPoint $disk -Mode "Encrypting"
                 Wait-AtlasReturnCompat -Message "    ENTER to go back..."; continue
             }
-            
+
             # HEALTH CHECK
             $health = Test-PreEncryptionHealth -MountPoint $disk
-            
+
             if (-not $health.CanProceed) {
                 Write-Host ""
                 Escribir-Centrado "CORRIGE LOS PROBLEMAS ANTES DE CIFRAR / FIX ISSUES BEFORE ENCRYPTING." "Red"
@@ -849,7 +699,7 @@ while ($true) {
                 Wait-AtlasReturnCompat -Message '    ENTER to go back...'
                 continue
             }
-            
+
             # Confirmación
             $capGB = if ($vol.CapacityGB) { "{0:N1}" -f $vol.CapacityGB } else { "?" }
             Write-Host ""
@@ -857,10 +707,10 @@ while ($true) {
             Write-Host "    [S] Encriptar  [N] Cancelar" -ForegroundColor White
             $confirm = Read-Host "    >"
             if ($confirm -ne "S" -and $confirm -ne "s") { continue }
-            
+
             Write-Host ""
             Write-Host "    Activating BitLocker on ${disk}..." -ForegroundColor Yellow
-            
+
             try {
                 Write-Host '    Guarda la recuperacion en OTRO disco y retiralo despues / Use a SEPARATE backup disk.' -ForegroundColor Yellow
                 $recoveryDir = Read-Host '    Carpeta existente de respaldo (vacio cancela) / Existing backup folder'
@@ -877,7 +727,7 @@ while ($true) {
                 Write-Host ("    Recovery backup verified: {0}" -f $enabled.RecoveryBackup) -ForegroundColor Cyan
                 if ($enabled.RebootMayBeRequired) { Write-Host '    Windows puede requerir reinicio y prueba de hardware / Restart and hardware check may be required.' -ForegroundColor Yellow }
                 Write-Log "BitLocker request verified: ${disk}; Status=$($enabled.VolumeStatus)"
-                
+
                 Write-Host ""
                 Write-Host "    [M] Monitorear progreso  [ENTER] Volver" -ForegroundColor DarkGray
                 $monSel = Read-Host "    >"
@@ -887,7 +737,7 @@ while ($true) {
             } catch {
                 Write-Host "    [ERROR] $($_.Exception.Message)" -ForegroundColor Red
                 Write-Log "ERROR activando BitLocker ${disk}: $($_.Exception.Message)" "ERROR"
-                
+
                 $msg = $_.Exception.Message
                 if ($msg -match "TPM") {
                     Write-Host "    SUGGESTION: Enable TPM in BIOS." -ForegroundColor Yellow
@@ -907,25 +757,25 @@ while ($true) {
             Write-Host "`n"
             Escribir-Centrado "=== DESCIFRAR BITLOCKER / DECRYPT DRIVE ===" "DarkYellow"
             Write-Host ""
-            
+
             $encVolumes = Show-DiskTable -OnlyEncrypted
             if (-not $encVolumes) { Wait-AtlasReturnCompat -Message "    ENTER to go back..."; continue }
-            
+
             Write-Host "    Disk a desencriptar (o [B]):" -ForegroundColor White
-            $input = Read-Host "    >"
-            if ($input -eq "B" -or $input -eq "b") { continue }
-            
-            $validated = Validate-DriveLetter -Input $input -ValidVolumes $encVolumes
+            $driveInput = Read-Host "    >"
+            if ($driveInput -ieq "B") { continue }
+
+            $validated = Validate-DriveLetter -DriveInput $driveInput -ValidVolumes $encVolumes
             if (-not $validated) { Wait-AtlasReturnCompat -Message "    ENTER to go back..."; continue }
-            
+
             $disk = $validated.Letter; $vol = $validated.Volume
-            
+
             if ($vol.VolumeStatus -eq 'DecryptionInProgress') {
                 Write-Host "    Already being decrypted." -ForegroundColor Yellow
                 Show-EncryptionProgress -MountPoint $disk -Mode "Decrypting"
                 Wait-AtlasReturnCompat -Message "    ENTER to go back..."; continue
             }
-            
+
             $capGB = if ($vol.CapacityGB) { "{0:N1}" -f $vol.CapacityGB } else { "?" }
             Write-Host ""
             Escribir-Centrado "CONFIRMAR: Desactivar BitLocker en ${disk} (${capGB} GB)?" "Red"
@@ -934,7 +784,7 @@ while ($true) {
             Write-Host '    Escribe DESCIFRAR / Type DECRYPT to remove encryption. Any other answer cancels.' -ForegroundColor White
             $confirm = Read-Host "    >"
             if ($confirm -notin @('DESCIFRAR','DECRYPT')) { continue }
-            
+
             try {
                 Disable-BitLocker -MountPoint $disk -ErrorAction Stop | Out-Null
                 $after = Get-BitLockerVolume -MountPoint $disk -ErrorAction Stop
@@ -943,7 +793,7 @@ while ($true) {
                 }
                 Escribir-Centrado "Decryption iniciada en ${disk}." "Green"
                 Write-Log "BitLocker decryption requested: ${disk}; Status=$($after.VolumeStatus)"
-                
+
                 Write-Host "    [M] Monitorear  [ENTER] Volver" -ForegroundColor DarkGray
                 $monSel = Read-Host "    >"
                 if ($monSel -eq "M" -or $monSel -eq "m") {
@@ -964,16 +814,16 @@ while ($true) {
             Write-Host "`n"
             Escribir-Centrado "=== ESTADO COMPLETO ===" "DarkYellow"
             Write-Host ""
-            
+
             $tpm = Get-TPMStatus
             $tpmColor = if ($tpm.HasTPM -and $tpm.IsReady) { "Green" } elseif ($tpm.HasTPM) { "Yellow" } else { "Red" }
             Write-Host "    TPM: $($tpm.Summary)" -ForegroundColor $tpmColor
-            
+
             Show-DiskTable | Out-Null
-            
+
             # Alerta
             Show-UnprotectedAlert
-            
+
             # Protectores
             Write-Host ""
             Write-Host "    PROTECTORES ACTIVOS:" -ForegroundColor DarkGray
@@ -999,7 +849,7 @@ while ($true) {
                 }
             }
             if (-not $hasProtectors) { Write-Host "    (none)" -ForegroundColor DarkGray }
-            
+
             Write-Host "`n"; Wait-AtlasReturnCompat -Message "    ENTER to go back..."
         }
 
@@ -1011,7 +861,7 @@ while ($true) {
             Write-Host "`n"
             Escribir-Centrado "=== HISTORIAL DE OPERACIONES ===" "DarkYellow"
             Write-Host ""
-            
+
             if (Test-Path $logFile) {
                 $logContent = Get-Content $logFile -Tail 50 -ErrorAction SilentlyContinue
                 if ($logContent) {
@@ -1034,7 +884,7 @@ while ($true) {
                 Write-Host "    No hay historial aun." -ForegroundColor DarkGray
                 Write-Host "    Created automatically with each operation." -ForegroundColor DarkGray
             }
-            
+
             Write-Host ""
             Write-Host "    File: ${logFile}" -ForegroundColor DarkGray
             Write-Host ""

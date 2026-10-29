@@ -42,6 +42,20 @@ ya que eso podría impedir la recuperación. Los backups explícitos de claves d
 BitLocker contienen secretos y se custodian por separado, fuera del equipo.
 Atlas no sube informes automáticamente ni prescribe conservarlos indefinidamente.
 
+BitLocker solicita un archivo .txt nuevo en otro disco físico; comprueba todos los
+volúmenes seleccionados antes de escribir y relee el archivo. No guarda claves
+automáticamente en el Escritorio ni en todos los USB. En CLI, Extract exige Output
+y mantiene valores ocultos salvo Reveal. En el menú, REVEAL/COPY/CARD son acciones
+explícitas; las tarjetas son texto imprimible, no QR. BACKUP solicita respaldo en
+AD/Entra; su aceptación no prueba recuperación remota. El archivo y las tarjetas
+contienen secretos: custodiar fuera del equipo protegido y revisar el historial
+del portapapeles si se eligió COPY. No se publican esas claves como evidencia.
+
+Runtimes permite seleccionar individualmente VC++ 2013 x64/x86, DirectX, XNA y
+OpenAL. Instalar solo lo requerido por una aplicación; selección vacía cancela.
+Timeout o cancelación detiene el resto; conservar evidencia de una instalación
+parcial antes de repetir. NetFx3 usa la característica Windows y medios compatibles.
+
 Licencias muestra estado local y exporta inventario sin claves completas. La clave
 OEM requiere `REVEAL`; copiarla exige además `COPY`. No hay copia implícita al
 portapapeles ni se interpreta una clave genérica/decodificada como activación.
