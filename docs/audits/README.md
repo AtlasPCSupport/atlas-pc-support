@@ -16,6 +16,7 @@ plan nuevo del 27/10. No reescribir resultados anteriores como aceptación actua
 | 27/10, fase 5 | 1.5.17 | [Mantenimiento y claridad](FASE-5-AUDITORIA-2026-10-27.md), evidencia de comprobaciones/promoción en su PR |
 | 27/10, cierre transversal | 1.5.18 | [Consumidores y rutas restantes](CIERRE-TRANSVERSAL-1.5.18-2026-10-27.md), regresiones de consumidores y compilación real de políticas; evidencia final en su PR |
 | 29/10, ajustes adicionales | 1.5.19 | [Router, recuperación y runtimes](CIERRE-HERRAMIENTAS-1.5.19-2026-10-29.md); comprobaciones locales en el informe, evidencia final de promoción en la PR; consultar el descriptor para saber qué está publicado |
+| 29/10, mantenimiento acotado | 1.5.20 | [Rutas, hosts y variables](MANTENIMIENTO-RUTAS-HOSTS-1.5.20-2026-10-29.md); regresiones de consumidores y resultados separados de archivo/caché, promoción por SHA en su PR |
 
 La versión pública y pins efectivos se consultan en el descriptor del dominio,
 no se deducen del número mayor presente en una nota o rama.

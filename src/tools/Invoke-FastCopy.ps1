@@ -502,7 +502,6 @@ function Start-FastCopy {
     if ($Mode -in @('MOVER','SINCRONIZAR')) { throw 'Destructive move/sync requires a separately verified backup and preview; use copy-only in this release.' }
     foreach($source in $Origins){Assert-AtlasCopyDestination -Source $source -Destination $Destino}
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
-    $allResults = @()
     $allOK = $true
     $logFile = Join-Path ([Environment]::GetFolderPath("Desktop")) "Log_FastCopy_$(Get-Date -Format 'yyyy-MM-dd_HHmm').log"
 
@@ -651,7 +650,6 @@ do {
     # OBTENER ORIGENES
     # =============================================
     $origenes = @()
-    $isMulti = $false
     $isProfile = $false
     $profileName = ""
 
@@ -677,14 +675,13 @@ do {
             if ($multiResult -eq "EXIT") { exit }
             if ($multiResult -eq "BACK") { continue }
             $origenes = @($multiResult)
-            $isMulti = $true
         }
         "3" {
-            $profile = Show-ProfileMenu
-            if (-not $profile) { continue }
-            $origenes = @($profile.Paths)
+            $selectedProfile = Show-ProfileMenu
+            if (-not $selectedProfile) { continue }
+            $origenes = @($selectedProfile.Paths)
             $isProfile = $true
-            $profileName = $profile.Name
+            $profileName = $selectedProfile.Name
         }
         default { continue }
     }
@@ -706,7 +703,6 @@ do {
             Write-Host "      [OK] ${oName} ($(Format-Size $fi.Length))" -ForegroundColor Green
         }
     }
-    $srcStats = @{ Files = $totalFiles; Size = $totalSize; SizeMB = [math]::Round($totalSize / 1MB, 1) }
     Write-Host ""
     Write-Host '      Total count/size not evaluated yet / Total pendiente de censo opcional.' -ForegroundColor Gray
 
@@ -721,20 +717,13 @@ do {
         $pathResult = Get-PathFromUser -Prompt "DESTINO" -Mode "folder"
         if ($pathResult -eq "EXIT") { exit }
         if ($pathResult -eq "BACK") { break }
-        if (-not (Test-Path $pathResult)) {
-            Write-Host "      [ERROR] No accesible: ${pathResult}" -ForegroundColor Red
+        try {
+            if(-not(Test-Path -LiteralPath $pathResult -PathType Container -ErrorAction Stop)){throw 'Destination must be an accessible directory.'}
+            foreach($copySource in $origenes){Assert-AtlasCopyDestination -Source $copySource -Destination $pathResult}
+        } catch {
+            Write-Host "      [ERROR] Destino no valido / Invalid destination: $($_.Exception.Message)" -ForegroundColor Red
             continue
         }
-
-        # Validar que ningun origen sea el destino
-        $conflict = $false
-        foreach ($o in $origenes) {
-            try {
-                $fO = (Resolve-Path $o).Path; $fD = (Resolve-Path $pathResult).Path
-                if ($fO -eq $fD) { Write-Host "      [ERROR] Origen = Target: $o" -ForegroundColor Red; $conflict = $true; break }
-            } catch {}
-        }
-        if ($conflict) { continue }
 
         $destDriveLetter = $pathResult.Substring(0, 1)
         $driveInfo = Detect-DriveType $destDriveLetter
