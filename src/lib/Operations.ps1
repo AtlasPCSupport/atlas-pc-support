@@ -655,6 +655,19 @@ function Set-AtlasManagedHostsBlock {
     [pscustomobject]@{Changed=$true;Backup=$backup;Sha256=$digest;Entries=$entries.Count}
 }
 
+function Clear-AtlasDnsCache {
+    [CmdletBinding()]
+    param()
+    try {
+        $result=Invoke-AtlasNativeProcess -FilePath (Join-Path $env:SystemRoot 'System32\ipconfig.exe') -ArgumentList @('/flushdns') -TimeoutSeconds 15
+    } catch {
+        Write-Warning 'DNS cache refresh could not be evaluated; a completed hosts write or restoration remains separate.'
+        return [pscustomobject]@{State='NotEvaluated';ExitCode=$null}
+    }
+    if($result.State -ne 'Correct'){Write-Warning "DNS cache refresh not completed: $($result.State), exit $($result.ExitCode). Hosts file changes remain separate."}
+    return $result
+}
+
 function Restore-AtlasHostsBackup {
     [CmdletBinding()]
     param([Parameter(Mandatory)][string]$Path,[Parameter(Mandatory)][string]$Backup)

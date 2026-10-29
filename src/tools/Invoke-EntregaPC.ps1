@@ -715,7 +715,6 @@ function Generar-ChecklistEntrega {
     $equipoRows = @()
     try {
         $cs   = Get-CimInstance -OperationTimeoutSec 10 Win32_ComputerSystem -ErrorAction Stop
-        $bios = Get-CimInstance -OperationTimeoutSec 10 Win32_BIOS -ErrorAction Stop
         $os   = Get-CimInstance -OperationTimeoutSec 10 Win32_OperatingSystem -ErrorAction Stop
         $equipoRows += _Row $L.RowName  $hostName
         $equipoRows += _Row $L.RowMaker ($cs.Manufacturer)
@@ -964,7 +963,6 @@ function Generar-ChecklistEntrega {
 
     try {
         $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
-        $desktop = [Environment]::GetFolderPath('Desktop')
         $out = Join-Path $handoverDir "handover-$handoverId-$stamp.html"
         Protect-AtlasReportText $html | Set-Content -LiteralPath $out -Encoding UTF8 -ErrorAction Stop
         Write-Host ""

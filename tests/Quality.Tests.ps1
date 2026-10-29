@@ -3,6 +3,165 @@ BeforeAll {
     . (Join-Path (Split-Path -Parent $PSScriptRoot) 'src/lib/ToolKit.ps1')
 }
 
+Describe 'Maintenance copy previews use execution preflight' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Release.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Reports.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Operations.ps1')
+        function Get-PathFromUser {param($Prompt,$Mode)throw 'Real interaction blocked'}
+        function Detect-DriveType {param($DriveLetter)throw 'Must not inspect drive after invalid preview'}
+    }
+    It 'rejects recursive, missing-source and denied previews before inspecting destination drive: <Tool>' -ForEach @(@{Tool='Invoke-FastCopy.ps1'},@{Tool='Invoke-Robocopy.ps1'}) {
+        $ast=Get-TestAst $script:RepoRoot ('src/tools/'+$Tool)
+        $loop=$ast.Find({param($n)$n -is [Management.Automation.Language.WhileStatementAst] -and $n.Label -eq 'askDest'},$true)
+        $preview=[scriptblock]::Create($loop.Extent.Text)
+        $source=Join-Path $TestDrive 'source';$child=Join-Path $source 'child'
+        New-Item -ItemType Directory -Path $child -Force|Out-Null
+        $L=@{Step2Dst='Destination';Step2Prompt='Destination'}
+        Mock Write-Host {};Mock Detect-DriveType {throw 'Preview leaked into drive lookup'}
+        $script:PreviewPath=$child;$script:PreviewCalls=0
+        Mock Get-PathFromUser {$script:PreviewCalls++;if($script:PreviewCalls -eq 1){$script:PreviewPath}else{'BACK'}}
+        $origen=$source;$origenes=@($source)
+        & $preview
+        Should -Invoke Detect-DriveType -Times 0 -Exactly
+        Should -Invoke Write-Host -Times 1 -Exactly -ParameterFilter {($Object -join ' ') -like '*[[]ERROR]*'}
+        $script:PreviewPath=$TestDrive;$script:PreviewCalls=0
+        $origen=Join-Path $TestDrive 'missing';$origenes=@($source,$origen)
+        & $preview
+        Should -Invoke Detect-DriveType -Times 0 -Exactly
+        $script:PreviewCalls=0
+        Mock Assert-AtlasCopyDestination {throw 'Access denied fixture'}
+        & $preview
+        Should -Invoke Detect-DriveType -Times 0 -Exactly
+    }
+    It 'uses literal existing paths with spaces and brackets without changing files' {
+        $source=Join-Path $TestDrive 'source [literal]';$target=Join-Path $TestDrive 'backup [literal]'
+        New-Item -ItemType Directory -Path $source,$target|Out-Null
+        Assert-AtlasCopyDestination -Source $source -Destination $target
+        @(Get-ChildItem -LiteralPath $target).Count|Should -Be 0
+    }
+}
+
+Describe 'Hosts file and cache refresh outcomes remain separate' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Release.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Reports.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Operations.ps1')
+        function Invoke-AtlasNativeProcess {[CmdletBinding()]param($FilePath,$ArgumentList,$TimeoutSeconds)throw 'Real cache changes blocked'}
+        function Pause-HostsManager {param($Message)}
+        function Invoke-WebRequest {[CmdletBinding()]param($Uri,$OutFile,[switch]$UseBasicParsing,$TimeoutSec)throw 'Real download blocked'}
+        $script:MaintenanceLocalApp=$env:LOCALAPPDATA;$script:MaintenanceSystemRoot=$env:SystemRoot;$script:MaintenanceTemp=$env:TEMP
+        $ast=Get-TestAst $script:RepoRoot 'src/tools/Invoke-HostsManager.ps1'
+        $menu=$ast.Find({param($n)$n -is [Management.Automation.Language.SwitchStatementAst] -and $n.Condition.Extent.Text -eq '$sel'},$true)
+        $script:RestoreHostsAction=[scriptblock]::Create((@($menu.Clauses|Where-Object {$_.Item1.Extent.Text -match '\[rR\]'})[0].Item2.Statements.Extent.Text -join "`n"))
+        $script:ApplyHostsAction=[scriptblock]::Create((@($menu.Clauses|Where-Object {$_.Item1.Value -eq '9'})[0].Item2.Statements.Extent.Text -join "`n"))
+    }
+    BeforeEach {
+        $env:LOCALAPPDATA=Join-Path $TestDrive ([guid]::NewGuid().ToString('N'))
+        if(-not $env:SystemRoot){$env:SystemRoot=$TestDrive}
+        New-Item -ItemType Directory -Path (Join-Path $env:LOCALAPPDATA 'AtlasPC') -Force|Out-Null
+        $env:TEMP=$env:LOCALAPPDATA
+        $L=@{SBWillRestore='Restore {0}';SBConfirm='Confirm';SBRestored='File restored';SBPostBackup='Prior file: {0}';ErrAdmin2='Error: {0}';EnterCont='Enter';SBDownloading='Downloading';SBBackupOK='Backup: {0}';SBApplied='Block applied';ErrPrefix='Error: {0}'}
+        Mock Write-Host {};Mock Read-Host {'y'}
+    }
+    AfterAll {$env:LOCALAPPDATA=$script:MaintenanceLocalApp;$env:SystemRoot=$script:MaintenanceSystemRoot;$env:TEMP=$script:MaintenanceTemp}
+    It 'returns native failure, cancellation and timeout without inventing a completed flush: <State>' -ForEach @(@{State='Failed'},@{State='TimedOut'},@{State='Cancelled'}) {
+        Mock Invoke-AtlasNativeProcess {[pscustomobject]@{State=$State;ExitCode=1}}
+        (Clear-AtlasDnsCache -WarningAction SilentlyContinue).State|Should -Be $State
+        Should -Invoke Invoke-AtlasNativeProcess -Times 1 -Exactly -ParameterFilter {$TimeoutSeconds -eq 15 -and $ArgumentList[0] -eq '/flushdns'}
+    }
+    It 'keeps launch failure distinct from an accepted native completion' {
+        Mock Invoke-AtlasNativeProcess {throw 'Unavailable'}
+        (Clear-AtlasDnsCache -WarningAction SilentlyContinue).State|Should -Be NotEvaluated
+        Mock Invoke-AtlasNativeProcess {[pscustomobject]@{State='Correct';ExitCode=0}}
+        (Clear-AtlasDnsCache).State|Should -Be Correct
+    }
+    It 'runs the real restore consumer and preserves exact bytes even if cache refresh times out' {
+        $hostsPath=Join-Path $env:LOCALAPPDATA 'hosts';$backup=Join-Path $env:LOCALAPPDATA 'original.bak'
+        [IO.File]::WriteAllText($hostsPath,'changed')
+        $bytes=[byte[]](239,187,191,35,32,111,114,105,103,105,110,97,108,13,10)
+        [IO.File]::WriteAllBytes($backup,$bytes)
+        [IO.File]::WriteAllText((Join-Path $env:LOCALAPPDATA 'AtlasPC/hosts-last-stevenblack-backup.txt'),$backup)
+        Mock Invoke-AtlasNativeProcess {[pscustomobject]@{State='TimedOut';ExitCode=$null}}
+        & $script:RestoreHostsAction -WarningAction SilentlyContinue
+        [Convert]::ToBase64String([IO.File]::ReadAllBytes($hostsPath))|Should -Be ([Convert]::ToBase64String($bytes))
+        Should -Invoke Write-Host -Times 1 -Exactly -ParameterFilter {($Object -join ' ').Trim() -eq 'File restored'}
+        Should -Invoke Write-Host -Times 1 -Exactly -ParameterFilter {($Object -join ' ') -eq 'DNS cache: TimedOut' -and $ForegroundColor -eq 'Yellow'}
+        Should -Invoke Invoke-AtlasNativeProcess -Times 1 -Exactly
+    }
+    It 'runs the managed-block consumer with a fake download and reports a failed cache refresh separately' {
+        $hostsPath=Join-Path $env:LOCALAPPDATA 'hosts';[IO.File]::WriteAllText($hostsPath,'127.0.0.1 localhost')
+        Mock Read-Host {if($Prompt -like '*Select*'){'1'}else{'y'}}
+        $L.SelectPrompt='Select'
+        Mock Invoke-WebRequest {[IO.File]::WriteAllText($OutFile,'0.0.0.0 ads.example.invalid')}
+        Mock Invoke-AtlasNativeProcess {[pscustomobject]@{State='Failed';ExitCode=1}}
+        & $script:ApplyHostsAction -WarningAction SilentlyContinue
+        [IO.File]::ReadAllText($hostsPath)|Should -Match 'ads.example.invalid'
+        Should -Invoke Write-Host -Times 1 -Exactly -ParameterFilter {($Object -join ' ').Trim() -eq 'Block applied'}
+        Should -Invoke Write-Host -Times 1 -Exactly -ParameterFilter {($Object -join ' ') -eq 'DNS cache: Failed' -and $ForegroundColor -eq 'Yellow'}
+    }
+}
+
+Describe 'Maintenance renames preserve native arguments and local choices' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        foreach($name in @('Start-Stress','Start-NvidiaSmiLoop')){. (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-GPUCheck.ps1' $name)}
+        . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-PrepararUSB.ps1' 'Get-StageEstimate')
+        . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-Robocopy.ps1' 'Get-PathFromUser')
+        function Invoke-AtlasNativeProcess {[CmdletBinding()]param($FilePath,$Arguments,$TimeoutSeconds)throw 'Real probe blocked'}
+        function Start-Process {[CmdletBinding()]param($FilePath,$ArgumentList,$WorkingDirectory,$RedirectStandardOutput,$WindowStyle,[switch]$PassThru)throw 'Real process blocked'}
+        function Get-AtlasApplicationPath {param($Name)'fixture-nvidia.exe'}
+        function Clean-Path {param($Path)$Path}
+        . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-FastCopy.ps1' 'Show-ProfileMenu')
+        function Get-UserProfile {@{'1'=@{Name='Fixture';Desc='Synthetic';Paths=@($TestDrive)}}}
+        function Write-Centered {param($Text,$Color)}
+    }
+    It 'retains stress duration, working directory and NVIDIA logging arguments without starting applications' {
+        Mock Invoke-AtlasNativeProcess {[pscustomobject]@{State='Correct';Stdout='--max-time';StdoutTruncated=$false}}
+        Mock Start-Process {[pscustomobject]@{Fixture=$true}}
+        $exe=Join-Path $TestDrive 'furmark.exe'
+        Start-Stress -ExePath $exe -Minutes 2|Out-Null
+        Should -Invoke Start-Process -Times 1 -Exactly -ParameterFilter {$WorkingDirectory -eq $TestDrive -and $ArgumentList -like '*--max-time 120*'}
+        Start-NvidiaSmiLoop -CsvPath (Join-Path $TestDrive 'log.csv')|Out-Null
+        Should -Invoke Start-Process -Times 1 -Exactly -ParameterFilter {$FilePath -eq 'fixture-nvidia.exe' -and $ArgumentList -like '*--format=csv,nounits -l 1*' -and $WindowStyle -eq 'Hidden'}
+    }
+    It 'preserves USB estimate selection and Robocopy cancel/path input' {
+        (Get-StageEstimate -StageKey PS7 -UseDeltaProfile $true).Min|Should -Be 60
+        (Get-StageEstimate -StageKey PS7 -UseDeltaProfile $false).Min|Should -Be 120
+        Mock Write-Host {};Mock Read-Host {'B'}
+        Get-PathFromUser -Prompt 'Fixture'|Should -Be BACK
+        Mock Read-Host {'S'};Get-PathFromUser -Prompt 'Fixture'|Should -Be EXIT
+        Mock Read-Host {'fixture path'};Get-PathFromUser -Prompt 'Fixture'|Should -Be 'fixture path'
+    }
+    It 'retains the FastCopy profile choice without replacing the PowerShell profile variable' {
+        $ast=Get-TestAst $script:RepoRoot 'src/tools/Invoke-FastCopy.ps1'
+        $menu=$ast.Find({param($n)$n -is [Management.Automation.Language.SwitchStatementAst] -and $n.Condition.Extent.Text -eq '$menuSel'},$true)
+        $clause=@($menu.Clauses|Where-Object {$_.Item1.Value -eq '3'})[0]
+        $action=[scriptblock]::Create(($clause.Item2.Statements.Extent.Text -join "`n")+';[pscustomobject]@{Name=$profileName;Paths=$origenes;ProfileVariable=$PROFILE}')
+        Mock Read-Host {'1'};Mock Write-Host {}
+        $expected=$PROFILE
+        $result=& $action
+        $result.Name|Should -Be Fixture;$result.Paths|Should -Be @($TestDrive)
+        $result.ProfileVariable|Should -Be $expected
+    }
+    It 'keeps supported DNS and latency entries while removing unused templates and the retiring probe' {
+        $ast=Get-TestAst $script:RepoRoot 'src/tools/Invoke-SelectorDNS.ps1'
+        foreach($variable in @('$dnsProfiles','$latencyTargets')){
+            $assignment=$ast.Find({param($n)$n -is [Management.Automation.Language.AssignmentStatementAst] -and $n.Left.Extent.Text -eq $variable},$true)
+            . ([scriptblock]::Create($assignment.Extent.Text))
+        }
+        $dnsProfiles['2'].Addr|Should -Contain '1.1.1.1'
+        $latencyTargets['Quad9']|Should -Be '9.9.9.9'
+        $latencyTargets.Values|Should -Not -Contain '194.242.2.9'
+        @($ast.FindAll({param($n)$n -is [Management.Automation.Language.VariableExpressionAst] -and $n.VariablePath.UserPath -eq 'dohTemplates'},$true)).Count|Should -Be 0
+    }
+}
+
 Describe 'Router observation regression coverage' {
     BeforeAll {
         $script:RepoRoot=Split-Path -Parent $PSScriptRoot

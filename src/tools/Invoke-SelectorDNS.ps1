@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Invoke-SelectorDNS
 # Migrado de: SelectorDNS.ps1
 # Atlas PC Support — v1.0
@@ -138,33 +138,8 @@ $dnsProfiles = [ordered]@{
     '15' = @{ Label = "NextDNS";                  Addr = @("45.90.28.0","45.90.30.0","2a07:a8c0::","2a07:a8c1::") }
 }
 
-# Templates DoH por IP
-$dohTemplates = @{
-    "1.1.1.1"              = "https://cloudflare-dns.com/dns-query"
-    "1.0.0.1"              = "https://cloudflare-dns.com/dns-query"
-    "2606:4700:4700::1111" = "https://cloudflare-dns.com/dns-query"
-    "2606:4700:4700::1001" = "https://cloudflare-dns.com/dns-query"
-    "1.1.1.2"              = "https://security.cloudflare-dns.com/dns-query"
-    "1.0.0.2"              = "https://security.cloudflare-dns.com/dns-query"
-    "2606:4700:4700::1112" = "https://security.cloudflare-dns.com/dns-query"
-    "2606:4700:4700::1002" = "https://security.cloudflare-dns.com/dns-query"
-    "1.1.1.3"              = "https://family.cloudflare-dns.com/dns-query"
-    "1.0.0.3"              = "https://family.cloudflare-dns.com/dns-query"
-    "2606:4700:4700::1113" = "https://family.cloudflare-dns.com/dns-query"
-    "2606:4700:4700::1003" = "https://family.cloudflare-dns.com/dns-query"
-    "8.8.8.8"              = "https://dns.google/dns-query"
-    "8.8.4.4"              = "https://dns.google/dns-query"
-    "2001:4860:4860::8888" = "https://dns.google/dns-query"
-    "2001:4860:4860::8844" = "https://dns.google/dns-query"
-    "9.9.9.9"              = "https://dns.quad9.net/dns-query"
-    "149.112.112.112"      = "https://dns.quad9.net/dns-query"
-    "2620:fe::fe"          = "https://dns.quad9.net/dns-query"
-    "2620:fe::9"           = "https://dns.quad9.net/dns-query"
-    "45.90.28.0"           = "https://dns.nextdns.io/dns-query"
-    "45.90.30.0"           = "https://dns.nextdns.io/dns-query"
-    "2a07:a8c0::"          = "https://dns.nextdns.io/dns-query"
-    "2a07:a8c1::"          = "https://dns.nextdns.io/dns-query"
-}
+# DoH se configura solo desde los ajustes nativos, sin tabla de plantillas sin uso.
+
 
 # IPs de referencia para el test de latencia
 $latencyTargets = [ordered]@{
@@ -175,7 +150,6 @@ $latencyTargets = [ordered]@{
     "Quad9"                 = "9.9.9.9"
     "OpenDNS Home"          = "208.67.222.222"
     "OpenDNS FamilyShield"  = "208.67.222.123"
-    "Mullvad 6 (Extreme)"   = "194.242.2.9"
     "NextDNS"               = "45.90.28.0"
 }
 #endregion
@@ -453,10 +427,10 @@ function Invoke-PerAdapterDNS {
     Write-Host -NoNewline "  >> " -ForegroundColor Yellow
     $dnsOpt = (Read-Host).Trim()
     if ($dnsProfiles.Keys -contains $dnsOpt) {
-        $profile  = $dnsProfiles[$dnsOpt]
+        $selectedDnsProfile  = $dnsProfiles[$dnsOpt]
         $selected = Select-AdapterNames
         if ($selected) {
-            Apply-DNS -AdapterNames $selected -Addresses $profile.Addr -Label $profile.Label
+            Apply-DNS -AdapterNames $selected -Addresses $selectedDnsProfile.Addr -Label $selectedDnsProfile.Label
         }
     } elseif ($dnsOpt -eq '16') {
         Invoke-CustomDNS
@@ -544,12 +518,12 @@ do {
     switch ($opcion) {
         { $_ -in @('9','10','11','12','13','14') } { Write-Warning $txt.HeaderMV }
         { $dnsProfiles.Keys -contains $_ } {
-            $profile  = $dnsProfiles[$opcion]
+            $selectedDnsProfile  = $dnsProfiles[$opcion]
             $adapters = Get-PhysicalAdapters
             if (-not $adapters) {
                 Write-Host "`n  $($txt.ErrNoAdap)" -ForegroundColor Red
             } else {
-                Apply-DNS -AdapterNames $adapters.Name -Addresses $profile.Addr -Label $profile.Label
+                Apply-DNS -AdapterNames $adapters.Name -Addresses $selectedDnsProfile.Addr -Label $selectedDnsProfile.Label
             }
         }
         '16' { Invoke-CustomDNS }

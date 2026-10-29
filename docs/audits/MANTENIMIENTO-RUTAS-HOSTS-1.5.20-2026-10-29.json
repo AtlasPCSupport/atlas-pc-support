@@ -1,0 +1,25 @@
+{
+  "dateLocal": "2026-10-29",
+  "timeZone": "America/Bogota",
+  "version": "1.5.20",
+  "manifestSha256": "a6ac49d1e9522970ef7110b1b2fe06ea0e821762cc33033ec44d57b2008fd848",
+  "toolCount": 27,
+  "releaseMembers": 34,
+  "newRegressionCases": 13,
+  "suites": [
+    { "runtime": "5.1.26100.9711", "passed": 447, "failed": 0, "skipped": 0, "analyzerErrors": 0, "analyzerWarnings": 248, "distributionArtifactsUnchanged": true },
+    { "runtime": "7.6.5", "passed": 447, "failed": 0, "skipped": 0, "analyzerErrors": 0, "analyzerWarnings": 266, "distributionArtifactsUnchanged": true }
+  ],
+  "workerTestsPassed": 27,
+  "mergePolicyTestsPassed": 9,
+  "workerDryRunPassed": true,
+  "npmAuditKnownVulnerabilities": 0,
+  "localMarkdownFilesChecked": 53,
+  "realHostDnsCacheChanged": false,
+  "realHostHostsFileChanged": false,
+  "realGpuApplicationsStarted": false,
+  "vmsResumed": false,
+  "windows10Qualified": false,
+  "physicalUsbUpdated": false,
+  "publicationEvidenceLocation": "Release pull request: authenticated push, exact-commit CI and public verification; local checks alone do not establish publication."
+}

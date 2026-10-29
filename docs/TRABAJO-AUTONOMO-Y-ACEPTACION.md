@@ -68,6 +68,11 @@ Ese cierre describe 1.5.12. Para el ciclo posterior de auditoría, consultar el
   individual de runtimes antiguos. Regresiones sin acciones reales sobre el host;
   publicación y CI registrados por commit. Se conserva deuda gradual documentada.
 
+- 1.5.20: [mantenimiento de rutas/hosts](audits/MANTENIMIENTO-RUTAS-HOSTS-1.5.20-2026-10-29.md),
+  previsualizaciones con el contrato común, resultado separado de caché DNS,
+  variables locales propias y eliminación de consultas/datos sin uso. La aceptación
+  física y la deuda restante conservan los límites documentados.
+
 ## Decisiones ya tomadas
 
 - Se conservan las herramientas y funciones actuales; la

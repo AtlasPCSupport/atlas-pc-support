@@ -293,7 +293,7 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
             [bool]$UseDeltaProfile
         )
 
-        $profile = if ($UseDeltaProfile) { 'delta' } else { 'full' }
+        $estimateProfile = if ($UseDeltaProfile) { 'delta' } else { 'full' }
         $estimates = @{
             full = @{
                 Launcher = @{ Min = 8;   Max = 30  }
@@ -313,7 +313,7 @@ Mantener Defender activo. No hacen falta exclusiones ni bypass de politica.
             }
         }
 
-        $entry = $estimates[$profile][$StageKey]
+        $entry = $estimates[$estimateProfile][$StageKey]
         if (-not $entry) { return @{ Min = 10; Max = 60 } }
         return $entry
     }

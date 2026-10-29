@@ -374,7 +374,8 @@ function Invoke-HostsManager {
                             Write-Host ('  ' + ($L.SBBackupOK -f $result.Backup)) -ForegroundColor Green
                         }
                         Write-Host ($result | ConvertTo-Json)
-                        try { Clear-DnsClientCache -ErrorAction Stop } catch { Write-Warning 'Hosts written; DNS cache flush not verified.' }
+                        $cache=Clear-AtlasDnsCache
+                        Write-Host "DNS cache: $($cache.State)" -ForegroundColor $(if($cache.State -eq 'Correct'){'Green'}else{'Yellow'})
                         Write-Host ('  ' + $L.SBApplied) -ForegroundColor Green
                     } finally {if(Test-Path -LiteralPath $tmp){Remove-Item -LiteralPath $tmp -Force -ErrorAction Stop}}
                 } catch {
@@ -405,7 +406,8 @@ function Invoke-HostsManager {
                         $bumpBefore = Join-Path (Split-Path $hostsPath) "hosts.before-revert-stevenblack.$stamp"
                         Copy-Item $hostsPath $bumpBefore -Force -ErrorAction Stop
                         Restore-AtlasHostsBackup -Path $hostsPath -Backup $backupPath | Out-Null
-                        try { ipconfig /flushdns | Out-Null } catch {}
+                        $cache=Clear-AtlasDnsCache
+                        Write-Host "DNS cache: $($cache.State)" -ForegroundColor $(if($cache.State -eq 'Correct'){'Green'}else{'Yellow'})
                         Write-Host ('  ' + $L.SBRestored) -ForegroundColor Green
                         Write-Host ('  ' + ($L.SBPostBackup -f $bumpBefore)) -ForegroundColor DarkGray
                     } catch {

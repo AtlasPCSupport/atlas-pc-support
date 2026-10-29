@@ -83,7 +83,7 @@ de requisitos diferente no hereda confirmaciones anteriores silenciosamente.
 | Código/USB | `get.ps1 -Rollback` selecciona solo una versión anterior íntegra; no deshace cambios del sistema. Ver RELEASES. |
 | DNS | Restaurar el snapshot creado antes del cambio. GUID y familia evitan confundir renombres de adaptador; se conserva origen DHCP/estático. Un backup viejo sin origen conocido se rechaza. |
 | Servicios | Elegir el snapshot de `ServiceSnapshots`; restauración comprueba inicio, estado y arranque diferido. Si falla, conservar evidencia y consultar Windows; no forzar dependientes. |
-| Hosts | Conservar el `.bak` de bytes originales. La importación de texto usa UTF-8; para recuperación byte a byte copiar el backup exacto con permisos apropiados. |
+| Hosts | Conservar el `.bak` de bytes originales. La importación de texto usa UTF-8; restauración usa los bytes exactos del backup. Al aplicar/restaurar el bloque administrado, el resultado del archivo y el refresco de caché DNS se muestran separados. Un fallo de caché no deshace una restauración de archivo completada. |
 | Impresión | Vaciar elimina solo trabajos de la cola elegida; los documentos eliminados se deben reenviar. Reiniciar Spooler es una acción distinta y afecta al servicio compartido. |
 | Cuentas | Confirmar acceso de un administrador alternativo antes de cambios. Un rollback de código no recupera datos de un perfil eliminado ni secretos EFS perdidos por reset de contraseña. |
 | BitLocker | Usar la clave respaldada externamente y el procedimiento Windows. La solicitud de cifrado no prueba que haya finalizado ni que se haya ensayado recuperación. |

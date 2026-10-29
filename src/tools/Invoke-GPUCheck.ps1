@@ -238,12 +238,12 @@ function Invoke-GPUCheck {
         $seconds = [Math]::Max(1, $Minutes * 60)
         $help = ''
         try { $probe = Invoke-AtlasNativeProcess -FilePath $ExePath -Arguments '--help' -TimeoutSeconds 10; if ($probe.State -eq 'Correct' -and -not $probe.StdoutTruncated) { $help = $probe.Stdout } } catch {}
-        $args = "/nogui /max_time=$seconds"
+        $nativeArguments = "/nogui /max_time=$seconds"
         if ($help -match '--max-time') {
-            $args = "--benchmark --p1080 --max-time $seconds --no-score-box"
+            $nativeArguments = "--benchmark --p1080 --max-time $seconds --no-score-box"
         }
         $wd = Split-Path -Parent $ExePath
-        return Start-Process -FilePath $ExePath -ArgumentList $args -WorkingDirectory $wd -PassThru
+        return Start-Process -FilePath $ExePath -ArgumentList $nativeArguments -WorkingDirectory $wd -PassThru
     }
 
     function Stop-Proc {
@@ -327,8 +327,8 @@ function Invoke-GPUCheck {
             'clocks_throttle_reasons.hw_slowdown',
             'clocks_throttle_reasons.sw_power_cap'
         ) -join ','
-        $args = "--query-gpu=$query --format=csv,nounits -l 1"
-        return Start-Process -FilePath $path -ArgumentList $args -RedirectStandardOutput $CsvPath -WindowStyle Hidden -PassThru
+        $nativeArguments = "--query-gpu=$query --format=csv,nounits -l 1"
+        return Start-Process -FilePath $path -ArgumentList $nativeArguments -RedirectStandardOutput $CsvPath -WindowStyle Hidden -PassThru
     }
 
     function Get-GpuEvents {

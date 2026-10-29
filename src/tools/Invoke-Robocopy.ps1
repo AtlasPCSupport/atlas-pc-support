@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Invoke-Robocopy  ->  Robocopy Mirror
 #
 # i18n: Option A (en default + full es secondary). Function name
@@ -378,12 +378,12 @@ function Get-PathFromUser {
     Write-Host $L.OpenExpl -ForegroundColor Cyan
     Write-Host $L.BackExit -ForegroundColor DarkGray
     Write-Host ""
-    $input = Read-Host "      ${Prompt}"
+    $pathInput = Read-Host "      ${Prompt}"
 
-    if ($input -eq "S" -or $input -eq "s") { return "EXIT" }
-    if ($input -eq "B" -or $input -eq "b") { return "BACK" }
+    if ($pathInput -eq "S" -or $pathInput -eq "s") { return "EXIT" }
+    if ($pathInput -eq "B" -or $pathInput -eq "b") { return "BACK" }
 
-    if ($input -eq "E" -or $input -eq "e") {
+    if ($pathInput -eq "E" -or $pathInput -eq "e") {
         if ($Mode -eq "folder") {
             $path = Select-FolderDialog -Description ($L.FolderDlgT -f $Prompt)
         } else {
@@ -399,7 +399,7 @@ function Get-PathFromUser {
         return $path
     }
 
-    return Clean-Path $input
+    return Clean-Path $pathInput
 }
 
 function Test-CopyIntegrity {
@@ -551,23 +551,13 @@ do {
         if ($pathResult -eq "BACK") { break }
 
         $destBase = $pathResult
-        if (-not (Test-Path $destBase)) {
-            Write-Host ($L.ErrUnreach -f $destBase) -ForegroundColor Red
+        try {
+            if(-not(Test-Path -LiteralPath $destBase -PathType Container -ErrorAction Stop)){throw 'Destination must be an accessible directory.'}
+            Assert-AtlasCopyDestination -Source $origen -Destination $destBase
+        } catch {
+            Write-Host "      [ERROR] Destino no valido / Invalid destination: $($_.Exception.Message)" -ForegroundColor Red
             continue
         }
-
-        try {
-            $fullOrigen = (Resolve-Path $origen).Path
-            $fullDest = (Resolve-Path $destBase).Path
-            if ($fullOrigen -eq $fullDest) {
-                Write-Host $L.ErrSameDir -ForegroundColor Red
-                continue
-            }
-            if ($fullDest.StartsWith($fullOrigen + "\")) {
-                Write-Host $L.ErrRecursion -ForegroundColor Red
-                continue
-            }
-        } catch {}
 
         $destDriveLetter = $destBase.Substring(0, 1)
         $driveInfo = Detect-DriveType $destDriveLetter
