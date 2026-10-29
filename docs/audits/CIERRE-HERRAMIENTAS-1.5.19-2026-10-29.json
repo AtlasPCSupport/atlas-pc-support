@@ -1,0 +1,28 @@
+{
+  "dateLocal": "2026-10-29",
+  "timeZone": "America/Bogota",
+  "version": "1.5.19",
+  "manifestSha256": "8662721537500895b153fb79e6ec7268aada241e4ea2be707580094bd89a6d33",
+  "toolCount": 27,
+  "releaseMembers": 34,
+  "suites": [
+    { "runtime": "5.1.26100.9711", "passed": 434, "failed": 0, "skipped": 0, "analyzerErrors": 0, "analyzerWarnings": 265, "distributionArtifactsUnchanged": true },
+    { "runtime": "7.6.5", "passed": 434, "failed": 0, "skipped": 0, "analyzerErrors": 0, "analyzerWarnings": 283, "distributionArtifactsUnchanged": true }
+  ],
+  "workerTestsPassed": 27,
+  "mergePolicyTestsPassed": 9,
+  "npmAuditKnownVulnerabilities": 0,
+  "workerDryRunPassed": true,
+  "localMarkdownFilesChecked": 52,
+  "syntheticRecoveryCardRenderedOnWindows": true,
+  "realSecretInventoryQueried": false,
+  "realEncryptionOrInstallationExecuted": false,
+  "vmsResumed": false,
+  "windows10Qualified": false,
+  "coldBootMeasured": false,
+  "physicalUsbUpdated": false,
+  "defenderProtectionObservedActive": true,
+  "previousPublicReleaseChecked": "1.5.18",
+  "previousPublicRoutesPassed": 7,
+  "publicationEvidenceLocation": "Release pull request after authenticated push, exact-commit CI and public verification; local results do not establish publication."
+}

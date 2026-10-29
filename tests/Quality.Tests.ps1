@@ -3,6 +3,116 @@ BeforeAll {
     . (Join-Path (Split-Path -Parent $PSScriptRoot) 'src/lib/ToolKit.ps1')
 }
 
+Describe 'Router observation regression coverage' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Release.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Reports.ps1')
+        foreach($name in @('Compare-AtlasRouterObservations','Save-AtlasRouterBaseline','Get-AtlasRouterFirmwareVersion','Get-MACDesdeARP','Modulo-Escaneo')){. (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-AuditoriaRouter.ps1' $name)}
+        function Invoke-AtlasNativeProcess {[CmdletBinding()]param($FilePath,$ArgumentList,$TimeoutSeconds)throw 'Real network blocked'}
+        function Obtener-Router {[pscustomobject]@{Gateway='192.0.2.1';InterfaceIndex=1}}
+        function Obtener-SubredBase {param($Gateway,$InterfaceIndex)'192.0.2'}
+        function Esperar-Enter {param([switch]$Silencioso)}
+        function Get-Fabricante {param($MAC)'Fixture'}
+        $script:RouterOriginalSystemRoot=$env:SystemRoot
+    }
+    BeforeEach {
+        $script:ArchivoEstado=Join-Path $TestDrive ('baseline-'+[guid]::NewGuid().ToString('N')+'.txt')
+        if(-not $env:SystemRoot){$env:SystemRoot=$TestDrive}
+        Mock Write-Host {};Mock Clear-Host {};Mock Start-Sleep {}
+    }
+    AfterAll {$env:SystemRoot=$script:RouterOriginalSystemRoot}
+    It 'separates MAC changes, equal observations, unknown identity, new and missing addresses' {
+        $before=@{'192.0.2.1'=@{MAC='00:11:22:33:44:55'};'192.0.2.2'=@{MAC='00-11-22-33-44-66'};'192.0.2.3'=@{MAC='Desconocida'};'192.0.2.4'=@{MAC='00-11-22-33-44-77'}}
+        $after=@{'192.0.2.1'=@{MAC='00-11-22-33-44-56'};'192.0.2.2'=@{MAC='00:11:22:33:44:66'};'192.0.2.3'=@{MAC='Desconocida'};'192.0.2.5'=@{MAC='00-11-22-33-44-88'}}
+        $r=Compare-AtlasRouterObservations -Previous $before -Current $after
+        $r.Changed.Count|Should -Be 1;$r.Changed[0].IP|Should -Be '192.0.2.1'
+        $r.Unchanged|Should -Be @('192.0.2.2');$r.Uncertain|Should -Be @('192.0.2.3')
+        $r.New|Should -Be @('192.0.2.5');$r.Missing|Should -Be @('192.0.2.4')
+        (Compare-AtlasRouterObservations -Previous @{} -Current @{}).Changed.Count|Should -Be 0
+    }
+    It 'reads explicit firmware but refuses hardware-only, generic and ambiguous versions' {
+        Get-AtlasRouterFirmwareVersion '<p>HW Version: 2.0</p><p>Firmware Version: 1.2.3 Build 20261001</p>'|Should -Be '1.2.3 Build 20261001'
+        Get-AtlasRouterFirmwareVersion '{"firmwareVersion":"1.2.3"}'|Should -Be '1.2.3'
+        foreach($html in @('HW Version: 2.0','Version: 1.2.3','Firmware Version: 1.2.3 Software Version: 2.3.4',('x'*524289))){Get-AtlasRouterFirmwareVersion $html|Should -BeNullOrEmpty}
+    }
+    It 'preserves a baseline on empty and failed scans and replaces a complete observation' {
+        [IO.File]::WriteAllText($script:ArchivoEstado,'previous')
+        $rows=@([pscustomobject]@{IP='192.0.2.1';MAC='00-11-22-33-44-55';Host='fixture'})
+        Save-AtlasRouterBaseline -Observations @() -WarningAction SilentlyContinue|Should -BeFalse
+        Save-AtlasRouterBaseline -Observations $rows -ScanErrors 1 -WarningAction SilentlyContinue|Should -BeFalse
+        [IO.File]::ReadAllText($script:ArchivoEstado)|Should -Be previous
+        Save-AtlasRouterBaseline -Observations $rows|Should -BeTrue
+        [IO.File]::ReadAllText($script:ArchivoEstado)|Should -Be '192.0.2.1|00-11-22-33-44-55|fixture'
+        @(Get-ChildItem -LiteralPath $TestDrive -Filter 'atlas-baseline-*.tmp').Count|Should -Be 0
+    }
+    It 'does not claim persistence for an invalid destination' {
+        $script:ArchivoEstado=Join-Path $TestDrive 'missing/baseline.txt'
+        Save-AtlasRouterBaseline -Observations @([pscustomobject]@{IP='192.0.2.1';MAC='Desconocida';Host='fixture'}) -WarningAction SilentlyContinue|Should -BeFalse
+    }
+    It 'bounds ARP and requires an exact IP and complete valid MAC result' {
+        Mock Invoke-AtlasNativeProcess {[pscustomobject]@{State='Correct';Stdout="  192.0.2.10  00-11-22-33-44-55 dynamic`n  192.0.2.1  00-11-22-33-44-66 dynamic";StdoutTruncated=$false}}
+        Get-MACDesdeARP '192.0.2.1'|Should -Be '00-11-22-33-44-66'
+        Should -Invoke Invoke-AtlasNativeProcess -Times 1 -Exactly -ParameterFilter {$TimeoutSeconds -eq 2 -and $ArgumentList[1] -eq '192.0.2.1'}
+        Mock Invoke-AtlasNativeProcess {[pscustomobject]@{State='TimedOut';Stdout='192.0.2.1 00-11-22-33-44-55 dynamic'}}
+        Get-MACDesdeARP '192.0.2.1'|Should -Be Desconocida
+        Mock Invoke-AtlasNativeProcess {[pscustomobject]@{State='Correct';Stdout='192.0.2.1 00-11-22-33-44-55 dynamic';StdoutTruncated=$true}}
+        Get-MACDesdeARP '192.0.2.1'|Should -Be Desconocida
+        Mock Invoke-AtlasNativeProcess {[pscustomobject]@{State='Correct';Stdout='192.0.2.1 FF-FF-FF-FF-FF-FF dynamic';StdoutTruncated=$false}}
+        Get-MACDesdeARP '192.0.2.1'|Should -Be Desconocida
+    }
+    It 'runs the real scan with synthetic failures and disposes ping without losing the old baseline' {
+        [IO.File]::WriteAllText($script:ArchivoEstado,'previous')
+        $script:FakePing=[pscustomobject]@{Disposed=$false}
+        $script:FakePing|Add-Member ScriptMethod Send {param($ip,$timeout)throw 'synthetic failure'}
+        $script:FakePing|Add-Member ScriptMethod Dispose {$this.Disposed=$true}
+        Mock New-Object {$script:FakePing} -ParameterFilter {$TypeName -eq 'System.Net.NetworkInformation.Ping'}
+        $script:HistorialSesion=[Collections.Generic.List[string]]::new()
+        Modulo-Escaneo -Silencioso -WarningAction SilentlyContinue|Out-Null
+        $script:FakePing.Disposed|Should -BeTrue
+        [IO.File]::ReadAllText($script:ArchivoEstado)|Should -Be previous
+    }
+}
+
+Describe 'Runtime selection executes only requested packages' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        foreach($name in @('Invoke-InstalarRuntimes','Resolve-AtlasLegacyRuntimeSelection')){. (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-InstalarRuntimes.ps1' $name)}
+        function Write-AtlasHeader {param($Title)}
+        function Wait-AtlasExit {}
+        function Get-AtlasWingetPath {'fixture-winget.exe'}
+        function Invoke-AtlasNativeProcess {[CmdletBinding()]param($FilePath,$ArgumentList,$TimeoutSeconds,$SuccessCodes)throw 'Real installer blocked'}
+    }
+    BeforeEach {Mock Write-Host {};Mock Wait-AtlasExit {};Mock Get-AtlasWingetPath {'fixture-winget.exe'}}
+    It 'deduplicates IDs and rejects a malformed selection entirely' {
+        @(Resolve-AtlasLegacyRuntimeSelection '1, 3,1')|Should -Be @('Microsoft.VCRedist.2013.x64','Microsoft.DirectX')
+        foreach($selection in @('1,6','all','1;3','--override','1,')){{Resolve-AtlasLegacyRuntimeSelection $selection}|Should -Throw}
+        @(Resolve-AtlasLegacyRuntimeSelection '').Count|Should -Be 0
+    }
+    It 'cancels before WinGet if selection is empty' {
+        Mock Read-Host {if($Prompt -like 'Only required*'){''}else{'2'}}
+        Mock Invoke-AtlasNativeProcess {throw 'No installation'}
+        Invoke-InstalarRuntimes
+        Should -Invoke Get-AtlasWingetPath -Times 0 -Exactly
+        Should -Invoke Invoke-AtlasNativeProcess -Times 0 -Exactly
+    }
+    It 'installs and verifies only the chosen package through the real menu flow' {
+        Mock Read-Host {if($Prompt -like 'Only required*'){'3'}elseif($Prompt -like 'Type INSTALL*'){'INSTALL'}else{'2'}}
+        Mock Invoke-AtlasNativeProcess {[pscustomobject]@{State='Correct';ExitCode=0;Stdout='Microsoft.DirectX';StdoutTruncated=$false}}
+        Invoke-InstalarRuntimes
+        Should -Invoke Invoke-AtlasNativeProcess -Times 1 -Exactly -ParameterFilter {$ArgumentList[0] -eq 'install' -and $ArgumentList[2] -eq 'Microsoft.DirectX' -and $TimeoutSeconds -eq 1800}
+        Should -Invoke Invoke-AtlasNativeProcess -Times 2 -Exactly
+    }
+    It 'stops a selection after interruption without starting the next installer: <State>' -ForEach @(@{State='TimedOut'},@{State='Cancelled'}) {
+        Mock Read-Host {if($Prompt -like 'Only required*'){'1,3'}elseif($Prompt -like 'Type INSTALL*'){'INSTALL'}else{'2'}}
+        Mock Invoke-AtlasNativeProcess {[pscustomobject]@{State=$State;ExitCode=$null}}
+        Invoke-InstalarRuntimes -WarningAction SilentlyContinue
+        Should -Invoke Invoke-AtlasNativeProcess -Times 1 -Exactly
+    }
+}
+
 Describe 'Audit phase 4: bounded copy census and destination continuity' {
     BeforeAll {
         $script:RepoRoot=Split-Path -Parent $PSScriptRoot

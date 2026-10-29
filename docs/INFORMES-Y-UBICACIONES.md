@@ -11,6 +11,7 @@ es la referencia; las carpetas de Windows pueden estar redirigidas.
 | GPU Check | LocalAppData/AtlasPC/reports/GPUCheck, intento fechado |
 | Robocopy/FastCopy | Logs nativos en Desktop; destino elegido por el operador |
 | Drivers | Export-* nuevo dentro del destino elegido y manifiesto completo |
+| BitLocker | Archivo .txt nuevo elegido en otro disco físico; tarjetas opcionales en esa misma carpeta, con claves sin redactar y custodia separada |
 | USB | usb-dependency-status.json en la raíz del pack; no homologación de proveedores |
 | Logs Atlas | LocalAppData/AtlasPC/logs; logs operativos locales sin redacción |
 

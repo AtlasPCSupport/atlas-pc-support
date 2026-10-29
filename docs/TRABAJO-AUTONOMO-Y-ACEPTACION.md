@@ -1,6 +1,6 @@
 # Trabajo autonomo y aceptacion pendiente
 
-Estado: 27/10/2026. Las VMs permanecen pausadas; Windows 10 no esta homologado
+Estado: 29/10/2026. Las VMs permanecen pausadas; Windows 10 no esta homologado
 por completo. Las pruebas en PowerShell 5.1 sobre el host no certifican una
 edicion o parche de Windows 10.
 
@@ -62,6 +62,11 @@ Ese cierre describe 1.5.12. Para el ciclo posterior de auditoría, consultar el
 - 1.5.18: [cierre transversal](audits/CIERRE-TRANSVERSAL-1.5.18-2026-10-27.md),
   inventario simple de Master, todos los consumidores de dependencias, consultas
   CIM/DNS restantes y compilación de políticas; resultados y promoción en su PR.
+
+- 1.5.19: [ajustes adicionales](audits/CIERRE-HERRAMIENTAS-1.5.19-2026-10-29.md),
+  comparación/firmware del Router, exportación explícita de recuperación y selección
+  individual de runtimes antiguos. Regresiones sin acciones reales sobre el host;
+  publicación y CI registrados por commit. Se conserva deuda gradual documentada.
 
 ## Decisiones ya tomadas
 

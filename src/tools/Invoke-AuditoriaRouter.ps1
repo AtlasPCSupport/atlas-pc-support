@@ -222,8 +222,8 @@ $script:Info = @{
         Desc   = @(
             "Pings the entire subnet (.1 to .254) and logs every",
             "device that responds. Shows IP, MAC, DNS name and",
-            "manufacturer. Detects IP conflicts (same MAC, different IP)",
-            "which can cause random connection drops."
+            "manufacturer. Repeated MACs are observations, not proof of IP conflicts.",
+            "Only responding addresses are observed; this is not a complete inventory."
         )
         Prec   = @(
             "Scanning 254 hosts may take between 30 and 90 seconds.",
@@ -609,15 +609,15 @@ function Test-Puerto {
 function Get-MACDesdeARP {
     param([string]$IP)
     try {
-        foreach ($L in (arp -a $IP 2>$null)) {
-            if ($L -match [regex]::Escape($IP) -and
-                $L -match '([0-9a-fA-F]{2}[-:][0-9a-fA-F]{2}[-:][0-9a-fA-F]{2}[-:][0-9a-fA-F]{2}[-:][0-9a-fA-F]{2}[-:][0-9a-fA-F]{2})') {
-                $M = $Matches[1].ToUpper()
-                if ($M -ne "FF-FF-FF-FF-FF-FF" -and $M -ne "00-00-00-00-00-00") { return $M }
-            }
+        $result=Invoke-AtlasNativeProcess -FilePath (Join-Path $env:SystemRoot 'System32\arp.exe') -ArgumentList @('-a',$IP) -TimeoutSeconds 2
+        if($result.State -ne 'Correct' -or $result.StdoutTruncated){return 'Desconocida'}
+        $pattern='(?im)^\s*'+[regex]::Escape($IP)+'\s+(?<mac>(?:[0-9a-f]{2}[:-]){5}[0-9a-f]{2})\s'
+        if($result.Stdout -match $pattern){
+            $mac=$Matches.mac.ToUpperInvariant().Replace(':','-')
+            if($mac -notin @('FF-FF-FF-FF-FF-FF','00-00-00-00-00-00')){return $mac}
         }
-    } catch { }
-    return "Desconocida"
+    } catch {Write-Verbose 'ARP observation unavailable; MAC remains unknown.'}
+    return 'Desconocida'
 }
 
 function Get-Fabricante {
@@ -792,15 +792,16 @@ function Modulo-Escaneo {
     $Sub = Obtener-SubredBase -Gateway $GW -InterfaceIndex $RI.InterfaceIndex
 
     Write-Host "`n  Subred: ${Sub}.1 - ${Sub}.254" -ForegroundColor White
-    Write-Host "  This may take up to 90 seconds. Please wait.`n" -ForegroundColor DarkGray
+    Write-Host "  Scan duration depends on responders and Windows. Please wait.`n" -ForegroundColor DarkGray
 
     $Ping        = New-Object System.Net.NetworkInformation.Ping
     $Encontrados = [System.Collections.Generic.List[hashtable]]::new()
     $MACVisto    = @{}
+    $scanErrors=0
     $dnsWindow=[Diagnostics.Stopwatch]::StartNew()
     $Log         = @("=== ESCANEO DE DISPOSITIVOS === $(Get-Date)", "Subred: ${Sub}.x", "")
 
-    for ($i = 1; $i -le 254; $i++) {
+    try {for ($i = 1; $i -le 254; $i++) {
         $IP = "$Sub.$i"
         try {
             if ($Ping.Send($IP, 150).Status -eq 'Success') {
@@ -811,12 +812,12 @@ function Modulo-Escaneo {
                     if($dns.State -eq 'Observed' -and $dns.Entry.HostName){$Host_=$dns.Entry.HostName}
                 }
 
-                $null = arp -a 2>$null
+
                 Start-Sleep -Milliseconds 80
                 $MAC  = Get-MACDesdeARP -IP $IP
                 $Fab  = Get-Fabricante -MAC $MAC
 
-                # Modulo K: deteccion de conflicto de IP
+                # Una MAC repetida no acredita conflicto de IP.
                 $Conflicto = ""
                 if ($MAC -ne "Desconocida") {
                     if ($MACVisto.ContainsKey($MAC)) {
@@ -833,28 +834,24 @@ function Modulo-Escaneo {
                     Write-Host "  [ROUTER]   $IP  $MAC  $Fab" -ForegroundColor Green
                     $Log += "  [ROUTER]   $IP | $MAC | $Fab"
                 } elseif ($Conflicto) {
-                    Write-Host "  [CONFLICTO]$IP  $MAC  $Fab$Conflicto" -ForegroundColor Red
-                    $Log += "  [CONFLICTO]$IP | $MAC | $Fab$Conflicto"
+                    Write-Host "  [MAC REPETIDA]$IP  $MAC  $Fab$Conflicto" -ForegroundColor Red
+                    $Log += "  [MAC REPETIDA]$IP | $MAC | $Fab$Conflicto"
                 } else {
                     Write-Host "  [disp]     $IP  $MAC  $Fab  |  $Host_" -ForegroundColor Cyan
                     $Log += "  [disp]     $IP | $MAC | $Fab | $Host_"
                 }
             }
-        } catch { }
+        } catch {$scanErrors++}
     }
 
+    } finally {$Ping.Dispose()}
     Write-Host "`n  $("-" * 60)" -ForegroundColor DarkGray
     Write-Host "  Total found: $($Encontrados.Count) devices" -ForegroundColor Yellow
     if ($MACVisto.Count -lt ($Encontrados | Where-Object { $_.MAC -ne "Desconocida" } | Measure-Object).Count) {
-        Write-Host "  WARNING: IP conflicts detected. See lines marked [CONFLICT]." -ForegroundColor Red
+        Write-Host "  Repeated MACs observed; this does not prove an IP conflict." -ForegroundColor Red
     }
 
-    # Guardar estado para modulo N
-    try {
-        $Lineas = $Encontrados | ForEach-Object { "$($_.IP)|$($_.MAC)|$($_.Host)" }
-        $Lineas | Out-File $script:ArchivoEstado -Encoding UTF8 -Force
-        Write-Host "  State saved for comparison (module N)." -ForegroundColor DarkGray
-    } catch { }
+    $null=Save-AtlasRouterBaseline -Observations @($Encontrados.ToArray()) -ScanErrors $scanErrors
 
     $script:HistorialSesion.Add("[B] Escaneo ${Sub}.x | $($Encontrados.Count) devices")
 
@@ -1204,7 +1201,7 @@ function Modulo-Fabricantes {
         $IP = "$Sub.$i"
         try {
             if ($Ping.Send($IP, 150).Status -eq 'Success') {
-                $null = arp -a 2>$null; Start-Sleep -Milliseconds 80
+                Start-Sleep -Milliseconds 80
                 $MAC = Get-MACDesdeARP -IP $IP
                 $Fab = Get-Fabricante  -MAC $MAC
                 $Tag = if ($IP -eq $GW) { " [ROUTER]" } else { "" }
@@ -1248,6 +1245,20 @@ function Modulo-Fabricantes {
 # ================================================================
 #  MODULO L - VERSION DE FIRMWARE DEL ROUTER
 # ================================================================
+function Get-AtlasRouterFirmwareVersion {
+    [CmdletBinding()]
+    param([string]$Content)
+    if(-not $Content -or $Content.Length -gt 512KB){return $null}
+    $versions=@()
+    $jsonPattern='"(?:firmware(?:_?version)?|softwareversion|fwversion)"\s*:\s*"(?<version>[A-Za-z]?\d[A-Za-z0-9 ._+()/-]{0,99})"'
+    foreach($match in [regex]::Matches($Content,$jsonPattern,[Text.RegularExpressions.RegexOptions]::IgnoreCase,[timespan]::FromMilliseconds(100))){$versions+=$match.Groups['version'].Value.Trim()}
+    $text=[Net.WebUtility]::HtmlDecode(($Content -replace '<[^>]*>',' ')) -replace '\s+',' '
+    $labelPattern='\b(?:Firmware(?:\s+Version)?|Software\s+Version|FW\s+Version)\s*[:=]\s*(?<version>[A-Za-z]?\d[A-Za-z0-9._+()-]*(?:\s+Build\s+[A-Za-z0-9._-]+)?)'
+    foreach($match in [regex]::Matches($text,$labelPattern,[Text.RegularExpressions.RegexOptions]::IgnoreCase,[timespan]::FromMilliseconds(100))){$versions+=$match.Groups['version'].Value.Trim()}
+    $unique=@($versions|Select-Object -Unique)
+    if($unique.Count -eq 1){return $unique[0]}
+    return $null # Ambiguous, hardware-only and generic Version labels are not firmware evidence.
+}
 function Modulo-Firmware {
     param([switch]$Silencioso)
     if (-not $Silencioso -and -not (Mostrar-InfoModulo "L")) { return }
@@ -1288,34 +1299,17 @@ function Modulo-Firmware {
                     -ErrorAction Stop -WarningAction SilentlyContinue
             $HTML = $Resp.Content
 
-            # Patrones de version en el HTML
-            $Version = $null
-            $Patrones = @(
-                'Firmware[^<:]*(?:Version)?[^<:]*:[^<"]*?([\d]+\.[\d]+[\d\.]*)',
-                'Software Version[^<]*?([0-9]+\.[0-9]+[0-9A-Za-z\._-]*)',
-                'FW Version[^<]*?([0-9]+\.[0-9]+[0-9A-Za-z\._-]*)',
-                'HW Version[^<]*?([0-9]+\.[0-9]+[0-9A-Za-z\._-]*)',
-                'Version[^<"]*?([0-9]+\.[0-9]+\.[0-9]+[0-9A-Za-z\._-]*)',
-                '"firmware"[^"]*"([^"]+)"',
-                'firmwareVersion[^"]*"([^"]+)"'
-            )
-
-            foreach ($Pat in $Patrones) {
-                if ($HTML -match $Pat) {
-                    $Version = $Matches[1].Trim()
-                    break
-                }
-            }
+            $Version=Get-AtlasRouterFirmwareVersion -Content $HTML
 
             if ($Version) {
                 Write-Host "  ENCONTRADO" -ForegroundColor Green
                 Write-Host ""
-                Write-Host "  Marca/Modelo detectado : $($R.Marca)" -ForegroundColor White
-                Write-Host "  Version firmware       : $Version" -ForegroundColor Yellow
+                Write-Host "  Ruta del proveedor probada: $($R.Marca)" -ForegroundColor White
+                Write-Host "  Version declarada observada: $Version" -ForegroundColor Yellow
                 Write-Host "  URL fuente             : $($R.URL)" -ForegroundColor DarkGray
                 Write-Host ""
                 Write-Host "  RECOMMENDATION: Compare this version with the one available on the web" -ForegroundColor Cyan
-                Write-Host "  from the manufacturer. If older than 1 year, consider updating." -ForegroundColor Cyan
+                Write-Host "  from the manufacturer for the exact model/revision; age and update need were not evaluated." -ForegroundColor Cyan
                 $Log += "  Marca   : $($R.Marca)"
                 $Log += "  Version : $Version"
                 $Log += "  URL     : $($R.URL)"
@@ -1337,7 +1331,7 @@ function Modulo-Firmware {
         Write-Host "  Options manuales:" -ForegroundColor DarkGray
         Write-Host "    1. Use module C to access the router panel." -ForegroundColor Gray
         Write-Host "    2. Look for the version in: Administration > Firmware update." -ForegroundColor Gray
-        Write-Host "    3. Check the physical label on the bottom of the router." -ForegroundColor Gray
+        Write-Host "    3. Check the exact hardware model/revision on the physical label; it does not prove installed firmware." -ForegroundColor Gray
         $Log += "  Resultado: No found de forma automatica."
     }
 
@@ -1403,110 +1397,86 @@ function Modulo-InformeCompleto {
 # ================================================================
 #  MODULO N - COMPARATIVA DE DISPOSITIVOS
 # ================================================================
+function Compare-AtlasRouterObservations {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][hashtable]$Previous,[Parameter(Mandatory)][hashtable]$Current)
+    $new=@($Current.Keys|Where-Object {-not $Previous.ContainsKey($_)}|Sort-Object)
+    $missing=@($Previous.Keys|Where-Object {-not $Current.ContainsKey($_)}|Sort-Object)
+    $changed=@();$unchanged=@();$uncertain=@()
+    foreach($ip in @($Current.Keys|Where-Object {$Previous.ContainsKey($_)}|Sort-Object)){
+        $before=([string]$Previous[$ip].MAC).Trim().Replace(':','-')
+        $after=([string]$Current[$ip].MAC).Trim().Replace(':','-')
+        if($before -notmatch '^([0-9a-f]{2}-){5}[0-9a-f]{2}$' -or $after -notmatch '^([0-9a-f]{2}-){5}[0-9a-f]{2}$'){$uncertain+=$ip;continue}
+        if($before -ine $after){$changed+=[pscustomobject]@{IP=$ip;BeforeMAC=$before;AfterMAC=$after}}
+        else{$unchanged+=$ip}
+    }
+    return [pscustomobject]@{New=$new;Missing=$missing;Changed=$changed;Unchanged=$unchanged;Uncertain=$uncertain}
+}
+
+function Save-AtlasRouterBaseline {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][AllowEmptyCollection()][object[]]$Observations,[int]$ScanErrors=0)
+    if($ScanErrors -gt 0 -or -not $Observations.Count){Write-Warning 'Incomplete or empty scan: previous baseline preserved.';return $false}
+    $temporary=$null
+    try {
+        $lines=@($Observations|ForEach-Object {"$($_.IP)|$($_.MAC)|$($_.Host)"})
+        $directory=Split-Path -Parent $script:ArchivoEstado
+        Assert-AtlasPlainDirectory $directory
+        if(Test-Path -LiteralPath $script:ArchivoEstado){Assert-AtlasPlainFile $script:ArchivoEstado}
+        $temporary=Join-Path $directory ('atlas-baseline-'+[guid]::NewGuid().ToString('N')+'.tmp')
+        $content=$lines -join "`n"
+        [IO.File]::WriteAllText($temporary,$content,[Text.UTF8Encoding]::new($false))
+        if([IO.File]::ReadAllText($temporary,[Text.Encoding]::UTF8) -cne $content){throw 'Baseline read-back mismatch.'}
+        if(Test-Path -LiteralPath $script:ArchivoEstado){[IO.File]::Replace($temporary,$script:ArchivoEstado,[Management.Automation.Language.NullString]::Value)}
+        else{[IO.File]::Move($temporary,$script:ArchivoEstado)}
+        Write-Host 'Observation baseline saved; this is not a complete network inventory.'
+        return $true
+    } catch {Write-Warning 'Observation baseline could not be saved; comparison must not claim persistence.';return $false}
+    finally {if($temporary -and (Test-Path -LiteralPath $temporary)){Remove-Item -LiteralPath $temporary -ErrorAction SilentlyContinue}}
+}
+
 function Modulo-Comparativa {
     param([switch]$Silencioso)
-    if (-not $Silencioso -and -not (Mostrar-InfoModulo "N")) { return }
-
-    Clear-Host
-    Write-Host ""
-    Write-Host "  [ N ]  COMPARATIVA DE DISPOSITIVOS" -ForegroundColor Magenta
-    Write-Host "  $("-" * 60)" -ForegroundColor DarkGray
-
-    # Cargar estado previo
-    $Previo = @{}
-    if (Test-Path $script:ArchivoEstado) {
-        $FechaMod = (Get-Item $script:ArchivoEstado).LastWriteTime
-        Write-Host "`n  Estado previo found: $FechaMod" -ForegroundColor DarkGray
-        foreach ($L in (Get-Content $script:ArchivoEstado)) {
-            $P = $L -split '\|'
-            if ($P.Count -ge 2) { $Previo[$P[0]] = @{ MAC = $P[1]; Host = if ($P.Count -ge 3) { $P[2] } else { "Oculto" } } }
-        }
-        Write-Host "  Devices en estado previo: $($Previo.Count)" -ForegroundColor DarkGray
-    } else {
-        Write-Host "`n  No hay estado previo saved." -ForegroundColor Yellow
-        Write-Host "  Run module B first to save a baseline." -ForegroundColor Yellow
-        Esperar-Enter -Silencioso:$Silencioso; return
-    }
-
-    Write-Host "`n  Scanning la red actual..." -ForegroundColor DarkGray
-    $RI = Obtener-Router
-    if (-not $RI) { Write-Host "  No se pudo detectar el router." -ForegroundColor Red; Esperar-Enter -Silencioso:$Silencioso; return }
-    $Sub  = Obtener-SubredBase -Gateway $RI.Gateway -InterfaceIndex $RI.InterfaceIndex
-    $Ping = New-Object System.Net.NetworkInformation.Ping
-
-    $Actual = @{}
-    $dnsWindow=[Diagnostics.Stopwatch]::StartNew()
-    for ($i = 1; $i -le 254; $i++) {
-        $IP = "$Sub.$i"
-        try {
-            if ($Ping.Send($IP, 150).Status -eq 'Success') {
-                $null = arp -a 2>$null; Start-Sleep -Milliseconds 60
-                $MAC    = Get-MACDesdeARP -IP $IP
-                $HostN  = "Oculto"
-                if($dnsWindow.ElapsedMilliseconds -lt 10000) {
-                    $dns=Resolve-AtlasDnsEntry -Name $IP -TimeoutMilliseconds 300
-                    if($dns.State -eq 'Observed' -and $dns.Entry.HostName){$HostN=$dns.Entry.HostName}
-                }
-                $Actual[$IP] = @{ MAC = $MAC; Host = $HostN }
-            }
-        } catch { }
-    }
-
-    Write-Host "`n  $("-" * 60)" -ForegroundColor DarkGray
-    Write-Host "  RESULTADO DE LA COMPARATIVA`n" -ForegroundColor Cyan
-
-    $Log = @("=== COMPARATIVA DE DISPOSITIVOS === $(Get-Date)", "Subred: ${Sub}.x", "")
-
-    # Devices nuevos
-    $Nuevos = $Actual.Keys | Where-Object { -not $Previo.ContainsKey($_) }
-    if ($Nuevos) {
-        Write-Host "  NEW DEVICES (not present in previous scan)" -ForegroundColor Yellow
-        $Log += "  NUEVOS:"
-        foreach ($IP in ($Nuevos | Sort-Object)) {
-            $Fab = Get-Fabricante -MAC $Actual[$IP].MAC
-            Write-Host "  [+] $IP  |  $($Actual[$IP].MAC)  |  $Fab  |  $($Actual[$IP].Host)" -ForegroundColor Green
-            $Log += "  [+] $IP | $($Actual[$IP].MAC) | $Fab | $($Actual[$IP].Host)"
-        }
-        $Log += ""
-        Write-Host ""
-    }
-
-    # Devices desaparecidos
-    $Idos = $Previo.Keys | Where-Object { -not $Actual.ContainsKey($_) }
-    if ($Idos) {
-        Write-Host "  MISSING DEVICES (were present before, no longer responding)" -ForegroundColor DarkGray
-        $Log += "  DESAPARECIDOS:"
-        foreach ($IP in ($Idos | Sort-Object)) {
-            Write-Host "  [-] $IP  |  $($Previo[$IP].MAC)  |  $($Previo[$IP].Host)" -ForegroundColor DarkGray
-            $Log += "  [-] $IP | $($Previo[$IP].MAC) | $($Previo[$IP].Host)"
-        }
-        $Log += ""
-        Write-Host ""
-    }
-
-    # Sin cambios
-    $Iguales = $Actual.Keys | Where-Object { $Previo.ContainsKey($_) }
-    Write-Host "  SIN CAMBIOS: $($Iguales.Count) device(s)" -ForegroundColor DarkGray
-    $Log += "  SIN CAMBIOS: $($Iguales.Count)"
-
-    Write-Host ""
-    if (-not $Nuevos -and -not $Idos) {
-        Write-Host "  La red no ha cambiado desde el ultimo escaneo." -ForegroundColor Green
-    }
-
-    # Guardar el nuevo estado como el actual
+    if(-not $Silencioso -and -not (Mostrar-InfoModulo 'N')){return}
+    $previous=@{}
     try {
-        ($Actual.Keys | ForEach-Object { "$_|$($Actual[$_].MAC)|$($Actual[$_].Host)" }) |
-        Out-File $script:ArchivoEstado -Encoding UTF8 -Force
-    } catch { }
-
-    $script:HistorialSesion.Add("[N] Comparativa | +$($Nuevos.Count) nuevos | -$($Idos.Count) desaparecidos")
-
-    if (-not $Silencioso -and -not $script:ModoAuto) {
-        $Exp = Read-Host "`n  Exportar informe a TXT? (Y/N)"
-        if ($Exp -match '^[SsYy]$') { Exportar-Informe -Contenido $Log -NombreModulo "Comparativa" | Out-Null }
-    }
-
+        foreach($line in @(Get-Content -LiteralPath $script:ArchivoEstado -Encoding UTF8 -ErrorAction Stop)){
+            $parts=$line -split '\|'
+            if($parts.Count -lt 2 -or $previous.ContainsKey($parts[0])){throw 'Invalid baseline'}
+            $address=$null
+            if(-not [Net.IPAddress]::TryParse($parts[0],[ref]$address) -or $address.AddressFamily -ne [Net.Sockets.AddressFamily]::InterNetwork){throw 'Invalid baseline IP'}
+            $previous[$parts[0]]=@{MAC=$parts[1];Host=$(if($parts.Count -ge 3){$parts[2]}else{'Oculto'})}
+        }
+        if(-not $previous.Count){throw 'Empty baseline'}
+    } catch {Write-Warning 'Previous baseline missing or unreadable. Run module B to create a valid baseline.';return}
+    $router=Obtener-Router
+    if(-not $router){Write-Warning 'Router not observed; previous baseline preserved.';return}
+    $subnet=Obtener-SubredBase -Gateway $router.Gateway -InterfaceIndex $router.InterfaceIndex
+    $current=@{};$scanErrors=0;$dnsWindow=[Diagnostics.Stopwatch]::StartNew()
+    $ping=[Net.NetworkInformation.Ping]::new()
+    try {
+        for($i=1;$i -le 254;$i++){
+            $ip="$subnet.$i"
+            try {
+                if($ping.Send($ip,150).Status -ne 'Success'){continue}
+                $mac=Get-MACDesdeARP -IP $ip;$hostName='Oculto'
+                if($dnsWindow.ElapsedMilliseconds -lt 10000){$dns=Resolve-AtlasDnsEntry -Name $ip -TimeoutMilliseconds 300;if($dns.State -eq 'Observed'){$hostName=$dns.Entry.HostName}}
+                $current[$ip]=@{MAC=$mac;Host=$hostName}
+            } catch {$scanErrors++}
+        }
+    } finally {$ping.Dispose()}
+    $comparison=Compare-AtlasRouterObservations -Previous $previous -Current $current
+    $log=@('=== COMPARATIVA DE OBSERVACIONES ===',"Subred: $subnet.x",'Missing = no reply observed; no cause established.')
+    foreach($ip in $comparison.New){$log+="[NEW] $ip | $($current[$ip].MAC)"}
+    foreach($ip in $comparison.Missing){$log+="[MISSING] $ip | $($previous[$ip].MAC)"}
+    foreach($change in $comparison.Changed){$log+="[MAC CHANGED] $($change.IP) | $($change.BeforeMAC) -> $($change.AfterMAC); cause not established"}
+    $log+="Same observed IP/MAC: $($comparison.Unchanged.Count); MAC not comparable: $($comparison.Uncertain.Count); scan errors: $scanErrors"
+    if(-not $comparison.New.Count -and -not $comparison.Missing.Count -and -not $comparison.Changed.Count -and -not $comparison.Uncertain.Count -and -not $scanErrors){$log+='No IP/MAC changes observed among responding addresses. This does not establish that the network is unchanged.'}
+    foreach($line in $log){Write-Host $line}
+    $observations=@(foreach($ip in $current.Keys){[pscustomobject]@{IP=$ip;MAC=$current[$ip].MAC;Host=$current[$ip].Host}})
+    $saved=Save-AtlasRouterBaseline -Observations $observations -ScanErrors $scanErrors
+    $script:HistorialSesion.Add("[N] +$($comparison.New.Count) -$($comparison.Missing.Count) MAC changes=$($comparison.Changed.Count); baseline saved=$saved")
+    if(-not $Silencioso -and -not $script:ModoAuto){if((Read-Host 'Exportar informe a TXT? (Y/N)') -match '^[SsYy]$'){Exportar-Informe -Contenido $log -NombreModulo 'Comparativa'|Out-Null}}
     Esperar-Enter -Silencioso:$Silencioso
 }
 

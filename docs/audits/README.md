@@ -15,6 +15,7 @@ plan nuevo del 27/10. No reescribir resultados anteriores como aceptación actua
 | 27/10, fase 4 | 1.5.16 | [USB y copias](FASE-4-AUDITORIA-2026-10-27.md), PR 178 publicada |
 | 27/10, fase 5 | 1.5.17 | [Mantenimiento y claridad](FASE-5-AUDITORIA-2026-10-27.md), evidencia de comprobaciones/promoción en su PR |
 | 27/10, cierre transversal | 1.5.18 | [Consumidores y rutas restantes](CIERRE-TRANSVERSAL-1.5.18-2026-10-27.md), regresiones de consumidores y compilación real de políticas; evidencia final en su PR |
+| 29/10, ajustes adicionales | 1.5.19 | [Router, recuperación y runtimes](CIERRE-HERRAMIENTAS-1.5.19-2026-10-29.md); comprobaciones locales en el informe, evidencia final de promoción en la PR; consultar el descriptor para saber qué está publicado |
 
 La versión pública y pins efectivos se consultan en el descriptor del dominio,
 no se deducen del número mayor presente en una nota o rama.
