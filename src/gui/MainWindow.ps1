@@ -822,8 +822,17 @@ $(Get-AtlasString 'about.description')
             $newLang = [string]$sel.Tag
             if ($newLang -eq $script:AtlasCurrentLang) { return }
             $ok = Set-AtlasLanguagePref $newLang
-            Write-AtlasLog "Idioma cambiado a '$newLang' (guardado=$ok). Reinicio requerido." -Tool 'UI'
             $brand = if ($script:Branding -and $script:Branding.brand) { $script:Branding.brand.shortName } else { 'Atlas PC Support' }
+            if (-not $ok) {
+                Write-AtlasLog 'Language preference could not be saved; previous configuration preserved.' -Level WARN -Tool 'UI'
+                $script:LangComboReady = $false
+                try { $eventSender.SelectedItem = @($eventSender.Items | Where-Object { [string]$_.Tag -eq $script:AtlasCurrentLang })[0] }
+                finally { $script:LangComboReady = $true }
+                $msg = Get-AtlasString 'language.saveFailed'
+                [System.Windows.MessageBox]::Show($msg, $brand, 'OK', 'Warning') | Out-Null
+                return
+            }
+            Write-AtlasLog "Idioma cambiado a '$newLang' (guardado=$ok). Reinicio requerido." -Tool 'UI'
             # Usar el string del NUEVO idioma (ya cargado en el dict, solo no aplicado a UI)
             $msg = $script:AtlasStringsDict[$newLang]['language.restartRequired']
             if (-not $msg) { $msg = Get-AtlasString 'language.restartRequired' }

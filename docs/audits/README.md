@@ -17,6 +17,7 @@ plan nuevo del 27/10. No reescribir resultados anteriores como aceptación actua
 | 27/10, cierre transversal | 1.5.18 | [Consumidores y rutas restantes](CIERRE-TRANSVERSAL-1.5.18-2026-10-27.md), regresiones de consumidores y compilación real de políticas; evidencia final en su PR |
 | 29/10, ajustes adicionales | 1.5.19 | [Router, recuperación y runtimes](CIERRE-HERRAMIENTAS-1.5.19-2026-10-29.md); comprobaciones locales en el informe, evidencia final de promoción en la PR; consultar el descriptor para saber qué está publicado |
 | 29/10, mantenimiento acotado | 1.5.20 | [Rutas, hosts y variables](MANTENIMIENTO-RUTAS-HOSTS-1.5.20-2026-10-29.md); [PR 182 integrada y publicación verificada](https://github.com/AtlasPCSupport/atlas-pc-support/pull/182), 447 pruebas por runtime y 34 miembros verificados; conserva límites de aceptación física |
+| 29/10, guardado de preferencias | 1.5.21 | [Preferencia de idioma](PREFERENCIA-IDIOMA-1.5.21-2026-10-29.md); preservación de configuración ante errores y resultado de guardado visible; promoción y CI por SHA en su PR |
 
 La versión pública y pins efectivos se consultan en el descriptor del dominio,
 no se deducen del número mayor presente en una nota o rama.

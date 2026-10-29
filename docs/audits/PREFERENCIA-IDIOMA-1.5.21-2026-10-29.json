@@ -1,0 +1,23 @@
+{
+  "dateLocal": "2026-10-29",
+  "timeZone": "America/Bogota",
+  "version": "1.5.21",
+  "manifestSha256": "7b65e879639f8104f4bc9b030ead468eaec26e967314fa9104b039a3903321e2",
+  "toolCount": 27,
+  "releaseMembers": 34,
+  "newRegressionCases": 9,
+  "baselineLocalChecks": [
+    { "runtime": "5.1.26100.9711", "passed": 447, "failed": 0, "skipped": 0, "analyzerErrors": 0, "analyzerWarnings": 253, "distributionArtifactsUnchanged": true, "reportDirectory": "atlas-local-checks-f556f90333164d7e89c3e3930d9b2989" },
+    { "runtime": "7.6.5", "passed": 447, "failed": 0, "skipped": 0, "analyzerErrors": 0, "analyzerWarnings": 264, "distributionArtifactsUnchanged": true, "reportDirectory": "atlas-local-checks-036dfb98670148588ce98798e5c9523d" }
+  ],
+  "integratedPesterAfterAddingLanguageTests": [
+    { "runtime": "5.1.26100.9711", "passed": 456, "failed": 0, "skipped": 0, "log": "atlas-1.5.21-integrated-ps5.log" },
+    { "runtime": "7.6.5", "passed": 456, "failed": 0, "skipped": 0, "log": "atlas-1.5.21-integrated-ps7.log" }
+  ],
+  "languageTestsIncludedInLocalRunner": true,
+  "operatorLanguageConfigurationChanged": false,
+  "vmsResumed": false,
+  "windows10Qualified": false,
+  "physicalUsbUpdated": false,
+  "publicationEvidenceLocation": "Release pull request: exact-commit CI, promotion and independent public verification. Local checks alone do not establish publication."
+}
