@@ -54,7 +54,7 @@ Describe 'Hosts file and cache refresh outcomes remain separate' {
         function Invoke-AtlasNativeProcess {[CmdletBinding()]param($FilePath,$ArgumentList,$TimeoutSeconds)throw 'Real cache changes blocked'}
         function Pause-HostsManager {param($Message)}
         function Invoke-WebRequest {[CmdletBinding()]param($Uri,$OutFile,[switch]$UseBasicParsing,$TimeoutSec)throw 'Real download blocked'}
-        $script:MaintenanceLocalApp=$env:LOCALAPPDATA;$script:MaintenanceSystemRoot=$env:SystemRoot
+        $script:MaintenanceLocalApp=$env:LOCALAPPDATA;$script:MaintenanceSystemRoot=$env:SystemRoot;$script:MaintenanceTemp=$env:TEMP
         $ast=Get-TestAst $script:RepoRoot 'src/tools/Invoke-HostsManager.ps1'
         $menu=$ast.Find({param($n)$n -is [Management.Automation.Language.SwitchStatementAst] -and $n.Condition.Extent.Text -eq '$sel'},$true)
         $script:RestoreHostsAction=[scriptblock]::Create((@($menu.Clauses|Where-Object {$_.Item1.Extent.Text -match '\[rR\]'})[0].Item2.Statements.Extent.Text -join "`n"))
@@ -64,10 +64,11 @@ Describe 'Hosts file and cache refresh outcomes remain separate' {
         $env:LOCALAPPDATA=Join-Path $TestDrive ([guid]::NewGuid().ToString('N'))
         if(-not $env:SystemRoot){$env:SystemRoot=$TestDrive}
         New-Item -ItemType Directory -Path (Join-Path $env:LOCALAPPDATA 'AtlasPC') -Force|Out-Null
+        $env:TEMP=$env:LOCALAPPDATA
         $L=@{SBWillRestore='Restore {0}';SBConfirm='Confirm';SBRestored='File restored';SBPostBackup='Prior file: {0}';ErrAdmin2='Error: {0}';EnterCont='Enter';SBDownloading='Downloading';SBBackupOK='Backup: {0}';SBApplied='Block applied';ErrPrefix='Error: {0}'}
         Mock Write-Host {};Mock Read-Host {'y'}
     }
-    AfterAll {$env:LOCALAPPDATA=$script:MaintenanceLocalApp;$env:SystemRoot=$script:MaintenanceSystemRoot}
+    AfterAll {$env:LOCALAPPDATA=$script:MaintenanceLocalApp;$env:SystemRoot=$script:MaintenanceSystemRoot;$env:TEMP=$script:MaintenanceTemp}
     It 'returns native failure, cancellation and timeout without inventing a completed flush: <State>' -ForEach @(@{State='Failed'},@{State='TimedOut'},@{State='Cancelled'}) {
         Mock Invoke-AtlasNativeProcess {[pscustomobject]@{State=$State;ExitCode=1}}
         (Clear-AtlasDnsCache -WarningAction SilentlyContinue).State|Should -Be $State
