@@ -1,5 +1,11 @@
 # Aceptación pendiente y trabajo sin VMs
 
+Estado actualizado al 29/10/2026, después de publicar 1.5.20. El nombre del
+archivo conserva el inicio del seguimiento; las evidencias fechadas de abajo
+mantienen su versión y alcance originales. El [índice de entregas](README.md)
+y la [guía del propietario](../TRABAJO-AUTONOMO-Y-ACEPTACION.md) recogen los
+cambios posteriores y las decisiones ya tomadas.
+
 Las fases de implementación y publicación se completaron con entregas por commit.
 Eso no cierra la aceptación operativa ni equivale a ejecutar todas las acciones
 con clientes reales. El seguimiento de cambios está en
@@ -27,7 +33,7 @@ hardware, recuperación, USB ni instalaciones reales de terceros.
 | 1 | Aplicaciones | Instalar las aplicaciones usadas, fuentes/Store, versión instalada, reinicios y requisitos OS del paquete entregado | Pruebas por paquete y edición. La instantánea contiene 56 manifiestos WinGet y dos entradas Store; no garantiza las versiones futuras ni licencias. |
 | 2 | Identidad y confianza de Atlas | Authenticode y confianza offline frente a sustitución de toda la USB | Certificado/identidad confiable y política de distribución. Un certificado autofirmado sin confianza previa no resuelve el problema. |
 | 2 | Licencias y permisos externos | Uso laboral/redistribución de terceros, custodia/retención de informes y alcance efectivo del PAT privado | Decisión del propietario y revisión por proveedor. No comprar ni rotar credenciales a ciegas. FastCopy de respaldo ya está actualizado a 5.12.0. |
-| 2 | Diagnósticos, UI y deuda | Sensores/CPU/GPU/batería reales, interpretación de eventos, lector de pantalla/DPI/monitores y otras invocaciones heredadas | Equipos representativos y revisión por impacto. Tras los cambios quedan 293/319 avisos en 5.1/7.6.9 y 123 catches vacíos; requieren distinguir tolerancia intencional de fallo ocultado. Se eliminó el fallback Get-WmiObject sin suprimir reglas. |
+| 2 | Diagnósticos, UI y deuda | Sensores/CPU/GPU/batería reales, interpretación de eventos, lector de pantalla/DPI/monitores y deuda restante | Equipos representativos y revisión por impacto. En 1.5.20 quedan 248/266 advertencias en PowerShell 5.1.26100.9711/7.6.5, cero errores del analizador y 447 pruebas aprobadas por runtime; [evidencia](MANTENIMIENTO-RUTAS-HOSTS-1.5.20-2026-10-29.json). Las cifras anteriores son históricas, no un recuento actual de catches. Distinguir tolerancia intencional de fallo ocultado; no suprimir reglas para presentar cero deuda. |
 | 2 | Deduplicador | Backend y borrado reversible, si se decide ofrecer esa capacidad | La tarjeta ya está deshabilitada y explica la ausencia. Integrarlo es alcance adicional; no existe un motor verificado que pueda activarse sin más. |
 
 ## Orden práctico
@@ -87,9 +93,11 @@ parciales y no transforma datos de espacio ausentes en una medicion satisfactori
 2. **Aplicaciones y RustDesk:** indicar las aplicaciones prioritarias y el
    escenario de conexion que se debe aceptar. Se prepara su lista de ensayos;
    su descarga verificada no sustituye instalacion, reinicio y conexion reales.
-3. **Firma y licencias:** definir la identidad que firmara Atlas y los usos
-   laborales/redistribucion previstos. Con esas decisiones se puede concretar
-   certificado, proveedores y condiciones que faltan verificar.
+3. **Firma y licencias:** ya se definieron marca personal, servicio técnico y
+   ambas modalidades de uso/entrega a clientes. La compra de firma está aplazada
+   y la alternativa de sustituir herramientas no se adoptó. No repetir esas
+   preguntas ni iniciar compras. Los permisos comerciales/de redistribución de
+   terceros siguen pendientes y solo se retoman cuando el propietario lo decida.
 4. **Hardware adicional:** reservar los medios/sistemas de archivos y equipos
    representativos para los ensayos pendientes. La USB NTFS y su reconexion
    ya tienen evidencia; desconexion durante escritura, fallos de alimentacion,
@@ -107,13 +115,14 @@ informes y entrega ficticia. BitLocker con vTPM/volúmenes de prueba también se
 ensayar dentro del laboratorio; las claves de recuperación se conservan fuera de
 los informes públicos. Cada ensayo necesita su snapshot, reversión y evidencia.
 
-Quedan intervenciones externas concretas: aceptar los prompts UAC cuando Windows
-los exija; aportar USB/hardware físico representativo; escoger las aplicaciones
-prioritarias y sus condiciones de licencia; confirmar el escenario/servidor de
-RustDesk; definir identidad de firma, custodia y retención; revisar permisos del
-PAT con su propietario. No se inventan AD/Entra, licencias, hardware ni pruebas de
-consentimiento usando fixtures. El acceso a Hyper-V por sí solo no resuelve esas
-dependencias.
+Cuando se decida retomar los ensayos, quedan intervenciones externas concretas:
+aceptar los prompts UAC cuando Windows los exija; aportar USB/hardware físico
+representativo; escoger aplicaciones prioritarias; confirmar el escenario/servidor
+de RustDesk; definir custodia y retención de datos reales; revisar permisos del
+PAT con su propietario. Firma y permisos comerciales conservan las decisiones
+anteriores, sin nuevas solicitudes automáticas. No se inventan AD/Entra, licencias,
+hardware ni pruebas de consentimiento usando fixtures. El acceso a Hyper-V por sí
+solo no resuelve esas dependencias.
 
 El laboratorio guarda contraseñas aleatorias solo para sus cuentas desechables,
 en medios de instalación restringidos y credenciales DPAPI locales. Nunca se
