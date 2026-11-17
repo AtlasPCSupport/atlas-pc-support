@@ -172,8 +172,8 @@ function Invoke-DiagnosticoEventos {
         '*|Microsoft-Windows-WHEA-Logger|1' = @{ Level='CRITICAL'; Title='Hardware error: CPU/Bus'; Cause='WHEA (Windows Hardware Error Architecture) detected an unrecoverable hardware fault. Typically CPU overheat, corrupt RAM, or unstable PCIe.'; Action='Test RAM with MemTest86 4+ passes. Check temperatures. BIOS to latest firmware.' }
         '*|Microsoft-Windows-WHEA-Logger|17' = @{ Level='WARN'; Title='Hardware error corrected'; Cause='Hardware error the system was able to correct (e.g. PCIe AER). Does not crash but indicates degradation.'; Action='If frequent: motherboard or expansion card issue. Reseat PCIe (GPU/SSD). BIOS update.' }
         '*|Microsoft-Windows-WHEA-Logger|18' = @{ Level='CRITICAL'; Title='Fatal hardware error (Machine Check)'; Cause='Machine Check Exception (MCE). CPU reports a fatal error. Hardware instability is highly likely.'; Action='Check CPU temp (HWiNFO). Remove OC. Test RAM. If recurring: CPU or board may be defective.' }
-        '*|Microsoft-Windows-WHEA-Logger|19' = @{ Level='WARN'; Title='Hardware error corrected (PCIe)'; Cause='PCIe bus error corrected via AER.'; Action='GPU/SSD PCIe poorly seated or faulty cable. Reseat + BIOS update.' }
-        '*|Microsoft-Windows-WHEA-Logger|46' = @{ Level='INFO'; Title='CPU thermal throttling'; Cause='CPU lowered frequency due to overheating.'; Action='Parts Upgrade tool -> see temps. Repaste + clean fans. Old laptop: nearly certain.' }
+        '*|Microsoft-Windows-WHEA-Logger|19' = @{ Level='WARN'; Title='Corrected processor hardware error'; Cause='The processor reported a corrected hardware error; inspect the original error source and type.'; Action='Correlate the event details, firmware, settings and workload before attributing a faulty component.' }
+        '*|Microsoft-Windows-WHEA-Logger|46' = @{ Level='CRITICAL'; Title='Fatal memory hardware error'; Cause='WHEA reported a fatal memory-related hardware error; the event alone does not identify a replaceable faulty module.'; Action='Preserve the original event and data, protect important files and investigate memory/platform stability before further stress or replacement.' }
         '*|*|10016' = @{ Level='INFO'; Title='DCOM permissions error'; Cause='An app tried to call a COM component without permission. Almost always harmless.'; Action='Ignorable. Microsoft acknowledges it as noise. Do not touch DCOM permissions unless you have a concrete symptom.' }
         '*|Microsoft-Windows-Kernel-Boot|134' = @{ Level='INFO'; Title='Boot time recorded'; Cause='Windows recorded how long boot took. Informational.'; Action='If very high (>60s with SSD): startup defrag, sfc, review startup programs.' }
         '*|*|4625' = @{ Level='WARN'; Title='Logon failure'; Cause='Someone tried to log in with wrong credentials. Message contains source IP + attempted username.'; Action='If many and from external IPs: brute-force attack. Disable public RDP, use a VPN.' }
@@ -206,8 +206,8 @@ function Invoke-DiagnosticoEventos {
         '*|Microsoft-Windows-WHEA-Logger|1' = @{ Level='CRITICAL'; Title='Hardware error: CPU/Bus'; Cause='WHEA (Windows Hardware Error Architecture) detecto fallo hardware no recuperable. Tipicamente CPU overheat, RAM corrupta, o PCIe inestable.'; Action='Test RAM con MemTest86 4+ pases. Check temperaturas. BIOS al ultimo firmware.' }
         '*|Microsoft-Windows-WHEA-Logger|17' = @{ Level='WARN'; Title='Hardware error corregido'; Cause='Error hardware que el sistema pudo corregir (ej. PCIe AER). No causa crash, pero indica degradacion.'; Action='Si es frecuente: problema de placa/tarjeta expansion. Re-asiente PCIe (GPU/SSD). BIOS update.' }
         '*|Microsoft-Windows-WHEA-Logger|18' = @{ Level='CRITICAL'; Title='Fatal hardware error (Machine Check)'; Cause='Machine Check Exception (MCE). CPU reporta error fatal. Muy probable inestabilidad hardware.'; Action='Check CPU temp (HWiNFO). Remove OC. Test RAM. Si repite: CPU o placa posiblemente defectuosa.' }
-        '*|Microsoft-Windows-WHEA-Logger|19' = @{ Level='WARN'; Title='Hardware error corregido (PCIe)'; Cause='Error en bus PCIe corregido via AER.'; Action='GPU/SSD PCIe mal asentada o cable defectuoso. Reseat + BIOS update.' }
-        '*|Microsoft-Windows-WHEA-Logger|46' = @{ Level='INFO'; Title='Throttling CPU por temperatura'; Cause='CPU redujo frecuencia por sobrecalentamiento.'; Action='Tool Parts Upgrade -> ver temps. Limpieza de pasta termica + ventilador. Notebook viejo: casi seguro.' }
+        '*|Microsoft-Windows-WHEA-Logger|19' = @{ Level='WARN'; Title='Error de hardware de procesador corregido'; Cause='El procesador notifico un error corregido; revisar origen y tipo en el evento original.'; Action='Correlacionar detalles, firmware, configuracion y carga antes de atribuir un componente defectuoso.' }
+        '*|Microsoft-Windows-WHEA-Logger|46' = @{ Level='CRITICAL'; Title='Error fatal de hardware relacionado con memoria'; Cause='WHEA notifico un error fatal relacionado con memoria; el evento solo no identifica un modulo reemplazable defectuoso.'; Action='Conservar evento y datos originales, proteger archivos importantes e investigar estabilidad de memoria/plataforma antes de mas estres o reemplazos.' }
         '*|*|10016' = @{ Level='INFO'; Title='DCOM error de permisos'; Cause='App intento llamar a un componente COM sin permisos. Casi siempre inofensivo.'; Action='Ignorable. Microsoft lo reconoce como ruido. No toques DCOM permissions salvo que tengas sintoma concreto.' }
         '*|Microsoft-Windows-Kernel-Boot|134' = @{ Level='INFO'; Title='Tiempo de arranque registrado'; Cause='Windows registro el tiempo que tardo el boot. Informativo.'; Action='Si ves tiempo muy alto (>60s con SSD): defrag autostart, sfc, revisar programas de inicio.' }
         '*|*|4625' = @{ Level='WARN'; Title='Logon fallido'; Cause='Alguien intento login con credenciales incorrectas. Mensaje contiene IP origen + usuario intentado.'; Action='Si son muchos y de IPs externas: ataque por fuerza bruta. Desactiva RDP publico, usa VPN.' }
@@ -317,10 +317,11 @@ function Invoke-DiagnosticoEventos {
         $sections[$L.HtmlSecCrash] = _Query-Events -LogName 'Application' -Ids @(1000,1001,1026) -Hours $Hours -MaxEvents 200
         $sections[$L.HtmlSecDrv]   = _Query-Events -LogName 'System' -Ids @(219,7026) -Hours $Hours -MaxEvents 200
 
+        $securityState = 'Observed'
         try {
             $sec = _Query-Events -LogName 'Security' -Ids @(4625,4720,4726,4724,4740) -Hours $Hours -MaxEvents 200
-            if ($sec -and $sec.Count -gt 0) { $sections[$L.HtmlSecSec] = $sec }
-        } catch {}
+            $sections[$L.HtmlSecSec] = @($sec)
+        } catch { $securityState = 'NotEvaluated'; $sections[$L.HtmlSecSec] = @() }
 
         $hostName  = $env:COMPUTERNAME
         $generated = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
@@ -330,6 +331,10 @@ function Invoke-DiagnosticoEventos {
         foreach ($title in $sections.Keys) {
             $events = @($sections[$title])
             $htmlSections += "<section><h2>$([System.Net.WebUtility]::HtmlEncode($title)) <span class='count'>(" + $events.Count + ")</span></h2>"
+            if ($title -eq $L.HtmlSecSec -and $securityState -eq 'NotEvaluated') {
+                $htmlSections += '<p class="muted">NotEvaluated: Security log unavailable; check access and policy.</p></section>'
+                continue
+            }
             if ($events.Count -eq 0) {
                 $htmlSections += "<p class='muted'>$($L.HtmlNoEvents)</p></section>"
                 continue
@@ -535,7 +540,9 @@ $htmlSections
                     Pause-DE -Message $L.EnterPrompt
                     continue
                 }
-                $kb = _Kb-Lookup '*' '*' $idN
+                $provider = (Read-Host 'Exact event provider (Enter: observations only) / Proveedor exacto').Trim()
+                $kb = if ($provider -and $provider -ne '*') { _Kb-Lookup '*' $provider $idN } else { $null }
+                Write-Host 'Event IDs are provider-specific. Causes are hypotheses; inspect the original event. / El ID depende del proveedor.' -ForegroundColor Yellow
                 Write-Host ''
                 if ($kb) {
                     $color = _Level-Color $kb.Level
