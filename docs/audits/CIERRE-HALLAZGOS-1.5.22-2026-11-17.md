@@ -4,6 +4,13 @@ Alcance autorizado: A01–A12 del [informe del 17/11](AUDITORIA-INTEGRAL-1.5.21-
 Windows 10 queda fuera de este ciclo por instrucción del propietario. No se
 reanuda el laboratorio ni se altera su aceptación histórica.
 
+Verificación posterior: **1.5.23** completa A07 con una regresión adicional para
+consultas de eventos realmente vacías: se muestran cero elementos, conservando
+`NotEvaluated` solo para fallos de consulta. El caso nuevo falló antes del cambio y
+pasó después. La entrega adicional se registra en
+[PR 186](https://github.com/AtlasPCSupport/atlas-pc-support/pull/186); los resultados
+de 1.5.22 de este documento/JSON conservan su versión y alcance originales.
+
 ## Cambios por hallazgo
 
 | Hallazgo | Resolución implementada | Evidencia y límite |

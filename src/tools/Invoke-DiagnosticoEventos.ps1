@@ -275,7 +275,7 @@ function Invoke-DiagnosticoEventos {
 
         $htmlSections = ''
         foreach ($title in $sections.Keys) {
-            $events = @($sections[$title])
+            $events = @($sections[$title] | Where-Object { $null -ne $_ })
             $htmlSections += "<section><h2>$([System.Net.WebUtility]::HtmlEncode($title)) <span class='count'>(" + $events.Count + ")</span></h2>"
             if ($title -eq $L.HtmlSecSec -and $securityState -eq 'NotEvaluated') {
                 $htmlSections += '<p class="muted">NotEvaluated: Security log unavailable; check access and policy.</p></section>'

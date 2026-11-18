@@ -112,6 +112,14 @@ Describe 'Audited diagnostic knowledge and handover coverage' {
         $script:RenderedEventHtml|Should -Match 'NotEvaluated: Security'
         $script:RenderedEventHtml|Should -Match 'CRITICAL</span><span class=.ev-title.>Fatal memory hardware error'
     }
+    It 'renders an observed empty query as zero events, including the Security section' {
+        $script:L=@{HtmlSecCrit='Critical';HtmlSecBoot='Boot';HtmlSecHw='Hardware';HtmlSecCrash='Crash';HtmlSecDrv='Drivers';HtmlSecSec='Security';HtmlNoEvents='Observed empty';HtmlRange='Range {0}';HtmlLang='en'}
+        Mock _Query-Events {}
+        Mock Write-AtlasShareableReport {$script:RenderedEventHtml=$Content}
+        _Build-HtmlReport -OutPath 'fixture.html'|Should -Be 'fixture.html'
+        $script:RenderedEventHtml|Should -Not -Match '\(1\)|NotEvaluated'
+        $script:RenderedEventHtml|Should -Match 'Security <span class=.count.>\(0\)'
+    }
 }
 
 Describe 'Persistent handover evidence' {
