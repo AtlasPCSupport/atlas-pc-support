@@ -1,0 +1,81 @@
+{
+  "dateLocal": "2026-11-17",
+  "version": "1.5.22",
+  "scope": "A01-A12 implementation; Windows 10 qualification excluded by owner",
+  "manifestSha256": "1cbeee5ca48ea06054fe1a95144d74bd379825fd95476e0eb86acfa46852dad3",
+  "findings": [
+    "A01",
+    "A02",
+    "A03",
+    "A04",
+    "A05",
+    "A06",
+    "A07",
+    "A08",
+    "A09",
+    "A10",
+    "A11",
+    "A12"
+  ],
+  "implementationCommits": [
+    "993cc79",
+    "aa2af8b"
+  ],
+  "deliveryPullRequest": "https://github.com/AtlasPCSupport/atlas-pc-support/pull/185",
+  "localChecks": [
+    {
+      "runtime": "5.1.26100.9818",
+      "osVersion": "10.0.26100.0",
+      "passed": 473,
+      "failed": 0,
+      "skipped": 0,
+      "analyzerErrors": 0,
+      "analyzerWarnings": 246,
+      "distributionArtifactsUnchanged": true,
+      "reportDirectory": "atlas-local-checks-7634afbaa1eb47f5bc6aeb889fb66588",
+      "log": "atlas-release-1.5.22-ps5.log"
+    },
+    {
+      "runtime": "7.6.9",
+      "osVersion": "10.0.26100.0",
+      "passed": 473,
+      "failed": 0,
+      "skipped": 0,
+      "analyzerErrors": 0,
+      "analyzerWarnings": 259,
+      "distributionArtifactsUnchanged": true,
+      "reportDirectory": "atlas-local-checks-61f9cf8dd428464899b89f51aef9113e",
+      "log": "atlas-release-1.5.22-ps7.log"
+    }
+  ],
+  "workerTests": {
+    "failed": 0,
+    "passed": 27
+  },
+  "ciPolicyTests": {
+    "failed": 0,
+    "passed": 9
+  },
+  "npmKnownVulnerabilities": 0,
+  "workerDryRunPassed": true,
+  "defender": {
+    "service": true,
+    "realTime": true,
+    "antivirus": true
+  },
+  "windows10Excluded": true,
+  "vmsStarted": false,
+  "physicalDisksChanged": false,
+  "realInstallationsRun": false,
+  "gpuStressRun": false,
+  "hostProtectionChanged": false,
+  "licensingOrCertificatePurchase": false,
+  "intentionalLimitations": [
+    "Effective script execution policy may block unsigned onboarding; no policy override",
+    "Real installations/recovery/alternate UAC identity and physical hardware are not certified by isolated tests",
+    "Permissions and byte-sharing tests execute on Windows, not Linux",
+    "Wrangler remains pinned at tested 4.154.0; no known vulnerability was reported",
+    "Free-text reports still require review; explicit recovery backups contain secrets"
+  ],
+  "promotionEvidence": "Publish only after CI build/windows-compat/worker passes on exact commit; verify descriptor and full downloaded package independently. Final publication evidence is recorded separately after deployment."
+}

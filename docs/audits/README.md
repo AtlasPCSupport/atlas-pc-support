@@ -18,6 +18,8 @@ plan nuevo del 27/10. No reescribir resultados anteriores como aceptación actua
 | 29/10, ajustes adicionales | 1.5.19 | [Router, recuperación y runtimes](CIERRE-HERRAMIENTAS-1.5.19-2026-10-29.md); comprobaciones locales en el informe, evidencia final de promoción en la PR; consultar el descriptor para saber qué está publicado |
 | 29/10, mantenimiento acotado | 1.5.20 | [Rutas, hosts y variables](MANTENIMIENTO-RUTAS-HOSTS-1.5.20-2026-10-29.md); [PR 182 integrada y publicación verificada](https://github.com/AtlasPCSupport/atlas-pc-support/pull/182), 447 pruebas por runtime y 34 miembros verificados; conserva límites de aceptación física |
 | 29/10, guardado de preferencias | 1.5.21 | [Preferencia de idioma](PREFERENCIA-IDIOMA-1.5.21-2026-10-29.md); preservación de configuración ante errores y resultado de guardado visible; promoción y CI por SHA en su PR |
+| 17/11, auditoría integral | 1.5.21 | [Informe y propuestas](AUDITORIA-INTEGRAL-1.5.21-2026-11-17.md), [evidencia nueva](AUDITORIA-INTEGRAL-1.5.21-2026-11-17.json); 27 herramientas revisadas, 456 pruebas por runtime y publicación verificada. Los hallazgos propuestos todavía no están implementados. |
+| 17/11, resolución A01–A12 | 1.5.22 | [Cambios y límites](CIERRE-HALLAZGOS-1.5.22-2026-11-17.md), [comprobaciones](CIERRE-HALLAZGOS-1.5.22-2026-11-17.json); entrega por SHA en PR 185. Windows 10 fuera de este ciclo por decisión del propietario. |
 
 La versión pública y pins efectivos se consultan en el descriptor del dominio,
 no se deducen del número mayor presente en una nota o rama.

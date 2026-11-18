@@ -193,3 +193,141 @@ Describe 'False positive result guards' {
         & $script:DiskHealth @([pscustomobject]@{Health='Healthy'}) | Should -BeFalse
     }
 }
+Describe 'Verified onboarding wrapper behavior' {
+    BeforeAll {
+        $repo=Split-Path -Parent $PSScriptRoot
+        $text=[IO.File]::ReadAllText((Join-Path $repo 'onboarding/install.bat'))
+        $elevationLine=@($text -split "`r?`n"|Where-Object {$_ -match '^\s+powershell.exe.*Start-Process'})[0]
+        $elevationSource=[regex]::Match($elevationLine,'-Command "(?<code>.*)"').Groups['code'].Value
+        $elevationAst=[Management.Automation.Language.Parser]::ParseInput($elevationSource,[ref]$null,[ref]$null)
+        $elevationCall=$elevationAst.Find({param($n)$n -is [Management.Automation.Language.CommandAst] -and $n.GetCommandName() -eq 'Start-Process'},$true)
+        if(-not $elevationCall){throw 'Missing BAT elevation call'}
+        $script:RealElevationCall=[scriptblock]::Create($elevationCall.Extent.Text)
+        $script:OnboardingPayload=([regex]::Matches($text,'(?m)^\s+"(?<code>.*)"(?: \^)?\r?$')|ForEach-Object {$_.Groups['code'].Value}) -join ' '
+        $errors=$null
+        $ast=[Management.Automation.Language.Parser]::ParseInput($script:OnboardingPayload,[ref]$null,[ref]$errors)
+        if($errors.Count){throw ($errors|Out-String)}
+        foreach($name in @('Invoke-VerifiedOnboarding','Invoke-OnboardingFile','Assert-OnboardingDirectory','New-OnboardingAttempt')) {
+            $node=$ast.Find({param($n)$n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq $name},$true)
+            . ([scriptblock]::Create($node.Extent.Text))
+        }
+        $script:FixtureBytes=[Text.Encoding]::UTF8.GetBytes('# verified fixture')
+        $script:RealDirectoryCheck=[scriptblock]::Create((Get-Command Assert-OnboardingDirectory).Definition)
+        $hash=[Security.Cryptography.SHA256]::Create()
+        try {$script:FixtureHash=([BitConverter]::ToString($hash.ComputeHash($script:FixtureBytes))).Replace('-','').ToLowerInvariant()} finally {$hash.Dispose()}
+    }
+    BeforeEach {
+        $script:Attempt=Join-Path $TestDrive ([guid]::NewGuid().ToString('N'));New-Item -ItemType Directory -Path $script:Attempt|Out-Null
+        Mock Assert-OnboardingDirectory {}
+        Mock Invoke-OnboardingFile {}
+        Mock Invoke-WebRequest {
+            if($OutFile){[IO.File]::WriteAllBytes($OutFile,$script:FixtureBytes)}else{[pscustomobject]@{Content=($script:FixtureHash+'  install-rustdesk.ps1')}}
+        }
+    }
+    It 'never executes a download with the wrong hash' {
+        Mock Invoke-WebRequest {if($OutFile){[IO.File]::WriteAllText($OutFile,'tampered')}else{[pscustomobject]@{Content=$script:FixtureHash}}}
+        {Invoke-VerifiedOnboarding $script:Attempt}|Should -Throw '*integrity*'
+        Should -Invoke Invoke-OnboardingFile -Times 0 -Exactly
+    }
+    It 'creates independent attempts and rejects redirected or untrusted directories' -Skip:($env:OS -ne 'Windows_NT') {
+        Mock Set-Acl {}
+        $first=New-OnboardingAttempt -Base $TestDrive
+        $second=New-OnboardingAttempt -Base $TestDrive
+        $first|Should -Not -Be $second
+        Split-Path $first -Leaf|Should -Match '^[a-f0-9]{32}$'
+        $acl=[Security.AccessControl.DirectorySecurity]::new()
+        $acl.SetOwner([Security.Principal.SecurityIdentifier]::new('S-1-1-0'))
+        Mock Get-Acl {$acl}
+        {& $script:RealDirectoryCheck $script:Attempt}|Should -Throw '*owner*'
+        Mock Get-Item {[pscustomobject]@{PSIsContainer=$true;Attributes=[IO.FileAttributes]::ReparsePoint}}
+        {& $script:RealDirectoryCheck $script:Attempt}|Should -Throw '*Redirected*'
+    }
+    It 'locks verified bytes against replacement throughout execution' -Skip:($env:OS -ne 'Windows_NT') {
+        Mock Invoke-OnboardingFile {
+            [IO.File]::ReadAllText($Path)|Should -Be '# verified fixture'
+            {[IO.File]::WriteAllText($Path,'replaced')}|Should -Throw
+        }
+        Invoke-VerifiedOnboarding $script:Attempt
+        Should -Invoke Invoke-OnboardingFile -Times 1 -Exactly
+        {Invoke-VerifiedOnboarding $script:Attempt}|Should -Throw
+        Should -Invoke Invoke-OnboardingFile -Times 1 -Exactly
+    }
+    It 'refuses concurrent or repeated use of an attempt before any download' {
+        $lock=[IO.File]::Open((Join-Path $script:Attempt '.run.lock'),'CreateNew','ReadWrite','None')
+        try {{Invoke-VerifiedOnboarding $script:Attempt}|Should -Throw} finally {$lock.Dispose()}
+        Should -Invoke Invoke-WebRequest -Times 0 -Exactly
+    }
+    It 'also prevents different attempts from running installers concurrently' {
+        $active=[IO.File]::Open((Join-Path (Split-Path $script:Attempt) '.active.lock'),'OpenOrCreate','ReadWrite','None')
+        try {{Invoke-VerifiedOnboarding $script:Attempt}|Should -Throw} finally {$active.Dispose()}
+        Should -Invoke Invoke-WebRequest -Times 0 -Exactly
+    }
+    It 'propagates policy/installer failure and permits a separate new attempt' {
+        Mock Invoke-OnboardingFile {throw 'Policy blocked'}
+        {Invoke-VerifiedOnboarding $script:Attempt}|Should -Throw '*Policy blocked*'
+        $other=Join-Path $TestDrive ([guid]::NewGuid().ToString('N'));New-Item -ItemType Directory -Path $other|Out-Null
+        Mock Invoke-OnboardingFile {}
+        Invoke-VerifiedOnboarding $other
+        Should -Invoke Invoke-OnboardingFile -Times 2 -Exactly
+    }
+    It 'transports special paths as environment data and preserves effective execution policy' {
+        $script:OnboardingPayload|Should -Not -Match 'ExecutionPolicy|Unblock-File|Invoke-Expression|EncodedCommand'
+        $env:ATLAS_ONBOARDING_SELF="C:\Users\O'Neil\Downloads\Atlas & soporte.bat"
+        try {
+            Mock Start-Process {[pscustomobject]@{ExitCode=0}}
+            # Execute the actual BAT elevation call with only the process boundary mocked.
+            & $script:RealElevationCall|Out-Null
+            Should -Invoke Start-Process -Times 1 -ParameterFilter {$FilePath -eq $env:ATLAS_ONBOARDING_SELF}
+        } finally {Remove-Item Env:ATLAS_ONBOARDING_SELF}
+    }
+}
+
+Describe 'Audited process deadlines and verified GPU stop' {
+    BeforeAll {
+        $script:ProcessTestSystemRoot=$env:SystemRoot
+        if(-not $env:SystemRoot){$env:SystemRoot=$TestDrive}
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        foreach($name in @('Stop-Proc','Wait-WithProgress','Get-GpuSessionLevel')){. (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-GPUCheck.ps1' $name)}
+        . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-Fase0.ps1' 'Get-TunnelState')
+        function Invoke-AtlasNativeProcess {param($FilePath,$ArgumentList,$TimeoutSeconds)throw 'Native boundary blocked'}
+        function New-TestOwnedProcess {
+            $p=[pscustomobject]@{HasExited=$false;ForceFails=$false;ForceCalls=0;Graceful=$false;Waits=[Collections.Generic.List[int]]::new()}
+            $p|Add-Member ScriptMethod CloseMainWindow {return $this.Graceful}
+            $p|Add-Member ScriptMethod WaitForExit {param($milliseconds)$this.Waits.Add($milliseconds);if($this.Graceful){$this.HasExited=$true};return $this.HasExited}
+            $p|Add-Member ScriptMethod Refresh {}
+            $p|Add-Member ScriptMethod Kill {$this.ForceCalls++;if($this.ForceFails){throw 'Denied'};$this.HasExited=$true}
+            return $p
+        }
+    }
+    AfterAll {
+        if($script:ProcessTestSystemRoot){$env:SystemRoot=$script:ProcessTestSystemRoot}
+        else {Remove-Item Env:SystemRoot -ErrorAction SilentlyContinue}
+    }
+    It 'keeps a timed out or empty tunnel query unevaluated' {
+        Mock Invoke-AtlasNativeProcess {[pscustomobject]@{State='TimedOut';Stdout='';StdoutTruncated=$false}}
+        Get-TunnelState @('interface','teredo','show','state')|Should -Match 'NotEvaluated.*TimedOut'
+        Should -Invoke Invoke-AtlasNativeProcess -Times 1 -ParameterFilter {$TimeoutSeconds -eq 10 -and $ArgumentList[1] -eq 'teredo'}
+        Mock Invoke-AtlasNativeProcess {[pscustomobject]@{State='Correct';Stdout='';StdoutTruncated=$false}}
+        Get-TunnelState @('interface','teredo','show','state')|Should -Match 'NotEvaluated'
+    }
+    It 'confirms graceful or forced termination, with bounded waits' {
+        $p=New-TestOwnedProcess;$p.Graceful=$true
+        Stop-Proc $p|Should -BeTrue
+        $p=New-TestOwnedProcess
+        Stop-Proc $p|Should -BeTrue
+        @($p.Waits)|Should -Be @(2000,5000)
+    }
+    It 'reports failure to terminate rather than claiming a successful stop or clean session' {
+        $p=New-TestOwnedProcess
+        $p.ForceFails=$true
+        Stop-Proc $p|Should -BeFalse
+        Get-GpuSessionLevel -Total 0 -HasTelemetry $true -StressRequested $true -SessionStatus ProcessStopUnconfirmed|Should -Be 'NO CONCLUYENTE'
+        $p.ForceCalls|Should -Be 1
+    }
+    It 'terminates only its own harmless real child and confirms exit' -Skip:($env:OS -ne 'Windows_NT') {
+        $child=Microsoft.PowerShell.Management\Start-Process -FilePath (Get-Process -Id $PID).Path -ArgumentList @('-NoProfile','-Command','Start-Sleep -Seconds 20') -WindowStyle Hidden -PassThru
+        try { Stop-Proc $child|Should -BeTrue;$child.HasExited|Should -BeTrue }
+        finally {if(-not $child.HasExited){$child.Kill()};$child.Dispose()}
+    }
+}

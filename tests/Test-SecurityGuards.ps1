@@ -123,6 +123,13 @@ function Test-OnboardingInstallBat {
         return
     }
     $text = Get-Content -Raw -LiteralPath $path -Encoding UTF8
+    if ($text -match '(?i)-ExecutionPolicy\s+(Bypass|Unrestricted)|\bUnblock-File\b|EncodedCommand|Invoke-Expression') {
+        Write-GuardFail 'onboarding/install.bat overrides execution policy or removes provenance.'
+    }
+    $payload = ([regex]::Matches($text, '(?m)^\s+"(?<code>.*)"(?: \^)?\r?$') | ForEach-Object { $_.Groups['code'].Value }) -join ' '
+    $parseErrors=$null
+    [Management.Automation.Language.Parser]::ParseInput($payload,[ref]$null,[ref]$parseErrors)|Out-Null
+    if (-not $payload -or $parseErrors.Count -or $payload.Length -gt 7000) { Write-GuardFail 'Invalid or oversized onboarding PowerShell payload.' }
     if ($text -match '(?i)\biex\s*\(\s*iwr') {
         Write-GuardFail "onboarding/install.bat contains direct iex(iwr...) pattern."
     } else {

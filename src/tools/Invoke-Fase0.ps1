@@ -240,6 +240,14 @@ function Restore-Defaults {
     Check-Status
 }
 
+function Get-TunnelState {
+    param([string[]]$Arguments)
+    $result = Invoke-AtlasNativeProcess -FilePath (Join-Path $env:SystemRoot 'System32/netsh.exe') -ArgumentList $Arguments -TimeoutSeconds 10
+    if ($result.State -ne 'Correct' -or $result.StdoutTruncated) { return ('NotEvaluated: netsh '+$result.State+'; inspect availability/access.') }
+    if ([string]::IsNullOrWhiteSpace($result.Stdout)) { return 'NotEvaluated: netsh returned no state.' }
+    return $result.Stdout.Trim()
+}
+
 function Check-Status {
     Show-Header
     Write-Centered $L.StatusHeader $AtlasWhite
@@ -247,8 +255,8 @@ function Check-Status {
 
     Write-AtlasLog $L.StatusReq
 
-    $Teredo = (netsh interface teredo show state | Out-String).Trim()
-    $6to4 = (netsh interface ipv6 6to4 show state | Out-String).Trim()
+    $Teredo = Get-TunnelState @('interface','teredo','show','state')
+    $6to4 = Get-TunnelState @('interface','ipv6','6to4','show','state')
 
     Write-AtlasLog ($L.TeredoState + "`n" + $Teredo)
     Write-AtlasLog ($L.SixToFourState + "`n" + $6to4)

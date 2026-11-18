@@ -1,4 +1,4 @@
-﻿# ============================================================
+# ============================================================
 # Invoke-AuditoriaRouter
 # Migrado de: AuditoriaRouter.ps1
 # Atlas PC Support — v1.0
@@ -1855,7 +1855,7 @@ while ($true) {
     Escribir-Centrado "  |  [H]  Puertos WAN           |  [J]  Fabricantes (MAC/OUI) |  " "White"
     Escribir-Centrado "  |                             |                              |  " "DarkGray"
     Escribir-Centrado "  +--- SEGURIDAD / RECON -------+------------------------------+  " "DarkGray"
-    Escribir-Centrado "  |  [K]  Passwords WiFi      |  [O]  Scan puertos gateway  |  " "Cyan"
+    Escribir-Centrado "  |  [K]  Ajustes WiFi      |  [O]  Scan puertos gateway  |  " "Cyan"
     Escribir-Centrado "  |  [R]  Devices LAN (ARP)|                              |  " "Cyan"
     Escribir-Centrado "  +--- SESION ------------------+------------------------------+  " "DarkGray"
     Escribir-Centrado "  |  [I]  Historial de Sesion   |  [S]  Salir                 |  " "DarkGray"

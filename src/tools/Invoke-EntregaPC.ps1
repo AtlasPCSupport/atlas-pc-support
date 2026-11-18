@@ -1,4 +1,4 @@
-﻿# ============================================================
+# ============================================================
 # Invoke-EntregaPC  ->  PC Handover Report
 #
 # i18n: Option A (en default + full es secondary). Function name
@@ -598,6 +598,16 @@ function Renombrar-Equipo {
     Wait-AtlasReturn -Message $L.EnterBack
 }
 
+function Get-EntregaNetworkProtection {
+    $network = Invoke-AtlasInventoryRead -Source 'IPv4 addresses' -Query { Get-NetIPAddress -AddressFamily IPv4 -ErrorAction Stop }
+    $defender = Invoke-AtlasInventoryRead -Source 'Defender' -Query {
+        $status = Get-MpComputerStatus -ErrorAction Stop
+        if ($null -eq $status -or $null -eq $status.AntivirusEnabled -or $null -eq $status.RealTimeProtectionEnabled) { throw 'Incomplete Defender response' }
+        $status
+    }
+    [pscustomobject]@{ Network=$network; Defender=$defender }
+}
+
 function _Esc-Html {
     param([string]$Text)
     if ($null -eq $Text) { return '' }
@@ -802,27 +812,25 @@ function Generar-ChecklistEntrega {
         $hotfixHtml = "<p class='err'>$($L.ErrHotfix -f (_Esc-Html $_.Exception.Message))</p>"
     }
 
-    $redHtml = ''
-    try {
-        $ips = Get-NetIPAddress -AddressFamily IPv4 -ErrorAction Stop | Where-Object { $_.IPAddress -notlike '169.*' -and $_.IPAddress -notlike '127.*' }
-        if ($ips) {
+    $coverage = Get-EntregaNetworkProtection
+    $redHtml = '<p class="muted">NotEvaluated: network query unavailable; check capabilities and access.</p>'
+    if ($coverage.Network.State -eq 'Observed') {
+        $ips = @($coverage.Network.Items | Where-Object { $_.IPAddress -notlike '169.*' -and $_.IPAddress -notlike '127.*' })
+        if ($ips.Count) {
             $redHtml = '<ul>'
             foreach ($ip in $ips) {
                 $redHtml += "<li><strong>$(_Esc-Html $ip.InterfaceAlias):</strong> <code>$(_Esc-Html $ip.IPAddress)/$($ip.PrefixLength)</code></li>"
             }
             $redHtml += '</ul>'
-        } else {
-            $redHtml = "<p class='muted'>$($L.NoNet)</p>"
-        }
-    } catch {}
-
-    $defenderRows = @()
-    try {
-        $mp = Get-MpComputerStatus -ErrorAction Stop
-        $defenderRows += _Row $L.RowAvOn  ([string]$mp.AntivirusEnabled)
-        $defenderRows += _Row $L.RowAvRT  ([string]$mp.RealTimeProtectionEnabled)
+        } else { $redHtml = "<p class='muted'>$($L.NoNet)</p>" }
+    }
+    $defenderRows = @(_Row 'Coverage' 'NotEvaluated: Defender query unavailable; check capabilities and access.')
+    if ($coverage.Defender.State -eq 'Observed') {
+        $mp = @($coverage.Defender.Items)[0]
+        $defenderRows = @(_Row $L.RowAvOn ([string]$mp.AntivirusEnabled))
+        $defenderRows += _Row $L.RowAvRT ([string]$mp.RealTimeProtectionEnabled)
         $defenderRows += _Row $L.RowAvSig ([string]$mp.AntivirusSignatureLastUpdated)
-    } catch {}
+    }
 
     $checklistHtml = '<p>Manual evidence only. Missing items remain NotVerified. Edit through Atlas and regenerate this report.</p>'
     foreach ($row in $checklist.Items) {

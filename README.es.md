@@ -31,7 +31,7 @@ Reabrir el comando selecciona la última **publicación aprobada**. Una sesión 
 
 ![Panel Atlas PC Support](docs/img/panel-screenshot.png)
 
-Sobre la rejilla de herramientas hay un dashboard en vivo (CPU / RAM / Disco + alertas) y un panel lateral con los datos del equipo (hostname, usuario, build de Windows, modelo de CPU, RAM total, uptime, IP local) siempre visible.
+Sobre la rejilla de herramientas hay un dashboard bajo demanda (CPU / RAM / Disco + alertas) y un panel lateral con los datos del equipo (hostname, usuario, build de Windows, modelo de CPU, RAM total, uptime, IP local).
 
 ---
 

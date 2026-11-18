@@ -1,4 +1,4 @@
-﻿function Invoke-KeyboardDoctor {
+function Invoke-KeyboardDoctor {
     <#
     .SYNOPSIS
       Keyboard Doctor: safe ghost-typing / keyboard-fault triage.
@@ -75,13 +75,13 @@
             BiosAsk='Did ghost typing happen in BIOS/UEFI? (y/n/skip)'
             ExternalAsk='With external USB keyboard and internal keyboard disabled/avoided, did ghost typing stop? (stopped/persists/skip)'
             TouchpadAsk='With touchpad disabled or palm rejection tested, did ghost typing stop? (stopped/persists/skip)'
-            MonitorWarn='Foreground-only monitor. It records key NAMES only while this console is visible. Do not type passwords. Type CONSENT to continue.'
+            MonitorWarn='Focused-window test: counts key-down events; no text or key names are saved. Type CONSENT to continue.'
             MonitorMinutes='Minutes to monitor (1-10, Enter=3)'
             MonitorActive='Monitor active. Do not touch the keyboard.'
             MonitorDone='Monitor complete. Captured keys: {0}'
             RepairTitle='Repair actions'
-            RepairWarn='These actions change user settings. Use only after explaining to the customer.'
-            Repair1='[1] Disable Filter/Sticky/Toggle Keys shortcuts'
+            RepairWarn='Opens Windows settings; review the intended user and preferences before changing them.'
+            Repair1='[1] Review accessibility keys in Windows Settings'
             Repair2='[2] Open Device Manager'
             Repair3='[3] Open Keyboard settings'
             RepairB='[B] Back'
@@ -166,13 +166,13 @@
             BiosAsk='Aparecio ghost typing en BIOS/UEFI? (y/n/skip)'
             ExternalAsk='Con teclado USB externo e interno aislado/evitado, desaparecio el ghost typing? (stopped/persists/skip)'
             TouchpadAsk='Con touchpad desactivado o palm rejection probado, desaparecio el ghost typing? (stopped/persists/skip)'
-            MonitorWarn='Monitor solo en primer plano. Registra NOMBRES de teclas solo mientras esta consola esta visible. No escribas contrasenas. Escribe CONSENT para continuar.'
+            MonitorWarn='Prueba con foco: cuenta eventos de tecla; no guarda texto ni nombres de teclas. Escribe CONSENT para continuar.'
             MonitorMinutes='Minutos de monitoreo (1-10, Enter=3)'
             MonitorActive='Monitor activo. No toques el teclado.'
             MonitorDone='Monitor completado. Teclas capturadas: {0}'
             RepairTitle='Acciones de reparacion'
-            RepairWarn='Estas acciones cambian ajustes del usuario. Usar solo tras explicarlo al cliente.'
-            Repair1='[1] Desactivar atajos Filter/Sticky/Toggle Keys'
+            RepairWarn='Abre ajustes de Windows; revisar usuario y preferencias antes de cambiarlas.'
+            Repair1='[1] Revisar teclas de accesibilidad en ajustes'
             Repair2='[2] Abrir Administrador de dispositivos'
             Repair3='[3] Abrir configuracion de teclado'
             RepairB='[B] Volver'

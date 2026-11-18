@@ -31,7 +31,7 @@ Reopening the command selects the latest **approved publication**. An open sessi
 
 ![Atlas PC Support panel](docs/img/panel-screenshot.png)
 
-A live dashboard banner (CPU / RAM / Disk + alerts) sits above the tool grid, and a system sidebar (hostname, user, Windows build, CPU model, total RAM, uptime, local IP) is visible at all times.
+An on-demand dashboard banner (CPU / RAM / Disk + alerts) sits above the tool grid, and a system sidebar (hostname, user, Windows build, CPU model, total RAM, uptime, local IP) is visible at all times.
 
 ---
 

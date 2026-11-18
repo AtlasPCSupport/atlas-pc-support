@@ -46,7 +46,7 @@ function Save-AtlasReleaseFile {
     [CmdletBinding()]
     param([Parameter(Mandatory)][string]$Commit, [Parameter(Mandatory)][string]$RelativePath, [Parameter(Mandatory)][string]$Destination)
     # Every transport fallback is bound to the SAME full commit. Never fall back to main.
-    $repository = 'mikepchelper-spec/atlas-pc-support'
+    $repository = 'AtlasPCSupport/atlas-pc-support'
     try {
         Invoke-WebRequest -Uri "https://raw.githubusercontent.com/$repository/$Commit/$RelativePath" -OutFile $Destination -UseBasicParsing -TimeoutSec 60 -ErrorAction Stop
     } catch {

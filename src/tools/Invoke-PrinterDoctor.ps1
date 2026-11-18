@@ -1,4 +1,4 @@
-﻿function Invoke-PrinterDoctor {
+function Invoke-PrinterDoctor {
     <#
     .SYNOPSIS
       Printer Doctor: safe Windows printer diagnostics and optional repairs.
@@ -84,7 +84,7 @@
             RepairTitle='Repair actions'
             RepairWarn='These actions can interrupt printing. Use only after checking the queue and informing the customer.'
             Repair1='[1] Restart Print Spooler'
-            Repair2='[2] Clear all print queues'
+            Repair2='[2] Clear one selected print queue'
             Repair3='[3] Open Windows Printers settings'
             Repair4='[4] Print test page'
             RepairB='[B] Back'
@@ -92,7 +92,7 @@
             Cancelled='Cancelled.'
             NeedAdmin='This action may require Administrator rights.'
             SpoolerRestarted='Print Spooler restarted.'
-            QueuesCleared='Print queues cleared.'
+            QueuesCleared='Selected queue operation completed.'
             AskPrinterName='Printer name'
             TestPageSent='Test page command sent.'
             ExportSaved='Report saved: {0}'
@@ -172,7 +172,7 @@
             RepairTitle='Acciones de reparacion'
             RepairWarn='Estas acciones pueden interrumpir impresiones. Usar solo despues de revisar la cola e informar al cliente.'
             Repair1='[1] Reiniciar Print Spooler'
-            Repair2='[2] Limpiar todas las colas de impresion'
+            Repair2='[2] Limpiar una cola de impresion seleccionada'
             Repair3='[3] Abrir configuracion de impresoras de Windows'
             Repair4='[4] Imprimir pagina de prueba'
             RepairB='[B] Volver'
@@ -180,7 +180,7 @@
             Cancelled='Cancelado.'
             NeedAdmin='Esta accion puede requerir permisos de Administrador.'
             SpoolerRestarted='Print Spooler reiniciado.'
-            QueuesCleared='Colas de impresion limpiadas.'
+            QueuesCleared='Operacion sobre la cola seleccionada completada.'
             AskPrinterName='Nombre de impresora'
             TestPageSent='Comando de pagina de prueba enviado.'
             ExportSaved='Reporte guardado: {0}'

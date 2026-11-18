@@ -18,9 +18,15 @@ function Protect-AtlasReportText {
         '(?i)\b[A-Z]:\\Users\\[^\\\s<>"'']+',
         '(?i)\bS-1-5-21-(?:\d+-){2,3}\d+\b',
         '(?i)\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b',
-        '(?i)\b(?:[A-F0-9]{2}[:-]){5}[A-F0-9]{2}\b',
-        '\b(?:\d{1,3}\.){3}\d{1,3}\b'
+        '(?i)\b(?:[A-F0-9]{2}[:-]){5}[A-F0-9]{2}\b'
     )) { $result = [regex]::Replace($result, $pattern, '[REDACTED]') }
+    # Only explicit version labels preserve dotted versions in free text/HTML.
+    $result = [regex]::Replace($result, '\b(?:\d{1,3}\.){3}\d{1,3}\b', {
+        param($match)
+        $prefix = $result.Substring(0, $match.Index)
+        if ($prefix -match '(?i)(?:DriverVersion|FileVersion|ProductVersion|Version|Versi[oó]n)["'']?\s*(?:[:=]|</(?:th|td)>\s*<td[^>]*>)\s*["'']?$') { return $match.Value }
+        return '[REDACTED]'
+    })
     $result = [regex]::Replace($result, '(?i)(?<![a-z0-9:])(?:[a-f0-9]{0,4}:){2,}[a-f0-9]{0,4}(?:%[\w.-]+)?(?![a-z0-9:])', {
         param($match)
         $address = $null
@@ -48,6 +54,8 @@ function Protect-AtlasReportObject {
         foreach ($name in $names) {
             if ($name -match '^(?i:Serial(?:Number)?|UUID|ProcessorId|MachineGuid|MacAddress|IpAddress(?:es)?|UserName|ComputerName|Computer|HostName|Owner|Client|ClientName|ConsultantName|Cliente|Customer|Document|SSID|BSSID|RecoveryPassword|ProductKey|KeyProtectorId|FullName|FileSystemLabel|PNPDeviceId|DeviceId|InstanceId|DeviceInstanceId)$') {
                 $result[$name] = '[REDACTED]'
+            } elseif ($name -match '^(?i:(?:Driver|File|Product|AMProduct|AMEngine)?Version)$' -and $InputObject.$name -is [string] -and $InputObject.$name -match '^\d+(?:\.\d+){1,4}$') {
+                $result[$name] = $InputObject.$name
             } else { $result[$name] = Protect-AtlasReportObject $InputObject.$name -SensitiveValues $SensitiveValues }
         }
         return [pscustomobject]$result

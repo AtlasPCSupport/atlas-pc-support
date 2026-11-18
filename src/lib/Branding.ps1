@@ -44,7 +44,7 @@ function Get-AtlasBranding {
             shortName    = "Atlas"
             tagline      = "Panel unificado de soporte técnico para Windows"
             version      = $(if ($script:AtlasVersion) { $script:AtlasVersion } else { '1.0.0' })
-            companyUrl   = "https://github.com/mikepchelper-spec/atlas-pc-support"
+            companyUrl   = "https://github.com/AtlasPCSupport/atlas-pc-support"
             copyright    = "© 2026 Atlas PC Support"
         }
         theme = @{

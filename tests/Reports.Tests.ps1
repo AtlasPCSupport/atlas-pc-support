@@ -14,6 +14,13 @@ Describe 'Shareable report privacy and trace' {
         $result=Protect-AtlasReportText '10.24.1.77 2606:4700:4700::1111 fe80::1234%12 AA:BB:CC:DD:EE:FF C:\Users\FixtureUser\file S-1-5-21-111-222-333-1001 fixture@example.test'
         $result|Should -Not -Match '10\.24|2606:|fe80:|AA:BB|FixtureUser|S-1-5-21|fixture@example'
     }
+    It 'preserves explicitly labelled versions while still redacting network addresses' {
+        Protect-AtlasReportText 'DriverVersion=10.2.3.4; IP=192.0.2.10' | Should -Be 'DriverVersion=10.2.3.4; IP=[REDACTED]'
+        Protect-AtlasReportText '<th>Version</th><td>10.2.3.4</td><td>192.0.2.10</td>' | Should -Be '<th>Version</th><td>10.2.3.4</td><td>[REDACTED]</td>'
+        $result=Protect-AtlasReportObject ([pscustomobject]@{DriverVersion='10.2.3.4';Version='1.2.3.4';IPAddress='192.0.2.10';Evidence='192.0.2.10'})
+        $result.DriverVersion|Should -Be '10.2.3.4';$result.Version|Should -Be '1.2.3.4'
+        $result.IPAddress|Should -Be '[REDACTED]';$result.Evidence|Should -Be '[REDACTED]'
+    }
     It 'redacts all equally long explicit values and their HTML encoding' {
         $result=Protect-AtlasReportText 'SN123 SN456 A&amp;BCD' -SensitiveValues @('SN123','SN456','A&BCD')
         $result|Should -Not -Match 'SN123|SN456|BCD'
@@ -54,6 +61,56 @@ Describe 'Shareable report privacy and trace' {
         $result.Flag|Should -BeFalse;$result.Null|Should -BeNullOrEmpty
         $result.Items[0]|Should -Be '[REDACTED] [REDACTED]'
         $result.Items[1].ABC|Should -Be '[REDACTED]'
+    }
+}
+
+Describe 'Audited diagnostic knowledge and handover coverage' {
+    BeforeAll {
+        $script:RepoRoot=Split-Path -Parent $PSScriptRoot
+        . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/Operations.ps1')
+        . (Join-Path $script:RepoRoot 'src/lib/ToolKit.ps1')
+        . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-EntregaPC.ps1' 'Get-EntregaNetworkProtection')
+        . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-DiagnosticoEventos.ps1' '_Kb-Lookup')
+        . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-DiagnosticoEventos.ps1' '_Build-HtmlReport')
+        function _Query-Events {param($LogName,$Levels,$Hours,$MaxEvents,$Ids)throw 'Real events blocked'}
+        function Write-AtlasShareableReport {param($Path,$Content,$Tool)throw 'Real output blocked'}
+        function Get-NetIPAddress { [CmdletBinding()]param($AddressFamily) throw 'Real network read blocked' }
+        function Get-MpComputerStatus { [CmdletBinding()]param() throw 'Real protection read blocked' }
+    }
+    It 'identifies WHEA memory and processor events using both real language tables' -ForEach @(@{Language='En'},@{Language='Es'}) {
+        $ast=Get-TestAst $script:RepoRoot 'src/tools/Invoke-DiagnosticoEventos.ps1'
+        $assignment=$ast.Find({param($n)$n -is [Management.Automation.Language.AssignmentStatementAst] -and $n.Left.Extent.Text -eq ('$kb'+$Language)},$true)
+        . ([scriptblock]::Create($assignment.Extent.Text))
+        $script:AtlasEventsKB=Get-Variable ('kb'+$Language) -ValueOnly
+        $memory=_Kb-Lookup System Microsoft-Windows-WHEA-Logger 46
+        $memory.Level|Should -Be CRITICAL;$memory.Title|Should -Match 'memor'
+        $processor=_Kb-Lookup System Microsoft-Windows-WHEA-Logger 19
+        $processor.Title|Should -Match 'proces';$processor.Cause|Should -Not -Match 'PCIe'
+        _Kb-Lookup System UnrelatedProvider 46|Should -BeNullOrEmpty
+    }
+    It 'keeps failed reads distinct from observed absence and disabled protection' {
+        Mock Get-NetIPAddress {throw 'Denied'};Mock Get-MpComputerStatus {throw 'Denied'}
+        $r=Get-EntregaNetworkProtection
+        $r.Network.State|Should -Be NotEvaluated;$r.Defender.State|Should -Be NotEvaluated
+        Mock Get-NetIPAddress {};Mock Get-MpComputerStatus {[pscustomobject]@{AntivirusEnabled=$false;RealTimeProtectionEnabled=$false}}
+        $r=Get-EntregaNetworkProtection
+        $r.Network.State|Should -Be Observed;@($r.Network.Items).Count|Should -Be 0
+        $r.Defender.State|Should -Be Observed;$r.Defender.Items[0].AntivirusEnabled|Should -BeFalse
+        Mock Get-MpComputerStatus {}
+        (Get-EntregaNetworkProtection).Defender.State|Should -Be NotEvaluated
+    }
+    It 'renders denied Security access explicitly and retains the WHEA event severity and corrected title' {
+        $script:L=@{HtmlSecCrit='Critical';HtmlSecBoot='Boot';HtmlSecHw='Hardware';HtmlSecCrash='Crash';HtmlSecDrv='Drivers';HtmlSecSec='Security';HtmlNoEvents='Empty';HtmlRange='Range {0}';HtmlLang='en'}
+        $script:AtlasEventsKB=@{'*|Microsoft-Windows-WHEA-Logger|46'=@{Title='Fatal memory hardware error';Level='INFO';Cause='Fixture';Action='Investigate'}}
+        Mock _Query-Events {
+            if($LogName -eq 'Security'){throw 'Access denied'}
+            if($Ids -contains 46){[pscustomobject]@{LogName='System';ProviderName='Microsoft-Windows-WHEA-Logger';Id=46;Level=2;TimeCreated=[datetime]'2026-11-17';Message='Fatal memory event'}}
+        }
+        Mock Write-AtlasShareableReport {$script:RenderedEventHtml=$Content}
+        _Build-HtmlReport -OutPath 'fixture.html'|Should -Be 'fixture.html'
+        $script:RenderedEventHtml|Should -Match 'NotEvaluated: Security'
+        $script:RenderedEventHtml|Should -Match 'CRITICAL</span><span class=.ev-title.>Fatal memory hardware error'
     }
 }
 

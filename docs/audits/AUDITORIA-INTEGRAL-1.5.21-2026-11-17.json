@@ -1,0 +1,240 @@
+{
+  "schemaVersion": 1,
+  "dateLocal": "2026-11-17",
+  "timeZone": "America/Bogota",
+  "scope": "Public repository audit and safe verification; proposals, not implementation",
+  "version": "1.5.21",
+  "checkoutCommit": "b8e2c8c33cb7a72cd171dd3edb0aaca2ec4865ec",
+  "inventory": {
+    "dependencies": 11,
+    "testNonBlankPowerShellLines": 4661,
+    "releaseMembers": 34,
+    "sourceNonBlankPowerShellLines": 18864,
+    "explicitlyDisabledEntries": 1,
+    "trackedFilesAtStart": 172,
+    "docsFilesAtStart": 76,
+    "toolEntries": 27
+  },
+  "localChecks": [
+    {
+      "runtime": "5.1.26100.9818",
+      "osVersion": "10.0.26100.0",
+      "passed": 456,
+      "failed": 0,
+      "skipped": 0,
+      "analyzerErrors": 0,
+      "analyzerWarnings": 253,
+      "analyzerInformation": 89,
+      "distributionArtifactsUnchanged": true,
+      "windows10Validated": false,
+      "temporaryReportDirectory": "atlas-local-checks-4ac804268e8c42a395f3b9e7b953ec23"
+    },
+    {
+      "runtime": "7.6.9",
+      "osVersion": "10.0.26100.0",
+      "passed": 456,
+      "failed": 0,
+      "skipped": 0,
+      "analyzerErrors": 0,
+      "analyzerWarnings": 264,
+      "analyzerInformation": 93,
+      "distributionArtifactsUnchanged": true,
+      "windows10Validated": false,
+      "temporaryReportDirectory": "atlas-local-checks-694854b1e3a4498498ffae2b7c8c1670"
+    }
+  ],
+  "workerTests": {
+    "directory": "api/cloudflare-worker",
+    "failed": 0,
+    "command": "npm.cmd test",
+    "passed": 27
+  },
+  "ciPolicyTests": {
+    "failed": 0,
+    "command": "node --test tests/ci-policy.test.cjs",
+    "passed": 9
+  },
+  "npmAudit": {
+    "dependencyCounts": {
+      "prod": 1,
+      "dev": 91,
+      "optional": 60,
+      "peer": 0,
+      "peerOptional": 0,
+      "total": 91
+    },
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    }
+  },
+  "npmOutdated": {
+    "upgraded": false,
+    "wranglerWanted": "4.154.0",
+    "wranglerCurrent": "4.154.0",
+    "wranglerLatestObserved": "4.164.0"
+  },
+  "endpoints": {
+    "paths": [
+      "/",
+      "/launcher.sha256",
+      "/tool-hashes.sha256",
+      "/install.bat",
+      "/install.ps1",
+      "/install.ps1.sha256",
+      "/healthz"
+    ],
+    "expectedManifestSha256": "7b65e879639f8104f4bc9b030ead468eaec26e967314fa9104b039a3903321e2",
+    "privateInstallerExecuted": false,
+    "expectedCommit": "972592be193d3f2b42f9a0b6a9a3ac854870cd7d",
+    "passed": 7,
+    "failed": 0
+  },
+  "publicVerification": {
+    "checkedUtc": "2026-11-17T21:16:18.7758047Z",
+    "baseUrl": "https://toolspanel.atlaspcsupport.com",
+    "commit": "972592be193d3f2b42f9a0b6a9a3ac854870cd7d",
+    "manifestSha256": "7b65e879639f8104f4bc9b030ead468eaec26e967314fa9104b039a3903321e2",
+    "version": "1.5.21",
+    "members": 34,
+    "downloadAndVerifySeconds": 10.85,
+    "noLaunch": {
+      "PS51": true,
+      "PS7": true
+    },
+    "defender": {
+      "realTime": true,
+      "service": true,
+      "antivirus": true
+    },
+    "temporaryDirectory": "atlas-audit-public-07dd5a15fe474d01976f4ec056e540d3",
+    "changes": "Temporary download only; no UI, install, publication or protection changes"
+  },
+  "isolatedReproductions": {
+    "language": {
+      "sequence": "en -> es -> en, without restart",
+      "displayedSelection": "en",
+      "savedLanguage": "es",
+      "saveCalls": 1,
+      "reproduced": true,
+      "method": "Real event body extracted by AST; dialog and persistence boundaries replaced with in-memory doubles. No UI or user configuration touched."
+    },
+    "privacy": {
+      "input": "DriverVersion=10.2.3.4; IP=192.0.2.10",
+      "output": "DriverVersion=[REDACTED]; IP=[REDACTED]",
+      "versionAlsoRedacted": true
+    },
+    "onboardingPath": {
+      "fixturePath": "C:\\Users\\O'Neil\\Downloads\\install.bat",
+      "parserErrorCount": 1,
+      "errorIds": [
+        "TerminatorExpectedAtEndOfString"
+      ],
+      "executed": false
+    },
+    "eventKnowledgeBase": [
+      {
+        "EventId": 19,
+        "AtlasLevel": "WARN",
+        "AtlasTitle": "Hardware error corregido (PCIe)",
+        "ProviderVersion": 0,
+        "ProviderDescription": "A corrected hardware error has occurred.\r\n\r\nReported by component: Processor Core\r\nError Source: %1\r\nError Type: %7\r\nProcessor APIC ID: %2\r\n\r\nThe details view of this entry contains further information."
+      },
+      {
+        "EventId": 46,
+        "AtlasLevel": "INFO",
+        "AtlasTitle": "Throttling CPU por temperatura",
+        "ProviderVersion": 0,
+        "ProviderDescription": "A fatal hardware error has occurred.\r\n\r\nComponent: Memory\r\nError Source: %1\r\n\r\nThe details view of this entry contains further information."
+      }
+    ]
+  },
+  "auditedFileHashes": [
+    {
+      "path": "onboarding/install.bat",
+      "rawSha256": "dd2d9d3709952528e8514fdc15666d205ab5a5d943025ab192c59f55ee9f04f0"
+    },
+    {
+      "path": "onboarding/README.md",
+      "rawSha256": "c1b6fd991b2e2b0fba2a468cf76bab7a025390d457156250a31ffb7b72981b53"
+    },
+    {
+      "path": "src/tools/Invoke-DiagnosticoEventos.ps1",
+      "rawSha256": "6e3b3763abcfe0e8f975c23f69d2bcdc716f6cd478e03b372f4602123552ccf3"
+    },
+    {
+      "path": "src/gui/MainWindow.ps1",
+      "rawSha256": "214d7238904041e865555331e4748efabb1cad8a8a8fa1ba223e26468c9c0c84"
+    },
+    {
+      "path": "src/tools/Invoke-EntregaPC.ps1",
+      "rawSha256": "2bfe111d27ddd5c1495f45a9b3e1d1be8e4afa9fd62cc4e1efe1e9aba84605f3"
+    },
+    {
+      "path": "src/lib/Reports.ps1",
+      "rawSha256": "a375c8c76de2b31bbe13dd97da8ebe6850090fb390f33d6bb5e234f29ebce5a9"
+    },
+    {
+      "path": "src/tools/Invoke-GPUCheck.ps1",
+      "rawSha256": "504ce4ea543f767daa8af426f4cf764af051e3e2dc5950318278d40f96ac1a55"
+    },
+    {
+      "path": "tests/Test-SecurityGuards.ps1",
+      "rawSha256": "37331b936cf3219c2aa24708539b9ec5660d333a12aa23506833f117b774a6e5"
+    }
+  ],
+  "evidenceClasses": {
+    "A04": "Static trust-boundary/concurrency concern; no exploit demonstrated",
+    "A05": "Parser fixture; command not executed",
+    "A01": "Actual lookup and read-only Windows provider metadata",
+    "A07": "Static exception and HTML data-flow review",
+    "A09": "Labels compared with implementation",
+    "A03": "Current repository documentation",
+    "A12": "Repository files and registry metadata",
+    "A10": "Static process lifecycle review; no stress test",
+    "A08": "Real redaction function on fictitious text",
+    "A11": "Guard implementation compared with accepted source",
+    "A02": "Static source and matching published BAT",
+    "A06": "Real handler with persistence/dialog doubles; no real UI"
+  },
+  "preserved": {
+    "defenderProtection": true,
+    "hostData": true,
+    "vmsPaused": true,
+    "noDeployment": true,
+    "publicUrl": true,
+    "noLicenseOrCertificatePurchase": true,
+    "noProductionCodeEdits": true,
+    "noPhysicalUsbWrites": true
+  },
+  "limitations": [
+    "No full Windows 10 qualification",
+    "No real installations, encryption, accounts/UAC changes, network mutation, service mutation or recovery in this audit",
+    "No GPU stress or physical hardware acceptance",
+    "Private installer implementation, remote server and effective account permissions not certified",
+    "npm audit does not assess third-party executables",
+    "Single observed download duration is not UI startup benchmark",
+    "Not a full Git-history secret scan or external penetration test",
+    "Licensing conditions do not establish a purchased entitlement"
+  ],
+  "localLogNames": [
+    "atlas-audit-2026-11-17-ps5.log",
+    "atlas-audit-2026-11-17-ps7.log",
+    "atlas-audit-2026-11-17-worker.log",
+    "atlas-audit-2026-11-17-endpoints.log",
+    "atlas-audit-2026-11-17-public.log"
+  ],
+  "ciSnapshot": {
+    "runId": 40946353326,
+    "commit": "b8e2c8c33cb7a72cd171dd3edb0aaca2ec4865ec",
+    "conclusion": "success",
+    "runUpdatedUtc": "2026-10-29T20:14:36Z",
+    "recheckedDate": "2026-11-17",
+    "url": "https://github.com/AtlasPCSupport/atlas-pc-support/actions/runs/40946353326",
+    "newCiRunTriggered": false
+  }
+}
