@@ -811,6 +811,7 @@ $(Get-AtlasString 'about.description')
             $i++
         }
         $langCombo.SelectedIndex = $selectedIndex
+        $script:AtlasPendingLang = $currentLang
         # Marcar initial selection como hecho ANTES de enganchar el handler,
         # para evitar que un evento espureo dispare al crear la ComboBox.
         $script:LangComboReady = $true
@@ -820,18 +821,20 @@ $(Get-AtlasString 'about.description')
             $sel = $eventSender.SelectedItem
             if (-not $sel) { return }
             $newLang = [string]$sel.Tag
-            if ($newLang -eq $script:AtlasCurrentLang) { return }
+            $pendingLang = if ($script:AtlasPendingLang) { $script:AtlasPendingLang } else { $script:AtlasCurrentLang }
+            if ($newLang -eq $pendingLang) { return }
             $ok = Set-AtlasLanguagePref $newLang
             $brand = if ($script:Branding -and $script:Branding.brand) { $script:Branding.brand.shortName } else { 'Atlas PC Support' }
             if (-not $ok) {
                 Write-AtlasLog 'Language preference could not be saved; previous configuration preserved.' -Level WARN -Tool 'UI'
                 $script:LangComboReady = $false
-                try { $eventSender.SelectedItem = @($eventSender.Items | Where-Object { [string]$_.Tag -eq $script:AtlasCurrentLang })[0] }
+                try { $eventSender.SelectedItem = @($eventSender.Items | Where-Object { [string]$_.Tag -eq $pendingLang })[0] }
                 finally { $script:LangComboReady = $true }
                 $msg = Get-AtlasString 'language.saveFailed'
                 [System.Windows.MessageBox]::Show($msg, $brand, 'OK', 'Warning') | Out-Null
                 return
             }
+            $script:AtlasPendingLang = $newLang
             Write-AtlasLog "Idioma cambiado a '$newLang' (guardado=$ok). Reinicio requerido." -Tool 'UI'
             # Usar el string del NUEVO idioma (ya cargado en el dict, solo no aplicado a UI)
             $msg = $script:AtlasStringsDict[$newLang]['language.restartRequired']

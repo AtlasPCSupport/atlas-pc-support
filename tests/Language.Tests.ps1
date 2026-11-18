@@ -68,6 +68,7 @@ Describe 'Language selection reports the persistence result' {
         function Show-TestLanguageDialog {param($Message,$Icon)$script:LanguageDialogs.Add([pscustomobject]@{Message=$Message;Icon=$Icon})}
         function Write-AtlasLog {param($Message,$Level,$Tool)}
     }
+    BeforeEach { $script:AtlasPendingLang='en' }
     It 'uses a warning and restores selection only on save failure: <Save>' -ForEach @(@{Save=$false},@{Save=$true}) {
         $script:AtlasCurrentLang='en';$script:LangComboReady=$true;$script:Branding=@{brand=@{shortName='Fixture'}}
         $script:LanguageDialogs=[Collections.Generic.List[object]]::new()
@@ -88,5 +89,26 @@ Describe 'Language selection reports the persistence result' {
             $script:LanguageDialogs[0].Message|Should -Be $script:AtlasStringsDict['en']['language.saveFailed']
             Should -Invoke Write-AtlasLog -Times 1 -Exactly -ParameterFilter {$Level -eq 'WARN'}
         }
+    }
+    It 'persists returning to the applied language and restores the last saved selection on failure' {
+        $script:AtlasCurrentLang='en';$script:LangComboReady=$true;$script:Branding=$null
+        $script:LanguageDialogs=[Collections.Generic.List[object]]::new()
+        $items=@([pscustomobject]@{Tag='en'},[pscustomobject]@{Tag='es'})
+        $control=[pscustomobject]@{Items=$items;SelectedItem=$items[1]}
+        $script:SavedLanguage='en'
+        Mock Set-AtlasLanguagePref { $script:SavedLanguage=$Language;return $true }
+        & $script:LanguageSelection $control $null
+        $script:SavedLanguage|Should -Be es
+        $control.SelectedItem=$items[0]
+        & $script:LanguageSelection $control $null
+        $script:SavedLanguage|Should -Be en
+        $control.SelectedItem=$items[1]
+        & $script:LanguageSelection $control $null
+        Mock Set-AtlasLanguagePref { return $false }
+        $control.SelectedItem=$items[0]
+        & $script:LanguageSelection $control $null
+        $control.SelectedItem.Tag|Should -Be es
+        $script:SavedLanguage|Should -Be es
+        $script:AtlasPendingLang|Should -Be es
     }
 }

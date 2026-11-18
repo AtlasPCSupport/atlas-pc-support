@@ -181,3 +181,12 @@ recursos desde su directorio; no copiar solamente su EXE.
   Revisa StdoutTruncated/StderrTruncated y usa OutputLogPath nuevo para salida
   completa explícita. Ese log puede contener datos sensibles. No interpretar una
   cola truncada como documento JSON/CSV completo. Estado nativo y timeout se conservan.
+- **Efectos y aceptación**: declarar qué cambia, confirmar la acción y comprobar el
+  resultado observado. Snapshot/reversión antes de operaciones sensibles; fallo
+  parcial o reversión incompleta deben ser visibles. Una guarda textual no sustituye
+  ejecutar regresiones negativas sobre la lógica real con fronteras simuladas.
+- **Consultas**: datos vacíos observados y consultas fallidas son estados diferentes.
+  Propagar `Observed`/`NotEvaluated` al informe, sin certificar salud por ausencia de datos.
+- **Dependencias ensayadas**: registrar versión observada, origen, hash, firma cuando
+  exista, build/edición y alcance de la prueba. Una ruta local encontrada no acredita
+  procedencia ni una licencia. Revisar CLI/recursos al cambiar de versión.

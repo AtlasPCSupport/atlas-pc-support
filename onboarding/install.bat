@@ -55,8 +55,10 @@ powershell.exe -NoProfile -Command ^
   "function Invoke-VerifiedOnboarding {" ^
   "param([string]$Directory);" ^
   "Assert-OnboardingDirectory $Directory;" ^
-  "$lock=$null;$file=$null;" ^
+  "$lock=$null;$file=$null;$active=$null;" ^
   "try {" ^
+  "$parent=Split-Path -Parent $Directory; Assert-OnboardingDirectory $parent;" ^
+  "$active=[IO.File]::Open((Join-Path $parent '.active.lock'),'OpenOrCreate','ReadWrite','None');" ^
   "$lock=[IO.File]::Open((Join-Path $Directory '.run.lock'),'CreateNew','ReadWrite','None');" ^
   "$tmp=Join-Path $Directory 'install.download';" ^
   "$dst=Join-Path $Directory 'install-rustdesk.ps1';" ^
@@ -73,6 +75,7 @@ powershell.exe -NoProfile -Command ^
   "} finally {" ^
   "if($file){$file.Dispose()};" ^
   "if($lock){$lock.Dispose()};" ^
+  "if($active){$active.Dispose()};" ^
   "};" ^
   "};" ^
   "$ErrorActionPreference='Stop';" ^

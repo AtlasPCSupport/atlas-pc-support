@@ -1,6 +1,6 @@
 // The existing domain is the bootstrap trust anchor. Publication pins are set
 // with a Worker deployment, never inferred from mutable repository checksums.
-const PUBLIC_REPO = "mikepchelper-spec/atlas-pc-support";
+const PUBLIC_REPO = "AtlasPCSupport/atlas-pc-support";
 const PRIVATE_REPO = "mikepchelper-spec/atlas-pc-support-handoff";
 const encoder = new TextEncoder();
 const decoder = new TextDecoder("utf-8", { fatal: true });

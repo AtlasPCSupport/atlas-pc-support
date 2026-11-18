@@ -1,4 +1,4 @@
-﻿# ============================================================
+# ============================================================
 # Invoke-GPUCheck
 # GPU diagnostics with optional stress test and report export.
 # Atlas PC Support
@@ -248,14 +248,22 @@ function Invoke-GPUCheck {
 
     function Stop-Proc {
         param([AllowNull()]$Process)
-        if ($null -eq $Process) { return }
+        if ($null -eq $Process) { return $true }
         try {
             if (-not $Process.HasExited) {
-                try { $Process.CloseMainWindow() | Out-Null } catch {}
-                Start-Sleep -Seconds 2
-                if (-not $Process.HasExited) { $Process | Stop-Process -Force }
+                [void]$Process.CloseMainWindow()
+                if (-not $Process.WaitForExit(2000)) {
+                    $Process.Kill()
+                    if (-not $Process.WaitForExit(5000)) { throw 'Process termination deadline exceeded.' }
+                }
             }
-        } catch {}
+            $Process.Refresh()
+            if (-not $Process.HasExited) { throw 'Process is still running.' }
+            return $true
+        } catch {
+            Write-Warning 'Owned GPU test process stop was not confirmed. Inspect the running test before leaving the machine.'
+            return $false
+        }
     }
 
     function Wait-WithProgress {
@@ -282,7 +290,7 @@ function Invoke-GPUCheck {
                         if ($tempC -ge $maxTempLimit) {
                             Write-Host ("  [!] THERMAL WATCHDOG STOP: System temp reached {0}°C (Max Limit: {1}°C)" -f $tempC, $maxTempLimit) -ForegroundColor Red
                             if ($StressProc -and -not $StressProc.HasExited) {
-                                Stop-Proc -Process $StressProc
+                                if (-not (Stop-Proc -Process $StressProc)) { return 'ThermalStopUnconfirmed' }
                             }
                             return 'ThermalStop'
                         }
@@ -492,9 +500,11 @@ table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6p
         if (-not $skipStress -and -not $pS) { $sessionStatus = 'NotStarted' }
     } finally {
         Write-Host ("[GPU Check] " + $L.ClosingProcs) -ForegroundColor Gray
-        Stop-Proc -Process $pS
-        Stop-Proc -Process $pN
-        Stop-Proc -Process $pG
+        $closed = @((Stop-Proc -Process $pS), (Stop-Proc -Process $pN), (Stop-Proc -Process $pG))
+        if ($closed -contains $false) {
+            $sessionStatus = 'ProcessStopUnconfirmed'
+            $notes.Add('A test process may still be running; manual inspection required.') | Out-Null
+        }
         Start-Sleep -Seconds 2
     }
     $sessionEnd = Get-Date

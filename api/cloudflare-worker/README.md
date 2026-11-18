@@ -26,7 +26,7 @@ pwsh -NoProfile -File ./api/cloudflare-worker/publish-release.ps1 -Commit <full-
 pins the new code and release together. The custom-domain association stays the
 same. No Cloudflare credentials are stored in this repository or required on PCs.
 
-Wrangler is pinned to 4.152.0. The compatible transitive Undici 7.30.1 override fixes
+Wrangler is pinned to 4.154.0. The compatible transitive Undici 7.30.1 override fixes
 the advisories reported by the current lock; no `npm audit fix --force` is used.
 Node 22 is a development/CI requirement, not a requirement for Windows clients.
 

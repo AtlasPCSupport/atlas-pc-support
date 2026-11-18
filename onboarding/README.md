@@ -12,7 +12,8 @@ demuestra una instalación ni una conexión correcta al servidor.
 3. El wrapper verifica SHA-256 antes de ejecutar el archivo local. Cada intento
    tiene una carpeta GUID bajo `%ProgramFiles%\AtlasPC\onboarding`, restringida a
    Administradores/SYSTEM. Rechaza enlaces, propietarios y permisos inesperados.
-   Un lock impide repetir/solapar el mismo intento; los bytes verificados permanecen
+   Un lock de carpeta impide repetir el intento y otro impide instaladores simultáneos
+   entre intentos; los bytes verificados permanecen
    abiertos sin permiso de escritura/borrado mientras corre el instalador.
 4. Se conserva la política efectiva de PowerShell. Si Restricted, AllSigned, MotW,
    AppLocker, WDAC o una política empresarial bloquean el archivo, detener y revisar

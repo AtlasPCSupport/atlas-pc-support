@@ -72,6 +72,9 @@ Describe 'Audited diagnostic knowledge and handover coverage' {
         . (Join-Path $script:RepoRoot 'src/lib/ToolKit.ps1')
         . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-EntregaPC.ps1' 'Get-EntregaNetworkProtection')
         . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-DiagnosticoEventos.ps1' '_Kb-Lookup')
+        . (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-DiagnosticoEventos.ps1' '_Build-HtmlReport')
+        function _Query-Events {param($LogName,$Levels,$Hours,$MaxEvents,$Ids)throw 'Real events blocked'}
+        function Write-AtlasShareableReport {param($Path,$Content,$Tool)throw 'Real output blocked'}
         function Get-NetIPAddress { [CmdletBinding()]param($AddressFamily) throw 'Real network read blocked' }
         function Get-MpComputerStatus { [CmdletBinding()]param() throw 'Real protection read blocked' }
     }
@@ -96,6 +99,18 @@ Describe 'Audited diagnostic knowledge and handover coverage' {
         $r.Defender.State|Should -Be Observed;$r.Defender.Items[0].AntivirusEnabled|Should -BeFalse
         Mock Get-MpComputerStatus {}
         (Get-EntregaNetworkProtection).Defender.State|Should -Be NotEvaluated
+    }
+    It 'renders denied Security access explicitly and retains the WHEA event severity and corrected title' {
+        $script:L=@{HtmlSecCrit='Critical';HtmlSecBoot='Boot';HtmlSecHw='Hardware';HtmlSecCrash='Crash';HtmlSecDrv='Drivers';HtmlSecSec='Security';HtmlNoEvents='Empty';HtmlRange='Range {0}';HtmlLang='en'}
+        $script:AtlasEventsKB=@{'*|Microsoft-Windows-WHEA-Logger|46'=@{Title='Fatal memory hardware error';Level='INFO';Cause='Fixture';Action='Investigate'}}
+        Mock _Query-Events {
+            if($LogName -eq 'Security'){throw 'Access denied'}
+            if($Ids -contains 46){[pscustomobject]@{LogName='System';ProviderName='Microsoft-Windows-WHEA-Logger';Id=46;Level=2;TimeCreated=[datetime]'2026-11-17';Message='Fatal memory event'}}
+        }
+        Mock Write-AtlasShareableReport {$script:RenderedEventHtml=$Content}
+        _Build-HtmlReport -OutPath 'fixture.html'|Should -Be 'fixture.html'
+        $script:RenderedEventHtml|Should -Match 'NotEvaluated: Security'
+        $script:RenderedEventHtml|Should -Match 'CRITICAL</span><span class=.ev-title.>Fatal memory hardware error'
     }
 }
 
