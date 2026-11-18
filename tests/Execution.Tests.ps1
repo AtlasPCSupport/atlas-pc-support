@@ -284,6 +284,8 @@ Describe 'Verified onboarding wrapper behavior' {
 
 Describe 'Audited process deadlines and verified GPU stop' {
     BeforeAll {
+        $script:ProcessTestSystemRoot=$env:SystemRoot
+        if(-not $env:SystemRoot){$env:SystemRoot=$TestDrive}
         $script:RepoRoot=Split-Path -Parent $PSScriptRoot
         . (Join-Path $PSScriptRoot 'SourceTestHelpers.ps1')
         foreach($name in @('Stop-Proc','Wait-WithProgress','Get-GpuSessionLevel')){. (Get-TestFunction $script:RepoRoot 'src/tools/Invoke-GPUCheck.ps1' $name)}
@@ -297,6 +299,10 @@ Describe 'Audited process deadlines and verified GPU stop' {
             $p|Add-Member ScriptMethod Kill {$this.ForceCalls++;if($this.ForceFails){throw 'Denied'};$this.HasExited=$true}
             return $p
         }
+    }
+    AfterAll {
+        if($script:ProcessTestSystemRoot){$env:SystemRoot=$script:ProcessTestSystemRoot}
+        else {Remove-Item Env:SystemRoot -ErrorAction SilentlyContinue}
     }
     It 'keeps a timed out or empty tunnel query unevaluated' {
         Mock Invoke-AtlasNativeProcess {[pscustomobject]@{State='TimedOut';Stdout='';StdoutTruncated=$false}}
